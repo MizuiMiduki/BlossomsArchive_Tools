@@ -1,0 +1,28 @@
+<form name="testForm">
+  <h4>①抽選対象の入力</h4>
+  <p class="small-text">※1行で1つの対象として認識するので改行して入力してください。</p>
+
+  <div class="field round border">
+    <textarea class="tyuusen-input" placeholder=""></textarea>
+  </div>
+
+  <h4>②抽選・再抽選</h4>
+  <input type="button" value="実行" class="button" id="start_lottery" />
+
+  <h4>③抽選結果の確認</h4>
+  <div class="kekka">
+    <div class="box-title">
+      <p style="text-align: center; margin: 5px;">抽選結果</p>
+    </div>
+
+    <article class="round">
+      <h5 id="str" style="text-align: center;"></h5>
+    </article>
+  </div>
+
+  <h4>④抽選結果の共有</h4>
+  <input type="button" value="共有" class="button" id="share" />
+
+  <h4>⑤入力内容のリセット</h4>
+  <input type="button" value="リセット" class="button" id="reset_text" />
+</form>

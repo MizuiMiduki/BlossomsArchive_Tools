@@ -1,0 +1,15 @@
+.display {
+    width: 100%;
+    padding: 10px;
+    font-size: 24px;
+    text-align: right;
+    margin-bottom: 20px;
+    /* border: 1px solid #fdb4eb; */
+    border-radius: 4px;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
