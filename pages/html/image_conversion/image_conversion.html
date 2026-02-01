@@ -1,0 +1,32 @@
+<h1>画像形式変換ツール</h1>
+<div class="converter">
+    <div class="grid">
+        <div>
+            <button>
+                <i>attach_file</i>
+                <span>File</span>
+            </button>
+            <input type="file" id="inputFile" accept="image/*">
+        </div>
+
+        <div class="field suffix border round">
+            <select id="formatSelect">
+                <option value="image/png">PNG</option>
+                <option value="image/jpeg">JPEG</option>
+                <option value="image/webp">WebP</option>
+            </select>
+            <i>arrow_drop_down</i>
+        </div>
+
+        <div>
+            <button id="convertBtn">
+                <i>animation</i>
+                <span>変換</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<article class="round">
+    <div id="previewArea"></div>
+</article>

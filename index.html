@@ -3,91 +3,99 @@
 
 <head>
     <meta charset="UTF-8">
-    <link href="/manifest.json" rel="manifest">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#fdb4eb">
-    <meta name="description" content="BlossomsArchive Tools">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>BlossomsArchive Tools</title>
-    <meta name="description" content="日常で使える計算機、パスワード生成、QRコード作成など、シンプルで使いやすい無料ツール集。">
-    <meta property="og:title" content="便利ツール集 | Blossoms Archive">
-    <meta property="og:description" content="シンプルで使いやすい計算機・QRコード・パスワード生成ツールなどを無料で提供。">
-    <meta property="og:url" content="https://tools.blossomsarchive.com/">
-    <meta property="og:type" content="website">
+    <link rel="manifest" href="/lunanthus/pwa/manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js"></script>
+    <script src="/lunanthus/router.js"></script>
+    <script src="/lunanthus/pwa/sw.js"></script>
     <link rel="icon"
         href="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05-32x32.png"
         sizes="32x32">
+    <link rel="stylesheet" href="/assets/style/primary.css">
+    <meta name="theme-color" content="#fdb4eb">
+    <!-- beercss -->
+    <link href="https://cdn.jsdelivr.net/npm/beercss@4.0.1/dist/cdn/beer.min.css" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@4.0.1/dist/cdn/beer.min.js"></script>
+    <script type="module"
+        src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
 </head>
 <!-- ADSENSE_CODE -->
 <!-- ANALYTICS_CODE -->
 
 <body>
-    <div class="body-back">
-    </div>
-    <budoux-ja>
-        <div id="header"></div>
-        <div class="nav">
-            <div class="">
-                <input id="drawer_input" class="drawer_hidden" type="checkbox">
-                <label for="drawer_input" class="drawer_open drawer_back"><span></span></label>
-                <nav class="nav_content">
-                    <div id="side-menu-sp"></div>
-                </nav>
-            </div>
+    <nav class="left max l">
+        <header>
+            <img alt="logo"
+                src="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05.png"
+                class="circle extra">
+        </header>
+        <a href="/">
+            <i>home</i>
+            <span>ホーム</span>
+        </a>
+        <!-- <a>
+            <i>search</i>
+            <span>Search</span>
+        </a> -->
+        <!-- <a>
+            <i>share</i>
+            <span>共有</span>
+        </a> -->
+        <hr class="small">
+        <a href="/about">
+            <i>info</i>
+            <span>情報</span>
+        </a>
+    </nav>
+
+    <nav class="left m">
+        <header>
+            <img alt="logo"
+                src="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05.png"
+                class="circle extra">
+        </header>
+        <a href="/">
+            <i>home</i>
+            <span>ホーム</span>
+        </a>
+        <!-- <a>
+            <i>search</i>
+            <span>Search</span>
+        </a> -->
+        <!-- <a>
+            <i>share</i>
+            <span>共有</span>
+        </a> -->
+        <hr class="small">
+        <a href="/about">
+            <i>info</i>
+            <span>情報</span>
+        </a>
+    </nav>
+
+    <nav class="bottom s">
+        <a href="/">
+            <i>home</i>
+            <span>ホーム</span>
+        </a>
+        <!-- <a>
+            <i>search</i>
+        </a> -->
+        <!-- <a>
+            <i>share</i>
+        </a> -->
+        <a href="/about">
+            <i>info</i>
+            <span>情報</span>
+        </a>
+    </nav>
+
+    <main class="responsive">
+        <div id="app">
+            loading...
         </div>
-        <div class="main-colum">
-            <div id="side-menu"></div>
-
-            <div class="main">
-                <main class="tools-container">
-                    <div class="tool-grid">
-                        <a href="/pages/lottery/" class="tool-card">
-                            <h2>抽選ツール</h2>
-                            <p>名前や番号をランダムで選出</p>
-                        </a>
-
-                        <a href="/pages/scientific-calculator/" class="tool-card">
-                            <h2>電卓</h2>
-                            <p>シンプルな計算</p>
-                        </a>
-
-                        <a href="/pages/access-info/" class="tool-card">
-                            <h2>IPアドレス確認</h2>
-                            <p>アクセス元のIPを確認</p>
-                        </a>
-
-                        <a href="/pages/password-generator/" class="tool-card">
-                            <h2>パスワード生成</h2>
-                            <p>パスワードを生成</p>
-                        </a>
-
-                        <a href="/pages/qr_code/" class="tool-card">
-                            <h2>QRコード生成</h2>
-                            <p>QRコードを生成</p>
-                        </a>
-
-                        <a href="/pages/photo/" class="tool-card">
-                            <h2>Exifフレーム</h2>
-                            <p>画像にExifフレームを追加</p>
-                        </a>
-
-                        <a href="/pages/image_conversion/" class="tool-card">
-                            <h2>画像変換</h2>
-                            <p>画像の形式を変換</p>
-                        </a>
-                    </div>
-                </main>
-            </div>
-
-
-        </div>
-
-        <div id="footer"></div>
-    </budoux-ja>
-    <link rel="stylesheet" href="/common/common.css">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="/common/common.js"></script>
+    </main>
 </body>
 
 </html>

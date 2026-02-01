@@ -1,0 +1,19 @@
+<div class="field label prefix outline">
+    <i>link</i>
+    <input type="text" id="text" placeholder=" ">
+    <label>QRコードにするテキストやURL</label>
+</div>
+<div class="space"></div>
+
+<button onclick="generateQRCode()">
+    <i>qr_code_2</i>
+    <span>QRコードを生成</span>
+</button>
+
+<div class="space"></div>
+
+<div id="qrcode-container" class="center-align">
+    <article class="no-padding medium-elevate center-align" style="display: inline-block; padding: 20px;">
+        <div id="qrcode"></div>
+    </article>
+</div>
