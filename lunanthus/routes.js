@@ -6,6 +6,6 @@ export default [
     { path: "/image_conversion", file: "/pages/html/image_conversion/image_conversion.html", script: "/pages/js/image_conversion/script.js", style: null },
     { path: "/password_generator", file: "/pages/html/password_generator/password_generator.html", script: "/pages/js/password_generator/script.js", style: null },
     { path: "/qr_generator", file: "/pages/html/qr_generator/qr_generator.html", script: "/pages/js/qr_generator/script.js", style: null },
-    // { path: "/exif_frame", file: "/pages/html/exif_frame/exif_frame.html", script: "/pages/js/exif_frame/script.js", style: null },
+    { path: "/exif_frame", file: "/pages/html/exif_frame/exif_frame.html", script: "/pages/js/exif_frame/script.js", style: null },
     { path: "/about", file: "/pages/html/about/about.html", script: "/pages/js/about/index.js", style: null }
 ];

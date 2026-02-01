@@ -6,7 +6,7 @@
             style="opacity: 0; cursor: pointer;">
     </button>
 
-    <button id="downloadBtn" class="secondary" style="display: none;">
+    <button id="downloadBtn" style="display: none;">
         <i>download</i>
         <span>画像をダウンロード</span>
     </button>
@@ -15,57 +15,89 @@
 <div class="space"></div>
 
 <div class="grid">
-    <div class="s12 m6 l3">
-        <p><b>フレームの色</b></p>
-        <nav class="border row no-space">
-            <label class="radio chip">
-                <input type="radio" name="frameColor" value="black" checked>
-                <span>黒</span>
-            </label>
-            <label class="radio chip">
-                <input type="radio" name="frameColor" value="white">
-                <span>白</span>
-            </label>
-        </nav>
+    <div class="s12 m6 l6">
+        <fieldset>
+            <legend>フレームの色</legend>
+            <nav>
+                <label class="radio">
+                    <input type="radio" name="frameColor" value="black" checked>
+                    <span>黒</span>
+                </label>
+                <label class="radio">
+                    <input type="radio" name="frameColor" value="white">
+                    <span>白</span>
+                </label>
+            </nav>
+        </fieldset>
     </div>
 
-    <div class="s12 m6 l3">
-        <p><b>フレームの位置</b></p>
-        <nav class="border row no-space">
-            <label class="radio chip"><input type="radio" name="framePosition" value="bottom"
-                    checked><span>下</span></label>
-            <label class="radio chip"><input type="radio" name="framePosition" value="top"><span>上</span></label>
-            <label class="radio chip"><input type="radio" name="framePosition" value="left"><span>左</span></label>
-            <label class="radio chip"><input type="radio" name="framePosition" value="right"><span>右</span></label>
-        </nav>
+    <div class="s12 m6 l6">
+        <fieldset>
+            <legend>フレームの位置</legend>
+            <nav>
+                <label class="radio">
+                    <input type="radio" name="framePosition" value="bottom" checked>
+                    <span>下</span>
+                </label>
+                <label class="radio">
+                    <input type="radio" name="framePosition" value="top">
+                    <span>上</span>
+                </label>
+                <label class="radio">
+                    <input type="radio" name="framePosition" value="left">
+                    <span>左</span>
+                </label>
+                <label class="radio">
+                    <input type="radio" name="framePosition" value="right">
+                    <span>右</span>
+                </label>
+            </nav>
+        </fieldset>
     </div>
 
-    <div class="s12 m6 l3">
-        <p><b>文字の位置</b></p>
-        <nav class="border row no-space">
-            <label class="radio chip"><input type="radio" name="textAlign" value="left" checked><span>左</span></label>
-            <label class="radio chip"><input type="radio" name="textAlign" value="center"><span>中央</span></label>
-            <label class="radio chip"><input type="radio" name="textAlign" value="right"><span>右</span></label>
-        </nav>
+    <div class="s12 m6 l6">
+        <fieldset>
+            <legend>文字の位置</legend>
+            <nav>
+                <label class="radio">
+                    <input type="radio" name="textAlign" value="left" checked>
+                    <span>左</span>
+                </label>
+                <label class="radio">
+                    <input type="radio" name="textAlign" value="center">
+                    <span>中央</span>
+                </label>
+                <label class="radio">
+                    <input type="radio" name="textAlign" value="right">
+                    <span>右</span>
+                </label>
+            </nav>
+        </fieldset>
     </div>
 
-    <div class="s12 m6 l3">
-        <p><b>保存形式</b></p>
-        <nav class="border row no-space">
-            <label class="radio chip"><input type="radio" name="formatSelect" value="image/jpeg"
-                    checked><span>JPG</span></label>
-            <label class="radio chip"><input type="radio" name="formatSelect" value="image/png"><span>PNG</span></label>
-            <label class="radio chip"><input type="radio" name="formatSelect"
-                    value="image/webp"><span>WebP</span></label>
-        </nav>
+    <div class="s12 m6 l6">
+        <fieldset>
+            <legend>保存形式</legend>
+            <nav>
+                <label class="radio">
+                    <input type="radio" name="formatSelect" value="image/jpeg" checked>
+                    <span>JPG</span>
+                </label>
+                <label class="radio">
+                    <input type="radio" name="formatSelect" value="image/png">
+                    <span>PNG</span>
+                </label>
+                <label class="radio">
+                    <input type="radio" name="formatSelect" value="image/webp">
+                    <span>WebP</span>
+                </label>
+            </nav>
+        </fieldset>
     </div>
 </div>
 
 <div class="space"></div>
 
-<div class="preview-wrapper center-align">
-    <canvas id="canvas"></canvas>
-    <article class="no-padding medium-elevate" style="display: inline-block;">
-        <img id="preview" class="preview-img responsive" style="max-height: 500px;">
-    </article>
-</div>
+<article class="border center-align">
+    <canvas id="canvas" style="max-width: 50vw;"></canvas>
+</article>

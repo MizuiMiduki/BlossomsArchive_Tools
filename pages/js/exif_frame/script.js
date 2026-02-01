@@ -1,7 +1,6 @@
 /** @type {any} */
 const globalApp = window;
 
-// 状態管理用オブジェクト
 const state = {
     /** @type {HTMLImageElement | null} */
     originalImage: null,
@@ -9,8 +8,25 @@ const state = {
     exifData: null
 };
 
+async function loadExifLib() {
+    if (typeof globalApp.EXIF !== 'undefined') return true;
+
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.min.js";
+        script.onload = () => {
+            console.log("EXIF library loaded successfully.");
+            resolve(true);
+        };
+        script.onerror = () => {
+            console.error("Failed to load EXIF library.");
+            reject(false);
+        };
+        document.head.appendChild(script);
+    });
+}
+
 /**
- * シャッタースピードのフォーマット
  * @param {number} value
  */
 function formatShutterSpeed(value) {
@@ -20,121 +36,107 @@ function formatShutterSpeed(value) {
     return `1/${denominator}s`;
 }
 
-/**
- * EXIF情報を画像に描画する
- */
 function drawImageWithExif() {
-    const img = state.originalImage;
-    const exif = state.exifData;
     const canvas = /** @type {HTMLCanvasElement | null} */ (document.getElementById("canvas"));
-    const preview = /** @type {HTMLImageElement | null} */ (document.getElementById("preview"));
+    const img = state.originalImage;
+    const exif = state.exifData || {};
 
-    if (!img || !exif || !canvas || !preview) return;
+    if (!img || !canvas) return;
 
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    // EXIFデータの整理
-    const make = exif.Make || "Unknown";
-    const model = exif.Model || "Unknown";
-    const fnumber = exif.FNumber ? `f/${exif.FNumber}` : "";
-    const iso = exif.ISOSpeedRatings ? `ISO ${exif.ISOSpeedRatings}` : "";
-    const shutterSpeed = exif.ExposureTime ? `SS ${formatShutterSpeed(exif.ExposureTime)}` : "";
-    const focalLength = exif.FocalLength ? `FL ${exif.FocalLength}mm` : "";
-
-    const line1_1 = `${make} ${model}`;
-    const line1_2 = [fnumber, shutterSpeed, focalLength, iso].filter(Boolean).join(" | ");
-
-    // スケール計算
-    const scale = img.height / 1080;
-    const padding = Math.round(60 * scale) * 2;
-    const fontSizeBig = Math.round(36 * scale);
-    const fontSizeSmall = Math.round(24 * scale);
-    const lineSpacing = 16;
-    const lineHeightBig = fontSizeBig + lineSpacing;
-    const lineHeightSmall = fontSizeSmall + lineSpacing;
-
-    // 設定の取得
     const frameColor = (/** @type {HTMLInputElement} */(document.querySelector('input[name="frameColor"]:checked')))?.value || "black";
     const framePosition = (/** @type {HTMLInputElement} */(document.querySelector('input[name="framePosition"]:checked')))?.value || "bottom";
     const textAlign = (/** @type {HTMLInputElement} */(document.querySelector('input[name="textAlign"]:checked')))?.value || "left";
 
-    const bgColor = frameColor === "white" ? "#fff" : "#000";
-    const textColor = frameColor === "white" ? "#000" : "#fff";
     const isVertical = (framePosition === "left" || framePosition === "right");
+    const scale = img.height / 1080;
+    const padding = Math.round(60 * scale) * 2;
 
-    // キャンバスサイズ決定
-    let canvasWidth = img.width;
-    let canvasHeight = img.height;
-    if (isVertical) canvasWidth += padding; else canvasHeight += padding;
+    canvas.width = isVertical ? img.width + padding : img.width;
+    canvas.height = isVertical ? img.height : img.height + padding;
 
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    let drawX = 0, drawY = 0, bandX = 0, bandY = 0;
-    if (framePosition === "bottom") bandY = img.height;
-    else if (framePosition === "top") drawY = padding;
-    else if (framePosition === "right") bandX = img.width;
-    else if (framePosition === "left") drawX = padding;
-
-    // 描画
-    context.fillStyle = bgColor;
+    context.fillStyle = frameColor === "white" ? "#fff" : "#000";
     context.fillRect(0, 0, canvas.width, canvas.height);
+
+    let drawX = (framePosition === "left") ? padding : 0;
+    let drawY = (framePosition === "top") ? padding : 0;
+    let bandX = (framePosition === "right") ? img.width : 0;
+    if (framePosition === "left") bandX = 0;
+
     context.drawImage(img, drawX, drawY);
 
-    context.fillStyle = textColor;
-    context.textBaseline = "top";
+    context.fillStyle = frameColor === "white" ? "#000" : "#fff";
+    const make = exif.Make || "Unknown Camera";
+    const model = exif.Model || "";
+    const info = [
+        exif.FNumber ? `f/${exif.FNumber}` : "",
+        exif.ExposureTime ? `${formatShutterSpeed(exif.ExposureTime)}` : "",
+        exif.FocalLength ? `${exif.FocalLength}mm` : "",
+        exif.ISOSpeedRatings ? `ISO ${exif.ISOSpeedRatings}` : ""
+    ].filter(Boolean).join(" | ");
+
+    const fontSizeBig = Math.round(36 * scale);
+    const fontSizeSmall = Math.round(24 * scale);
+    const lineSpacing = 16;
 
     if (isVertical) {
-        // 縦枠（左・右）の描画処理
         context.save();
         context.translate(bandX + padding / 2, canvas.height / 2);
         context.rotate(framePosition === "left" ? Math.PI / 2 : -Math.PI / 2);
         context.textAlign = "center";
         context.textBaseline = "middle";
-
         context.font = `${fontSizeBig}px sans-serif`;
-        context.fillText(line1_1, 0, -lineHeightSmall / 2);
+        context.fillText(`${make} ${model}`, 0, -(fontSizeSmall + lineSpacing) / 2);
         context.font = `${fontSizeSmall}px sans-serif`;
-        context.fillText(line1_2, 0, lineHeightBig / 2);
+        context.fillText(info, 0, (fontSizeBig + lineSpacing) / 2);
         context.restore();
     } else {
-        // 横枠（上・下）の描画処理
-        let textBaseX = textAlign === "left" ? 40 : textAlign === "center" ? canvas.width / 2 : canvas.width - 40;
         context.textAlign = /** @type {CanvasTextAlign} */ (textAlign);
 
-        const textStartY = framePosition === "top"
-            ? (padding - (lineHeightBig + lineHeightSmall)) / 2
-            : img.height + (padding - (lineHeightBig + lineHeightSmall)) / 2;
+        const totalTextHeight = fontSizeBig + lineSpacing + fontSizeSmall;
+
+        let tx = textAlign === "left" ? 40 : textAlign === "center" ? canvas.width / 2 : canvas.width - 40;
+
+        let ty;
+        if (framePosition === "top") {
+            ty = (padding / 2) - (totalTextHeight / 2) + fontSizeBig;
+        } else {
+            ty = img.height + (padding / 2) - (totalTextHeight / 2) + fontSizeBig;
+        }
 
         context.font = `${fontSizeBig}px sans-serif`;
-        context.fillText(line1_1, textBaseX, textStartY);
+        context.textBaseline = "alphabetic"; // 標準のベースライン
+        context.fillText(`${make} ${model}`, tx, ty);
+
         context.font = `${fontSizeSmall}px sans-serif`;
-        context.fillText(line1_2, textBaseX, textStartY + lineHeightBig);
+        context.fillText(info, tx, ty + lineSpacing + fontSizeSmall);
     }
 
-    preview.src = canvas.toDataURL("image/jpeg", 0.9);
+    const downloadBtn = document.getElementById("downloadBtn");
+    if (downloadBtn) downloadBtn.style.display = "flex";
 }
 
-// イベント管理（動的要素対応）
-document.addEventListener("change", (e) => {
+document.addEventListener("change", async (e) => {
     const target = /** @type {HTMLInputElement} */ (e.target);
 
-    // ファイル選択
     if (target.id === "fileInput" && target.files?.[0]) {
+        await loadExifLib();
+
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
             img.onload = () => {
-                // EXIF.jsの呼び出し
+                state.originalImage = img;
                 if (globalApp.EXIF) {
                     globalApp.EXIF.getData(img, () => {
-                        // 最初に渡した img をそのまま使う
-                        // アロー関数 () => を使うことで、this の混乱も防げます
                         state.exifData = globalApp.EXIF.getAllTags(img);
-                        state.originalImage = img;
                         drawImageWithExif();
                     });
+                } else {
+                    state.exifData = {};
+                    drawImageWithExif();
                 }
             };
             img.src = String(event.target?.result || "");
@@ -142,37 +144,23 @@ document.addEventListener("change", (e) => {
         reader.readAsDataURL(target.files[0]);
     }
 
-    // 設定変更
-    if (["frameColor", "framePosition", "textAlign"].includes(target.name)) {
-        drawImageWithExif();
+    if (["frameColor", "framePosition", "textAlign", "formatSelect"].includes(target.name)) {
+        if (state.originalImage) drawImageWithExif();
     }
 });
 
 document.addEventListener("click", (e) => {
     const target = /** @type {HTMLElement} */ (e.target);
+    const downloadBtn = target.closest('#downloadBtn');
 
-    // プレビュークリックでモーダル
-    if (target.id === "preview") {
-        const modal = document.getElementById("modal");
-        const modalImg = /** @type {HTMLImageElement | null} */ (document.getElementById("modalImg"));
-        if (modal && modalImg) {
-            modal.style.display = "flex";
-            modalImg.src = (/** @type {HTMLImageElement} */(target)).src;
-        }
-    }
-
-    // モーダル閉じる
-    if (target.id === "modal") {
-        target.style.display = "none";
-    }
-
-    // ダウンロード
-    if (target.id === "downloadBtn") {
+    if (downloadBtn) {
         const canvas = /** @type {HTMLCanvasElement | null} */ (document.getElementById("canvas"));
         if (canvas) {
+            const format = (/** @type {HTMLInputElement} */(document.querySelector('input[name="formatSelect"]:checked')))?.value || "image/jpeg";
+            const ext = format === "image/png" ? "png" : format === "image/webp" ? "webp" : "jpg";
             const a = document.createElement("a");
-            a.href = canvas.toDataURL("image/jpeg", 0.95);
-            a.download = "exif-framed-photo.jpg";
+            a.href = canvas.toDataURL(format, 0.95);
+            a.download = `photo_framed.${ext}`;
             a.click();
         }
     }
