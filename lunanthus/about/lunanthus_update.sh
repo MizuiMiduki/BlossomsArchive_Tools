@@ -7,7 +7,7 @@ PATHS=(
   "lunanthus/spa/"
   "lunanthus/pwa/sw.js"
   "lunanthus/router.js"
- "lunanthus/about/lunanthus_about.json"
+  "lunanthus/about/lunanthus_about.json"
 )
 
 if ! git remote get-url lunanthus_origin >/dev/null 2>&1; then

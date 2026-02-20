@@ -3,10 +3,22 @@ $(async function () {
     const $app = $("#app");
 
     const renderPage = async () => {
+        window.scrollTo(0, 0);
+
         const path = location.pathname;
         const route = routes.default.find(r => r.path === path);
 
         if (route) {
+
+            const manifest = await fetch('/lunanthus/pwa/manifest.json');
+            const manifest_data = await manifest.json();
+
+            if (manifest_data.name && route.title) {
+                document.title = `${route.title} - ${manifest_data.name}`;
+            } else if (manifest_data.name) {
+                document.title = manifest_data.name;
+            }
+
             const pathName = route.path.slice(1);
 
             /**
