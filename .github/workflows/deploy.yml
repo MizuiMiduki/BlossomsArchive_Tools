@@ -20,8 +20,13 @@ jobs:
           ANALYTICS_CODE="${{ secrets.ANALYTICS_CODE }}"
 
           for file in $(find ./ -name "*.html"); do
-            sed -i "s|<!-- ADSENSE_CODE -->|$ADSENSE_CODE|" "$file"
-            sed -i "s|<!-- ANALYTICS_CODE -->|$ANALYTICS_CODE|" "$file"
+            awk -v ad_code="$ADSENSE_CODE" -v analytics_code="$ANALYTICS_CODE" '
+              {
+                gsub("<!-- ADSENSE_CODE -->", ad_code);
+                gsub("<!-- ANALYTICS_CODE -->", analytics_code);
+                print;
+              }
+            ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
           done
 
       - name: Clear FTP Directory
