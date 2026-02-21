@@ -98,8 +98,8 @@ $(async function () {
 
             if (routes.default.some(r => r.path === pathname)) {
                 event.preventDefault();
-                history.pushState(null, "", pathname);
                 renderPage();
+                history.pushState(null, "", pathname);
             }
         }
     });
