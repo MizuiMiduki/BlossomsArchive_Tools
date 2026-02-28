@@ -8,18 +8,17 @@ $(async function () {
         const path = location.pathname;
         const route = routes.default.find(r => r.path === path);
 
+        const manifest = await fetch('/lunanthus/pwa/manifest.json');
+        const manifest_data = await manifest.json();
+
         if (route) {
-
-            const manifest = await fetch('/lunanthus/pwa/manifest.json');
-            const manifest_data = await manifest.json();
-
             if (manifest_data.name && route.title) {
                 document.title = `${route.title} - ${manifest_data.name}`;
             } else if (manifest_data.name) {
                 document.title = manifest_data.name;
             }
 
-            const pathName = route.path.slice(1);
+            history.replaceState(history.state, document.title, location.href);
 
             /**
              * Last-Modified を取得する関数
@@ -81,6 +80,8 @@ $(async function () {
             }
 
         } else {
+            document.title = `404 Not Found - ${manifest_data.name}`;
+            history.replaceState(history.state, document.title, location.href);
             $app.html("<h1>404<br>Not Found</h1>");
         }
     };
@@ -98,8 +99,8 @@ $(async function () {
 
             if (routes.default.some(r => r.path === pathname)) {
                 event.preventDefault();
-                renderPage();
                 history.pushState(null, "", pathname);
+                renderPage();
             }
         }
     });
