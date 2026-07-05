@@ -109,9 +109,12 @@ export default function Layout(props: LayoutProps) {
                             </a>
                         )}
                     </For>
-                    <footer class="text-center p-8 opacity-60">
-                        <a href="/privacy" class="text-sm hover:underline">
+                    <footer class="text-center p-8 opacity-60 space-y-1">
+                        <a href="/privacy" class="block text-sm hover:underline">
                             プライバシーポリシー
+                        </a>
+                        <a href="/credits" class="block text-sm hover:underline">
+                            使用ライブラリ
                         </a>
                         <p class="text-xs mt-2">© BlossomsArchive</p>
                     </footer>
