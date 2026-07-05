@@ -1,0 +1,13 @@
+# SPAのルーティング対応：存在しないファイル・ディレクトリへのアクセスをindex.htmlにリダイレクト
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # 実際に存在するファイルへのリクエストはそのまま通す
+    RewriteCond %{REQUEST_FILENAME} !-f
+    # 実際に存在するディレクトリへのリクエストはそのまま通す
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # それ以外はすべてindex.htmlに渡す
+    RewriteRule ^ index.html [QSA,L]
+</IfModule>
