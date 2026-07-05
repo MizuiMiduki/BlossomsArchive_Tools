@@ -16,8 +16,7 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: "20"
-                  cache: "npm"
+                  node-version: "24"
 
             - name: Install dependencies and Build
               run: |
@@ -31,10 +30,9 @@ jobs:
               run: |
                   # distディレクトリ内の全HTMLファイルを対象に置換を実行
                   find ./dist -name "*.html" -type f | while read file; do
-                    # プレースホルダーを実際のコードに置換
-                    # sedの区切り文字に | を使用することでタグ内の / に影響を受けないようにしています
-                    sed -i "s||$ADSENSE_CODE|g" "$file"
-                    sed -i "s||$ANALYTICS_CODE|g" "$file"
+                  # プレースホルダーを実際のコードに置換
+                  sed -i "s||$ADSENSE_CODE|g" "$file"
+                  sed -i "s||$ANALYTICS_CODE|g" "$file"
                   done
 
             - name: Deploy via FTP
