@@ -1,5 +1,5 @@
 // src/components/Layout.tsx
-import { JSX, For, createEffect, createSignal } from "solid-js";
+import { JSX, For, createEffect, createSignal, onMount } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { routes } from "../routes";
 import ThemeToggle from "./ThemeToggle";
@@ -12,6 +12,36 @@ export default function Layout(props: LayoutProps) {
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = createSignal(false);
 
+    onMount(() => {
+        const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+        const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
+
+        if (gaId) {
+            const script1 = document.createElement("script");
+            script1.async = true;
+            script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+            document.head.appendChild(script1);
+
+            const script2 = document.createElement("script");
+            script2.innerHTML = `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                window.gtag = gtag;
+                gtag('js', new Date());
+                gtag('config', '${gaId}', { send_page_view: false });
+            `;
+            document.head.appendChild(script2);
+        }
+
+        if (adsenseId) {
+            const script = document.createElement("script");
+            script.async = true;
+            script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
+            script.crossOrigin = "anonymous";
+            document.head.appendChild(script);
+        }
+    });
+
     // ★ ページ遷移したら自動でメニューを閉じます
     createEffect(() => {
         location.pathname; // 追跡
@@ -23,14 +53,23 @@ export default function Layout(props: LayoutProps) {
         return route ? route.title : "ツールダッシュボード";
     };
 
-    // タイトル管理
+    // タイトル管理 & GA4 トラッキング
     createEffect(() => {
         const baseTitle = "BlossomsArchive Tools";
         const currentPageTitle = getHeaderTitle();
-        document.title =
+        const fullTitle =
             location.pathname === "/"
                 ? baseTitle
                 : `${currentPageTitle} | ${baseTitle}`;
+        document.title = fullTitle;
+
+        const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+        if (gaId && (window as any).gtag) {
+            (window as any).gtag("config", gaId, {
+                page_path: location.pathname,
+                page_title: fullTitle,
+            });
+        }
     });
 
     return (
