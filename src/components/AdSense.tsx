@@ -1,4 +1,5 @@
-import { createEffect, onCleanup } from "solid-js";
+// src/components/AdSense.tsx
+import { createEffect, createMemo, onCleanup } from "solid-js";
 import { useLocation } from "@solidjs/router";
 
 interface AdSenseProps {
@@ -9,21 +10,27 @@ interface AdSenseProps {
 
 export default function AdSense(props: AdSenseProps) {
     const clientId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
+
+    // クライアントIDがない場合は何も表示しない（エラー防止）
     if (!clientId) return null;
 
     const location = useLocation();
+
+    // 現在のルートとスロットを監視して、変化があったら効果を再実行する
+    const key = createMemo(() => location.pathname + props.slot);
+
     let container!: HTMLDivElement;
 
     createEffect(() => {
-        // ルート変化を追跡（マウント時・ページ遷移時に実行）
-        location.pathname;
+        // key() を参照することで、ルート変化やslot変更を検知する
+        key();
 
         if (!container) return;
 
-        // 前の ins 要素を完全に除去
+        // 1. 中身を一度完全に空にする
         container.innerHTML = "";
 
-        // 新しい ins 要素を生成
+        // 2. <ins> 要素を新しく生成
         const ins = document.createElement("ins");
         ins.className = "adsbygoogle";
         ins.style.display = "block";
@@ -33,17 +40,13 @@ export default function AdSense(props: AdSenseProps) {
         ins.setAttribute("data-full-width-responsive", "true");
         container.appendChild(ins);
 
-        // rAF で ins が DOM に確定してから push する
-        const raf = requestAnimationFrame(() => {
-            try {
-                ((window as any).adsbygoogle =
-                    (window as any).adsbygoogle || []).push({});
-            } catch (e) {
-                console.error("AdSense error:", e);
-            }
-        });
-
-        onCleanup(() => cancelAnimationFrame(raf));
+        // 3. AdSenseの初期化処理
+        try {
+            (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+            (window as any).adsbygoogle.push({});
+        } catch (e) {
+            console.error("AdSense error:", e);
+        }
     });
 
     return (
