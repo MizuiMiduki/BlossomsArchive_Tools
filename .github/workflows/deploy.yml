@@ -1,60 +1,48 @@
-name: Deploy to FTP
+name: Build and Deploy to FTP
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
 
-      - name: Insert AdSense + Analytics code
-        run: |
-          ADSENSE_CODE="${{ secrets.ADSENSE_CODE }}"
-          ANALYTICS_CODE="${{ secrets.ANALYTICS_CODE }}"
+            - name: Install dependencies and Build
+              run: |
+                  npm ci
+                  npm run build
 
-          for file in $(find ./ -name "*.html"); do
-            awk -v ad_code="$ADSENSE_CODE" -v analytics_code="$ANALYTICS_CODE" '
-              {
-                gsub("<!-- ADSENSE_CODE -->", ad_code);
-                gsub("<!-- ANALYTICS_CODE -->", analytics_code);
-                print;
-              }
-            ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
-          done
+            - name: Inject AdSense and Analytics code
+              env:
+                  ADSENSE_CODE: ${{ secrets.ADSENSE_CODE }}
+                  ANALYTICS_CODE: ${{ secrets.ANALYTICS_CODE }}
+              run: |
+                  # distディレクトリ内の全HTMLファイルを対象に置換を実行
+                  find ./dist -name "*.html" -type f | while read file; do
+                    # プレースホルダーを実際のコードに置換
+                    # sedの区切り文字に | を使用することでタグ内の / に影響を受けないようにしています
+                    sed -i "s||$ADSENSE_CODE|g" "$file"
+                    sed -i "s||$ANALYTICS_CODE|g" "$file"
+                  done
 
-      - name: Clear FTP Directory
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: "${{ secrets.FTP_TARGET_DIR }}"
-          dangerous-clean-slate: true
-
-      - name: Deploy files via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: "./"
-          server-dir: "${{ secrets.FTP_TARGET_DIR }}"
-          exclude: |
-            **/.git*
-            **/.github
-            .idea
-            node_modules
-            jsconfig.json
-            package.json
-            package-lock.json
-            tsconfig.json
-            *.md
-            LICENSE
-            .gitignore
+            - name: Deploy via FTP
+              uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+              with:
+                  server: ${{ secrets.FTP_SERVER }}
+                  username: ${{ secrets.FTP_USERNAME }}
+                  password: ${{ secrets.FTP_PASSWORD }}
+                  local-dir: "./dist/"
+                  server-dir: "${{ secrets.FTP_TARGET_DIR }}"
+                  dangerous-clean-slate: true
