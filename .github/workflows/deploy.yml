@@ -33,12 +33,21 @@ jobs:
                   ADSENSE_CODE: ${{ secrets.ADSENSE_CODE }}
                   ANALYTICS_CODE: ${{ secrets.ANALYTICS_CODE }}
               run: |
-                  # distディレクトリ内の全HTMLファイルを対象に置換を実行
-                  find ./dist -name "*.html" -type f | while read file; do
-                  # プレースホルダーを実際のコードに置換
-                  sed -i "s||$ADSENSE_CODE|g" "$file"
-                  sed -i "s||$ANALYTICS_CODE|g" "$file"
-                  done
+                  python3 -c "
+                  import os, glob
+                  adsense = os.environ['ADSENSE_CODE']
+                  analytics = os.environ['ANALYTICS_CODE']
+                  # distディレクトリ内の全HTMLファイルを検索
+                  for file in glob.glob('./dist/**/*.html', recursive=True):
+                      with open(file, 'r', encoding='utf-8') as f:
+                          content = f.read()
+                      # 文字列の置換を実行
+                      content = content.replace('', adsense)
+                      content = content.replace('', analytics)
+                      # ファイルへ書き戻す
+                      with open(file, 'w', encoding='utf-8') as f:
+                          f.write(content)
+                  "
 
             - name: Deploy via FTP
               uses: SamKirkland/FTP-Deploy-Action@v4.3.5
