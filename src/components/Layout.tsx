@@ -90,7 +90,7 @@ export default function Layout(props: LayoutProps) {
                         alt="Blossoms Logo"
                         class="w-8 h-8 rounded-full object-cover border border-base-300"
                     />
-                    <span class="font-bold">Blossoms Tools</span>
+                    <span class="font-bold">BA Tools</span>
                 </div>
 
                 <nav class="space-y-2">
