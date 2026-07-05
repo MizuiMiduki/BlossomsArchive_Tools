@@ -1,14 +1,20 @@
 {
   "compilerOptions": {
+    // General
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "target": "ESNext",
+
+    // Modules
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
     "module": "ESNext",
-    "allowJs": true,
-    "checkJs": true,
+    "moduleResolution": "bundler",
     "noEmit": true,
+
+    // Type Checking & Safety
     "strict": true,
-    "lib": ["DOM", "ESNext"],
-    "skipLibCheck": true
-  },
-  "include": ["**/*.js"],
-  "exclude": ["node_modules"]
+    "types": ["vite/client"]
+  }
 }

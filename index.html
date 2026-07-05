@@ -1,101 +1,22 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlossomsArchive Tools</title>
-    <link rel="manifest" href="/lunanthus/pwa/manifest.json">
-    <script src="https://cdn.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js"></script>
-    <script src="/lunanthus/router.js"></script>
-    <script src="/lunanthus/pwa/sw.js"></script>
-    <link rel="icon"
-        href="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05-32x32.png"
-        sizes="32x32">
-    <link rel="stylesheet" href="/assets/style/primary.css">
-    <meta name="theme-color" content="#fdb4eb">
-    <!-- beercss -->
-    <link href="https://cdn.jsdelivr.net/npm/beercss@4.0.15/dist/cdn/beer.min.css" rel="stylesheet">
-    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@4.0.15/dist/cdn/beer.min.js"></script>
-    <script type="module"
-        src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon"
+    href="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05-32x32.png" />
+  <title>BlossomsArchive Tools</title>
+  <!-- ADSENSE_CODE -->
+  <!-- ANALYTICS_CODE -->
 </head>
-<!-- ADSENSE_CODE -->
-<!-- ANALYTICS_CODE -->
 
 <body>
-    <nav class="left max l">
-        <header>
-            <img alt="logo"
-                src="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05.png"
-                class="circle extra">
-        </header>
-        <a href="/">
-            <i>home</i>
-            <span>ホーム</span>
-        </a>
-        <!-- <a>
-            <i>search</i>
-            <span>Search</span>
-        </a> -->
-        <!-- <a>
-            <i>share</i>
-            <span>共有</span>
-        </a> -->
-        <hr class="small">
-        <a href="/about">
-            <i>info</i>
-            <span>情報</span>
-        </a>
-    </nav>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
 
-    <nav class="left m">
-        <header>
-            <img alt="logo"
-                src="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05.png"
-                class="circle extra">
-        </header>
-        <a href="/">
-            <i>home</i>
-            <span>ホーム</span>
-        </a>
-        <!-- <a>
-            <i>search</i>
-            <span>Search</span>
-        </a> -->
-        <!-- <a>
-            <i>share</i>
-            <span>共有</span>
-        </a> -->
-        <hr class="small">
-        <a href="/about">
-            <i>info</i>
-            <span>情報</span>
-        </a>
-    </nav>
-
-    <nav class="bottom s">
-        <a href="/">
-            <i>home</i>
-            <span>ホーム</span>
-        </a>
-        <!-- <a>
-            <i>search</i>
-        </a> -->
-        <!-- <a>
-            <i>share</i>
-        </a> -->
-        <a href="/about">
-            <i>info</i>
-            <span>情報</span>
-        </a>
-    </nav>
-
-    <main class="responsive">
-        <div id="app">
-            loading...
-        </div>
-    </main>
+  <script src="/src/index.tsx" type="module"></script>
 </body>
 
 </html>

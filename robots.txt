@@ -1,5 +1,0 @@
-User-agent: *
-Disallow: /parts/
-Disallow: /template/
-
-Sitemap:http://tools.blossomsarchive.com/Sitemap.xml
