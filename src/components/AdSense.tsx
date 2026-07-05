@@ -1,4 +1,4 @@
-import { onMount } from "solid-js";
+import { onMount, createUniqueId } from "solid-js";
 
 interface AdSenseProps {
     slot: string;
@@ -9,12 +9,25 @@ interface AdSenseProps {
 }
 
 export default function AdSense(props: AdSenseProps) {
+    const id = createUniqueId();
+
     onMount(() => {
-        try {
-            ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-        } catch (e) {
-            console.error("AdSense tracking error:", e);
-        }
+        // DOMに要素が完全にマウントされた後、わずかに遅延させて初期化します
+        const timer = setTimeout(() => {
+            try {
+                const insEl = document.getElementById(id);
+                if (insEl) {
+                    // SPAのページ遷移で要素が再利用・再描画された場合に備えて、AdSenseの処理ステータスをリセット
+                    insEl.removeAttribute("data-adsbygoogle-status");
+                    insEl.innerHTML = "";
+                }
+                ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+            } catch (e) {
+                console.error("AdSense tracking error:", e);
+            }
+        }, 150);
+
+        return () => clearTimeout(timer);
     });
 
     const clientId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
@@ -26,6 +39,7 @@ export default function AdSense(props: AdSenseProps) {
     return (
         <div class={`my-6 flex justify-center overflow-hidden w-full ${props.class || ""}`}>
             <ins
+                id={id}
                 class="adsbygoogle"
                 style={props.style || { display: "block" }}
                 data-ad-client={clientId}
