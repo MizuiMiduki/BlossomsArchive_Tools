@@ -23,13 +23,29 @@ export default function PrivacyPolicy() {
             </section>
 
             <section class="space-y-4">
-                <h2 class="text-xl font-bold">3. 外部サービスの利用と例外</h2>
+                <h2 class="text-xl font-bold">3. 広告配信とアクセス解析ツールについて</h2>
                 <p>
-                    当アプリでは、利便性の向上やアクセス解析等を目的として、Google
-                    Analytics等の外部サービスやAPIを利用する場合があります。
+                    当アプリでは、第三者配信の広告サービス「Google AdSense」およびアクセス解析ツール「Google アナリティクス」を利用しています。
+                </p>
+                <p class="font-bold">【Google AdSenseについて】</p>
+                <p class="pl-4">
+                    Googleなどの第三者配信事業者は、Cookie（クッキー）を使用して、ユーザーが当アプリや他のウェブサイトに過去にアクセスした際の情報に基づいて適切な広告を配信します。
+                </p>
+                <p class="font-bold">【Google アナリティクスについて】</p>
+                <p class="pl-4">
+                    Google アナリティクスはデータの収集のためにCookieを使用しています。このデータは匿名で収集されており、個人を特定するものではありません。
                 </p>
                 <p>
-                    これらのサービスにおいてデータが収集・利用される場合、当該データの管理および取り扱いは、各サービス提供者が定めるプライバシーポリシーおよび利用規約に基づきます。当アプリは、外部サービス側の仕様変更やデータ収集により発生した結果について一切の責任を負いません。
+                    これらのサービスにおいてデータが収集・利用される方法の詳細については、Googleの
+                    <a
+                        href="https://policies.google.com/technologies/partner-sites"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-primary hover:underline"
+                    >
+                        ポリシーと規約
+                    </a>
+                    をご覧ください。
                 </p>
             </section>
 
