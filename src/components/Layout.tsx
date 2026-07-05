@@ -1,5 +1,5 @@
 // src/components/Layout.tsx
-import { JSX, For, createEffect, createSignal, onMount } from "solid-js";
+import { JSX, For, createEffect, createSignal } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { createScriptLoader } from "@solid-primitives/script-loader";
 import { routes } from "../routes";
@@ -33,16 +33,13 @@ export default function Layout(props: LayoutProps) {
           })
         : null;
 
-    // AdSense: script タグを head に追加
-    onMount(() => {
-        if (adsenseId) {
-            const script = document.createElement("script");
-            script.async = true;
-            script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
-            script.crossOrigin = "anonymous";
-            document.head.appendChild(script);
-        }
-    });
+    // AdSense: createScriptLoader で非同期ロード
+    const adsenseTag = adsenseId
+        ? createScriptLoader({
+              src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`,
+              crossOrigin: "anonymous",
+          })
+        : null;
 
     // ★ ページ遷移したら自動でメニューを閉じます
     createEffect(() => {
@@ -75,8 +72,9 @@ export default function Layout(props: LayoutProps) {
 
     return (
         <div class="min-h-screen bg-base-200 flex">
-            {/* GA4 スクリプトを JSX に挿入（createScriptLoader の要件） */}
+            {/* GA4・AdSense スクリプトを JSX に挿入（createScriptLoader の要件） */}
             {gaTag}
+            {adsenseTag}
             {/* ★ モバイル用オーバーレイ（メニューが開いている時だけ背景を暗くします） */}
             <div
                 class={`fixed inset-0 bg-black/50 z-20 lg:hidden ${isMenuOpen() ? "block" : "hidden"}`}
