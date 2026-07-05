@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@solid-primitives/script-loader':
+        specifier: ^2.3.2
+        version: 2.3.2(solid-js@1.9.9)
       '@solidjs/router':
         specifier: ^0.16.1
         version: 0.16.1(solid-js@1.9.9)
@@ -495,6 +498,11 @@ packages:
 
   '@solid-primitives/scheduled@1.5.2':
     resolution: {integrity: sha512-/j2igE0xyNaHhj6kMfcUQn5rAVSTLbAX+CDEBm25hSNBmNiHLu2lM7Usj2kJJ5j36D67bE8wR1hBNA8hjtvsQA==}
+    peerDependencies:
+      solid-js: ^1.6.12
+
+  '@solid-primitives/script-loader@2.3.2':
+    resolution: {integrity: sha512-B2bgXuZVPMRmWDQ+p7m39aLSiuZF/EnR5VZoZpBEnI/2vdaLAMIXrZl35+eKMESE/JtHwUWIfqoHJC8Q+8X17g==}
     peerDependencies:
       solid-js: ^1.6.12
 
@@ -1691,6 +1699,10 @@ snapshots:
       solid-js: 1.9.9
 
   '@solid-primitives/scheduled@1.5.2(solid-js@1.9.9)':
+    dependencies:
+      solid-js: 1.9.9
+
+  '@solid-primitives/script-loader@2.3.2(solid-js@1.9.9)':
     dependencies:
       solid-js: 1.9.9
 
