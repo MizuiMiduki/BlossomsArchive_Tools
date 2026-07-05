@@ -18,10 +18,15 @@ jobs:
               with:
                   node-version: "24"
 
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9 # お好みのバージョンを指定してください
+
             - name: Install dependencies and Build
               run: |
-                  npm ci
-                  npm run build
+                  pnpm install --frozen-lockfile
+                  pnpm run build
 
             - name: Inject AdSense and Analytics code
               env:
