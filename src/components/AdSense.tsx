@@ -1,39 +1,10 @@
-import { createEffect, createSignal, Show, onMount, onCleanup } from "solid-js";
+import { createEffect, onCleanup } from "solid-js";
 import { useLocation } from "@solidjs/router";
 
 interface AdSenseProps {
     slot: string;
     format?: string;
-    responsive?: string;
     class?: string;
-}
-
-// ルート変更のたびに完全リマウントされる内部コンポーネント
-function AdSlot(props: AdSenseProps & { clientId: string }) {
-    onMount(() => {
-        const timer = setTimeout(() => {
-            try {
-                ((window as any).adsbygoogle =
-                    (window as any).adsbygoogle || []).push({});
-            } catch (e) {
-                console.error("AdSense error:", e);
-            }
-        }, 100);
-        onCleanup(() => clearTimeout(timer));
-    });
-
-    return (
-        <div class={`my-6 flex justify-center overflow-hidden w-full ${props.class ?? ""}`}>
-            <ins
-                class="adsbygoogle"
-                style={{ display: "block" }}
-                data-ad-client={props.clientId}
-                data-ad-slot={props.slot}
-                data-ad-format={props.format ?? "auto"}
-                data-full-width-responsive={props.responsive ?? "true"}
-            />
-        </div>
-    );
 }
 
 export default function AdSense(props: AdSenseProps) {
@@ -41,17 +12,44 @@ export default function AdSense(props: AdSenseProps) {
     if (!clientId) return null;
 
     const location = useLocation();
-    // ルートが変わるたびに新しい文字列が入るシグナル
-    const [pathname, setPathname] = createSignal(location.pathname);
+    let container!: HTMLDivElement;
 
     createEffect(() => {
-        setPathname(location.pathname);
+        // ルート変化を追跡（マウント時・ページ遷移時に実行）
+        location.pathname;
+
+        if (!container) return;
+
+        // 前の ins 要素を完全に除去
+        container.innerHTML = "";
+
+        // 新しい ins 要素を生成
+        const ins = document.createElement("ins");
+        ins.className = "adsbygoogle";
+        ins.style.display = "block";
+        ins.setAttribute("data-ad-client", clientId);
+        ins.setAttribute("data-ad-slot", props.slot);
+        ins.setAttribute("data-ad-format", props.format ?? "auto");
+        ins.setAttribute("data-full-width-responsive", "true");
+        container.appendChild(ins);
+
+        // rAF で ins が DOM に確定してから push する
+        const raf = requestAnimationFrame(() => {
+            try {
+                ((window as any).adsbygoogle =
+                    (window as any).adsbygoogle || []).push({});
+            } catch (e) {
+                console.error("AdSense error:", e);
+            }
+        });
+
+        onCleanup(() => cancelAnimationFrame(raf));
     });
 
-    // keyed=true: pathname の値が変わると AdSlot を完全に破棄→再生成する
     return (
-        <Show when={pathname()} keyed>
-            <AdSlot {...props} clientId={clientId} />
-        </Show>
+        <div
+            ref={container!}
+            class={`my-6 flex justify-center overflow-hidden w-full ${props.class ?? ""}`}
+        />
     );
 }
