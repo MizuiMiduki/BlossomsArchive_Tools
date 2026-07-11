@@ -257,7 +257,6 @@ export default function ExifFrame() {
         const target = e.target as HTMLInputElement;
         if (!target.files || target.files.length === 0) return;
 
-        // 参照のズレを防ぐため、新しい画像を読み込む時に一度Showの条件を外す
         setHasImage(false);
 
         const file = target.files[0];
@@ -290,7 +289,6 @@ export default function ExifFrame() {
                 sourceImage = img;
                 setHasImage(true);
                 setImageRotation(0);
-                // DOMが組み立てられてrefが新要素を掴むのを確実に待ってから描画
                 setTimeout(() => drawFrame(), 0);
             };
             img.src = event.target?.result as string;
@@ -378,12 +376,18 @@ export default function ExifFrame() {
                                     <input
                                         type="checkbox"
                                         checked={isChekiMode()}
-                                        onChange={(e) =>
-                                            handleToggleChange(
-                                                setIsChekiMode,
-                                                e.currentTarget.checked,
-                                            )
-                                        }
+                                        onChange={(e) => {
+                                            const checked = e.currentTarget.checked;
+                                            setIsChekiMode(checked);
+                                            // チェキモードがONになったらデフォルトを白枠にする
+                                            if (checked) {
+                                                setFrameColor("white");
+                                            } else {
+                                                // OFFになったら元の黒枠に戻す（お好みで調整してね）
+                                                setFrameColor("black");
+                                            }
+                                            drawFrame();
+                                        }}
                                         class="toggle toggle-primary toggle-sm"
                                     />
                                 </label>
