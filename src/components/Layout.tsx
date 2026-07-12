@@ -1,4 +1,3 @@
-// src/components/Layout.tsx
 import { JSX, For, createEffect, createSignal } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { createScriptLoader } from "@solid-primitives/script-loader";
@@ -12,10 +11,32 @@ interface LayoutProps {
 export default function Layout(props: LayoutProps) {
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = createSignal(false);
-    const [isPcMenuOpen, setIsPcMenuOpen] = createSignal(true);
+
+    const initialPcMenuState = localStorage.getItem("isPcMenuOpen") !== "false";
+    const [isPcMenuOpen, setIsPcMenuOpen] = createSignal(initialPcMenuState);
+    const [isPcMenuHovered, setIsPcMenuHovered] = createSignal(false);
 
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
+
+    let hoverTimeout: number | undefined;
+
+    createEffect(() => {
+        localStorage.setItem("isPcMenuOpen", String(isPcMenuOpen()));
+    });
+
+    const handleMouseEnter = () => {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        if (!isPcMenuOpen()) {
+            setIsPcMenuHovered(true);
+        }
+    };
+
+    const handleMouseLeave = () => {
+        hoverTimeout = window.setTimeout(() => {
+            setIsPcMenuHovered(false);
+        }, 200);
+    };
 
     const gaTag = gaId
         ? createScriptLoader({
@@ -66,6 +87,16 @@ export default function Layout(props: LayoutProps) {
         }
     });
 
+    const getPcClasses = () => {
+        if (isPcMenuOpen()) {
+            return "lg:static lg:translate-x-0 lg:w-64 lg:p-6 lg:opacity-100 lg:border-r lg:border-base-300 pointer-events-auto";
+        }
+        if (isPcMenuHovered()) {
+            return "lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:translate-x-0 lg:w-64 lg:p-6 lg:opacity-100 lg:bg-base-100 lg:border-r lg:border-base-300 lg:shadow-xl pointer-events-auto";
+        }
+        return "lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:-translate-x-full lg:w-64 lg:p-6 lg:opacity-0 lg:border-r-0 overflow-hidden pointer-events-none";
+    };
+
     return (
         <div class="min-h-screen bg-base-200 flex overflow-x-hidden">
             {gaTag}
@@ -76,20 +107,16 @@ export default function Layout(props: LayoutProps) {
                 onClick={() => setIsMenuOpen(false)}
             />
 
-            {/* サイドバー */}
             <aside
-                class={`fixed inset-y-0 left-0 z-30 bg-base-100 border-r border-base-300 p-6 flex flex-col transition-all duration-300 lg:static lg:translate-x-0 ${
+                class={`fixed inset-y-0 left-0 z-30 bg-base-100 p-6 flex flex-col transition-all duration-300 border-r border-base-300 ${
                     isMenuOpen()
                         ? "translate-x-0 w-64"
                         : "-translate-x-full w-64"
-                } ${
-                    isPcMenuOpen()
-                        ? "lg:w-64 lg:p-6 lg:opacity-100"
-                        : "lg:w-0 lg:p-0 lg:opacity-0 lg:border-r-0 overflow-hidden"
-                }`}
+                } ${getPcClasses()}`}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
             >
                 <div class="w-52 flex flex-col h-full">
-                    {/* 🛠️ タイトルエリア：ロゴとテキストの横にコンパクトな折り畳みボタンを埋め込んだにゃん！ */}
                     <div class="flex items-center justify-between mb-8 px-2 gap-2">
                         <div class="flex items-center gap-3">
                             <img
@@ -102,11 +129,13 @@ export default function Layout(props: LayoutProps) {
                             </span>
                         </div>
 
-                        {/* 🛠️ 🔥 PC用のコンパクトな折り畳み矢印ボタンだにゃん */}
                         <button
                             type="button"
                             class="hidden lg:flex btn btn-ghost btn-xs btn-square text-slate-400 hover:text-slate-700"
-                            onClick={() => setIsPcMenuOpen(false)}
+                            onClick={() => {
+                                setIsPcMenuOpen(false);
+                                setIsPcMenuHovered(false);
+                            }}
                             title="メニューを折りたたむ"
                         >
                             <svg
@@ -162,11 +191,9 @@ export default function Layout(props: LayoutProps) {
                 </div>
             </aside>
 
-            {/* メインエリア */}
             <div class="flex-1 flex flex-col min-w-0">
                 <header class="h-16 bg-white/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-10 flex items-center px-4 lg:px-8 shadow-sm justify-between gap-4">
                     <div class="flex items-center gap-4">
-                        {/* 📱 スマホ用、または 💻 PCでメニューが「閉じている時だけ」出現するハンバーガーボタンに調整したにゃん */}
                         <button
                             class={`btn btn-ghost btn-square ${isPcMenuOpen() ? "lg:hidden" : "flex"}`}
                             onClick={() => {
@@ -176,6 +203,8 @@ export default function Layout(props: LayoutProps) {
                                     setIsMenuOpen(!isMenuOpen());
                                 }
                             }}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
                             title="メニューを開く"
                         >
                             <svg
