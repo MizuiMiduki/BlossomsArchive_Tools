@@ -91,13 +91,13 @@ export default function ExifFrame() {
         {
             id: "none",
             name: "標準（装飾なし）",
-            border: "border-slate-300",
+            border: "border-base-300",
             style: "background: #fff;",
         },
         {
             id: "shadow",
             name: "立体浮き出し影",
-            border: "border-slate-300 shadow-md",
+            border: "border-base-300 shadow-md",
             style: "background: #eee;",
         },
         {
@@ -130,22 +130,22 @@ export default function ExifFrame() {
         {
             id: "none",
             name: "標準テキスト（プレートなし）",
-            bg: "bg-slate-100 text-slate-700 border-slate-300",
+            bg: "bg-base-200 text-base-content border-base-300",
             innerHtml: "Text Only",
         },
         {
             id: "box",
             name: "モダン座布団ボックス",
-            bg: "bg-slate-200/60 text-slate-800 border-slate-300 rounded-md",
+            bg: "bg-base-300/60 text-base-content border-base-300 rounded-md",
             innerHtml:
-                "<span class='bg-black/10 px-2 py-0.5 rounded text-[11px]'>Label Box</span>",
+                "<span class='bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded text-[11px]'>Label Box</span>",
         },
         {
             id: "line",
             name: "クラシック上下境界線",
-            bg: "bg-slate-50 text-slate-800 border-slate-300",
+            bg: "bg-base-100 text-base-content border-base-300",
             innerHtml:
-                "<span class='border-y border-slate-800 px-1 py-0.5 text-[11px]'>Line Text</span>",
+                "<span class='border-y border-current px-1 py-0.5 text-[11px]'>Line Text</span>",
         },
         {
             id: "metal-gold",
@@ -157,7 +157,7 @@ export default function ExifFrame() {
         {
             id: "metal-silver",
             name: "アルミブラッシュドシルバー",
-            bg: "bg-gradient-to-b from-white via-slate-300 to-slate-400 text-slate-955 font-bold border-slate-500 shadow-[2px_2px_0px_#151515]",
+            bg: "bg-gradient-to-b from-white via-slate-300 to-slate-400 text-slate-900 font-bold border-slate-500 shadow-[2px_2px_0px_#151515]",
             innerHtml:
                 "<span class='text-[10px] relative px-2 py-0.5 border border-white/40 block text-center'>凹 SILVER</span>",
         },
@@ -879,10 +879,10 @@ export default function ExifFrame() {
                 )}
             </For>
 
-            <div class="card bg-base-100 shadow-xl p-6 w-full border border-base-200">
+            <div class="card bg-base-100 shadow-xl p-6 w-full border border-base-300">
                 <div class="flex flex-col lg:flex-row gap-8 w-full items-stretch">
                     <div class="w-full lg:w-[360px] flex-shrink-0 flex flex-col gap-4 max-h-[85vh] overflow-y-auto pr-1">
-                        <div class="flex flex-col gap-2 bg-slate-100 dark:bg-slate-900/40 p-3 rounded-xl border border-base-200 shadow-xs">
+                        <div class="flex flex-col gap-2 bg-base-200 p-3 rounded-xl border border-base-300 shadow-xs">
                             <label class="btn btn-primary text-white h-12 px-6 text-sm rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 w-full">
                                 <span>📁 写真を選択する</span>
                                 <input
@@ -901,7 +901,7 @@ export default function ExifFrame() {
                                 </button>
                                 <button
                                     onClick={rotateImage}
-                                    class="btn btn-outline btn-primary btn-sm h-10 px-4 rounded-xl flex items-center justify-center gap-2 w-full border-slate-300 text-xs"
+                                    class="btn btn-outline btn-primary btn-sm h-10 px-4 rounded-xl flex items-center justify-center gap-2 w-full border-base-300 text-xs"
                                 >
                                     🔄 画像を右に90度回転
                                 </button>
@@ -909,12 +909,12 @@ export default function ExifFrame() {
                         </div>
 
                         <Show when={!isAdvancedMode()}>
-                            <div class="flex flex-col gap-2 bg-slate-50 dark:bg-slate-900/20 p-3 rounded-xl border border-base-200/60 text-xs">
+                            <div class="flex flex-col gap-2 bg-base-200/50 p-3 rounded-xl border border-base-300/60 text-xs">
                                 <div class="flex items-center justify-between">
-                                    <span class="font-bold text-slate-700">
+                                    <span class="font-bold text-base-content/80">
                                         🎨 背景マットの色
                                     </span>
-                                    <div class="flex items-center gap-3 font-semibold">
+                                    <div class="flex items-center gap-3 font-semibold text-base-content">
                                         <label class="flex gap-1 items-center cursor-pointer">
                                             <input
                                                 type="radio"
@@ -951,8 +951,8 @@ export default function ExifFrame() {
                                         </label>
                                     </div>
                                 </div>
-                                <div class="border-t border-slate-200/60 pt-2 mt-1 flex items-center justify-between">
-                                    <span class="font-bold text-slate-700">
+                                <div class="border-t border-base-300/60 pt-2 mt-1 flex items-center justify-between">
+                                    <span class="font-bold text-base-content/80">
                                         📸 チェキ風フレーム
                                     </span>
                                     <input
@@ -970,8 +970,8 @@ export default function ExifFrame() {
                             </div>
                         </Show>
 
-                        <div class="form-control border border-base-200 p-3.5 rounded-xl bg-base-50/30 flex flex-col gap-3">
-                            <span class="text-xs font-black text-slate-800 uppercase tracking-wider block border-b border-base-200 pb-1.5">
+                        <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3">
+                            <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
                                 📝 文字編集
                             </span>
 
@@ -980,7 +980,7 @@ export default function ExifFrame() {
                                 fallback={
                                     <div class="flex flex-col gap-2 text-xs">
                                         <div class="flex flex-col gap-1">
-                                            <span class="text-[10px] font-bold text-slate-500">
+                                            <span class="text-[10px] font-bold text-base-content/60">
                                                 📷
                                                 カメラ記述（1行目・左側または上側）
                                             </span>
@@ -994,11 +994,11 @@ export default function ExifFrame() {
                                                         e.currentTarget.value,
                                                     )
                                                 }
-                                                class="input input-bordered input-sm w-full bg-white text-xs"
+                                                class="input input-bordered input-sm w-full bg-base-100 text-base-content text-xs border-base-300"
                                             />
                                         </div>
                                         <div class="flex flex-col gap-1">
-                                            <span class="text-[10px] font-bold text-slate-500">
+                                            <span class="text-[10px] font-bold text-base-content/60">
                                                 🔎
                                                 レンズ記述（1行目・右側または下側）
                                             </span>
@@ -1012,7 +1012,7 @@ export default function ExifFrame() {
                                                         e.currentTarget.value,
                                                     )
                                                 }
-                                                class="input input-bordered input-sm w-full bg-white text-xs"
+                                                class="input input-bordered input-sm w-full bg-base-100 text-base-content text-xs border-base-300"
                                             />
                                         </div>
                                     </div>
@@ -1020,7 +1020,7 @@ export default function ExifFrame() {
                             >
                                 <div class="flex flex-col gap-2 text-xs animate-fade-in">
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[10px] font-bold text-slate-500">
+                                        <span class="text-[10px] font-bold text-base-content/60">
                                             ✍️ 自由タイトル 1行目（メイン題名）
                                         </span>
                                         <input
@@ -1033,11 +1033,11 @@ export default function ExifFrame() {
                                                     e.currentTarget.value,
                                                 )
                                             }
-                                            class="input input-bordered input-sm w-full bg-white text-xs font-medium"
+                                            class="input input-bordered input-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
                                         />
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[10px] font-bold text-slate-500">
+                                        <span class="text-[10px] font-bold text-base-content/60">
                                             📅 自由タイトル 2行目（サブ情報）
                                         </span>
                                         <input
@@ -1050,19 +1050,19 @@ export default function ExifFrame() {
                                                     e.currentTarget.value,
                                                 )
                                             }
-                                            class="input input-bordered input-sm w-full bg-white text-xs font-medium"
+                                            class="input input-bordered input-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
                                         />
                                     </div>
                                 </div>
                             </Show>
 
-                            <details class="collapse collapse-arrow bg-white dark:bg-slate-900 border border-base-200 rounded-lg text-xs mt-1">
-                                <summary class="collapse-title font-bold text-[11px] text-slate-500 min-h-0 py-2 px-3">
+                            <details class="collapse collapse-arrow bg-base-100 border border-base-300 rounded-lg text-xs mt-1">
+                                <summary class="collapse-title font-bold text-[11px] text-base-content/70 min-h-0 py-2 px-3">
                                     🔤 フォント・表示数値を直接修正
                                 </summary>
-                                <div class="collapse-content p-3 flex flex-col gap-3 border-t border-base-100">
+                                <div class="collapse-content p-3 flex flex-col gap-3 border-t border-base-300">
                                     <div class="flex flex-col gap-1">
-                                        <span class="font-bold text-slate-500 text-[10px]">
+                                        <span class="font-bold text-base-content/60 text-[10px]">
                                             使用フォント
                                         </span>
                                         <select
@@ -1072,7 +1072,7 @@ export default function ExifFrame() {
                                                     e.currentTarget.value,
                                                 )
                                             }
-                                            class="select select-bordered select-xs w-full bg-base-100"
+                                            class="select select-bordered select-xs w-full bg-base-100 text-base-content border-base-300"
                                         >
                                             <For each={fontList}>
                                                 {(f) => (
@@ -1084,7 +1084,7 @@ export default function ExifFrame() {
                                         </select>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="font-bold text-slate-500 text-[10px]">
+                                        <span class="font-bold text-base-content/60 text-[10px]">
                                             文字の大きさ ({fontSizeScale()}%)
                                         </span>
                                         <input
@@ -1104,12 +1104,12 @@ export default function ExifFrame() {
                                     </div>
 
                                     <Show when={!useCustomTitle()}>
-                                        <div class="border-t border-base-100 pt-2 flex flex-col gap-2">
-                                            <span class="font-bold text-slate-500 text-[10px]">
+                                        <div class="border-t border-base-300 pt-2 flex flex-col gap-2">
+                                            <span class="font-bold text-base-content/60 text-[10px]">
                                                 Exif表示フラグと内部数値の書き換え
                                             </span>
 
-                                            <div class="flex flex-col gap-1.5 text-[11px]">
+                                            <div class="flex flex-col gap-1.5 text-[11px] text-base-content">
                                                 <div class="flex items-center gap-2">
                                                     <input
                                                         type="checkbox"
@@ -1123,7 +1123,7 @@ export default function ExifFrame() {
                                                         }
                                                         class="checkbox checkbox-xs"
                                                     />
-                                                    <span class="w-12 text-slate-400 font-bold text-[10px]">
+                                                    <span class="w-12 text-base-content/60 font-bold text-[10px]">
                                                         カメラ:
                                                     </span>
                                                     <input
@@ -1136,7 +1136,7 @@ export default function ExifFrame() {
                                                                     .value,
                                                             )
                                                         }
-                                                        class="input input-bordered input-xs flex-1 bg-white font-medium"
+                                                        class="input input-bordered input-xs flex-1 bg-base-100 font-medium border-base-300"
                                                     />
                                                 </div>
                                                 <div class="flex items-center gap-2">
@@ -1152,7 +1152,7 @@ export default function ExifFrame() {
                                                         }
                                                         class="checkbox checkbox-xs"
                                                     />
-                                                    <span class="w-12 text-slate-400 font-bold text-[10px]">
+                                                    <span class="w-12 text-base-content/60 font-bold text-[10px]">
                                                         レンズ:
                                                     </span>
                                                     <input
@@ -1165,7 +1165,7 @@ export default function ExifFrame() {
                                                                     .value,
                                                             )
                                                         }
-                                                        class="input input-bordered input-xs flex-1 bg-white font-medium"
+                                                        class="input input-bordered input-xs flex-1 bg-base-100 font-medium border-base-300"
                                                     />
                                                 </div>
                                                 <div class="flex items-center gap-2">
@@ -1181,7 +1181,7 @@ export default function ExifFrame() {
                                                         }
                                                         class="checkbox checkbox-xs"
                                                     />
-                                                    <span class="w-12 text-slate-400 font-bold text-[10px]">
+                                                    <span class="w-12 text-base-content/60 font-bold text-[10px]">
                                                         焦点距離:
                                                     </span>
                                                     <input
@@ -1194,10 +1194,10 @@ export default function ExifFrame() {
                                                                     .value,
                                                             )
                                                         }
-                                                        class="input input-bordered input-xs flex-1 bg-white font-medium"
+                                                        class="input input-bordered input-xs flex-1 bg-base-100 font-medium border-base-300"
                                                         placeholder="例: 50"
                                                     />
-                                                    <span class="text-[10px] text-slate-400">
+                                                    <span class="text-[10px] text-base-content/60">
                                                         mm
                                                     </span>
                                                 </div>
@@ -1214,10 +1214,10 @@ export default function ExifFrame() {
                                                         }
                                                         class="checkbox checkbox-xs"
                                                     />
-                                                    <span class="w-12 text-slate-400 font-bold text-[10px]">
+                                                    <span class="w-12 text-base-content/60 font-bold text-[10px]">
                                                         絞り値:
                                                     </span>
-                                                    <span class="text-[10px] text-slate-400">
+                                                    <span class="text-[10px] text-base-content/60">
                                                         f/
                                                     </span>
                                                     <input
@@ -1230,7 +1230,7 @@ export default function ExifFrame() {
                                                                     .value,
                                                             )
                                                         }
-                                                        class="input input-bordered input-xs flex-1 bg-white font-medium"
+                                                        class="input input-bordered input-xs flex-1 bg-base-100 font-medium border-base-300"
                                                         placeholder="例: 2.8"
                                                     />
                                                 </div>
@@ -1247,7 +1247,7 @@ export default function ExifFrame() {
                                                         }
                                                         class="checkbox checkbox-xs"
                                                     />
-                                                    <span class="w-12 text-slate-400 font-bold text-[10px]">
+                                                    <span class="w-12 text-base-content/60 font-bold text-[10px]">
                                                         SS速度:
                                                     </span>
                                                     <input
@@ -1260,7 +1260,7 @@ export default function ExifFrame() {
                                                                     .value,
                                                             )
                                                         }
-                                                        class="input input-bordered input-xs flex-1 bg-white font-medium"
+                                                        class="input input-bordered input-xs flex-1 bg-base-100 font-medium border-base-300"
                                                         placeholder="例: 1/250s"
                                                     />
                                                 </div>
@@ -1277,10 +1277,10 @@ export default function ExifFrame() {
                                                         }
                                                         class="checkbox checkbox-xs"
                                                     />
-                                                    <span class="w-12 text-slate-400 font-bold text-[10px]">
+                                                    <span class="w-12 text-base-content/60 font-bold text-[10px]">
                                                         ISO感度:
                                                     </span>
-                                                    <span class="text-[10px] text-slate-400">
+                                                    <span class="text-[10px] text-base-content/60">
                                                         ISO
                                                     </span>
                                                     <input
@@ -1293,7 +1293,7 @@ export default function ExifFrame() {
                                                                     .value,
                                                             )
                                                         }
-                                                        class="input input-bordered input-xs flex-1 bg-white font-medium"
+                                                        class="input input-bordered input-xs flex-1 bg-base-100 font-medium border-base-300"
                                                         placeholder="例: 100"
                                                     />
                                                 </div>
@@ -1305,14 +1305,14 @@ export default function ExifFrame() {
                         </div>
 
                         <Show when={!isChekiMode()}>
-                            <div class="form-control border border-base-200 p-3 rounded-xl bg-base-50/30 flex flex-col gap-2 text-xs">
-                                <div class="flex items-center justify-between border-b border-base-200/60 pb-1">
-                                    <span class="font-bold text-slate-600 text-[11px]">
+                            <div class="form-control border border-base-300 p-3 rounded-xl bg-base-200/30 flex flex-col gap-2 text-xs">
+                                <div class="flex items-center justify-between border-b border-base-300 pb-1">
+                                    <span class="font-bold text-base-content/80 text-[11px]">
                                         📍 配置設定
                                     </span>
                                 </div>
-                                <div class="flex items-center justify-between gap-2 py-0.5">
-                                    <span class="text-slate-400 font-medium text-[10px]">
+                                <div class="flex items-center justify-between gap-2 py-0.5 text-base-content">
+                                    <span class="text-base-content/60 font-medium text-[10px]">
                                         帯の位置:
                                     </span>
                                     <div class="flex gap-2">
@@ -1344,14 +1344,14 @@ export default function ExifFrame() {
                                     </div>
                                 </div>
                                 <div
-                                    class="flex items-center justify-between gap-2 py-0.5 border-t border-slate-100 mt-0.5 pt-1.5 transition-all duration-200"
+                                    class="flex items-center justify-between gap-2 py-0.5 border-t border-base-300 mt-0.5 pt-1.5 transition-all duration-200 text-base-content"
                                     classList={{
                                         "opacity-40 pointer-events-none select-none":
                                             framePosition() === "left" ||
                                             framePosition() === "right",
                                     }}
                                 >
-                                    <span class="text-slate-400 font-medium text-[10px]">
+                                    <span class="text-base-content/60 font-medium text-[10px]">
                                         文字寄せ:
                                     </span>
                                     <div class="flex gap-3">
@@ -1390,13 +1390,13 @@ export default function ExifFrame() {
                             </div>
                         </Show>
 
-                        <div class="form-control border border-base-200 p-3 rounded-xl bg-base-50/50">
-                            <label class="flex items-center justify-between cursor-pointer">
+                        <div class="form-control border border-base-300 p-3 rounded-xl bg-base-200/50">
+                            <label class="flex items-center justify-between cursor-pointer text-base-content">
                                 <div class="flex flex-col">
-                                    <span class="text-xs font-black text-slate-700">
+                                    <span class="text-xs font-bold text-base-content">
                                         ✍️ 自由なタイトルモードにする
                                     </span>
-                                    <span class="text-[9px] text-slate-400 font-medium">
+                                    <span class="text-[9px] text-base-content/50 font-medium">
                                         カメラ情報の代わりに好きな文字を刻印
                                     </span>
                                 </div>
@@ -1414,12 +1414,12 @@ export default function ExifFrame() {
                             </label>
                         </div>
 
-                        <div class="form-control border border-base-200 p-3.5 rounded-xl bg-base-50/30 flex flex-col gap-2.5 text-xs">
-                            <span class="text-xs font-black text-slate-800 uppercase tracking-wider block border-b border-base-200 pb-1.5">
+                        <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-2.5 text-xs">
+                            <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
                                 💾 ファイル保存設定
                             </span>
                             <div class="flex flex-col gap-1">
-                                <span class="text-[10px] font-bold text-slate-400">
+                                <span class="text-[10px] font-bold text-base-content/60">
                                     出力ファイル名
                                 </span>
                                 <input
@@ -1431,11 +1431,11 @@ export default function ExifFrame() {
                                             e.currentTarget.value,
                                         )
                                     }
-                                    class="input input-bordered input-xs w-full bg-white font-mono"
+                                    class="input input-bordered input-xs w-full bg-base-100 font-mono text-base-content border-base-300"
                                 />
                             </div>
-                            <div class="flex gap-2 pt-1 justify-between items-center">
-                                <span class="text-[10px] font-bold text-slate-400">
+                            <div class="flex gap-2 pt-1 justify-between items-center text-base-content">
+                                <span class="text-[10px] font-bold text-base-content/60">
                                     保存形式:
                                 </span>
                                 <div class="flex gap-2">
@@ -1462,13 +1462,13 @@ export default function ExifFrame() {
                                     ))}
                                 </div>
                             </div>
-                            <div class="form-control border-t border-base-200/80 pt-2">
+                            <div class="form-control border-t border-base-300 pt-2 text-base-content">
                                 <label class="flex items-center justify-between cursor-pointer">
                                     <div class="flex flex-col">
-                                        <span class="text-[11px] font-bold text-slate-600">
+                                        <span class="text-[11px] font-bold text-base-content/80">
                                             元のExifデータを引き継ぐ
                                         </span>
-                                        <span class="text-[9px] text-slate-400 font-medium">
+                                        <span class="text-[9px] text-base-content/50 font-medium">
                                             ※JPEG保存時のみ有効
                                         </span>
                                     </div>
@@ -1502,7 +1502,7 @@ export default function ExifFrame() {
                                     <span class="label-text font-black text-secondary text-sm">
                                         🔥 上級者カスタマイズモード
                                     </span>
-                                    <span class="text-[10px] text-slate-500 font-medium">
+                                    <span class="text-[10px] text-base-content/60 font-medium">
                                         こだわりの額縁や銘板プレートを解放
                                     </span>
                                 </div>
@@ -1520,10 +1520,10 @@ export default function ExifFrame() {
                             </label>
 
                             <Show when={isAdvancedMode()}>
-                                <div class="flex flex-col gap-3 pt-2 border-t border-secondary/20 animate-fade-in text-xs">
+                                <div class="flex flex-col gap-3 pt-2 border-t border-secondary/20 animate-fade-in text-xs text-base-content">
                                     <div class="grid grid-cols-2 gap-2">
                                         <div class="flex flex-col gap-1">
-                                            <span class="text-[10px] font-bold text-slate-600">
+                                            <span class="text-[10px] font-bold text-base-content/70">
                                                 🎨 好きな枠色
                                             </span>
                                             <div class="flex items-center gap-1">
@@ -1537,15 +1537,15 @@ export default function ExifFrame() {
                                                                 .value,
                                                         )
                                                     }
-                                                    class="w-7 h-7 rounded cursor-pointer border border-slate-300"
+                                                    class="w-7 h-7 rounded cursor-pointer border border-base-300 bg-transparent"
                                                 />
-                                                <span class="text-[10px] font-mono font-bold text-slate-400">
+                                                <span class="text-[10px] font-mono font-bold text-base-content/50">
                                                     {customFrameColor()}
                                                 </span>
                                             </div>
                                         </div>
                                         <div class="flex flex-col gap-1">
-                                            <span class="text-[10px] font-bold text-slate-600">
+                                            <span class="text-[10px] font-bold text-base-content/70">
                                                 ✍️ 好きな文字色
                                             </span>
                                             <div class="flex items-center gap-1">
@@ -1559,9 +1559,9 @@ export default function ExifFrame() {
                                                                 .value,
                                                         )
                                                     }
-                                                    class="w-7 h-7 rounded pointer border border-slate-300"
+                                                    class="w-7 h-7 rounded pointer border border-base-300 bg-transparent"
                                                 />
-                                                <span class="text-[10px] font-mono font-bold text-slate-400">
+                                                <span class="text-[10px] font-mono font-bold text-base-content/50">
                                                     {customTextColor()}
                                                 </span>
                                             </div>
@@ -1569,7 +1569,7 @@ export default function ExifFrame() {
                                     </div>
 
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[10px] font-bold text-slate-600">
+                                        <span class="text-[10px] font-bold text-base-content/70">
                                             🪚 写真の角丸調整
                                         </span>
                                         <input
@@ -1590,7 +1590,7 @@ export default function ExifFrame() {
                                     </div>
 
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[10px] font-bold text-slate-600 mb-1">
+                                        <span class="text-[10px] font-bold text-base-content/70 mb-1">
                                             🖼️ 額縁の装飾スタイル
                                         </span>
                                         <div class="grid grid-cols-3 gap-1.5 p-0.5">
@@ -1608,14 +1608,14 @@ export default function ExifFrame() {
                                                             frameStyle() ===
                                                             tmpl.id
                                                                 ? "border-secondary bg-secondary/10 scale-[0.96] ring-2 ring-secondary/20"
-                                                                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 shadow-xs"
+                                                                : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content shadow-xs"
                                                         }`}
                                                     >
                                                         <div
                                                             class={`w-7 h-5 mb-1 border rounded-xs ${tmpl.border}`}
                                                             style={tmpl.style}
                                                         />
-                                                        <span class="text-[9px] font-bold text-slate-600 leading-tight block">
+                                                        <span class="text-[9px] font-bold text-base-content/80 leading-tight block">
                                                             {tmpl.name}
                                                         </span>
                                                     </button>
@@ -1625,7 +1625,7 @@ export default function ExifFrame() {
                                     </div>
 
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[10px] font-bold text-slate-600 mb-1">
+                                        <span class="text-[10px] font-bold text-base-content/70 mb-1">
                                             🏷️ 文字のプレート装飾
                                         </span>
                                         <div class="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto p-0.5">
@@ -1643,10 +1643,10 @@ export default function ExifFrame() {
                                                             textPlateStyle() ===
                                                             plate.id
                                                                 ? "border-secondary bg-secondary/10 scale-[0.98] ring-2 ring-secondary/30"
-                                                                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                                                                : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content shadow-sm"
                                                         }`}
                                                     >
-                                                        <span class="text-[9px] font-bold text-slate-500 mb-1 block">
+                                                        <span class="text-[9px] font-bold text-base-content/70 mb-1 block">
                                                             {plate.name}
                                                         </span>
                                                         <div
@@ -1663,7 +1663,7 @@ export default function ExifFrame() {
 
                                     <div class="form-control border-t border-secondary/20 pt-2">
                                         <label class="flex items-center justify-between cursor-pointer">
-                                            <span class="text-[10px] font-bold text-slate-500">
+                                            <span class="text-[10px] font-bold text-base-content/60">
                                                 チェキ風の帯比率を連動
                                             </span>
                                             <input
@@ -1684,11 +1684,11 @@ export default function ExifFrame() {
                         </div>
                     </div>
 
-                    <div class="flex-1 flex flex-col border border-slate-200 bg-slate-950/5 rounded-2xl p-4 justify-center items-center relative min-h-[400px] lg:min-h-0 overflow-hidden shadow-inner">
+                    <div class="flex-1 flex flex-col border border-base-300 bg-base-200/30 text-base-content rounded-2xl p-4 justify-center items-center relative min-h-[400px] lg:min-h-0 overflow-hidden shadow-inner">
                         <Show
                             when={hasImage()}
                             fallback={
-                                <div class="text-slate-400 p-8 text-center font-medium">
+                                <div class="text-base-content/50 p-8 text-center font-medium">
                                     📸
                                     写真を読み込むと、比率を維持したプレビューが表示されます！
                                 </div>
@@ -1744,14 +1744,14 @@ export default function ExifFrame() {
                     onClick={() => setShowMobileSaveModal(false)}
                 >
                     <div
-                        class="bg-base-100 max-w-md w-full p-5 rounded-2xl shadow-2xl flex flex-col gap-4 text-center border border-base-200"
+                        class="bg-base-100 text-base-content max-w-md w-full p-5 rounded-2xl shadow-2xl flex flex-col gap-4 text-center border border-base-300"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div class="flex flex-col gap-1">
-                            <h3 class="font-black text-sm text-slate-800 flex items-center justify-center gap-1.5">
+                            <h3 class="font-bold text-sm text-base-content flex items-center justify-center gap-1.5">
                                 📥 画像が生成されました
                             </h3>
-                            <p class="text-[11px] text-slate-500 leading-relaxed font-medium mt-1">
+                            <p class="text-[11px] text-base-content/70 leading-relaxed font-medium mt-1">
                                 スマートフォンのブラウザ制限により自動保存が開始されない場合は、
                                 <br />
                                 下記の画像を
@@ -1761,7 +1761,7 @@ export default function ExifFrame() {
                                 して保存してください。
                             </p>
                         </div>
-                        <div class="w-full max-h-[50vh] overflow-y-auto bg-slate-100 p-2 rounded-xl flex items-center justify-center">
+                        <div class="w-full max-h-[50vh] overflow-y-auto bg-base-200 p-2 rounded-xl flex items-center justify-center">
                             <img
                                 src={downloadImageSrc()}
                                 alt="Generated masterpiece"

@@ -43,6 +43,11 @@ const libraries: Library[] = [
         url: "https://github.com/MikeKovarik/exifr",
     },
     {
+        name: "piexifjs",
+        license: "MIT",
+        url: "https://github.com/hMatoba/piexifjs",
+    },
+    {
         name: "Vite",
         license: "MIT",
         url: "https://github.com/vitejs/vite",

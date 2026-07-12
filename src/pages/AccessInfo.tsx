@@ -1,4 +1,3 @@
-// src/pages/AccessInfo.tsx
 import { createSignal, Show } from "solid-js";
 
 interface IpData {
@@ -37,7 +36,6 @@ export default function AccessInfo() {
         setInfo(null);
         setHasFetched(true);
 
-        // 1. 端末情報の解析
         try {
             setUserAgent(navigator.userAgent || "不明");
             setLanguage(navigator.language || "ja");
@@ -95,10 +93,9 @@ export default function AccessInfo() {
                 setBatteryLevel("取得不可");
             }
         } catch (deviceErr) {
-            console.error("端末情報の取得エラー:", deviceErr);
+            console.error("Device info error:", deviceErr);
         }
 
-        // 2. IP情報のフェッチ
         try {
             const response = await fetch("https://ipapi.co/json/").catch(() => {
                 throw new Error(
@@ -107,9 +104,7 @@ export default function AccessInfo() {
             });
 
             if (!response.ok) {
-                throw new Error(
-                    "APIサーバーの応答制限、または混雑中です。",
-                );
+                throw new Error("APIサーバーの応答制限、または混雑中です。");
             }
 
             const data = await response.json().catch(() => {
@@ -188,11 +183,10 @@ IPアドレス: ${data.ip}
 
     return (
         <div class="h-full w-full p-6 flex flex-col gap-6">
-            <div class="card bg-base-100 shadow-xl p-8 w-full border border-base-200">
-                {/* 初期状態ボタン */}
+            <div class="card bg-base-100 shadow-xl p-8 w-full border border-base-300">
                 <Show when={!hasFetched() && !loading()}>
                     <div class="flex flex-col items-center justify-center py-16 gap-4">
-                        <p class="text-slate-500 font-medium text-lg">
+                        <p class="text-base-content/70 font-medium text-lg">
                             ボタンを押すと、現在のネットワークや端末環境を解析します。
                         </p>
                         <button
@@ -204,17 +198,15 @@ IPアドレス: ${data.ip}
                     </div>
                 </Show>
 
-                {/* ローディングスピナー */}
                 <Show when={loading()}>
                     <div class="flex flex-col items-center justify-center py-12 gap-4">
                         <span class="loading loading-spinner loading-lg text-primary"></span>
-                        <p class="text-slate-500 font-medium">
+                        <p class="text-base-content/70 font-medium">
                             情報を解析中...
                         </p>
                     </div>
                 </Show>
 
-                {/* エラー表示 */}
                 <Show when={error() && !loading()}>
                     <div class="alert alert-error text-white font-bold mb-6 shadow-md rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div class="flex items-center gap-2">
@@ -223,29 +215,27 @@ IPアドレス: ${data.ip}
                         </div>
                         <button
                             onClick={fetchAccessInfo}
-                            class="btn btn-sm bg-white text-error border-none hover:bg-slate-100 flex-shrink-0"
+                            class="btn btn-sm bg-base-100 text-error border-none hover:bg-base-200 flex-shrink-0"
                         >
                             もう一度試す
                         </button>
                     </div>
                 </Show>
 
-                {/* 取得完了後のデータ表示 */}
                 <Show when={info() && !loading()}>
                     <div class="w-full flex flex-col gap-8 animate-fade-in">
-                        {/* 接続環境・プロバイダ・位置情報 */}
                         <div>
                             <h3 class="text-xl font-bold mb-3 text-primary flex items-center gap-2">
                                 <span>🌐</span> 接続環境・位置情報
                             </h3>
-                            <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
+                            <div class="overflow-x-auto border border-base-300 rounded-xl bg-base-100">
                                 <table class="table table-zebra w-full text-base table-fixed">
                                     <tbody>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 w-1/3 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 w-1/3 bg-base-200/30">
                                                 IPアドレス
                                             </td>
-                                            <td class="font-mono text-slate-900 font-bold text-lg truncate">
+                                            <td class="font-mono text-base-content font-bold text-lg truncate">
                                                 {info()?.ip}
                                             </td>
                                             <td class="w-28 border-none">
@@ -267,11 +257,11 @@ IPアドレス: ${data.ip}
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 プロバイダ (ISP)
                                             </td>
-                                            <td class="text-slate-900 font-semibold truncate">
+                                            <td class="text-base-content font-semibold truncate">
                                                 {info()?.org}
                                             </td>
                                             <td class="w-28 border-none">
@@ -293,11 +283,11 @@ IPアドレス: ${data.ip}
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 国 / 地域
                                             </td>
-                                            <td class="text-slate-900 truncate">
+                                            <td class="text-base-content truncate">
                                                 {info()?.country_name} (
                                                 {info()?.country_code})
                                             </td>
@@ -320,11 +310,11 @@ IPアドレス: ${data.ip}
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 都道府県 / 都市
                                             </td>
-                                            <td class="text-slate-900 truncate">
+                                            <td class="text-base-content truncate">
                                                 {info()?.region} /{" "}
                                                 {info()?.city}
                                             </td>
@@ -347,11 +337,11 @@ IPアドレス: ${data.ip}
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 郵便番号
                                             </td>
-                                            <td class="text-slate-900 font-mono truncate">
+                                            <td class="text-base-content font-mono truncate">
                                                 {info()?.postal || "---"}
                                             </td>
                                             <td class="w-28 border-none">
@@ -381,10 +371,10 @@ IPアドレス: ${data.ip}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 緯度 / 経度 (推定)
                                             </td>
-                                            <td class="text-slate-900 font-mono truncate">
+                                            <td class="text-base-content font-mono truncate">
                                                 {info()?.latitude} ,{" "}
                                                 {info()?.longitude}
                                             </td>
@@ -412,19 +402,18 @@ IPアドレス: ${data.ip}
                             </div>
                         </div>
 
-                        {/* 端末環境 */}
                         <div>
                             <h3 class="text-xl font-bold mb-3 text-secondary flex items-center gap-2">
                                 <span>💻</span> 端末・ブラウザ環境
                             </h3>
-                            <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
+                            <div class="overflow-x-auto border border-base-300 rounded-xl bg-base-100">
                                 <table class="table table-zebra w-full text-base">
                                     <tbody>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 w-1/3 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 w-1/3 bg-base-200/30">
                                                 物理解像度
                                             </td>
-                                            <td class="text-slate-900 font-mono font-bold">
+                                            <td class="text-base-content font-mono font-bold">
                                                 {physicScreenSize()}
                                             </td>
                                             <td class="w-28 border-none">
@@ -446,11 +435,11 @@ IPアドレス: ${data.ip}
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 論理解像度
                                             </td>
-                                            <td class="text-slate-900 font-mono">
+                                            <td class="text-base-content font-mono">
                                                 {screenSize()}
                                             </td>
                                             <td class="w-28 border-none">
@@ -471,11 +460,11 @@ IPアドレス: ${data.ip}
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 回線種別
                                             </td>
-                                            <td class="text-slate-900">
+                                            <td class="text-base-content">
                                                 {networkType()}
                                             </td>
                                             <td class="w-28 border-none">
@@ -496,11 +485,11 @@ IPアドレス: ${data.ip}
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr class="border-b border-slate-100">
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                        <tr class="border-b border-base-200">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 ユーザーエージェント
                                             </td>
-                                            <td class="text-xs font-mono text-slate-700 break-all whitespace-normal pr-4">
+                                            <td class="text-xs font-mono text-base-content/80 break-all whitespace-normal pr-4">
                                                 {userAgent()}
                                             </td>
                                             <td class="w-28 border-none">
@@ -522,10 +511,10 @@ IPアドレス: ${data.ip}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="font-bold text-slate-600 bg-slate-50/50">
+                                            <td class="font-bold text-base-content/70 bg-base-200/30">
                                                 バッテリー残量
                                             </td>
-                                            <td class="text-slate-900">
+                                            <td class="text-base-content">
                                                 {batteryLevel()}
                                             </td>
                                             <td class="w-28 border-none">
@@ -550,10 +539,9 @@ IPアドレス: ${data.ip}
                                 </table>
                             </div>
                         </div>
-                        {/* ★ヘッダー部分を flex-row かつアイテムを両端に分けるように調整しました */}
                         <div class="flex flex-row justify-between items-center mb-6 w-full">
                             <Show when={info() && !loading()}>
-                                <div class="flex justify-end">
+                                <div class="flex justify-end w-full">
                                     <button
                                         onClick={copyAllToClipboard}
                                         class={`btn text-white h-12 px-6 text-lg rounded-xl shadow-sm transition-all ${allCopied() ? "btn-success" : "btn-neutral"}`}

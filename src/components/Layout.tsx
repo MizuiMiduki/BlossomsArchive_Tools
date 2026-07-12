@@ -192,7 +192,7 @@ export default function Layout(props: LayoutProps) {
             </aside>
 
             <div class="flex-1 flex flex-col min-w-0">
-                <header class="h-16 bg-white/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-10 flex items-center px-4 lg:px-8 shadow-sm justify-between gap-4">
+                <header class="h-16 bg-base-100/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-10 flex items-center px-4 lg:px-8 shadow-sm justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <button
                             class={`btn btn-ghost btn-square ${isPcMenuOpen() ? "lg:hidden" : "flex"}`}
