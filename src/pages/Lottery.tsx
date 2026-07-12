@@ -213,7 +213,8 @@ export default function Lottery() {
                                         class={`btn btn-sm text-white ${shared() ? "btn-success" : "btn-primary"}`}
                                     >
                                         {shared()
-                                            ? navigator.share
+                                            ? typeof navigator.share ===
+                                              "function"
                                                 ? "共有しました！"
                                                 : "コピーしました！"
                                             : "結果を共有"}
