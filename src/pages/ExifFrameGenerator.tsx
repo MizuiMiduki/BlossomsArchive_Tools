@@ -23,6 +23,9 @@ export default function ExifFrame() {
     const [customTitleLine2, setCustomTitleLine2] =
         createSignal("Shot in 2026");
 
+    const [prefixText, setPrefixText] = createSignal("Shot on ");
+    const [showPrefix, setShowPrefix] = createSignal(true);
+
     const [isAdvancedMode, setIsAdvancedMode] = createSignal(false);
     const [customFrameColor, setCustomFrameColor] = createSignal("#ffffff");
     const [customTextColor, setCustomTextColor] = createSignal("#222222");
@@ -59,19 +62,19 @@ export default function ExifFrame() {
             id: "gothic",
             name: "Noto Sans JP",
             value: "'Noto Sans JP', sans-serif",
-            link: "Noto+Sans+JP:wght@400;700",
+            link: "Noto+Sans+JP:wght@300;400;700",
         },
         {
             id: "serif",
             name: "Noto Serif JP",
             value: "'Noto Serif JP', serif",
-            link: "Noto+Serif+JP:wght@400;700",
+            link: "Noto+Serif+JP:wght@300;400;700",
         },
         {
             id: "italic",
             name: "Playfair Display",
             value: "'Playfair Display', serif",
-            link: "Playfair+Display:ital,wght@1,400;1,700",
+            link: "Playfair+Display:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700",
         },
         {
             id: "hand",
@@ -83,7 +86,7 @@ export default function ExifFrame() {
             id: "hand-jp",
             name: "Kiwi Maru",
             value: "'Kiwi Maru', serif",
-            link: "Kiwi+Maru:wght@400;500",
+            link: "Kiwi+Maru:wght@300;400;500",
         },
     ];
 
@@ -327,19 +330,21 @@ export default function ExifFrame() {
             ctx.restore();
         }
 
-        let textLine1 = "";
+        const prefix = showPrefix() ? prefixText() : "";
+        let textLine1Main = "";
         let textLine2 = "";
 
         if (useCustomTitle()) {
-            textLine1 = customTitleLine1().trim();
+            textLine1Main = customTitleLine1().trim();
             textLine2 = customTitleLine2().trim();
         } else {
-            textLine1 = [
+            textLine1Main = [
                 showCamera() ? cameraModel().trim() : "",
                 showLens() ? lensModel().trim() : "",
             ]
                 .filter(Boolean)
                 .join(" | ");
+
             textLine2 = [
                 showFocal() && focalLength() ? `${focalLength()}mm` : "",
                 showFNumber() && fNumber() ? `f/${fNumber()}` : "",
@@ -356,7 +361,8 @@ export default function ExifFrame() {
         const scale = fontSizeScale() / 100;
         const fontSize1 = Math.round(longSide * 0.015 * scale);
         const fontSize2 = Math.round(longSide * 0.011 * scale);
-        const font1 = `bold ${fontSize1}px ${selectedFont()}`;
+        const font1Prefix = `300 ${fontSize1}px ${selectedFont()}`;
+        const font1Main = `bold ${fontSize1}px ${selectedFont()}`;
         const font2 = `${fontSize2}px ${selectedFont()}`;
 
         const getHorizontalX = () => {
@@ -378,27 +384,34 @@ export default function ExifFrame() {
         };
 
         const drawCombinedTextAndPlate = (
-            line1: string,
+            prefixStr: string,
+            mainStr: string,
             line2: string,
             tx: number,
             ty: number,
         ) => {
-            if (!line1 && !line2) return;
+            if (!prefixStr && !mainStr && !line2) return;
 
             ctx.save();
-            ctx.textAlign = getHorizontalAlign();
+            const hAlign = getHorizontalAlign();
+            ctx.textAlign = hAlign;
 
-            ctx.font = font1;
-            const w1 = line1 ? ctx.measureText(line1).width : 0;
+            ctx.font = font1Prefix;
+            const prefixW = prefixStr ? ctx.measureText(prefixStr).width : 0;
+            ctx.font = font1Main;
+            const mainW = mainStr ? ctx.measureText(mainStr).width : 0;
+            const w1 = prefixW + mainW;
+
             ctx.font = font2;
             const w2 = line2 ? ctx.measureText(line2).width : 0;
             const maxTextWidth = Math.max(w1, w2);
 
             const lineGap = Math.round(fontSize1 * 0.4);
+            const hasLine1 = prefixStr || mainStr;
             const totalTextHeight =
-                (line1 ? fontSize1 : 0) +
+                (hasLine1 ? fontSize1 : 0) +
                 (line2 ? fontSize2 : 0) +
-                (line1 && line2 ? lineGap : 0);
+                (hasLine1 && line2 ? lineGap : 0);
 
             const paddingX = Math.round(fontSize1 * 1.0);
             const paddingY = Math.round(fontSize1 * 0.6);
@@ -406,8 +419,8 @@ export default function ExifFrame() {
             const pHeight = totalTextHeight + paddingY * 2;
 
             let pX = tx;
-            if (ctx.textAlign === "center") pX = tx - pWidth / 2;
-            else if (ctx.textAlign === "end") pX = tx - pWidth;
+            if (hAlign === "center") pX = tx - pWidth / 2;
+            else if (hAlign === "end") pX = tx - pWidth;
             const pY = ty - pHeight / 2;
 
             const isMetal =
@@ -537,9 +550,27 @@ export default function ExifFrame() {
                     : "#e2e8f0";
 
             let currentTextY = pY + paddingY + fontSize1 * 0.85;
-            if (line1) {
-                ctx.font = font1;
-                ctx.fillText(line1, tx, currentTextY);
+            if (prefixStr || mainStr) {
+                let startX = tx;
+                if (hAlign === "center") {
+                    startX = tx - w1 / 2;
+                    ctx.textAlign = "left";
+                } else if (hAlign === "end") {
+                    startX = tx - w1;
+                    ctx.textAlign = "left";
+                }
+
+                if (prefixStr) {
+                    ctx.font = font1Prefix;
+                    ctx.fillText(prefixStr, startX, currentTextY);
+                    startX += prefixW;
+                }
+                if (mainStr) {
+                    ctx.font = font1Main;
+                    ctx.fillText(mainStr, startX, currentTextY);
+                }
+
+                ctx.textAlign = hAlign;
                 currentTextY += fontSize2 + lineGap;
             }
             if (line2) {
@@ -553,7 +584,8 @@ export default function ExifFrame() {
         if (isChekiMode()) {
             const textCenterY = imgY + imgH + Math.round(textSpace / 2);
             drawCombinedTextAndPlate(
-                textLine1,
+                prefix,
+                textLine1Main,
                 textLine2,
                 finalCanvasW / 2,
                 textCenterY,
@@ -568,13 +600,14 @@ export default function ExifFrame() {
 
             ctx.save();
             ctx.fillStyle = tColor;
-            if (textLine1 && textLine2) {
+            const combinedLine1 = `${prefix}${textLine1Main}`;
+            if (combinedLine1 && textLine2) {
                 drawVerticalText(
                     ctx,
-                    textLine1,
+                    combinedLine1,
                     x + (fontSize1 / 2 + gap / 2),
                     y,
-                    font1,
+                    font1Main,
                 );
                 drawVerticalText(
                     ctx,
@@ -584,7 +617,13 @@ export default function ExifFrame() {
                     font2,
                 );
             } else {
-                drawVerticalText(ctx, textLine1 || textLine2, x, y, font1);
+                drawVerticalText(
+                    ctx,
+                    combinedLine1 || textLine2,
+                    x,
+                    y,
+                    font1Main,
+                );
             }
             ctx.restore();
         } else {
@@ -592,7 +631,13 @@ export default function ExifFrame() {
                 framePosition() === "bottom"
                     ? imgH + textSpace / 2 + imgY
                     : textSpace / 2 + realFrameWidth;
-            drawCombinedTextAndPlate(textLine1, textLine2, getHorizontalX(), y);
+            drawCombinedTextAndPlate(
+                prefix,
+                textLine1Main,
+                textLine2,
+                getHorizontalX(),
+                y,
+            );
         }
 
         if (isRealFrame) {
@@ -974,6 +1019,44 @@ export default function ExifFrame() {
                             <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
                                 📝 文字編集
                             </span>
+
+                            <div class="flex flex-col gap-2 bg-base-100 p-3 rounded-lg border border-base-300 text-xs mb-1">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-base-content text-[11px]">
+                                            🏷️ 接頭辞の設定
+                                        </span>
+                                        <span class="text-[9px] text-base-content/50 font-medium">
+                                            テキストの先頭に文字を添えます
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={showPrefix()}
+                                        onChange={(e) =>
+                                            handleToggleChange(
+                                                setShowPrefix,
+                                                e.currentTarget.checked,
+                                            )
+                                        }
+                                        class="toggle toggle-primary toggle-xs"
+                                    />
+                                </div>
+                                <Show when={showPrefix()}>
+                                    <input
+                                        type="text"
+                                        value={prefixText()}
+                                        onInput={(e) =>
+                                            handleTextChange(
+                                                setPrefixText,
+                                                e.currentTarget.value,
+                                            )
+                                        }
+                                        class="input input-bordered input-xs w-full mt-1.5 bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                        placeholder="例: Shot on "
+                                    />
+                                </Show>
+                            </div>
 
                             <Show
                                 when={useCustomTitle()}
@@ -1755,6 +1838,7 @@ export default function ExifFrame() {
                                 スマートフォンのブラウザ制限により自動保存が開始されない場合は、
                                 <br />
                                 下記の画像を
+                                <br />
                                 <strong class="text-primary font-bold text-xs">
                                     長押し（ロングタップ）
                                 </strong>
