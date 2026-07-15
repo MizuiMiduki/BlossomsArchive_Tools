@@ -40,3 +40,6 @@ jobs:
                   local-dir: "./dist/"
                   server-dir: "${{ secrets.FTP_TARGET_DIR }}"
                   dangerous-clean-slate: true
+
+            - name: List dist directory
+              run: ls -R ./dist/
