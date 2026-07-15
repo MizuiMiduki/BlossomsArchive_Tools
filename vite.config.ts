@@ -22,3 +22,11 @@ export default defineConfig({
         target: "esnext",
     },
 });
+
+// vite.config.ts の末尾に追加にゃ！
+console.log("=== [DEBUG] routesの型:", typeof routes);
+console.log("=== [DEBUG] routesの長さ:", routes.length);
+console.log(
+    "=== [DEBUG] routesのパス一覧:",
+    routes.map((r) => r.path),
+);
