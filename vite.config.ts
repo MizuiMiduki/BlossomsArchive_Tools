@@ -10,14 +10,15 @@ export default defineConfig({
         devtools(),
         solidPlugin(),
         tailwindcss(),
-        // vite.config.ts
         sitemap({
             hostname: "https://tools.blossomsarchive.com",
             routes: routes.map((r) => ({
                 url: r.path,
                 changefreq: "daily",
                 priority: 0.7,
+                lastmod: new Date().toISOString(),
             })),
+            generateRobots: false,
         } as any),
     ],
     server: {
