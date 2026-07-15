@@ -6,7 +6,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npx tsx scripts/generate-sitemap.ts",
     "serve": "vite preview",
     "type-check": "tsc --noEmit"
   },
@@ -22,7 +22,6 @@
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.4",
-    "vite-plugin-sitemap": "^0.8.2",
     "vite-plugin-solid": "^2.11.8"
   },
   "pnpm": {
