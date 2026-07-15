@@ -1,9 +1,47 @@
 // src/pages/Calculator.tsx
-import { createSignal, For } from "solid-js";
+import { createSignal, For, onMount, onCleanup } from "solid-js";
 
 export default function Calculator() {
     const [display, setDisplay] = createSignal("0");
     const [history, setHistory] = createSignal<string[]>([]);
+
+    // SEO対策：メタデータの動的挿入
+    onMount(() => {
+        document.title = "シンプル計算機 | 履歴機能付きWeb電卓";
+
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.setAttribute("name", "description");
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            "ブラウザ上で手軽に使えるシンプルな計算機ツールです。過去の計算履歴を保存し、クリックで再利用することも可能です。",
+        );
+
+        const script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.id = "calculator-jsonld";
+        script.text = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "シンプル計算機",
+            operatingSystem: "All",
+            applicationCategory: "UtilityApplication",
+            browserRequirements: "Requires JavaScript. Requires HTML5.",
+            description:
+                "計算履歴機能がついた、使いやすいWebベースの電卓ツール。",
+        });
+        document.head.appendChild(script);
+    });
+
+    onCleanup(() => {
+        const script = document.getElementById("calculator-jsonld");
+        if (script) {
+            script.remove();
+        }
+    });
 
     const buttons = [
         "7",

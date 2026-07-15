@@ -1,13 +1,49 @@
 // src/pages/Clock.tsx
-import { createSignal, onMount, onCleanup, Switch, Match, For } from "solid-js"; // ★ For を追加しました
+import { createSignal, onMount, onCleanup, Switch, Match, For } from "solid-js";
 
 export default function Clock() {
     const [time, setTime] = createSignal(new Date());
     const [mode, setMode] = createSignal<"digital" | "analog">("digital");
 
+    // SEO対策：メタデータの動的挿入
     onMount(() => {
+        document.title = "リアルタイム時計 | デジタル＆アナログ時計表示";
+
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.setAttribute("name", "description");
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            "ブラウザ上で現在時刻をリアルタイムに表示するWeb時計ツールです。デジタル表示とアナログ表示を切り替えて楽しめます。",
+        );
+
+        const script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.id = "clock-jsonld";
+        script.text = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "リアルタイム時計",
+            operatingSystem: "All",
+            applicationCategory: "UtilityApplication",
+            browserRequirements: "Requires JavaScript. Requires HTML5.",
+            description:
+                "現在時刻をデジタルまたはアナログ形式で表示するシンプルなWeb時計です。",
+        });
+        document.head.appendChild(script);
+
+        // 時計のタイマー処理
         const timer = setInterval(() => setTime(new Date()), 1000);
-        onCleanup(() => clearInterval(timer));
+        onCleanup(() => {
+            clearInterval(timer);
+            const script = document.getElementById("clock-jsonld");
+            if (script) {
+                script.remove();
+            }
+        });
     });
 
     const getAngles = () => {

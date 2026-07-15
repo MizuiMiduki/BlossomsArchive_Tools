@@ -1,4 +1,11 @@
-import { createSignal, createMemo, For, Show } from "solid-js";
+import {
+    createSignal,
+    createMemo,
+    onMount,
+    onCleanup,
+    For,
+    Show,
+} from "solid-js";
 
 export default function HyperfocalCalculator() {
     const [sensorType, setSensorType] = createSignal("apsc-sony");
@@ -19,6 +26,45 @@ export default function HyperfocalCalculator() {
         { id: "medium-gfx", name: "中判 (Fujifilm GFX など)", coc: 0.038 },
         { id: "custom", name: "カスタム（自分で入力する）", coc: 0.03 },
     ];
+
+    // SEO対策：メタデータの動的挿入
+    onMount(() => {
+        document.title =
+            "過焦点距離（パンフォーカス）計算ツール | 被写界深度シミュレーター";
+
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.setAttribute("name", "description");
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            "カメラのセンサーサイズ、レンズの焦点距離、F値から過焦点距離と被写界深度（DoF）を計算するシミュレーター。パンフォーカス写真の撮影に必要なピント位置を手軽に割り出せます。",
+        );
+
+        const script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.id = "hyperfocal-jsonld";
+        script.text = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "過焦点距離・被写界深度計算ツール",
+            operatingSystem: "All",
+            applicationCategory: "UtilityApplication",
+            browserRequirements: "Requires JavaScript. Requires HTML5.",
+            description:
+                "簡単操作で被写界深度とパンフォーカス距離を算出・可視化するWebツール。",
+        });
+        document.head.appendChild(script);
+    });
+
+    onCleanup(() => {
+        const script = document.getElementById("hyperfocal-jsonld");
+        if (script) {
+            script.remove();
+        }
+    });
 
     const activeCoc = createMemo<number>(() => {
         if (sensorType() === "custom") {
@@ -53,7 +99,6 @@ export default function HyperfocalCalculator() {
     });
 
     const dofData = createMemo(() => {
-        // 型を明示的に number として抽出します
         const h = hyperfocalData().distanceM as number;
         const s = customSubjectDistance() as number;
         const f = (focalLength() / 1000) as number;
@@ -658,6 +703,89 @@ export default function HyperfocalCalculator() {
                                         </span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-8 pt-6 border-t border-base-300">
+                    <div class="card bg-base-200/50 p-6 rounded-2xl border border-base-300">
+                        <h3 class="text-sm font-bold text-base-content border-b border-base-300 pb-2 mb-4">
+                            📘 光学理論に基づく計算式
+                        </h3>
+                        <div class="space-y-6 text-xs text-base-content/85 leading-relaxed">
+                            <p>
+                                幾何光学において、過焦点距離{" "}
+                                <span class="font-mono font-bold bg-base-100 px-1.5 py-0.5 rounded border border-base-300">
+                                    H
+                                </span>{" "}
+                                は、許容錯乱円の直径を{" "}
+                                <span class="font-mono font-bold">c</span>
+                                、レンズの物理焦点距離を{" "}
+                                <span class="font-mono font-bold">f</span>
+                                、絞り値（F値）を{" "}
+                                <span class="font-mono font-bold">N</span>{" "}
+                                としたとき、以下の数式で定義されます。
+                            </p>
+
+                            <div class="bg-base-100 p-4 rounded-xl flex items-center justify-center gap-3 font-mono text-base-content border border-base-300 shadow-sm">
+                                <span class="text-sm font-bold">H = </span>
+                                <div class="flex flex-col items-center">
+                                    <span class="border-b border-base-content/60 px-2 pb-0.5">
+                                        f &sup2;
+                                    </span>
+                                    <span class="px-2 pt-0.5">N &times; c</span>
+                                </div>
+                                <span class="text-sm font-bold">+ f</span>
+                            </div>
+
+                            <p>
+                                ピント位置をこの距離{" "}
+                                <span class="font-mono font-bold bg-base-100 px-1.5 py-0.5 rounded border border-base-300">
+                                    H
+                                </span>{" "}
+                                に固定した時、合焦深度の手前側限界（近点限界{" "}
+                                <span class="font-mono font-bold">D_near</span>
+                                ）は次の値をとります。
+                            </p>
+
+                            <div class="bg-base-100 p-4 rounded-xl flex items-center justify-center gap-3 font-mono text-base-content border border-base-300 shadow-sm">
+                                <span class="text-sm font-bold">D_near = </span>
+                                <div class="flex flex-col items-center">
+                                    <span class="border-b border-base-content/60 px-2 pb-0.5">
+                                        H
+                                    </span>
+                                    <span class="px-2 pt-0.5">2</span>
+                                </div>
+                            </div>
+
+                            <p>
+                                この時、前方側は過焦点距離の半分の地点から、後方側は理論上「無限遠」までが合焦域（パンフォーカス）に収まります。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card bg-base-200/50 p-6 rounded-2xl border border-base-300">
+                        <h3 class="text-sm font-bold text-base-content border-b border-base-300 pb-2 mb-4">
+                            ❓ よくある光学の質問 (FAQ)
+                        </h3>
+                        <div class="space-y-3 text-xs leading-relaxed text-base-content/80">
+                            <div>
+                                <h4 class="font-bold text-base-content mb-1">
+                                    Q. 許容錯乱円（CoC）とは何ですか？
+                                </h4>
+                                <p>
+                                    センサー上の1点に集まるべき光が、わずかにピンボケすることで作る「ボケの円」のことです。人間の目で「ピントが合っている」と認識できる限界の大きさを指します。
+                                </p>
+                            </div>
+                            <div class="border-t border-base-300 pt-2">
+                                <h4 class="font-bold text-base-content mb-1">
+                                    Q.
+                                    小絞りボケ（回折現象）は計算に含まれますか？
+                                </h4>
+                                <p>
+                                    本ツールは幾何光学をベースに算出しているため、F値を絞り込みすぎた時の光の回折（画質低下）は考慮していません。実写の際はF8〜F11あたりが最もバランスがよくお勧めです。
+                                </p>
                             </div>
                         </div>
                     </div>

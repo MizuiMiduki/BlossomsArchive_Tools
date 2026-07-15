@@ -1,4 +1,11 @@
-import { createSignal, Show, For } from "solid-js";
+import {
+    createSignal,
+    Show,
+    For,
+    createEffect,
+    onMount,
+    onCleanup,
+} from "solid-js";
 import exifr from "exifr";
 import piexif from "piexifjs";
 
@@ -56,6 +63,45 @@ export default function ExifFrame() {
     let rawFileBase64Str: string | null = null;
     let canvasRef: HTMLCanvasElement | undefined;
     let sourceImage: HTMLImageElement | null = null;
+
+    // SEO対策：メタデータの動的挿入
+    onMount(() => {
+        document.title =
+            "Exif情報付きフレーム作成ツール | 写真編集ユーティリティ";
+
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement("meta");
+            metaDesc.setAttribute("name", "description");
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute(
+            "content",
+            "アップロードした写真に、撮影時のExif情報（絞り、シャッタースピード、焦点距離など）をフレームとして合成・生成できるWebツールです。",
+        );
+
+        const script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.id = "exif-frame-jsonld";
+        script.text = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Exifフレーム作成ツール",
+            operatingSystem: "All",
+            applicationCategory: "PhotographyApplication",
+            browserRequirements: "Requires JavaScript. Requires HTML5.",
+            description:
+                "写真にExif情報を書き込み、スタイリッシュなフレーム付き画像を生成するツールです。",
+        });
+        document.head.appendChild(script);
+    });
+
+    onCleanup(() => {
+        const script = document.getElementById("exif-frame-jsonld");
+        if (script) {
+            script.remove();
+        }
+    });
 
     const fontList = [
         {
@@ -777,6 +823,46 @@ export default function ExifFrame() {
         }
     };
 
+    // リアクティブに自動で再描画が走るように一元化するにゃん！
+    createEffect(() => {
+        if (hasImage()) {
+            // 追跡したいすべてのStateをここに並べるにゃん
+            frameColor();
+            framePosition();
+            textAlign();
+            isChekiMode();
+            selectedFont();
+            fontSizeScale();
+            imageRotation();
+            useCustomTitle();
+            customTitleLine1();
+            customTitleLine2();
+            prefixText();
+            showPrefix();
+            isAdvancedMode();
+            customFrameColor();
+            customTextColor();
+            imageBorderRadius();
+            frameStyle();
+            textPlateStyle();
+            cameraModel();
+            lensModel();
+            focalLength();
+            fNumber();
+            shutterSpeed();
+            isoValue();
+            showCamera();
+            showLens();
+            showFocal();
+            showFNumber();
+            showSpeed();
+            showIso();
+
+            // 設定が切り替わったら自動で再描画にゃん！
+            drawFrame();
+        }
+    });
+
     const handleDownload = () => {
         if (!canvasRef) return;
 
@@ -869,28 +955,27 @@ export default function ExifFrame() {
             sourceImage = img;
             setHasImage(true);
             setImageRotation(0);
-            setTimeout(() => drawFrame(), 0);
         };
         img.src = URL.createObjectURL(file);
     };
 
-    const formatShutterSpeed = (exposure: any) => {
+    const formatShutterSpeed = (exposure: any): string => {
         if (!exposure) return "";
-        if (exposure >= 1) return `${exposure}s`;
-        return `1/${Math.round(1 / exposure)}s`;
+        const expNum = Number(exposure);
+        if (isNaN(expNum)) return String(exposure);
+        if (expNum >= 1) return `${expNum}s`;
+        return `1/${Math.round(1 / expNum)}s`;
     };
 
-    const handleOptionChange = (setter: any, val: any) => {
+    // ハンドラはシンプルに値をセットするだけに綺麗にしたにゃん！
+    const handleOptionChange = (setter: (val: any) => void, val: any) => {
         setter(val);
-        drawFrame();
     };
-    const handleToggleChange = (setter: any, val: any) => {
+    const handleToggleChange = (setter: (val: any) => void, val: any) => {
         setter(val);
-        drawFrame();
     };
-    const handleTextChange = (setter: any, val: any) => {
+    const handleTextChange = (setter: (val: any) => void, val: any) => {
         setter(val);
-        drawFrame();
     };
 
     const handleFontChange = async (val: string) => {
@@ -906,15 +991,13 @@ export default function ExifFrame() {
     const handleSizeScaleChange = (val: number) => {
         setSelectedFont(selectedFont());
         setFontSizeScale(val);
-        drawFrame();
     };
     const rotateImage = () => {
         setImageRotation((prev) => (prev + 90) % 360);
-        drawFrame();
     };
 
     return (
-        <div class="h-full w-full p-4 flex flex-col gap-4">
+        <div class="h-full w-full p-4 flex flex-col gap-4 bg-base-100">
             <For each={fontList}>
                 {(f) => (
                     <link
@@ -939,12 +1022,14 @@ export default function ExifFrame() {
                             </label>
                             <Show when={hasImage()}>
                                 <button
+                                    type="button"
                                     onClick={handleDownload}
                                     class="btn btn-success text-white h-12 px-6 text-sm rounded-xl shadow-xs flex items-center justify-center gap-2 w-full"
                                 >
                                     📥 額縁付きで保存
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={rotateImage}
                                     class="btn btn-outline btn-primary btn-sm h-10 px-4 rounded-xl flex items-center justify-center gap-2 w-full border-base-300 text-xs"
                                 >
@@ -974,7 +1059,7 @@ export default function ExifFrame() {
                                                     )
                                                 }
                                                 class="radio radio-primary radio-xs"
-                                            />{" "}
+                                            />
                                             白
                                         </label>
                                         <label class="flex gap-1 items-center cursor-pointer">
@@ -991,7 +1076,7 @@ export default function ExifFrame() {
                                                     )
                                                 }
                                                 class="radio radio-primary radio-xs"
-                                            />{" "}
+                                            />
                                             黒
                                         </label>
                                     </div>
@@ -1007,7 +1092,6 @@ export default function ExifFrame() {
                                             setIsChekiMode(
                                                 e.currentTarget.checked,
                                             );
-                                            setTimeout(() => drawFrame(), 0);
                                         }}
                                         class="toggle toggle-primary toggle-xs"
                                     />
@@ -1064,7 +1148,7 @@ export default function ExifFrame() {
                                     <div class="flex flex-col gap-2 text-xs">
                                         <div class="flex flex-col gap-1">
                                             <span class="text-[10px] font-bold text-base-content/60">
-                                                📷
+                                                📸
                                                 カメラ記述（1行目・左側または上側）
                                             </span>
                                             <input
@@ -1399,31 +1483,35 @@ export default function ExifFrame() {
                                         帯の位置:
                                     </span>
                                     <div class="flex gap-2">
-                                        {[
-                                            { val: "bottom", label: "下" },
-                                            { val: "top", label: "上" },
-                                            { val: "left", label: "左" },
-                                            { val: "right", label: "右" },
-                                        ].map((pos) => (
-                                            <label class="flex gap-1 items-center cursor-pointer font-medium">
-                                                <input
-                                                    type="radio"
-                                                    name="pos"
-                                                    checked={
-                                                        framePosition() ===
-                                                        pos.val
-                                                    }
-                                                    onChange={() =>
-                                                        handleOptionChange(
-                                                            setFramePosition,
-                                                            pos.val,
-                                                        )
-                                                    }
-                                                    class="radio radio-primary radio-xs"
-                                                />{" "}
-                                                {pos.label}
-                                            </label>
-                                        ))}
+                                        <For
+                                            each={[
+                                                { val: "bottom", label: "下" },
+                                                { val: "top", label: "上" },
+                                                { val: "left", label: "左" },
+                                                { val: "right", label: "右" },
+                                            ]}
+                                        >
+                                            {(pos) => (
+                                                <label class="flex gap-1 items-center cursor-pointer font-medium">
+                                                    <input
+                                                        type="radio"
+                                                        name="pos"
+                                                        checked={
+                                                            framePosition() ===
+                                                            pos.val
+                                                        }
+                                                        onChange={() =>
+                                                            handleOptionChange(
+                                                                setFramePosition,
+                                                                pos.val,
+                                                            )
+                                                        }
+                                                        class="radio radio-primary radio-xs"
+                                                    />
+                                                    {pos.label}
+                                                </label>
+                                            )}
+                                        </For>
                                     </div>
                                 </div>
                                 <div
@@ -1438,36 +1526,43 @@ export default function ExifFrame() {
                                         文字寄せ:
                                     </span>
                                     <div class="flex gap-3">
-                                        {[
-                                            { val: "left", label: "左" },
-                                            { val: "center", label: "中央" },
-                                            { val: "right", label: "右" },
-                                        ].map((align) => (
-                                            <label class="flex gap-1 items-center cursor-pointer font-medium">
-                                                <input
-                                                    type="radio"
-                                                    name="align"
-                                                    checked={
-                                                        textAlign() ===
-                                                        align.val
-                                                    }
-                                                    onChange={() =>
-                                                        handleOptionChange(
-                                                            setTextAlign,
-                                                            align.val,
-                                                        )
-                                                    }
-                                                    class="radio radio-primary radio-xs"
-                                                    disabled={
-                                                        framePosition() ===
-                                                            "left" ||
-                                                        framePosition() ===
-                                                            "right"
-                                                    }
-                                                />{" "}
-                                                {align.label}
-                                            </label>
-                                        ))}
+                                        <For
+                                            each={[
+                                                { val: "left", label: "左" },
+                                                {
+                                                    val: "center",
+                                                    label: "中央",
+                                                },
+                                                { val: "right", label: "右" },
+                                            ]}
+                                        >
+                                            {(align) => (
+                                                <label class="flex gap-1 items-center cursor-pointer font-medium">
+                                                    <input
+                                                        type="radio"
+                                                        name="align"
+                                                        checked={
+                                                            textAlign() ===
+                                                            align.val
+                                                        }
+                                                        onChange={() =>
+                                                            handleOptionChange(
+                                                                setTextAlign,
+                                                                align.val,
+                                                            )
+                                                        }
+                                                        class="radio radio-primary radio-xs"
+                                                        disabled={
+                                                            framePosition() ===
+                                                                "left" ||
+                                                            framePosition() ===
+                                                                "right"
+                                                        }
+                                                    />
+                                                    {align.label}
+                                                </label>
+                                            )}
+                                        </For>
                                     </div>
                                 </div>
                             </div>
@@ -1522,27 +1617,35 @@ export default function ExifFrame() {
                                     保存形式:
                                 </span>
                                 <div class="flex gap-2">
-                                    {[
-                                        "image/jpeg",
-                                        "image/png",
-                                        "image/webp",
-                                    ].map((fmt) => (
-                                        <label class="flex gap-1 text-[11px] items-center cursor-pointer font-semibold">
-                                            <input
-                                                type="radio"
-                                                name="fmt"
-                                                checked={saveFormat() === fmt}
-                                                onChange={() =>
-                                                    handleOptionChange(
-                                                        setSaveFormat,
-                                                        fmt,
-                                                    )
-                                                }
-                                                class="radio radio-primary radio-xs"
-                                            />{" "}
-                                            {fmt.split("/")[1].toUpperCase()}
-                                        </label>
-                                    ))}
+                                    <For
+                                        each={[
+                                            "image/jpeg",
+                                            "image/png",
+                                            "image/webp",
+                                        ]}
+                                    >
+                                        {(fmt) => (
+                                            <label class="flex gap-1 text-[11px] items-center cursor-pointer font-semibold">
+                                                <input
+                                                    type="radio"
+                                                    name="fmt"
+                                                    checked={
+                                                        saveFormat() === fmt
+                                                    }
+                                                    onChange={() =>
+                                                        handleOptionChange(
+                                                            setSaveFormat,
+                                                            fmt,
+                                                        )
+                                                    }
+                                                    class="radio radio-primary radio-xs"
+                                                />
+                                                {fmt
+                                                    .split("/")[1]
+                                                    .toUpperCase()}
+                                            </label>
+                                        )}
+                                    </For>
                                 </div>
                             </div>
                             <div class="form-control border-t border-base-300 pt-2 text-base-content">
@@ -1666,7 +1769,6 @@ export default function ExifFrame() {
                                                         e.currentTarget.value,
                                                     ),
                                                 );
-                                                drawFrame();
                                             }}
                                             class="range range-secondary range-xs mt-1"
                                         />
@@ -1778,6 +1880,7 @@ export default function ExifFrame() {
                             }
                         >
                             <button
+                                type="button"
                                 onClick={() => setIsMaximized(true)}
                                 class="absolute top-4 right-4 btn btn-sm bg-slate-900/80 text-white border-none hover:bg-slate-900 shadow-md z-10 px-3 rounded-lg text-xs h-9"
                             >
@@ -1802,6 +1905,7 @@ export default function ExifFrame() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
+                            type="button"
                             onClick={() => setIsMaximized(false)}
                             class="btn btn-circle btn-outline border-white/40 text-white"
                         >
@@ -1854,6 +1958,7 @@ export default function ExifFrame() {
                         </div>
 
                         <button
+                            type="button"
                             onClick={() => setShowMobileSaveModal(false)}
                             class="btn btn-primary text-white w-full h-11 text-xs rounded-xl shadow-xs mt-1"
                         >

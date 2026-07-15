@@ -1,3 +1,4 @@
+// src/components/Layout.tsx
 import { JSX, For, createEffect, createSignal } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { createScriptLoader } from "@solid-primitives/script-loader";
@@ -12,8 +13,10 @@ export default function Layout(props: LayoutProps) {
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = createSignal(false);
 
-    const initialPcMenuState = localStorage.getItem("isPcMenuOpen") !== "false";
-    const [isPcMenuOpen, setIsPcMenuOpen] = createSignal(initialPcMenuState);
+    // デフォルトで表示するために初期値を true に設定
+    const [isPcMenuOpen, setIsPcMenuOpen] = createSignal(
+        localStorage.getItem("isPcMenuOpen") !== "false",
+    );
     const [isPcMenuHovered, setIsPcMenuHovered] = createSignal(false);
 
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
@@ -27,15 +30,11 @@ export default function Layout(props: LayoutProps) {
 
     const handleMouseEnter = () => {
         if (hoverTimeout) clearTimeout(hoverTimeout);
-        if (!isPcMenuOpen()) {
-            setIsPcMenuHovered(true);
-        }
+        if (!isPcMenuOpen()) setIsPcMenuHovered(true);
     };
 
     const handleMouseLeave = () => {
-        hoverTimeout = window.setTimeout(() => {
-            setIsPcMenuHovered(false);
-        }, 200);
+        hoverTimeout = window.setTimeout(() => setIsPcMenuHovered(false), 200);
     };
 
     const gaTag = gaId
@@ -72,13 +71,11 @@ export default function Layout(props: LayoutProps) {
 
     createEffect(() => {
         const baseTitle = "BlossomsArchive Tools";
-        const currentPageTitle = getHeaderTitle();
         const fullTitle =
             location.pathname === "/"
                 ? baseTitle
-                : `${currentPageTitle} | ${baseTitle}`;
+                : `${getHeaderTitle()} | ${baseTitle}`;
         document.title = fullTitle;
-
         if (gaId && (window as any).gtag) {
             (window as any).gtag("config", gaId, {
                 page_path: location.pathname,
@@ -87,18 +84,10 @@ export default function Layout(props: LayoutProps) {
         }
     });
 
-    const getPcClasses = () => {
-        if (isPcMenuOpen()) {
-            return "lg:static lg:translate-x-0 lg:w-64 lg:p-6 lg:opacity-100 lg:border-r lg:border-base-300 pointer-events-auto";
-        }
-        if (isPcMenuHovered()) {
-            return "lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:translate-x-0 lg:w-64 lg:p-6 lg:opacity-100 lg:bg-base-100 lg:border-r lg:border-base-300 lg:shadow-xl pointer-events-auto";
-        }
-        return "lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:-translate-x-full lg:w-64 lg:p-6 lg:opacity-0 lg:border-r-0 overflow-hidden pointer-events-none";
-    };
-
     return (
-        <div class="min-h-screen bg-base-200 flex overflow-x-hidden">
+        <div
+            class={`min-h-screen bg-base-200 flex overflow-x-hidden ${isPcMenuOpen() ? "lg:pl-64" : ""}`}
+        >
             {gaTag}
             {adsenseTag}
 
@@ -112,7 +101,13 @@ export default function Layout(props: LayoutProps) {
                     isMenuOpen()
                         ? "translate-x-0 w-64"
                         : "-translate-x-full w-64"
-                } ${getPcClasses()}`}
+                } lg:transition-none ${
+                    isPcMenuOpen()
+                        ? "lg:translate-x-0 lg:w-64"
+                        : isPcMenuHovered()
+                          ? "lg:translate-x-0 lg:w-64 lg:shadow-xl lg:z-30"
+                          : "lg:-translate-x-full lg:w-64"
+                }`}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
             >
@@ -121,22 +116,20 @@ export default function Layout(props: LayoutProps) {
                         <div class="flex items-center gap-3">
                             <img
                                 src="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05-32x32.png"
-                                alt="Blossoms Logo"
-                                class="w-8 h-8 rounded-full object-cover border border-base-300"
+                                alt="Logo"
+                                class="w-8 h-8 rounded-full border border-base-300"
                             />
                             <span class="font-bold whitespace-nowrap">
                                 BA Tools
                             </span>
                         </div>
-
                         <button
                             type="button"
-                            class="hidden lg:flex btn btn-ghost btn-xs btn-square text-slate-400 hover:text-slate-700"
+                            class="hidden lg:flex btn btn-ghost btn-xs btn-square"
                             onClick={() => {
                                 setIsPcMenuOpen(false);
                                 setIsPcMenuHovered(false);
                             }}
-                            title="メニューを折りたたむ"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -160,7 +153,7 @@ export default function Layout(props: LayoutProps) {
                                 {(route) => (
                                     <a
                                         href={route.path}
-                                        class={`block py-2 px-4 rounded-lg font-medium transition-all ${
+                                        class={`block py-2 px-4 rounded-lg font-medium transition-colors ${
                                             location.pathname === route.path
                                                 ? "bg-primary text-white"
                                                 : "hover:bg-base-200"
@@ -171,18 +164,11 @@ export default function Layout(props: LayoutProps) {
                                 )}
                             </For>
                         </div>
-
-                        <footer class="text-center pt-8 pb-4 opacity-60 space-y-1 mt-auto">
-                            <a
-                                href="/privacy"
-                                class="block text-sm hover:underline"
-                            >
+                        <footer class="text-center pt-8 pb-4 opacity-60 text-sm">
+                            <a href="/privacy" class="block hover:underline">
                                 プライバシーポリシー
                             </a>
-                            <a
-                                href="/credits"
-                                class="block text-sm hover:underline"
-                            >
+                            <a href="/credits" class="block hover:underline">
                                 使用ライブラリ
                             </a>
                             <p class="text-xs mt-2">© BlossomsArchive</p>
@@ -191,27 +177,22 @@ export default function Layout(props: LayoutProps) {
                 </div>
             </aside>
 
-            <div class="flex-1 flex flex-col min-w-0">
+            <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden transition-all duration-300">
                 <header class="h-16 bg-base-100/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-10 flex items-center px-4 lg:px-8 shadow-sm justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <button
                             class={`btn btn-ghost btn-square ${isPcMenuOpen() ? "lg:hidden" : "flex"}`}
                             onClick={() => {
-                                if (window.innerWidth >= 1024) {
+                                if (window.innerWidth >= 1024)
                                     setIsPcMenuOpen(true);
-                                } else {
-                                    setIsMenuOpen(!isMenuOpen());
-                                }
+                                else setIsMenuOpen(!isMenuOpen());
                             }}
-                            onMouseEnter={handleMouseEnter}
-                            onMouseLeave={handleMouseLeave}
-                            title="メニューを開く"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="none"
                                 viewBox="0 0 24 24"
-                                class="inline-block w-6 h-6 stroke-current"
+                                class="w-6 h-6 stroke-current"
                             >
                                 <path
                                     stroke-linecap="round"
@@ -221,17 +202,16 @@ export default function Layout(props: LayoutProps) {
                                 ></path>
                             </svg>
                         </button>
-
                         <span class="font-bold text-lg">
                             {getHeaderTitle()}
                         </span>
                     </div>
-
-                    <div class="w-10">
-                        <ThemeToggle />
-                    </div>
+                    <ThemeToggle />
                 </header>
-                <main class="flex-1 p-4 lg:p-8">{props.children}</main>
+
+                <main class="flex-1 overflow-y-auto">
+                    <div class="p-4 lg:p-8">{props.children}</div>
+                </main>
             </div>
         </div>
     );
