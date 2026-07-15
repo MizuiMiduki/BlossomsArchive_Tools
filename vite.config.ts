@@ -10,9 +10,14 @@ export default defineConfig({
         devtools(),
         solidPlugin(),
         tailwindcss(),
+        // vite.config.ts
         sitemap({
             hostname: "https://tools.blossomsarchive.com",
-            routes: routes.map((r) => r.path),
+            routes: routes.map((r) => ({
+                url: r.path,
+                changefreq: "daily",
+                priority: 0.7,
+            })),
         } as any),
     ],
     server: {
@@ -22,11 +27,3 @@ export default defineConfig({
         target: "esnext",
     },
 });
-
-// vite.config.ts の末尾に追加にゃ！
-console.log("=== [DEBUG] routesの型:", typeof routes);
-console.log("=== [DEBUG] routesの長さ:", routes.length);
-console.log(
-    "=== [DEBUG] routesのパス一覧:",
-    routes.map((r) => r.path),
-);
