@@ -44,4 +44,9 @@ export const routes = [
         title: "時計",
         description: "現在時刻をデジタルとアナログで表示します",
     },
+    {
+        path: "/hyperfocal",
+        title: "過焦点距離計算",
+        description: "パンフォーカスに最適な過焦点距離を計算します",
+    },
 ];

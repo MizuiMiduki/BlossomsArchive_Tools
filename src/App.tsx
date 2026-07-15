@@ -13,6 +13,7 @@ import Clock from "./pages/Clock";
 import TimerStopwatch from "./pages/TimerStopwatch";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Credits from "./pages/Credits";
+import HyperfocalCalculator from "./pages/Hyperfocal";
 
 function App() {
     return (
@@ -29,6 +30,7 @@ function App() {
             <Route path="/timer" component={TimerStopwatch} />
             <Route path="/privacy" component={PrivacyPolicy} />
             <Route path="/credits" component={Credits} />
+            <Route path="/hyperfocal" component={HyperfocalCalculator} />
         </Router>
     );
 }
