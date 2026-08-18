@@ -79,6 +79,56 @@ export default function Credits() {
                 ))}
             </div>
 
+            <h2 class="text-2xl font-bold pt-4">使用アイコン</h2>
+
+            <div class="space-y-3">
+                <div class="card bg-base-100 border border-base-300 shadow-sm">
+                    <div class="card-body p-4 flex-row items-center justify-between">
+                        <a
+                            href="https://github.com/simple-icons/simple-icons"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="font-medium text-primary hover:underline"
+                        >
+                            Simple Icons
+                        </a>
+                        <span class="badge badge-outline badge-sm shrink-0">
+                            CC0 1.0 License
+                        </span>
+                    </div>
+                </div>
+                <div class="card bg-base-100 border border-base-300 shadow-sm">
+                    <div class="card-body p-4 flex-row items-center justify-between">
+                        <a
+                            href="https://misskey-hub.net/about/assets/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="font-medium text-primary hover:underline"
+                        >
+                            Misskey Logo
+                        </a>
+                        <span class="badge badge-outline badge-sm shrink-0">
+                            CC BY-SA License
+                        </span>
+                    </div>
+                </div>
+                <div class="card bg-base-100 border border-base-300 shadow-sm">
+                    <div class="card-body p-4 flex-row items-center justify-between">
+                        <a
+                            href="https://github.com/mastodon/mastodon"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="font-medium text-primary hover:underline"
+                        >
+                            Mastodon Logo
+                        </a>
+                        <span class="badge badge-outline badge-sm shrink-0">
+                            AGPL-3.0 License
+                        </span>
+                    </div>
+                </div>
+            </div>
+
             <div class="pt-4 border-t border-base-200">
                 <a href="/" class="btn btn-outline">
                     トップへ戻る
