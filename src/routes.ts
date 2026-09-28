@@ -57,6 +57,11 @@ export const routes: Route[] = [
         description: "パンフォーカスに最適な過焦点距離を計算します",
     },
     {
+        path: "/headphone-driveability",
+        title: "イヤホン・ヘッドホンの鳴らしやすさ",
+        description: "インピーダンスと音圧感度から必要な出力を見積もります",
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         hidden: true,
