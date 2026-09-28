@@ -15,6 +15,7 @@ import TimerStopwatch from "./pages/TimerStopwatch";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Credits from "./pages/Credits";
 import HyperfocalCalculator from "./pages/Hyperfocal";
+import HeadphoneDriveability from "./pages/HeadphoneDriveability";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -34,6 +35,10 @@ function App() {
                 <Route path="/privacy" component={PrivacyPolicy} />
                 <Route path="/credits" component={Credits} />
                 <Route path="/hyperfocal" component={HyperfocalCalculator} />
+                <Route
+                    path="/headphone-driveability"
+                    component={HeadphoneDriveability}
+                />
                 <Route path="*" component={NotFound} />
             </Router>
         </MetaProvider>
