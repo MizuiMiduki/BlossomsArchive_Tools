@@ -24,13 +24,13 @@ function App() {
             <Router root={Layout}>
                 <Route path="/" component={Home} />
                 <Route path="/calculator" component={Calculator} />
-                <Route path="/qr" component={QrGenerator} />
+                <Route path="/qr_code" component={QrGenerator} />
                 <Route
                     path="/password-generator"
                     component={PasswordGenerator}
                 />
                 <Route path="/lottery" component={Lottery} />
-                <Route path="/image-conversion" component={ImageConverter} />
+                <Route path="/image_conversion" component={ImageConverter} />
                 <Route path="/access-info" component={AccessInfo} />
                 <Route path="/exif-frame" component={ExifFrameGenerator} />
                 <Route path="/clock" component={Clock} />
