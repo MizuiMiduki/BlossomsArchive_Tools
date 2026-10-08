@@ -4,6 +4,12 @@ on:
     pull_request:
         types: [opened, synchronize, reopened]
     workflow_dispatch:
+        inputs:
+            bypass_minimum_release_age:
+                description: "Temporarily bypass pnpm's minimum release age check for this run"
+                type: boolean
+                required: false
+                default: false
 
 permissions:
     contents: write
@@ -26,7 +32,12 @@ jobs:
               uses: pnpm/action-setup@v4
 
             - name: Install dependencies
+              if: github.event_name != 'workflow_dispatch' || !inputs.bypass_minimum_release_age
               run: pnpm install --frozen-lockfile
+
+            - name: Install dependencies (temporary policy bypass)
+              if: github.event_name == 'workflow_dispatch' && inputs.bypass_minimum_release_age
+              run: pnpm install --frozen-lockfile --config.minimum-release-age=0
 
             - name: Determine changed files
               id: changed-files
