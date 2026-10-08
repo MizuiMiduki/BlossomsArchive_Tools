@@ -27,7 +27,7 @@ export const routes: Route[] = [
         description: "URLやテキストからQRコードを作成できる無料ツールです。",
     },
     {
-        path: "/password",
+        path: "/password-generator",
         title: "パスワード生成",
         description:
             "安全性の高いパスワードを条件に合わせて生成できる無料ツールです。",
