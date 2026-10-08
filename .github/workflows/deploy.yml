@@ -5,6 +5,12 @@ on:
         branches:
             - main
     workflow_dispatch:
+        inputs:
+            今回のみ待機時間チェックを省略:
+                description: "選択すると、この実行に限り公開後の待機時間チェックを省略します"
+                type: boolean
+                required: false
+                default: false
 
 permissions:
     contents: read
@@ -24,14 +30,20 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
 
-            - name: Install dependencies and Build
+            - name: Install dependencies
+              if: github.event_name != 'workflow_dispatch' || !inputs['今回のみ待機時間チェックを省略']
+              run: pnpm install --frozen-lockfile
+
+            - name: Install dependencies (temporary policy bypass)
+              if: github.event_name == 'workflow_dispatch' && inputs['今回のみ待機時間チェックを省略']
+              run: pnpm install --frozen-lockfile --config.minimum-release-age=0
+
+            - name: Build
               env:
                   VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
                   VITE_ADSENSE_CLIENT_ID: ${{ secrets.VITE_ADSENSE_CLIENT_ID }}
                   VITE_ADSENSE_DEFAULT_SLOT: ${{ secrets.VITE_ADSENSE_DEFAULT_SLOT }}
-              run: |
-                  pnpm install --frozen-lockfile
-                  pnpm run build
+              run: pnpm run build
 
             - name: Deploy via FTP
               uses: SamKirkland/FTP-Deploy-Action@v4.3.5
