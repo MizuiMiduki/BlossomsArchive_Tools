@@ -3,6 +3,9 @@
     RewriteEngine On
     RewriteBase /
 
+    # 旧URLをpagesのない正規URLへ恒久リダイレクト
+    RewriteRule ^pages/(.*)$ /$1 [R=301,L]
+
     # 実際に存在するファイルへのリクエストはそのまま通す
     RewriteCond %{REQUEST_FILENAME} !-f
     # 実際に存在するディレクトリへのリクエストはそのまま通す
