@@ -25,7 +25,10 @@ function App() {
                 <Route path="/" component={Home} />
                 <Route path="/calculator" component={Calculator} />
                 <Route path="/qr" component={QrGenerator} />
-                <Route path="/password" component={PasswordGenerator} />
+                <Route
+                    path="/password-generator"
+                    component={PasswordGenerator}
+                />
                 <Route path="/lottery" component={Lottery} />
                 <Route path="/image-conversion" component={ImageConverter} />
                 <Route path="/access-info" component={AccessInfo} />
