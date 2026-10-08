@@ -2,6 +2,7 @@ allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true
 overrides:
+  source-map-js: ^1.2.2
   seroval: '^1.6.2'
   undici: 8.11.x
 packages:
