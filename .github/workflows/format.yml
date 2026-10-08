@@ -5,8 +5,8 @@ on:
         types: [opened, synchronize, reopened]
     workflow_dispatch:
         inputs:
-            bypass_minimum_release_age:
-                description: "Temporarily bypass pnpm's minimum release age check for this run"
+            今回のみ待機時間チェックを省略:
+                description: "選択すると、この実行に限り公開後の待機時間チェックを省略します"
                 type: boolean
                 required: false
                 default: false
@@ -32,11 +32,11 @@ jobs:
               uses: pnpm/action-setup@v4
 
             - name: Install dependencies
-              if: github.event_name != 'workflow_dispatch' || !inputs.bypass_minimum_release_age
+              if: github.event_name != 'workflow_dispatch' || !inputs['今回のみ待機時間チェックを省略']
               run: pnpm install --frozen-lockfile
 
             - name: Install dependencies (temporary policy bypass)
-              if: github.event_name == 'workflow_dispatch' && inputs.bypass_minimum_release_age
+              if: github.event_name == 'workflow_dispatch' && inputs['今回のみ待機時間チェックを省略']
               run: pnpm install --frozen-lockfile --config.minimum-release-age=0
 
             - name: Determine changed files
