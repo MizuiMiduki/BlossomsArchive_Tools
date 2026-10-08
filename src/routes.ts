@@ -22,7 +22,7 @@ export const routes: Route[] = [
             "計算履歴を確認しながら使える、シンプルな無料Web電卓です。",
     },
     {
-        path: "/qr",
+        path: "/qr_code",
         title: "QRコード生成",
         description: "URLやテキストからQRコードを作成できる無料ツールです。",
     },
@@ -38,7 +38,7 @@ export const routes: Route[] = [
         description: "名前や項目からランダムに抽選できる無料ツールです。",
     },
     {
-        path: "/image-conversion",
+        path: "/image_conversion",
         title: "画像形式変換",
         description: "画像ファイルを別の形式に変換できる無料ツールです。",
     },
