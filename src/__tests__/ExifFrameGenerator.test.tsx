@@ -113,6 +113,16 @@ describe("ExifFrameGenerator", () => {
         const anchorCalls = createElementSpy.mock.calls.filter((call) => call[0] === "a");
         expect(anchorCalls.length).toBe(0);
 
+        // 1回目のダウンロードボタン押下で a タグが生成されクリックされること
+        fireEvent.click(downloadLink);
+        const anchorCallsAfterClick1 = createElementSpy.mock.calls.filter((call) => call[0] === "a");
+        expect(anchorCallsAfterClick1.length).toBe(1);
+
+        // 2回目のダウンロードボタン押下でも再度 a タグが生成されクリックされること（スマホ等の2回目不具合防止）
+        fireEvent.click(downloadLink);
+        const anchorCallsAfterClick2 = createElementSpy.mock.calls.filter((call) => call[0] === "a");
+        expect(anchorCallsAfterClick2.length).toBe(2);
+
         globalThis.Image = origImage;
     });
 

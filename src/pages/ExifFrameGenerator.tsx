@@ -1322,6 +1322,44 @@ export default function ExifFrame() {
         setShowMobileSaveModal(true);
     };
 
+    const dataUrlToBlob = (dataUrl: string): Blob => {
+        const parts = dataUrl.split(",");
+        const mimeMatch = parts[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+        const bstr = atob(parts[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
+    };
+
+    const handleDownload = (e: MouseEvent) => {
+        const dataUrl = downloadImageSrc();
+        const fileName = downloadFileName();
+        if (!dataUrl) return;
+
+        try {
+            const blob = dataUrlToBlob(dataUrl);
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+            }, 1000);
+            e.preventDefault();
+        } catch (err) {
+            console.error("Failed to download via Blob:", err);
+            // エラー時は通常のリンクナビゲーションにフォールバック
+        }
+    };
+
+
     const handleFileChange = async (e: Event) => {
         const target = e.target as HTMLInputElement;
         if (!target.files || target.files.length === 0) return;
@@ -2879,12 +2917,13 @@ export default function ExifFrame() {
                             <img
                                 src={downloadImageSrc()}
                                 alt="Generated masterpiece"
-                                class="max-w-full max-h-[55vh] object-contain shadow-md rounded-xs select-none"
+                                class="max-w-full max-h-[55vh] object-contain shadow-md rounded-xs"
                             />
                         </div>
                         <a
                             href={downloadImageSrc()}
                             download={downloadFileName()}
+                            onClick={handleDownload}
                             class="btn btn-success text-white w-full h-11 text-xs rounded-xl shadow-xs flex items-center justify-center gap-1 font-bold text-sm"
                         >
                             📥 画像をダウンロードする
@@ -2899,8 +2938,7 @@ export default function ExifFrame() {
                                     try {
                                         const dataUrl = downloadImageSrc();
                                         const fileName = downloadFileName();
-                                        const res = await fetch(dataUrl);
-                                        const blob = await res.blob();
+                                        const blob = dataUrlToBlob(dataUrl);
                                         const file = new File([blob], fileName, { type: blob.type });
                                         if ((navigator as any).canShare({ files: [file] })) {
                                             await navigator.share({
