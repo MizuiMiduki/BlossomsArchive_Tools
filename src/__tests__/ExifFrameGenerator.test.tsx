@@ -46,6 +46,23 @@ describe("ExifFrameGenerator", () => {
         render(() => <ExifFrame />);
         expect(screen.getByText("📁 写真を選択する")).toBeInTheDocument();
         expect(screen.queryByText("✨ 額縁付き画像を生成")).not.toBeInTheDocument();
+        expect(screen.getByText("⚡ 区切り文字")).toBeInTheDocument();
+    });
+
+    it("区切り文字プリセットの選択および自由入力の切り替えができること", () => {
+        render(() => <ExifFrame />);
+        const slashBtn = screen.getByTitle("スラッシュ ( / )");
+        expect(slashBtn).toBeInTheDocument();
+        fireEvent.click(slashBtn);
+
+        const customBtn = screen.getByTitle("自由入力");
+        expect(customBtn).toBeInTheDocument();
+        fireEvent.click(customBtn);
+
+        const customInput = screen.getByPlaceholderText("例: // や , など") as HTMLInputElement;
+        expect(customInput).toBeInTheDocument();
+        fireEvent.input(customInput, { target: { value: " // " } });
+        expect(customInput.value).toBe(" // ");
     });
 
     it("画像アップロード後に生成ボタンが表示されること", async () => {

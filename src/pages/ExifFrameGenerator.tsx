@@ -56,6 +56,26 @@ export default function ExifFrame() {
     const [showSpeed, setShowSpeed] = createSignal(true);
     const [showIso, setShowIso] = createSignal(true);
 
+    const [separatorType, setSeparatorType] = createSignal(" | ");
+    const [customSeparator, setCustomSeparator] = createSignal(" | ");
+
+    const separatorPresets = [
+        { label: "パイプ ( | )", value: " | ", display: "|" },
+        { label: "スラッシュ ( / )", value: " / ", display: "/" },
+        { label: "ドット ( · )", value: " · ", display: "·" },
+        { label: "丸点 ( • )", value: " • ", display: "•" },
+        { label: "ハイフン ( - )", value: " - ", display: "-" },
+        { label: "スペース (空白)", value: "   ", display: "␣" },
+        { label: "自由入力", value: "custom", display: "自由" },
+    ];
+
+    const getSeparator = () => {
+        if (separatorType() === "custom") {
+            return customSeparator();
+        }
+        return separatorType();
+    };
+
     const [selectedFont, setSelectedFont] = createSignal(
         "'Noto Sans JP', sans-serif",
     );
@@ -484,12 +504,13 @@ export default function ExifFrame() {
             textLine1Main = customTitleLine1().trim();
             textLine2 = customTitleLine2().trim();
         } else {
+            const sep = getSeparator();
             textLine1Main = [
                 showCamera() ? cameraModel().trim() : "",
                 showLens() ? lensModel().trim() : "",
             ]
                 .filter(Boolean)
-                .join(" | ");
+                .join(sep);
 
             textLine2 = [
                 showFocal() && focalLength() ? `${focalLength()}mm` : "",
@@ -498,7 +519,7 @@ export default function ExifFrame() {
                 showIso() && isoValue() ? `ISO ${isoValue()}` : "",
             ]
                 .filter(Boolean)
-                .join(" | ");
+                .join(sep);
         }
 
         let tColor = frameColor() === "white" ? "#222222" : "#e2e8f0";
@@ -1274,6 +1295,8 @@ export default function ExifFrame() {
             showFNumber();
             showSpeed();
             showIso();
+            separatorType();
+            customSeparator();
 
             // 設定が切り替わったら自動で再描画にゃん！
             drawFrame();
@@ -1464,7 +1487,7 @@ export default function ExifFrame() {
         const parts = [];
         if (showCamera() && cameraModel()) parts.push(cameraModel());
         if (showLens() && lensModel()) parts.push(lensModel());
-        const mainStr = parts.join(" ");
+        const mainStr = parts.join(getSeparator());
         return (showPrefix() ? prefixText() : "") + mainStr || "Camera Model";
     };
 
@@ -1475,7 +1498,7 @@ export default function ExifFrame() {
         if (showFNumber() && fNumber()) parts.push(`f/${fNumber()}`);
         if (showSpeed() && shutterSpeed()) parts.push(shutterSpeed());
         if (showIso() && isoValue()) parts.push(`ISO${isoValue()}`);
-        return parts.join(" ") || "50mm f/2.8";
+        return parts.join(getSeparator()) || "50mm f/2.8";
     };
 
     const getMiniBgColor = () => {
@@ -1697,6 +1720,65 @@ export default function ExifFrame() {
                                             class="input input-bordered input-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
                                         />
                                     </div>
+                                </div>
+                            </Show>
+
+                            <Show when={!useCustomTitle()}>
+                                <div class="flex flex-col gap-1.5 bg-base-100 p-3 rounded-lg border border-base-300 text-xs">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-base-content text-[11px] flex items-center gap-1">
+                                            ⚡ 区切り文字
+                                        </span>
+                                        <span class="text-[9px] text-base-content/50 font-medium">
+                                            Exifパラメータ間の区切り記号
+                                        </span>
+                                    </div>
+                                    <div class="grid grid-cols-4 sm:grid-cols-7 gap-1 mt-1">
+                                        <For each={separatorPresets}>
+                                            {(item) => {
+                                                const isSelected = () =>
+                                                    separatorType() === item.value;
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleOptionChange(
+                                                                setSeparatorType,
+                                                                item.value,
+                                                            )
+                                                        }
+                                                        class={`h-8 px-1 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
+                                                            isSelected()
+                                                                ? "border-primary bg-primary text-white shadow-xs scale-[0.98]"
+                                                                : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content/80"
+                                                        }`}
+                                                        title={item.label}
+                                                    >
+                                                        {item.display}
+                                                    </button>
+                                                );
+                                            }}
+                                        </For>
+                                    </div>
+                                    <Show when={separatorType() === "custom"}>
+                                        <div class="flex items-center gap-2 mt-1.5 animate-fade-in">
+                                            <span class="text-[10px] text-base-content/60 font-bold whitespace-nowrap">
+                                                任意の区切り文字:
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={customSeparator()}
+                                                onInput={(e) =>
+                                                    handleTextChange(
+                                                        setCustomSeparator,
+                                                        e.currentTarget.value,
+                                                    )
+                                                }
+                                                class="input input-bordered input-xs flex-1 bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                                placeholder="例:  //  や  ,  など"
+                                            />
+                                        </div>
+                                    </Show>
                                 </div>
                             </Show>
 
