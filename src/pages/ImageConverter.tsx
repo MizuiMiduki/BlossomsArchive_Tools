@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup, Show } from "solid-js";
 import AdSense from "../components/AdSense";
+import BudouX from "../components/BudouX";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function ImageConverter() {
@@ -115,15 +116,13 @@ export default function ImageConverter() {
                     {/* ヘッダーセクション */}
                     <div class="mb-8 border-b border-slate-200 pb-5">
                         <h1 class="text-2xl md:text-3xl font-black text-slate-800">
-                            画像形式変換ツール
+                            <BudouX text="画像形式変換ツール" />
                         </h1>
-                        <p class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
-                            JPEG, PNG,
-                            WebP形式の画像を、お好みの拡張子に変換します。
-                            すべての画像リサイズ・変換処理は
-                            <strong>Canvas API（クライアントサイド）</strong>
-                            を介して実行され、アップロード通信なしで瞬時に処理されます。
-                        </p>
+                        <BudouX
+                            as="p"
+                            class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed"
+                            text="JPEG, PNG, WebP形式の画像を、お好みの拡張子に変換します。すべての画像リサイズ・変換処理は Canvas API（クライアントサイド）を介して実行され、アップロード通信なしで瞬時に処理されます。"
+                        />
                     </div>
 
                     {/* グリッドレイアウト */}

@@ -1,5 +1,6 @@
 import { createSignal, Show, onMount, onCleanup } from "solid-js";
 import AdSense from "../components/AdSense";
+import BudouX from "../components/BudouX";
 import { delayedCall, playPageEntrance, animateFadeIn, animatePop } from "../utils/gsapAnimations";
 
 interface IpData {
@@ -291,9 +292,11 @@ IPアドレス: ${data.ip}
             <div class="card bg-base-100 shadow-xl p-4 sm:p-8 w-full border border-base-300">
                 <Show when={!hasFetched() && !loading()}>
                     <div class="flex flex-col items-center justify-center py-12 sm:py-16 gap-4 text-center">
-                        <p class="text-base-content/70 font-medium text-sm sm:text-lg">
-                            ボタンを押すと、現在のネットワークや端末環境を解析します。
-                        </p>
+                        <BudouX
+                            as="p"
+                            class="text-base-content/70 font-medium text-sm sm:text-lg"
+                            text="ボタンを押すと、現在のネットワークや端末環境を解析します。"
+                        />
                         <button
                             onClick={(e) => {
                                 animatePop(e.currentTarget, 0.95, 0.15);

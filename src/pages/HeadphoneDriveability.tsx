@@ -1,5 +1,6 @@
 import { createMemo, createSignal, onCleanup, onMount, Show } from "solid-js";
 import AdSense from "../components/AdSense";
+import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/gsapAnimations";
 
 function formatRange(min: number, max: number, digits: number, unit: string) {
@@ -159,11 +160,13 @@ export default function HeadphoneDriveability() {
                         Audio utility
                     </p>
                     <h1 class="mt-1 text-2xl font-black text-base-content sm:text-3xl">
-                        イヤホン・ヘッドホンの鳴らしやすさ
+                        <BudouX text="イヤホン・ヘッドホンの鳴らしやすさ" />
                     </h1>
-                    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-base-content/70">
-                        インピーダンスと音圧感度から、目標音圧に必要な出力電圧・電流・電力を見積もります。
-                    </p>
+                    <BudouX
+                        as="p"
+                        class="mt-3 max-w-3xl text-sm leading-relaxed text-base-content/70"
+                        text="インピーダンスと音圧感度から、目標音圧に必要な出力電圧・電流・電力を見積もります。"
+                    />
                 </header>
 
                 <div class="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)]">

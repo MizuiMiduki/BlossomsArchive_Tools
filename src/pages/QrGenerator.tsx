@@ -2,6 +2,7 @@
 import { createSignal, onMount, onCleanup, Show, For } from "solid-js";
 import QRCode from "qrcode";
 import AdSense from "../components/AdSense";
+import BudouX from "../components/BudouX";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 // ボタンオプション用の型を定義して TypeScript に型を教えます
@@ -152,12 +153,13 @@ export default function QrGenerator() {
                     {/* ヘッダーセクション */}
                     <div class="mb-8 border-b border-slate-200 pb-5">
                         <h1 class="text-2xl md:text-3xl font-black text-slate-800">
-                            QRコード作成・生成ツール
+                            <BudouX text="QRコード作成・生成ツール" />
                         </h1>
-                        <p class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
-                            WebサイトのURLや任意のテキストから、高品質なQRコードをブラウザ内で瞬時に作成します。
-                            高解像度PNGに加え、拡大しても画質が荒れないベクター（SVG）出力に対応しています。
-                        </p>
+                        <BudouX
+                            as="p"
+                            class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed"
+                            text="WebサイトのURLや任意のテキストから、高品質なQRコードをブラウザ内で瞬時に作成します。高解像度PNGに加え、拡大しても画質が荒れないベクター（SVG）出力に対応しています。"
+                        />
                     </div>
 
                     {/* 2カラムレイアウト */}

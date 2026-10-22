@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
+import BudouX from "../components/BudouX";
 import {
     delayedCall,
     playPageEntrance,
@@ -191,12 +192,13 @@ export default function Lottery() {
                     {/* ヘッダーセクション */}
                     <div class="mb-8 border-b border-slate-200 pb-5">
                         <h1 class="text-2xl md:text-3xl font-black text-slate-800">
-                            抽選・ランダム選定ツール
+                            <BudouX text="抽選・ランダム選定ツール" />
                         </h1>
-                        <p class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
-                            テキストエリアに入力された複数の候補から、システム（CSPRNG）によってランダムに項目を抽出します。
-                            ブラウザ内のフロントエンド処理により一括選定を行い、ネットワーク通信なしで挙動が完結します。
-                        </p>
+                        <BudouX
+                            as="p"
+                            class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed"
+                            text="テキストエリアに入力された複数の候補から、システム（CSPRNG）によってランダムに項目を抽出します。ブラウザ内のフロントエンド処理により一括選定を行い、ネットワーク通信なしで挙動が完結します。"
+                        />
                     </div>
 
                     {/* グリッドレイアウト */}

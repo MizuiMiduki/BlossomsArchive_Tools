@@ -7,6 +7,7 @@ import {
     Show,
 } from "solid-js";
 import AdSense from "../components/AdSense";
+import BudouX from "../components/BudouX";
 import { animateFadeIn, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function HyperfocalCalculator() {
@@ -212,11 +213,13 @@ export default function HyperfocalCalculator() {
             <div class="card bg-base-100 shadow-2xl p-6 w-full border border-base-300">
                 <div class="mb-6 border-b-2 border-base-300 pb-4">
                     <h2 class="text-2xl font-black text-primary flex items-center gap-2">
-                        📐 過焦点距離（パンフォーカス）計算ツール
+                        <BudouX text="📐 過焦点距離（パンフォーカス）計算ツール" />
                     </h2>
-                    <p class="text-xs text-base-content font-bold mt-2 leading-relaxed opacity-80">
-                        手前の景色から、はるか遠くの背景まで、写真全体にクッキリピントが合っている「パンフォーカス写真」を撮るための最適なピント合わせ位置を計算します。
-                    </p>
+                    <BudouX
+                        as="p"
+                        class="text-xs text-base-content font-bold mt-2 leading-relaxed opacity-80"
+                        text="手前の景色から、はるか遠くの背景まで、写真全体にクッキリピントが合っている「パンフォーカス写真」を撮るための最適なピント合わせ位置を計算します。"
+                    />
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch overflow-hidden">
@@ -228,9 +231,11 @@ export default function HyperfocalCalculator() {
                                 <span class="label-text font-black text-sm text-base-content">
                                     📸 1. カメラのセンサーサイズを選ぶ
                                 </span>
-                                <span class="text-[10px] text-base-content/60 font-semibold leading-normal">
-                                    お使いのカメラの種類を選んでください。ピントの合う範囲に影響します。
-                                </span>
+                                <BudouX
+                                    as="span"
+                                    class="text-[10px] text-base-content/60 font-semibold leading-normal"
+                                    text="お使いのカメラの種類を選んでください。ピントの合う範囲に影響します。"
+                                />
                             </label>
                             <select
                                 value={sensorType()}
@@ -514,19 +519,19 @@ export default function HyperfocalCalculator() {
                             </h3>
 
                             <div class="bg-base-100 p-3 rounded-lg border border-base-300/60 text-[11px] leading-normal space-y-1">
-                                <p class="text-base-content font-bold">
+                                <p class="text-base-content font-bold" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
                                     💡{" "}
                                     <strong class="text-primary">
                                         過焦点距離（お勧めピント位置）
                                     </strong>{" "}
-                                    にピントを合わせると、手前から奥（無限遠）まで全てクッキリ写るようになります。
+                                    <BudouX text="にピントを合わせると、手前から奥（無限遠）まで全てクッキリ写るようになります。" />
                                 </p>
-                                <p class="text-base-content opacity-80">
+                                <p class="text-base-content opacity-80" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
                                     💡{" "}
                                     <strong class="text-secondary">
                                         実際のピント合わせ位置
                                     </strong>{" "}
-                                    は、撮影者が「直接狙った特定の被写体（人物）」の位置です。その前後どこまでピントが合うかをシミュレーションしています。
+                                    <BudouX text="は、撮影者が「直接狙った特定の被写体（人物）」の位置です。その前後どこまでピントが合うかをシミュレーションしています。" />
                                 </p>
                             </div>
 
@@ -626,16 +631,12 @@ export default function HyperfocalCalculator() {
                                         {hyperfocalData().distanceM.toFixed(2)}
                                         <span class="text-sm"> m</span>
                                     </span>
-                                    <span class="text-[10px] text-base-content font-bold leading-relaxed opacity-80 mt-1 break-words">
-                                        カメラをマニュアルフォーカス（MF）にして、
+                                    <span class="text-[10px] text-base-content font-bold leading-relaxed opacity-80 mt-1 break-words" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
+                                        <BudouX text="カメラをマニュアルフォーカス（MF）にして、この距離（約 " />
                                         <strong>
-                                            この距離（約{" "}
-                                            {hyperfocalData().distanceM.toFixed(
-                                                1,
-                                            )}
-                                            m 先）の地面や木
+                                            {hyperfocalData().distanceM.toFixed(1)}m 先
                                         </strong>
-                                        にピントを合わせます。
+                                        <BudouX text=" の地面や木にピントを合わせます。" />
                                     </span>
                                 </div>
 
@@ -648,17 +649,12 @@ export default function HyperfocalCalculator() {
                                         {hyperfocalData().nearLimitM.toFixed(2)}
                                         m 〜 無限遠
                                     </span>
-                                    <span class="text-[10px] text-emerald-900/80 font-bold leading-relaxed mt-1 break-words">
-                                        上記のお勧め距離に合わせるだけで、
+                                    <span class="text-[10px] text-emerald-900/80 font-bold leading-relaxed mt-1 break-words" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
+                                        <BudouX text="上記のお勧め距離に合わせるだけで、手前約 " />
                                         <strong>
-                                            手前約{" "}
-                                            {hyperfocalData().nearLimitM.toFixed(
-                                                1,
-                                            )}
-                                            m
-                                            から、一番奥の山や星空の背景まですべて
+                                            {hyperfocalData().nearLimitM.toFixed(1)}m
                                         </strong>
-                                        が鮮明に写ります！
+                                        <BudouX text=" から、一番奥の山や星空の背景まですべてが鮮明に写ります！" />
                                     </span>
                                 </div>
                             </div>

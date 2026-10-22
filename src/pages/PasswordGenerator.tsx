@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
+import BudouX from "../components/BudouX";
 import {
     delayedCall,
     playPageEntrance,
@@ -136,14 +137,13 @@ export default function PasswordGenerator() {
                     {/* ヘッダーセクション */}
                     <div class="mb-8 border-b border-slate-200 pb-5">
                         <h1 class="text-2xl md:text-3xl font-black text-slate-800">
-                            パスワード生成ツール
+                            <BudouX text="パスワード生成ツール" />
                         </h1>
-                        <p class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
-                            指定されたパラメータ（文字種・長さ）に基づき、ランダムな文字列をローカル環境で作成します。
-                            ブラウザの標準 API である{" "}
-                            <strong>Crypto API</strong>{" "}
-                            を利用してシード値を生成します。
-                        </p>
+                        <BudouX
+                            as="p"
+                            class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed"
+                            text="指定されたパラメータ（文字種・長さ）に基づき、ランダムな文字列をローカル環境で作成します。ブラウザの標準 API である Crypto API を利用してシード値を生成します。"
+                        />
                     </div>
 
                     {/* 2カラムレイアウト */}
