@@ -1,5 +1,12 @@
 import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
+import {
+    delayedCall,
+    playPageEntrance,
+    animateFadeIn,
+    animateStaggerIn,
+    animatePop,
+} from "../utils/gsapAnimations";
 
 export default function PasswordGenerator() {
     const [length, setLength] = createSignal(16);
@@ -12,7 +19,10 @@ export default function PasswordGenerator() {
     const [copiedIndex, setCopiedIndex] = createSignal<number | null>(null);
     const [allCopied, setAllCopied] = createSignal(false);
 
-    // SEO対策：検索エンジン用メタデータの注入
+    let containerRef: HTMLDivElement | undefined;
+    let generateButtonRef: HTMLButtonElement | undefined;
+    let resultsListRef: HTMLDivElement | undefined;
+
     onMount(() => {
         document.title =
             "パスワード生成ツール | 桁数・文字種指定（CSPRNG準拠）";
@@ -25,7 +35,7 @@ export default function PasswordGenerator() {
         }
         metaDesc.setAttribute(
             "content",
-            "ブラウザ上で動作するランダムパスワード生成ツール。暗号学的疑似乱数発生器（CSPRNG）を使用し、任意の桁数（4〜100桁）および文字種（英大文字・小文字、数字、記号）の組み合わせを指定して、複数のパスワードを一括生成できます。",
+            "ブラウザ上で動作するランダムパスワード生成ツール。暗号学的疑似乱数発生器（CSPRNG）を使用し、任意の桁数（4～100桁）および文字種（英大文字・小文字、数字、記号）の組み合わせを指定して、複数のパスワードを一括生成できます。",
         );
 
         const script = document.createElement("script");
@@ -42,6 +52,8 @@ export default function PasswordGenerator() {
                 "CSPRNG（window.crypto.getRandomValues）に準拠した、ローカル完結型のパスワード生成・作成ツール。",
         });
         document.head.appendChild(script);
+
+        if (containerRef) playPageEntrance(containerRef, ".card");
     });
 
     onCleanup(() => {
@@ -52,6 +64,8 @@ export default function PasswordGenerator() {
     });
 
     const generatePassword = () => {
+        if (generateButtonRef) animatePop(generateButtonRef);
+
         const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
         const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const numberChars = "0123456789";
@@ -84,13 +98,20 @@ export default function PasswordGenerator() {
         setResults(newPasswords);
         setCopiedIndex(null);
         setAllCopied(false);
+
+        // 生成された各行をGSAPでアニメーション描画
+        setTimeout(() => {
+            if (resultsListRef) {
+                animateStaggerIn(resultsListRef, ".password-item");
+            }
+        }, 10);
     };
 
     const copyToClipboard = async (text: string, index: number) => {
         try {
             await navigator.clipboard.writeText(text);
             setCopiedIndex(index);
-            setTimeout(() => setCopiedIndex(null), 2000);
+            delayedCall(2, () => setCopiedIndex(null));
         } catch (err) {
             console.error("Copy failed:", err);
         }
@@ -101,14 +122,14 @@ export default function PasswordGenerator() {
         try {
             await navigator.clipboard.writeText(results().join("\n"));
             setAllCopied(true);
-            setTimeout(() => setAllCopied(false), 2000);
+            delayedCall(2, () => setAllCopied(false));
         } catch (err) {
             console.error("Bulk copy failed:", err);
         }
     };
 
     return (
-        <div class="h-full w-full p-4 md:p-8 flex flex-col items-center bg-base-300/30 overflow-x-hidden">
+        <div ref={containerRef} class="h-full w-full p-4 md:p-8 flex flex-col items-center bg-base-300/30 overflow-x-hidden">
             <div class="w-full max-w-7xl flex flex-col gap-8">
                 {/* メインツールカード */}
                 <div class="card bg-base-100 shadow-xl p-6 md:p-10 w-full border border-slate-200">
@@ -279,6 +300,7 @@ export default function PasswordGenerator() {
                             {/* 生成ボタン */}
                             <div class="mt-4">
                                 <button
+                                    ref={generateButtonRef}
                                     onClick={generatePassword}
                                     class="btn bg-slate-800 hover:bg-slate-900 border-none text-white w-full text-lg h-16 font-black transition-all shadow-md"
                                 >
@@ -304,7 +326,10 @@ export default function PasswordGenerator() {
                                     </div>
                                 }
                             >
-                                <div class="flex flex-col h-full gap-4">
+                                <div
+                                    ref={(el) => animateFadeIn(el)}
+                                    class="flex flex-col h-full gap-4"
+                                >
                                     <div class="flex justify-between items-center pb-2 border-b border-slate-200">
                                         <span class="font-bold text-sm text-slate-800">
                                             生成結果 ({results().length}件)
@@ -329,10 +354,13 @@ export default function PasswordGenerator() {
                                     </div>
 
                                     {/* 結果リストコンテナ */}
-                                    <div class="flex-1 flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1">
+                                    <div
+                                        ref={resultsListRef}
+                                        class="flex-1 flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1"
+                                    >
                                         <For each={results()}>
                                             {(item, index) => (
-                                                <div class="flex gap-2 bg-white p-2.5 rounded-xl border border-slate-200 items-center shadow-xs">
+                                                <div class="password-item flex gap-2 bg-white p-2.5 rounded-xl border border-slate-200 items-center shadow-xs">
                                                     <input
                                                         type="text"
                                                         value={item}

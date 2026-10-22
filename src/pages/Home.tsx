@@ -1,15 +1,24 @@
-import { For } from "solid-js";
+import { For, onMount } from "solid-js";
 import { routes } from "../routes";
 import AdSense from "../components/AdSense";
+import { playPageEntrance } from "../utils/gsapAnimations";
 
 export default function Home() {
+    let containerRef: HTMLDivElement | undefined;
+
+    onMount(() => {
+        if (containerRef) {
+            playPageEntrance(containerRef, ".card");
+        }
+    });
+
     return (
-        <div class="max-w-5xl mx-auto space-y-8">
+        <div ref={containerRef} class="max-w-5xl mx-auto space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <For each={routes.filter((r) => r.path !== "/" && !r.hidden)}>
                     {(route) => (
                         /* カードはただの囲み要素にする */
-                        <div class="card bg-base-100 border border-base-300 shadow-sm transition-all duration-300">
+                        <div class="card bg-base-100 border border-base-300 shadow-sm">
                             <div class="card-body p-6">
                                 <h2 class="card-title text-primary">
                                     {route.title}

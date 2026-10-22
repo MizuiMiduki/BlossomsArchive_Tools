@@ -1,4 +1,6 @@
-import { createSignal, Switch, Match, For, createEffect } from "solid-js";
+import { createSignal, Switch, Match, For, createEffect, onMount } from "solid-js";
+import gsap from "gsap";
+import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function TimerStopwatch() {
     // 状態管理
@@ -22,7 +24,9 @@ export default function TimerStopwatch() {
     const [m, setM] = createSignal(0);
     const [s, setS] = createSignal(0);
 
-    let timerId: number | undefined;
+    let containerRef: HTMLDivElement | undefined;
+    let timerId: gsap.core.Tween | undefined;
+    let timeDisplayRef: HTMLDivElement | undefined;
 
     // 設定値が変わったら即座に時間を反映（動いていない時だけ）
     createEffect(() => {
@@ -47,16 +51,23 @@ export default function TimerStopwatch() {
         }
     };
 
-    const stop = () => {
+    const stop = (targetEl?: HTMLElement) => {
+        if (targetEl) animatePop(targetEl, 0.92, 0.15);
         setIsRunning(false);
-        if (timerId) clearInterval(timerId);
+        if (timerId) {
+            timerId.kill();
+            timerId = undefined;
+        }
     };
 
-    const start = () => {
+    const start = (targetEl?: HTMLElement) => {
+        if (targetEl) animatePop(targetEl, 0.92, 0.15);
         if (isRunning()) return;
         setIsRunning(true);
-        const interval = mode() === "stopwatch" ? 10 : 1000;
-        timerId = window.setInterval(() => {
+        const intervalSec = mode() === "stopwatch" ? 0.01 : 1;
+
+        // gsap.delayedCall を再帰的に呼び出してインターバルを実現
+        const tick = () => {
             if (mode() === "stopwatch") {
                 setTime((t) => t + 1);
             } else {
@@ -69,10 +80,20 @@ export default function TimerStopwatch() {
                     } else {
                         stop();
                         modalRef?.showModal();
+                        if (modalRef) {
+                            gsap.fromTo(
+                                modalRef.querySelector(".modal-box"),
+                                { scale: 0.8, opacity: 0 },
+                                { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2)" },
+                            );
+                        }
+                        return;
                     }
                 }
             }
-        }, interval);
+            timerId = gsap.delayedCall(intervalSec, tick);
+        };
+        timerId = gsap.delayedCall(intervalSec, tick);
     };
 
     const changeMode = (newMode: "stopwatch" | "timer" | "pomodoro") => {
@@ -83,10 +104,18 @@ export default function TimerStopwatch() {
         if (newMode === "stopwatch") setTime(0);
         else if (newMode === "timer") setTime(300);
         else if (newMode === "pomodoro") setTime(focusMin() * 60);
+
+        if (timeDisplayRef) {
+            animatePop(timeDisplayRef, 0.96, 0.2);
+        }
     };
 
+    onMount(() => {
+        if (containerRef) playPageEntrance(containerRef);
+    });
+
     return (
-        <div class="flex flex-col items-center justify-center p-6 space-y-8 max-w-sm mx-auto">
+        <div ref={containerRef} class="flex flex-col items-center justify-center p-6 space-y-8 max-w-sm mx-auto">
             {/* ダイアログ */}
             <dialog ref={modalRef} class="modal modal-bottom sm:modal-middle">
                 <div class="modal-box">
@@ -125,7 +154,7 @@ export default function TimerStopwatch() {
             </div>
 
             {/* 表示部分 */}
-            <div class="text-center">
+            <div ref={timeDisplayRef} class="text-center">
                 {mode() === "pomodoro" && (
                     <div
                         class={`badge ${isBreak() ? "badge-accent" : "badge-primary"} mb-2`}
@@ -142,19 +171,20 @@ export default function TimerStopwatch() {
             <div class="flex gap-4">
                 <button
                     class="btn btn-primary w-28"
-                    onClick={isRunning() ? stop : start}
+                    onClick={(e) => isRunning() ? stop(e.currentTarget) : start(e.currentTarget)}
                 >
                     {isRunning() ? "一時停止" : "スタート"}
                 </button>
                 <button
                     class="btn btn-outline w-28"
-                    onClick={() =>
+                    onClick={(e) => {
+                        animatePop(e.currentTarget, 0.92, 0.15);
                         setTime(
                             mode() === "pomodoro"
                                 ? (isBreak() ? breakMin() : focusMin()) * 60
                                 : 0,
-                        )
-                    }
+                        );
+                    }}
                 >
                     リセット
                 </button>
@@ -163,7 +193,10 @@ export default function TimerStopwatch() {
             {/* 各モードの詳細設定 */}
             <Switch>
                 <Match when={mode() === "timer"}>
-                    <div class="w-full space-y-4 pt-4 border-t border-base-200">
+                    <div
+                        ref={(el) => animateFadeIn(el, { duration: 0.3 })}
+                        class="w-full space-y-4 pt-4 border-t border-base-200"
+                    >
                         <div class="text-sm font-bold opacity-60">
                             時間入力 (H:M:S)
                         </div>
@@ -200,9 +233,10 @@ export default function TimerStopwatch() {
                             />
                             <button
                                 class="btn btn-primary"
-                                onClick={() =>
-                                    setTime(h() * 3600 + m() * 60 + s())
-                                }
+                                onClick={(e) => {
+                                    animatePop(e.currentTarget, 0.92, 0.15);
+                                    setTime(h() * 3600 + m() * 60 + s());
+                                }}
                             >
                                 セット
                             </button>
@@ -216,7 +250,10 @@ export default function TimerStopwatch() {
                                 {(min) => (
                                     <button
                                         class="btn btn-sm btn-ghost border-base-300"
-                                        onClick={() => setTime(min * 60)}
+                                        onClick={(e) => {
+                                            animatePop(e.currentTarget, 0.92, 0.15);
+                                            setTime(min * 60);
+                                        }}
                                     >
                                         {min}分
                                     </button>
@@ -226,7 +263,10 @@ export default function TimerStopwatch() {
                     </div>
                 </Match>
                 <Match when={mode() === "pomodoro"}>
-                    <div class="w-full space-y-4 pt-4 border-t border-base-200">
+                    <div
+                        ref={(el) => animateFadeIn(el, { duration: 0.3 })}
+                        class="w-full space-y-4 pt-4 border-t border-base-200"
+                    >
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs opacity-60">

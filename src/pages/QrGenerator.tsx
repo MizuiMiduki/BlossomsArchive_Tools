@@ -2,6 +2,7 @@
 import { createSignal, onMount, onCleanup, Show, For } from "solid-js";
 import QRCode from "qrcode";
 import AdSense from "../components/AdSense";
+import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 // ボタンオプション用の型を定義して TypeScript に型を教えます
 interface FormatOption {
@@ -15,6 +16,9 @@ export default function QrGenerator() {
     const [qrData, setQrData] = createSignal("");
     const [isLarge, setIsLarge] = createSignal(false);
     const [fileFormat, setFileFormat] = createSignal("png");
+
+    let containerRef: HTMLDivElement | undefined;
+    let generateButtonRef: HTMLButtonElement | undefined;
 
     // SEO対策：メタデータおよび構造化データの動的注入
     onMount(() => {
@@ -45,6 +49,8 @@ export default function QrGenerator() {
                 "ブラウザ上で安全に動作する登録不要のQRコード作成ツール。チラシや名刺の印刷にも適した高解像度のSVG・PNG・JPEG・WebP形式でのダウンロード機能を提供します。",
         });
         document.head.appendChild(script);
+
+        if (containerRef) playPageEntrance(containerRef, ".card");
     });
 
     onCleanup(() => {
@@ -67,6 +73,7 @@ export default function QrGenerator() {
 
     const generate = async () => {
         if (!text()) return;
+        if (generateButtonRef) animatePop(generateButtonRef);
         try {
             const data = await QRCode.toDataURL(text(), {
                 width: 600,
@@ -134,36 +141,35 @@ export default function QrGenerator() {
         { value: "png", label: "PNG", desc: "標準・Web向け" },
         { value: "jpeg", label: "JPEG", desc: "汎用画像" },
         { value: "webp", label: "WebP", desc: "軽量・次世代" },
-        { value: "svg", label: "SVG", desc: "ベクター・印刷用" },
+        { value: "svg", label: "SVG", desc: "ベクター・高品質" },
     ];
 
     return (
-        <div class="h-full w-full p-4 md:p-8 flex flex-col items-center bg-base-300/30 overflow-x-hidden">
+        <div ref={containerRef} class="h-full w-full p-4 md:p-8 flex flex-col items-center bg-base-300/30 overflow-x-hidden">
             <div class="w-full max-w-7xl flex flex-col gap-8">
                 {/* メインツールカード */}
                 <div class="card bg-base-100 shadow-xl p-6 md:p-10 w-full border border-slate-200">
                     {/* ヘッダーセクション */}
                     <div class="mb-8 border-b border-slate-200 pb-5">
-                        <h1 class="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-2">
-                            🔗 QRコード作成・高画質生成ツール
+                        <h1 class="text-2xl md:text-3xl font-black text-slate-800">
+                            QRコード作成・生成ツール
                         </h1>
                         <p class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed">
-                            URLや任意の文字列から高精度なQRコードを即座に生成します。
-                            高解像度の<strong>SVG形式（ベクターデータ）</strong>
-                            にも対応しており、Web用から印刷用のデザインまで幅広くご利用いただけます。
+                            WebサイトのURLや任意のテキストから、高品質なQRコードをブラウザ内で瞬時に作成します。
+                            高解像度PNGに加え、拡大しても画質が荒れないベクター（SVG）出力に対応しています。
                         </p>
                     </div>
 
-                    {/* グリッドコンテナ：左右2カラム */}
+                    {/* 2カラムレイアウト */}
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-                        {/* 左側：入力コントロール */}
+                        {/* 左側：設定コントロール */}
                         <div class="lg:col-span-7 flex flex-col justify-between gap-6">
                             <div class="flex flex-col gap-6">
-                                {/* 入力エリア */}
+                                {/* 1. 文字列入力フォーム */}
                                 <div class="form-control w-full">
                                     <label class="label py-1">
                                         <span class="label-text font-bold text-sm text-slate-700">
-                                            QRコード化する文字列・URL
+                                            QRコードに埋め込む文字列・URL
                                         </span>
                                     </label>
                                     <textarea
@@ -171,42 +177,38 @@ export default function QrGenerator() {
                                         onInput={(e) =>
                                             setText(e.currentTarget.value)
                                         }
-                                        class="textarea textarea-bordered w-full h-28 text-base bg-white border-2 border-slate-300 text-slate-900 focus:border-slate-500 font-medium"
-                                        placeholder="https://example.com"
+                                        class="textarea textarea-bordered w-full h-32 text-sm bg-white border-2 border-slate-300 text-slate-900 focus:border-slate-500 font-medium p-3 focus:outline-none shadow-sm"
+                                        placeholder="https://example.com または 任意のテキストを入力してください"
                                     />
                                 </div>
 
-                                {/* 保存オプション設定 */}
+                                {/* 2. 保存フォーマットの選択 */}
                                 <div class="form-control w-full">
                                     <label class="label py-1">
                                         <span class="label-text font-bold text-sm text-slate-700">
-                                            出力フォーマット
+                                            保存形式の選択
                                         </span>
                                     </label>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                        {/* item に FormatOption 型が適用されるように修正しました */}
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                         <For each={formatOptions}>
-                                            {(item: FormatOption) => (
+                                            {(opt) => (
                                                 <button
-                                                    onClick={() => {
-                                                        setFileFormat(
-                                                            item.value,
-                                                        );
-                                                        if (qrData())
-                                                            generate();
-                                                    }}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setFileFormat(opt.value)
+                                                    }
                                                     class={`p-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${
                                                         fileFormat() ===
-                                                        item.value
-                                                            ? "border-slate-700 bg-slate-100 text-slate-900 font-bold"
-                                                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                                                        opt.value
+                                                            ? "border-slate-800 bg-slate-50 text-slate-900 shadow-sm"
+                                                            : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
                                                     }`}
                                                 >
-                                                    <span class="text-sm font-black">
-                                                        {item.label}
+                                                    <span class="font-black text-sm">
+                                                        {opt.label}
                                                     </span>
-                                                    <span class="text-[9px] opacity-75 mt-0.5 whitespace-nowrap">
-                                                        {item.desc}
+                                                    <span class="text-[10px] text-slate-400 font-semibold mt-0.5">
+                                                        {opt.desc}
                                                     </span>
                                                 </button>
                                             )}
@@ -218,6 +220,7 @@ export default function QrGenerator() {
                             {/* 生成ボタン */}
                             <div class="mt-4">
                                 <button
+                                    ref={generateButtonRef}
                                     onClick={generate}
                                     disabled={!text()}
                                     class="btn bg-slate-800 hover:bg-slate-900 border-none text-white w-full text-lg h-16 font-black transition-all shadow-md"
@@ -244,7 +247,10 @@ export default function QrGenerator() {
                                     </div>
                                 }
                             >
-                                <div class="flex flex-col items-center gap-5 w-full animate-fade-in">
+                                <div
+                                    ref={(el) => animateFadeIn(el, { ease: "back.out(1.4)" })}
+                                    class="flex flex-col items-center gap-5 w-full"
+                                >
                                     <div class="relative group bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                                         <img
                                             src={qrData()}
@@ -370,7 +376,10 @@ export default function QrGenerator() {
                     class="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-50 p-4 cursor-pointer"
                     onClick={() => setIsLarge(false)}
                 >
-                    <div class="relative max-w-full max-h-full bg-white p-5 rounded-2xl shadow-2xl flex flex-col items-center border border-slate-200">
+                    <div
+                        ref={(el) => animateFadeIn(el, { duration: 0.25, ease: "back.out(1.5)" })}
+                        class="relative max-w-full max-h-full bg-white p-5 rounded-2xl shadow-2xl flex flex-col items-center border border-slate-200"
+                    >
                         <img
                             src={qrData()}
                             alt="QRコード 拡大表示"

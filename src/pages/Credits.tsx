@@ -1,4 +1,6 @@
 // src/pages/Credits.tsx
+import { onMount } from "solid-js";
+import { playPageEntrance } from "../utils/gsapAnimations";
 
 interface Library {
     name: string;
@@ -7,6 +9,11 @@ interface Library {
 }
 
 const libraries: Library[] = [
+    {
+        name: "GSAP",
+        license: "Standard 'No-Charge' GreenSock License",
+        url: "https://gsap.com/",
+    },
     {
         name: "Solid.js",
         license: "MIT",
@@ -55,8 +62,14 @@ const libraries: Library[] = [
 ];
 
 export default function Credits() {
+    let containerRef: HTMLDivElement | undefined;
+
+    onMount(() => {
+        if (containerRef) playPageEntrance(containerRef, ".card");
+    });
+
     return (
-        <div class="max-w-2xl mx-auto p-6 space-y-6">
+        <div ref={containerRef} class="max-w-2xl mx-auto p-6 space-y-6">
             <h1 class="text-3xl font-bold">使用ライブラリ</h1>
 
             <div class="space-y-3">

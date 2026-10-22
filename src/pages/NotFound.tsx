@@ -1,8 +1,16 @@
+import { onMount } from "solid-js";
 import { Meta } from "@solidjs/meta";
+import { playPageEntrance } from "../utils/gsapAnimations";
 
 export default function NotFound() {
+    let containerRef: HTMLDivElement | undefined;
+
+    onMount(() => {
+        if (containerRef) playPageEntrance(containerRef);
+    });
+
     return (
-        <div class="p-10 text-center">
+        <div ref={containerRef} class="p-10 text-center">
             <Meta name="robots" content="noindex" />
 
             <h1 class="text-4xl font-bold">404</h1>

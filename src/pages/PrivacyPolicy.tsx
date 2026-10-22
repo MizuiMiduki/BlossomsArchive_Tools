@@ -1,8 +1,16 @@
 // src/pages/PrivacyPolicy.tsx
+import { onMount } from "solid-js";
+import { playPageEntrance } from "../utils/gsapAnimations";
 
 export default function PrivacyPolicy() {
+    let containerRef: HTMLDivElement | undefined;
+
+    onMount(() => {
+        if (containerRef) playPageEntrance(containerRef);
+    });
+
     return (
-        <div class="max-w-2xl mx-auto p-6 space-y-8">
+        <div ref={containerRef} class="max-w-2xl mx-auto p-6 space-y-8">
             <h1 class="text-3xl font-bold">プライバシーポリシー</h1>
 
             <section class="space-y-4">

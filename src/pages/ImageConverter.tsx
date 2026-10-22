@@ -1,7 +1,9 @@
 import { createSignal, onMount, onCleanup, Show } from "solid-js";
 import AdSense from "../components/AdSense";
+import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function ImageConverter() {
+    let containerRef: HTMLDivElement | undefined;
     const [selectedFile, setSelectedFile] = createSignal<File | null>(null);
     const [outputFormat, setOutputFormat] = createSignal("image/png");
     const [convertedUrl, setConvertedUrl] = createSignal("");
@@ -37,6 +39,8 @@ export default function ImageConverter() {
                 "PNG, JPEG, WebP 形式に相互対応した、クライアントサイド完結型の画像ファイル拡張子変換ツール。",
         });
         document.head.appendChild(script);
+
+        if (containerRef) playPageEntrance(containerRef, ".card");
     });
 
     onCleanup(() => {
@@ -104,7 +108,7 @@ export default function ImageConverter() {
     };
 
     return (
-        <div class="h-full w-full p-4 md:p-8 flex flex-col items-center bg-base-300/30 overflow-x-hidden">
+        <div ref={containerRef} class="h-full w-full p-4 md:p-8 flex flex-col items-center bg-base-300/30 overflow-x-hidden">
             <div class="w-full max-w-7xl flex flex-col gap-8">
                 {/* メインツールカード：2カラムレイアウト */}
                 <div class="card bg-base-100 shadow-xl p-6 md:p-10 w-full border border-slate-200">
@@ -188,7 +192,10 @@ export default function ImageConverter() {
                             {/* 変換アクションボタン */}
                             <div class="mt-4">
                                 <button
-                                    onClick={convertImage}
+                                    onClick={(e) => {
+                                        animatePop(e.currentTarget, 0.95, 0.15);
+                                        convertImage();
+                                    }}
                                     disabled={!selectedFile() || isConverting()}
                                     class="btn bg-slate-800 hover:bg-slate-900 border-none text-white w-full text-base h-14 font-black transition-all shadow-md disabled:bg-slate-200 disabled:text-slate-400"
                                 >
@@ -216,7 +223,7 @@ export default function ImageConverter() {
                                     </div>
                                 }
                             >
-                                <div class="flex flex-col h-full gap-4">
+                                <div ref={(el) => animateFadeIn(el)} class="flex flex-col h-full gap-4">
                                     <div class="flex justify-between items-center pb-2 border-b border-slate-200">
                                         <span class="font-bold text-xs text-slate-600 tracking-wider">
                                             変換完了（フォーマット:{" "}

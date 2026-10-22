@@ -9,6 +9,7 @@ import {
 import exifr from "exifr";
 import piexif from "piexifjs";
 import AdSense from "../components/AdSense";
+import { delayedCall, playPageEntrance, animateFadeIn } from "../utils/gsapAnimations";
 export default function ExifFrame() {
     const [fileName, setFileName] = createSignal("");
     const [customExportName, setCustomExportName] = createSignal("");
@@ -85,6 +86,7 @@ export default function ExifFrame() {
     let rawFileBase64Str: string | null = null;
     let canvasRef: HTMLCanvasElement | undefined;
     let sourceImage: HTMLImageElement | null = null;
+    let containerRef: HTMLDivElement | undefined;
 
     // SEO対策：メタデータの動的挿入
     onMount(() => {
@@ -116,6 +118,8 @@ export default function ExifFrame() {
                 "写真にExif情報を書き込み、スタイリッシュなフレーム付き画像を生成するツールです。",
         });
         document.head.appendChild(script);
+
+        if (containerRef) playPageEntrance(containerRef);
     });
 
     onCleanup(() => {
@@ -1371,10 +1375,14 @@ export default function ExifFrame() {
             link.download = fileName;
             document.body.appendChild(link);
             link.click();
-            setTimeout(() => {
+            delayedCall(1, () => {
                 document.body.removeChild(link);
                 URL.revokeObjectURL(blobUrl);
-            }, 1000);
+
+            });
+
+
+
             e.preventDefault();
         } catch (err) {
             console.error("Failed to download via Blob:", err);
@@ -1512,7 +1520,7 @@ export default function ExifFrame() {
     };
 
     return (
-        <div class="h-full w-full p-4 flex flex-col gap-4 bg-base-100">
+        <div ref={containerRef} class="h-full w-full p-4 flex flex-col gap-4 bg-base-100">
             <For each={fontList}>
                 {(f) => (
                     <link

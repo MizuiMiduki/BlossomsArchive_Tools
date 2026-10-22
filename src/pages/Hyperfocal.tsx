@@ -7,6 +7,7 @@ import {
     Show,
 } from "solid-js";
 import AdSense from "../components/AdSense";
+import { animateFadeIn, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function HyperfocalCalculator() {
     const [sensorType, setSensorType] = createSignal("apsc-sony");
@@ -14,6 +15,8 @@ export default function HyperfocalCalculator() {
     const [focalLength, setFocalLength] = createSignal(16);
     const [fNumber, setFNumber] = createSignal(2.8);
     const [customSubjectDistance, setCustomSubjectDistance] = createSignal(2.5);
+
+    let containerRef: HTMLDivElement | undefined;
 
     const sensors = [
         { id: "fullframe", name: "フルサイズ (35mm基準)", coc: 0.03 },
@@ -58,6 +61,8 @@ export default function HyperfocalCalculator() {
                 "簡単操作で被写界深度とパンフォーカス距離を算出・可視化するWebツール。",
         });
         document.head.appendChild(script);
+
+        if (containerRef) playPageEntrance(containerRef, ".card");
     });
 
     onCleanup(() => {
@@ -203,7 +208,7 @@ export default function HyperfocalCalculator() {
     });
 
     return (
-        <div class="h-full w-full p-4 flex flex-col gap-4 bg-base-300/40 overflow-hidden">
+        <div ref={containerRef} class="h-full w-full p-4 flex flex-col gap-4 bg-base-300/40 overflow-hidden">
             <div class="card bg-base-100 shadow-2xl p-6 w-full border border-base-300">
                 <div class="mb-6 border-b-2 border-base-300 pb-4">
                     <h2 class="text-2xl font-black text-primary flex items-center gap-2">
@@ -244,7 +249,7 @@ export default function HyperfocalCalculator() {
 
                         {/* カスタムCoC設定 */}
                         <Show when={sensorType() === "custom"}>
-                            <div class="form-control w-full animate-fade-in bg-base-100 p-3 rounded-xl border border-base-300 text-xs overflow-hidden">
+                            <div ref={(el) => animateFadeIn(el)} class="form-control w-full bg-base-100 p-3 rounded-xl border border-base-300 text-xs overflow-hidden">
                                 <label class="label py-1 flex flex-col items-start gap-0.5">
                                     <span class="label-text font-black text-xs text-secondary">
                                         ⚙️ 許容錯乱円の直径 (CoC)

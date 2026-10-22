@@ -1,7 +1,9 @@
 // src/components/ThemeToggle.tsx
 import { createSignal, onMount } from "solid-js";
+import gsap from "gsap";
 
 export default function ThemeToggle() {
+    let buttonRef: HTMLButtonElement | undefined;
     const [isDark, setIsDark] = createSignal(false);
 
     onMount(() => {
@@ -25,10 +27,19 @@ export default function ThemeToggle() {
         document.documentElement.setAttribute("data-theme", newTheme);
         localStorage.setItem("theme", newTheme);
         setIsDark(!isDark());
+
+        if (buttonRef) {
+            gsap.fromTo(
+                buttonRef,
+                { rotation: -90, scale: 0.6 },
+                { rotation: 0, scale: 1, duration: 0.4, ease: "back.out(2)" },
+            );
+        }
     };
 
     return (
         <button
+            ref={buttonRef}
             onClick={toggleTheme}
             class="btn btn-ghost btn-circle"
             aria-label="Toggle Dark Mode"
@@ -37,3 +48,4 @@ export default function ThemeToggle() {
         </button>
     );
 }
+

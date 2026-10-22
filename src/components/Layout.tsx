@@ -5,6 +5,7 @@ import { Link, Meta, Title } from "@solidjs/meta";
 import { createScriptLoader } from "@solid-primitives/script-loader";
 import { getPageMetadata, routes } from "../routes";
 import ThemeToggle from "./ThemeToggle";
+import { delayedCall } from "../utils/gsapAnimations";
 
 interface LayoutProps {
     children?: JSX.Element;
@@ -21,19 +22,19 @@ export default function Layout(props: LayoutProps) {
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
 
-    let hoverTimeout: number | undefined;
+    let hoverTween: ReturnType<typeof delayedCall> | undefined;
 
     createEffect(() => {
         localStorage.setItem("isPcMenuOpen", String(isPcMenuOpen()));
     });
 
     const handleMouseEnter = () => {
-        if (hoverTimeout) clearTimeout(hoverTimeout);
+        if (hoverTween) hoverTween.kill();
         if (!isPcMenuOpen()) setIsPcMenuHovered(true);
     };
 
     const handleMouseLeave = () => {
-        hoverTimeout = window.setTimeout(() => setIsPcMenuHovered(false), 200);
+        hoverTween = delayedCall(0.2, () => setIsPcMenuHovered(false));
     };
 
     const gaTag = gaId

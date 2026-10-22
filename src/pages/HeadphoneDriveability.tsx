@@ -1,5 +1,6 @@
 import { createMemo, createSignal, onCleanup, onMount, Show } from "solid-js";
 import AdSense from "../components/AdSense";
+import { playPageEntrance } from "../utils/gsapAnimations";
 
 function formatRange(min: number, max: number, digits: number, unit: string) {
     const minText = min.toFixed(digits);
@@ -10,6 +11,7 @@ function formatRange(min: number, max: number, digits: number, unit: string) {
 }
 
 export default function HeadphoneDriveability() {
+    let containerRef: HTMLDivElement | undefined;
     const [impedance, setImpedance] = createSignal("32");
     const [impedanceTolerance, setImpedanceTolerance] = createSignal("0");
     const [impedanceFrequency, setImpedanceFrequency] = createSignal("1000");
@@ -46,6 +48,8 @@ export default function HeadphoneDriveability() {
                 "インピーダンスと音圧感度から必要な電圧・電流・電力を計算するツール。",
         });
         document.head.appendChild(script);
+
+        if (containerRef) playPageEntrance(containerRef);
     });
 
     onCleanup(() => {
@@ -148,7 +152,7 @@ export default function HeadphoneDriveability() {
     });
 
     return (
-        <div class="flex w-full flex-col gap-6 p-4 lg:p-6">
+        <div ref={containerRef} class="flex w-full flex-col gap-6 p-4 lg:p-6">
             <section class="rounded-lg border border-base-300 bg-base-100 p-5 shadow-sm sm:p-8">
                 <header class="mb-4 border-b border-base-300 pb-3">
                     <p class="text-sm font-bold uppercase tracking-wide text-primary">
