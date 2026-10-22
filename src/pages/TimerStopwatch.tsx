@@ -115,7 +115,7 @@ export default function TimerStopwatch() {
     });
 
     return (
-        <div ref={containerRef} class="flex flex-col items-center justify-center p-6 space-y-8 max-w-sm mx-auto">
+        <div ref={containerRef} class="flex flex-col items-center justify-center p-4 sm:p-6 space-y-8 max-w-md mx-auto">
             {/* ダイアログ */}
             <dialog ref={modalRef} class="modal modal-bottom sm:modal-middle">
                 <div class="modal-box">
@@ -132,10 +132,10 @@ export default function TimerStopwatch() {
             </dialog>
 
             {/* タブ切り替え */}
-            <div class="inline-flex max-w-full overflow-x-auto p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
+            <div class="grid grid-cols-3 w-full max-w-xs sm:max-w-sm p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
                 <button
                     type="button"
-                    class={`px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all ${
+                    class={`py-2 px-1 text-center rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                         mode() === "stopwatch"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -146,7 +146,7 @@ export default function TimerStopwatch() {
                 </button>
                 <button
                     type="button"
-                    class={`px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all ${
+                    class={`py-2 px-1 text-center rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                         mode() === "timer"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -157,7 +157,7 @@ export default function TimerStopwatch() {
                 </button>
                 <button
                     type="button"
-                    class={`px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all ${
+                    class={`py-2 px-1 text-center rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                         mode() === "pomodoro"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
