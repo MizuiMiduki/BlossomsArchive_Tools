@@ -39,7 +39,7 @@ export default function Calculator() {
         });
         document.head.appendChild(script);
 
-        if (containerRef) playPageEntrance(containerRef, ".btn, .input");
+        if (containerRef) playPageEntrance(containerRef);
     });
 
     onCleanup(() => {
