@@ -11,6 +11,11 @@ on:
                 type: boolean
                 required: false
                 default: false
+            サーバーを全削除して再デプロイ:
+                description: "選択すると、サーバー上の全ファイルを削除してからアップロードします（通常は差分同期のため不要）"
+                type: boolean
+                required: false
+                default: false
 
 permissions:
     contents: read
@@ -54,4 +59,4 @@ jobs:
                   password: ${{ secrets.FTP_PASSWORD }}
                   local-dir: "./dist/"
                   server-dir: "${{ secrets.FTP_TARGET_DIR }}"
-                  dangerous-clean-slate: true
+                  dangerous-clean-slate: ${{ github.event_name == 'workflow_dispatch' && inputs['サーバーを全削除して再デプロイ'] || false }}
