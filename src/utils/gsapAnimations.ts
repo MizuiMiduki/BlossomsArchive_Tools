@@ -4,6 +4,8 @@
  */
 import gsap from "gsap";
 
+const isTest = typeof import.meta !== "undefined" && import.meta.env?.MODE === "test";
+
 /**
  * ページルート要素にフェードイン＋スライドアップのエントランスアニメーションを適用する。
  * @param container ページのルートHTMLElement
@@ -14,6 +16,7 @@ export function playPageEntrance(
     staggerTargets?: string,
 ): gsap.core.Timeline {
     const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+    if (isTest) return tl;
 
     if (staggerTargets) {
         const targets = container.querySelectorAll(staggerTargets);
@@ -47,6 +50,11 @@ export function animateFadeIn(
     el: HTMLElement,
     vars?: gsap.TweenVars,
 ): gsap.core.Tween {
+    if (isTest) {
+        el.style.opacity = "1";
+        return gsap.to(el, { duration: 0, ...vars });
+    }
+
     return gsap.fromTo(
         el,
         { opacity: 0, y: 14, ...vars?.from },
@@ -69,8 +77,13 @@ export function animateStaggerIn(
     childSelector: string,
     vars?: gsap.TweenVars,
 ): gsap.core.Tween | null {
-    const targets = container.querySelectorAll(childSelector);
+    const targets = container.querySelectorAll<HTMLElement>(childSelector);
     if (targets.length === 0) return null;
+
+    if (isTest) {
+        targets.forEach((t) => { t.style.opacity = "1"; });
+        return gsap.to(targets, { duration: 0, ...vars });
+    }
 
     return gsap.fromTo(
         targets,
@@ -97,6 +110,8 @@ export function animatePop(
     duration = 0.18,
 ): gsap.core.Timeline {
     const tl = gsap.timeline();
+    if (isTest) return tl;
+
     tl.to(el, { scale, duration: duration / 2, ease: "power1.in" }).to(el, {
         scale: 1,
         duration: duration / 2,
@@ -115,7 +130,7 @@ export function delayedCall(
     seconds: number,
     callback: () => void,
 ): gsap.core.Tween {
-    return gsap.delayedCall(seconds, callback);
+    return gsap.delayedCall(isTest ? 0.001 : seconds, callback);
 }
 
 /**
@@ -127,6 +142,8 @@ export function setupHoverAnimation(
     leaveProps: gsap.TweenVars,
     duration = 0.2,
 ): () => void {
+    if (isTest) return () => {};
+
     const over = () => gsap.to(el, { duration, ease: "power1.out", ...hoverProps });
     const out = () => gsap.to(el, { duration, ease: "power1.out", ...leaveProps });
 

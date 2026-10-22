@@ -132,25 +132,40 @@ export default function TimerStopwatch() {
             </dialog>
 
             {/* タブ切り替え */}
-            <div class="tabs tabs-boxed">
-                <a
-                    class={`tab ${mode() === "stopwatch" ? "tab-active" : ""}`}
+            <div class="inline-flex p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
+                <button
+                    type="button"
+                    class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                        mode() === "stopwatch"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-base-content/70 hover:text-base-content"
+                    }`}
                     onClick={() => changeMode("stopwatch")}
                 >
                     ストップウォッチ
-                </a>
-                <a
-                    class={`tab ${mode() === "timer" ? "tab-active" : ""}`}
+                </button>
+                <button
+                    type="button"
+                    class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                        mode() === "timer"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-base-content/70 hover:text-base-content"
+                    }`}
                     onClick={() => changeMode("timer")}
                 >
                     タイマー
-                </a>
-                <a
-                    class={`tab ${mode() === "pomodoro" ? "tab-active" : ""}`}
+                </button>
+                <button
+                    type="button"
+                    class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                        mode() === "pomodoro"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-base-content/70 hover:text-base-content"
+                    }`}
                     onClick={() => changeMode("pomodoro")}
                 >
                     ポモドーロ
-                </a>
+                </button>
             </div>
 
             {/* 表示部分 */}

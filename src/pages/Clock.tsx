@@ -29,6 +29,39 @@ export default function Clock() {
     let continuousSecAngle = initialSec;
     let isFirstTick = true;
 
+    const updateAnalogHands = (now: Date) => {
+        const targetSec = continuousSecAngle;
+        const targetMin = now.getMinutes() * 6 + now.getSeconds() * 0.1;
+        const targetHour = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
+
+        // 秒針：機械式時計のようにコチッと弾む弾性アニメーション
+        gsap.to(animatedAngles, {
+            sec: targetSec,
+            duration: 0.35,
+            ease: "elastic.out(1, 0.4)",
+            onUpdate: () => setSecAngle(animatedAngles.sec),
+            overwrite: "auto",
+        });
+
+        // 分針：スムーズなイージング
+        gsap.to(animatedAngles, {
+            min: targetMin,
+            duration: 0.5,
+            ease: "power2.out",
+            onUpdate: () => setMinAngle(animatedAngles.min),
+            overwrite: "auto",
+        });
+
+        // 時針：スムーズなイージング
+        gsap.to(animatedAngles, {
+            hour: targetHour,
+            duration: 0.5,
+            ease: "power2.out",
+            onUpdate: () => setHourAngle(animatedAngles.hour),
+            overwrite: "auto",
+        });
+    };
+
     // SEO対策：メタデータの動的挿入
     onMount(() => {
         document.title = "リアルタイム時計 | デジタル＆アナログ時計表示";
@@ -94,39 +127,6 @@ export default function Clock() {
             }
         });
     });
-
-    const updateAnalogHands = (now: Date) => {
-        const targetSec = continuousSecAngle;
-        const targetMin = now.getMinutes() * 6 + now.getSeconds() * 0.1;
-        const targetHour = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
-
-        // 秒針：機械式時計のようにコチッと弾む弾性アニメーション
-        gsap.to(animatedAngles, {
-            sec: targetSec,
-            duration: 0.35,
-            ease: "elastic.out(1, 0.4)",
-            onUpdate: () => setSecAngle(animatedAngles.sec),
-            overwrite: "auto",
-        });
-
-        // 分針：スムーズなイージング
-        gsap.to(animatedAngles, {
-            min: targetMin,
-            duration: 0.5,
-            ease: "power2.out",
-            onUpdate: () => setMinAngle(animatedAngles.min),
-            overwrite: "auto",
-        });
-
-        // 時針：スムーズなイージング
-        gsap.to(animatedAngles, {
-            hour: targetHour,
-            duration: 0.5,
-            ease: "power2.out",
-            onUpdate: () => setHourAngle(animatedAngles.hour),
-            overwrite: "auto",
-        });
-    };
 
     // モード切り替え時に最新の針の位置を即時反映
     createEffect(() => {

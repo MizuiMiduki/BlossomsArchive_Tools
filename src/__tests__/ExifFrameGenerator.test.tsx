@@ -185,11 +185,15 @@ describe("ExifFrameGenerator", () => {
         fireEvent.change(fileInput, { target: { files: [dummyFile] } });
 
         const generateBtn = await screen.findByText("✨ 額縁付き画像を生成");
+        // FileReaderの非同期処理 (readAsDataURL) の完了を待機
+        await new Promise((r) => setTimeout(r, 50));
         fireEvent.click(generateBtn);
 
         // piexif.dump に渡された exifObj の Orientation が 1 (Normal) に補正されたことを検証
-        expect(loadSpy).toHaveBeenCalled();
-        expect(dumpSpy).toHaveBeenCalled();
+        await vi.waitFor(() => {
+            expect(loadSpy).toHaveBeenCalled();
+            expect(dumpSpy).toHaveBeenCalled();
+        });
         const dumpedObj = dumpSpy.mock.calls[0][0] as any;
         expect(dumpedObj["0th"][piexif.ImageIFD.Orientation]).toBe(1);
 
