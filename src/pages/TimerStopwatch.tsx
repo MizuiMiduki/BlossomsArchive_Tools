@@ -132,10 +132,10 @@ export default function TimerStopwatch() {
             </dialog>
 
             {/* タブ切り替え */}
-            <div class="inline-flex p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
+            <div class="inline-flex max-w-full overflow-x-auto p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
                 <button
                     type="button"
-                    class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                    class={`px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all ${
                         mode() === "stopwatch"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -146,7 +146,7 @@ export default function TimerStopwatch() {
                 </button>
                 <button
                     type="button"
-                    class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                    class={`px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all ${
                         mode() === "timer"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -157,7 +157,7 @@ export default function TimerStopwatch() {
                 </button>
                 <button
                     type="button"
-                    class={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                    class={`px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all ${
                         mode() === "pomodoro"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
