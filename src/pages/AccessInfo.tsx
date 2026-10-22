@@ -1,5 +1,6 @@
 import { createSignal, Show, onMount, onCleanup } from "solid-js";
 import AdSense from "../components/AdSense";
+import { delayedCall, playPageEntrance, animateFadeIn, animatePop } from "../utils/gsapAnimations";
 
 interface IpData {
     ip: string;
@@ -29,6 +30,8 @@ export default function AccessInfo() {
     const [language, setLanguage] = createSignal("");
     const [networkType, setNetworkType] = createSignal("");
     const [batteryLevel, setBatteryLevel] = createSignal("");
+
+    let containerRef: HTMLDivElement | undefined;
 
     // SEO対策：メタデータの動的挿入
     onMount(() => {
@@ -60,6 +63,8 @@ export default function AccessInfo() {
                 "IPアドレスや端末の各種環境情報をまとめて取得・表示する解析ツールです。",
         });
         document.head.appendChild(script);
+
+        if (containerRef) playPageEntrance(containerRef);
     });
 
     onCleanup(() => {
@@ -186,7 +191,7 @@ export default function AccessInfo() {
         try {
             await navigator.clipboard.writeText(text);
             setCopiedKey(key);
-            setTimeout(() => setCopiedKey(null), 1500);
+            delayedCall(1.5, () => setCopiedKey(null));
         } catch (err) {
             console.error(err);
         }
@@ -215,23 +220,86 @@ IPアドレス: ${data.ip}
         try {
             await navigator.clipboard.writeText(text);
             setAllCopied(true);
-            setTimeout(() => setAllCopied(false), 2000);
+            delayedCall(2, () => setAllCopied(false));
         } catch (err) {
             console.error(err);
         }
     };
 
+    /**
+     * スマホでも文字が見切れないレスポンシブな情報行レンダラー
+     */
+    const renderRow = (
+        label: string,
+        value: string | undefined,
+        copyKey: string,
+        options?: { isMono?: boolean; isPrimary?: boolean; disabled?: boolean },
+    ) => {
+        const val = value || "---";
+        const isValEmpty = !value || value === "---";
+        const isCopied = () => copiedKey() === copyKey;
+
+        return (
+            <div class="flex flex-col md:flex-row md:items-center justify-between p-3.5 sm:p-4 gap-2 hover:bg-base-200/50 transition-colors">
+                {/* ラベル + モバイル用コピーボタン (横並び) */}
+                <div class="flex items-center justify-between md:w-52 lg:w-60 shrink-0">
+                    <span class="font-bold text-xs sm:text-sm text-base-content/70">
+                        {label}
+                    </span>
+                    <button
+                        disabled={options?.disabled || isValEmpty}
+                        onClick={() => copyRow(val, copyKey)}
+                        class={`btn btn-xs h-7 px-2.5 rounded-lg text-white font-medium md:hidden transition-colors ${
+                            isCopied() ? "btn-success" : "btn-neutral"
+                        }`}
+                    >
+                        {isCopied() ? "完了" : "コピー"}
+                    </button>
+                </div>
+
+                {/* 値エリア：スマホでも幅いっぱいに折り返して見切れない */}
+                <div
+                    class={`flex-1 break-all whitespace-normal text-sm sm:text-base text-base-content md:px-4 ${
+                        options?.isMono ? "font-mono" : ""
+                    } ${
+                        options?.isPrimary
+                            ? "font-bold text-base sm:text-lg text-primary"
+                            : "font-semibold"
+                    }`}
+                >
+                    {val}
+                </div>
+
+                {/* PC用コピーボタン */}
+                <div class="hidden md:flex shrink-0">
+                    <button
+                        disabled={options?.disabled || isValEmpty}
+                        onClick={() => copyRow(val, copyKey)}
+                        class={`btn btn-xs h-7 px-3 rounded-lg text-white font-medium transition-colors ${
+                            isCopied() ? "btn-success" : "btn-neutral"
+                        }`}
+                    >
+                        {isCopied() ? "完了" : "コピー"}
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     return (
-        <div class="h-full w-full p-6 flex flex-col gap-6">
-            <div class="card bg-base-100 shadow-xl p-8 w-full border border-base-300">
+        <div ref={containerRef} class="h-full w-full p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
+            <div class="card bg-base-100 shadow-xl p-4 sm:p-8 w-full border border-base-300">
                 <Show when={!hasFetched() && !loading()}>
-                    <div class="flex flex-col items-center justify-center py-16 gap-4">
-                        <p class="text-base-content/70 font-medium text-lg">
+                    <div class="flex flex-col items-center justify-center py-12 sm:py-16 gap-4 text-center">
+                        <p class="text-base-content/70 font-medium text-sm sm:text-lg">
                             ボタンを押すと、現在のネットワークや端末環境を解析します。
                         </p>
                         <button
-                            onClick={fetchAccessInfo}
-                            class="btn btn-primary text-white text-xl h-16 px-12 rounded-2xl shadow-lg transition-all hover:scale-105"
+                            onClick={(e) => {
+                                animatePop(e.currentTarget, 0.95, 0.15);
+                                fetchAccessInfo();
+                            }}
+                            class="btn btn-primary text-white text-base sm:text-xl h-12 sm:h-16 px-8 sm:px-12 rounded-xl sm:rounded-2xl shadow-lg transition-all hover:scale-105"
                         >
                             アクセス情報を取得する
                         </button>
@@ -241,7 +309,7 @@ IPアドレス: ${data.ip}
                 <Show when={loading()}>
                     <div class="flex flex-col items-center justify-center py-12 gap-4">
                         <span class="loading loading-spinner loading-lg text-primary"></span>
-                        <p class="text-base-content/70 font-medium">
+                        <p class="text-base-content/70 font-medium text-sm sm:text-base">
                             情報を解析中...
                         </p>
                     </div>
@@ -249,12 +317,15 @@ IPアドレス: ${data.ip}
 
                 <Show when={error() && !loading()}>
                     <div class="alert alert-error text-white font-bold mb-6 shadow-md rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 text-sm sm:text-base">
                             <span>⚠️</span>
                             <span>{error()}</span>
                         </div>
                         <button
-                            onClick={fetchAccessInfo}
+                            onClick={(e) => {
+                                animatePop(e.currentTarget, 0.95, 0.15);
+                                fetchAccessInfo();
+                            }}
                             class="btn btn-sm bg-base-100 text-error border-none hover:bg-base-200 flex-shrink-0"
                         >
                             もう一度試す
@@ -263,335 +334,73 @@ IPアドレス: ${data.ip}
                 </Show>
 
                 <Show when={info() && !loading()}>
-                    <div class="w-full flex flex-col gap-8 animate-fade-in">
+                    <div ref={(el) => animateFadeIn(el)} class="w-full flex flex-col gap-6 sm:gap-8">
+                        {/* 接続環境・位置情報 */}
                         <div>
-                            <h3 class="text-xl font-bold mb-3 text-primary flex items-center gap-2">
+                            <h3 class="text-lg sm:text-xl font-bold mb-3 text-primary flex items-center gap-2">
                                 <span>🌐</span> 接続環境・位置情報
                             </h3>
-                            <div class="overflow-x-auto border border-base-300 rounded-xl bg-base-100">
-                                <table class="table table-zebra w-full text-base table-fixed">
-                                    <tbody>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 w-1/3 bg-base-200/30">
-                                                IPアドレス
-                                            </td>
-                                            <td class="font-mono text-base-content font-bold text-lg truncate">
-                                                {info()?.ip}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                info()?.ip ||
-                                                                    "",
-                                                                "ip",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "ip" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() === "ip"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                プロバイダ (ISP)
-                                            </td>
-                                            <td class="text-base-content font-semibold truncate">
-                                                {info()?.org}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                info()?.org ||
-                                                                    "",
-                                                                "org",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "org" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() === "org"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                国 / 地域
-                                            </td>
-                                            <td class="text-base-content truncate">
-                                                {info()?.country_name} (
-                                                {info()?.country_code})
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                `${info()?.country_name} (${info()?.country_code})`,
-                                                                "country",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "country" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() ===
-                                                        "country"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                都道府県 / 都市
-                                            </td>
-                                            <td class="text-base-content truncate">
-                                                {info()?.region} /{" "}
-                                                {info()?.city}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                `${info()?.region} / ${info()?.city}`,
-                                                                "region",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "region" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() ===
-                                                        "region"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                郵便番号
-                                            </td>
-                                            <td class="text-base-content font-mono truncate">
-                                                {info()?.postal || "---"}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        disabled={
-                                                            !info()?.postal ||
-                                                            info()?.postal ===
-                                                                "---"
-                                                        }
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                info()
-                                                                    ?.postal ||
-                                                                    "",
-                                                                "postal",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "postal" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() ===
-                                                        "postal"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                緯度 / 経度 (推定)
-                                            </td>
-                                            <td class="text-base-content font-mono truncate">
-                                                {info()?.latitude} ,{" "}
-                                                {info()?.longitude}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                `${info()?.latitude} , ${info()?.longitude}`,
-                                                                "latlng",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "latlng" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() ===
-                                                        "latlng"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
+                                {renderRow("IPアドレス", info()?.ip, "ip", {
+                                    isMono: true,
+                                    isPrimary: true,
+                                })}
+                                {renderRow("プロバイダ (ISP)", info()?.org, "org")}
+                                {renderRow(
+                                    "国 / 地域",
+                                    `${info()?.country_name} (${info()?.country_code})`,
+                                    "country",
+                                )}
+                                {renderRow(
+                                    "都道府県 / 都市",
+                                    `${info()?.region} / ${info()?.city}`,
+                                    "region",
+                                )}
+                                {renderRow("郵便番号", info()?.postal, "postal", {
+                                    isMono: true,
+                                    disabled: !info()?.postal || info()?.postal === "---",
+                                })}
+                                {renderRow(
+                                    "緯度 / 経度 (推定)",
+                                    `${info()?.latitude} , ${info()?.longitude}`,
+                                    "latlng",
+                                    { isMono: true },
+                                )}
                             </div>
                         </div>
 
+                        {/* 端末・ブラウザ環境 */}
                         <div>
-                            <h3 class="text-xl font-bold mb-3 text-secondary flex items-center gap-2">
+                            <h3 class="text-lg sm:text-xl font-bold mb-3 text-secondary flex items-center gap-2">
                                 <span>💻</span> 端末・ブラウザ環境
                             </h3>
-                            <div class="overflow-x-auto border border-base-300 rounded-xl bg-base-100">
-                                <table class="table table-zebra w-full text-base">
-                                    <tbody>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 w-1/3 bg-base-200/30">
-                                                物理解像度
-                                            </td>
-                                            <td class="text-base-content font-mono font-bold">
-                                                {physicScreenSize()}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                physicScreenSize(),
-                                                                "physic",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "physic" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() ===
-                                                        "physic"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                論理解像度
-                                            </td>
-                                            <td class="text-base-content font-mono">
-                                                {screenSize()}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                screenSize(),
-                                                                "logic",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "logic" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() === "logic"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                回線種別
-                                            </td>
-                                            <td class="text-base-content">
-                                                {networkType()}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                networkType(),
-                                                                "net",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "net" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() === "net"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr class="border-b border-base-200">
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                ユーザーエージェント
-                                            </td>
-                                            <td class="text-xs font-mono text-base-content/80 break-all whitespace-normal pr-4">
-                                                {userAgent()}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                userAgent(),
-                                                                "ua",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "ua" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() === "ua"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="font-bold text-base-content/70 bg-base-200/30">
-                                                バッテリー残量
-                                            </td>
-                                            <td class="text-base-content">
-                                                {batteryLevel()}
-                                            </td>
-                                            <td class="w-28 border-none">
-                                                <div class="flex items-center justify-end h-full">
-                                                    <button
-                                                        onClick={() =>
-                                                            copyRow(
-                                                                batteryLevel(),
-                                                                "bat",
-                                                            )
-                                                        }
-                                                        class={`btn btn-xs text-white ${copiedKey() === "bat" ? "btn-success" : "btn-neutral"}`}
-                                                    >
-                                                        {copiedKey() === "bat"
-                                                            ? "完了"
-                                                            : "コピー"}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
+                                {renderRow("物理解像度", physicScreenSize(), "physic", {
+                                    isMono: true,
+                                })}
+                                {renderRow("論理解像度", screenSize(), "logic", {
+                                    isMono: true,
+                                })}
+                                {renderRow("回線種別", networkType(), "net")}
+                                {renderRow("ユーザーエージェント", userAgent(), "ua", {
+                                    isMono: true,
+                                })}
+                                {renderRow("バッテリー残量", batteryLevel(), "bat")}
                             </div>
                         </div>
-                        <div class="flex flex-row justify-between items-center mb-6 w-full">
-                            <Show when={info() && !loading()}>
-                                <div class="flex justify-end w-full">
-                                    <button
-                                        onClick={copyAllToClipboard}
-                                        class={`btn text-white h-12 px-6 text-lg rounded-xl shadow-sm transition-all ${allCopied() ? "btn-success" : "btn-neutral"}`}
-                                    >
-                                        {allCopied()
-                                            ? "すべてコピー完了！"
-                                            : "すべての情報をコピー"}
-                                    </button>
-                                </div>
-                            </Show>
+
+                        {/* 全体コピーボタン */}
+                        <div class="flex justify-end w-full pt-2">
+                            <button
+                                onClick={copyAllToClipboard}
+                                class={`btn text-white w-full sm:w-auto h-11 sm:h-12 px-6 text-sm sm:text-base rounded-xl shadow-sm transition-all ${
+                                    allCopied() ? "btn-success" : "btn-neutral"
+                                }`}
+                            >
+                                {allCopied()
+                                    ? "すべてコピー完了！"
+                                    : "すべての情報をコピー"}
+                            </button>
                         </div>
                     </div>
                 </Show>
