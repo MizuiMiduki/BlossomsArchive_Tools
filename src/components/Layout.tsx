@@ -23,6 +23,7 @@ export default function Layout(props: LayoutProps) {
     const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
 
     let hoverTween: ReturnType<typeof delayedCall> | undefined;
+    let mainRef: HTMLElement | undefined;
 
     createEffect(() => {
         localStorage.setItem("isPcMenuOpen", String(isPcMenuOpen()));
@@ -76,8 +77,21 @@ export default function Layout(props: LayoutProps) {
     };
 
     createEffect(() => {
-        location.pathname;
+        const _path = location.pathname;
         setIsMenuOpen(false);
+
+        if (location.hash) {
+            const target = document.getElementById(location.hash.slice(1));
+            if (target) {
+                target.scrollIntoView();
+                return;
+            }
+        }
+
+        if (mainRef) {
+            mainRef.scrollTop = 0;
+        }
+        window.scrollTo(0, 0);
     });
 
     createEffect(() => {
@@ -346,7 +360,7 @@ export default function Layout(props: LayoutProps) {
                     <ThemeToggle />
                 </header>
 
-                <main class="flex-1 overflow-y-auto">
+                <main ref={mainRef} class="flex-1 overflow-y-auto">
                     <div class="p-4 lg:p-8">{props.children}</div>
                 </main>
             </div>
