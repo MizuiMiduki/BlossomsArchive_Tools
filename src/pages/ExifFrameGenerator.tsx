@@ -94,70 +94,6 @@ export default function ExifFrame() {
     ];
     const [activeTab, setActiveTab] = createSignal<SettingTab>("text");
 
-    // AdSense のアンカー広告（画面下部に固定表示される自動広告）の高さ。
-    // スマホの下部固定タブバーが広告の下に潜り込まないよう、この分だけ上にずらす。
-    const [anchorAdOffset, setAnchorAdOffset] = createSignal(0);
-    onMount(() => {
-        if (typeof window === "undefined" || !document.body) return;
-        let rafId = 0;
-        const raf =
-            window.requestAnimationFrame?.bind(window) ??
-            ((cb: FrameRequestCallback) => window.setTimeout(() => cb(0), 16));
-        const caf =
-            window.cancelAnimationFrame?.bind(window) ??
-            ((id: number) => window.clearTimeout(id));
-        const measure = () => {
-            rafId = 0;
-            let offset = 0;
-            const vh = window.innerHeight;
-            // 通常のアンカー広告、アンカーフレーム、広告インテントのアンカー要素(#google-anno-sa)などを包括検出
-            document
-                .querySelectorAll<HTMLElement>(
-                    "ins.adsbygoogle, ins[data-anchor-status], ins[data-anchor-shown], #google-anno-sa, .google-anno-sa, iframe[id*='aswift'][id*='anchor']",
-                )
-                .forEach((el) => {
-                    const style = getComputedStyle(el);
-                    if (
-                        style.display === "none" ||
-                        style.visibility === "hidden"
-                    )
-                        return;
-                    const rect = el.getBoundingClientRect();
-                    // 画面下端付近に固定表示されており、高さを持っている要素を対象とする
-                    if (
-                        rect.height > 20 &&
-                        rect.bottom >= vh - 10 &&
-                        rect.top < vh
-                    ) {
-                        offset = Math.max(offset, Math.round(vh - rect.top));
-                    }
-                });
-            setAnchorAdOffset(offset);
-        };
-        const schedule = () => {
-            if (!rafId) rafId = raf(measure);
-        };
-        const observer = new MutationObserver(schedule);
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: [
-                "style",
-                "class",
-                "data-anchor-status",
-                "data-anchor-shown",
-            ],
-        });
-        window.addEventListener("resize", schedule);
-        schedule();
-        onCleanup(() => {
-            observer.disconnect();
-            window.removeEventListener("resize", schedule);
-            if (rafId) caf(rafId);
-        });
-    });
-
     let rawFileBase64Str: string | null = null;
     let canvasRef: HTMLCanvasElement | undefined;
     let sourceImage: HTMLImageElement | null = null;
@@ -1792,15 +1728,12 @@ export default function ExifFrame() {
                         </div>
                         <div
                             ref={settingsTopRef}
-                            class="order-3 lg:order-none flex flex-col gap-4 scroll-mt-[40vh] lg:scroll-mt-0"
+                            class="order-3 lg:order-none flex flex-col gap-4 scroll-mt-68 sm:scroll-mt-76 lg:scroll-mt-0"
                         >
                             <div
                                 role="tablist"
                                 aria-label="設定カテゴリ"
-                                class="fixed bottom-[var(--exif-anchor-offset,0px)] inset-x-0 z-[2147483646] bg-base-100/95 backdrop-blur-md border-t border-base-300 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)] lg:sticky lg:top-0 lg:bottom-auto lg:inset-x-auto lg:z-10 lg:border lg:rounded-xl lg:shadow-xs lg:pb-0"
-                                style={{
-                                    "--exif-anchor-offset": `${anchorAdOffset()}px`,
-                                }}
+                                class="fixed bottom-0 inset-x-0 z-[2147483646] bg-base-100/95 backdrop-blur-md border-t border-base-300 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)] lg:sticky lg:top-0 lg:bottom-auto lg:inset-x-auto lg:z-10 lg:border lg:rounded-xl lg:shadow-xs lg:pb-0"
                             >
                                 <div class="flex items-stretch gap-1 p-1.5 max-w-xl mx-auto lg:max-w-none">
                                     <For each={settingTabs}>
@@ -3093,7 +3026,7 @@ export default function ExifFrame() {
                     </div>
 
                     <div
-                        class="order-2 lg:order-none flex-1 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative min-h-[140px] lg:min-h-0 overflow-hidden shadow-inner"
+                        class="order-2 lg:order-none flex-1 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative h-64 sm:h-72 lg:h-[620px] shrink-0 overflow-hidden shadow-inner"
                         classList={{
                             "sticky top-0 z-[5] shadow-md lg:static lg:shadow-inner":
                                 hasImage(),
@@ -3102,7 +3035,7 @@ export default function ExifFrame() {
                         <Show
                             when={hasImage()}
                             fallback={
-                                <div class="text-base-content/50 p-8 text-center font-medium">
+                                <div class="text-base-content/50 p-4 text-center font-medium text-xs sm:text-sm">
                                     📸
                                     写真を読み込むと、比率を維持したプレビューが表示されます！
                                 </div>
@@ -3117,7 +3050,7 @@ export default function ExifFrame() {
                             </button>
                             <canvas
                                 ref={(el) => (canvasRef = el)}
-                                class="w-full h-full max-h-[36vh] lg:max-h-[calc(100vh-160px)] object-contain rounded-none shadow-lg bg-slate-200 transition-all duration-300"
+                                class="max-w-full max-h-full w-auto h-auto object-contain rounded-none shadow-lg bg-slate-200"
                             />
                         </Show>
                     </div>
@@ -3346,10 +3279,10 @@ export default function ExifFrame() {
             </Show>
             <AdSense />
             <AdSense />
-            {/* スマホ固定タブバーとアンカー広告分、末尾に十分な余白を確保して最下部広告やコンテンツが被らないようにする */}
+            {/* スマホ固定タブバー分、末尾に十分な余白を確保して最下部広告やコンテンツが被らないようにする */}
             <div
                 class="lg:hidden shrink-0 w-full"
-                style={{ height: `calc(5rem + env(safe-area-inset-bottom, 0px) + ${anchorAdOffset()}px)` }}
+                style={{ height: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
                 aria-hidden="true"
             />
         </div>
