@@ -92,6 +92,70 @@ export default function ExifFrame() {
     ];
     const [activeTab, setActiveTab] = createSignal<SettingTab>("text");
 
+    // AdSense のアンカー広告（画面下部に固定表示される自動広告）の高さ。
+    // スマホの下部固定タブバーが広告の下に潜り込まないよう、この分だけ上にずらす。
+    const [anchorAdOffset, setAnchorAdOffset] = createSignal(0);
+    onMount(() => {
+        if (typeof window === "undefined" || !document.body) return;
+        let rafId = 0;
+        const raf =
+            window.requestAnimationFrame?.bind(window) ??
+            ((cb: FrameRequestCallback) => window.setTimeout(() => cb(0), 16));
+        const caf =
+            window.cancelAnimationFrame?.bind(window) ??
+            ((id: number) => window.clearTimeout(id));
+        const measure = () => {
+            rafId = 0;
+            let offset = 0;
+            const vh = window.innerHeight;
+            document
+                .querySelectorAll<HTMLElement>(
+                    "ins.adsbygoogle, ins[data-anchor-status], ins[data-anchor-shown]",
+                )
+                .forEach((el) => {
+                    const style = getComputedStyle(el);
+                    if (
+                        style.position !== "fixed" ||
+                        style.display === "none" ||
+                        style.visibility === "hidden"
+                    )
+                        return;
+                    const rect = el.getBoundingClientRect();
+                    // 画面下端に接していて、実際に表示されているもののみ対象
+                    if (
+                        rect.height > 0 &&
+                        rect.bottom >= vh - 2 &&
+                        rect.top < vh
+                    ) {
+                        offset = Math.max(offset, Math.round(vh - rect.top));
+                    }
+                });
+            setAnchorAdOffset(offset);
+        };
+        const schedule = () => {
+            if (!rafId) rafId = raf(measure);
+        };
+        const observer = new MutationObserver(schedule);
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: [
+                "style",
+                "class",
+                "data-anchor-status",
+                "data-anchor-shown",
+            ],
+        });
+        window.addEventListener("resize", schedule);
+        schedule();
+        onCleanup(() => {
+            observer.disconnect();
+            window.removeEventListener("resize", schedule);
+            if (rafId) caf(rafId);
+        });
+    });
+
     let rawFileBase64Str: string | null = null;
     let canvasRef: HTMLCanvasElement | undefined;
     let sourceImage: HTMLImageElement | null = null;
@@ -1724,7 +1788,10 @@ export default function ExifFrame() {
                             <div
                                 role="tablist"
                                 aria-label="設定カテゴリ"
-                                class="fixed bottom-0 inset-x-0 z-10 bg-base-100/95 backdrop-blur-md border-t border-base-300 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)] lg:sticky lg:top-0 lg:bottom-auto lg:inset-x-auto lg:border lg:rounded-xl lg:shadow-xs lg:pb-0"
+                                class="fixed bottom-[var(--exif-anchor-offset,0px)] inset-x-0 z-10 bg-base-100/95 backdrop-blur-md border-t border-base-300 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)] lg:sticky lg:top-0 lg:bottom-auto lg:inset-x-auto lg:border lg:rounded-xl lg:shadow-xs lg:pb-0"
+                                style={{
+                                    "--exif-anchor-offset": `${anchorAdOffset()}px`,
+                                }}
                             >
                                 <div class="flex items-stretch gap-1 p-1.5 max-w-xl mx-auto lg:max-w-none">
                                     <For each={settingTabs}>
@@ -3146,6 +3213,12 @@ export default function ExifFrame() {
             </Show>
             <AdSense />
             <AdSense />
+            {/* アンカー広告分、ページ末尾の余白を広げてタブバー裏に内容が隠れないようにする */}
+            <div
+                class="lg:hidden shrink-0"
+                style={{ height: `${anchorAdOffset()}px` }}
+                aria-hidden="true"
+            />
         </div>
     );
 }
