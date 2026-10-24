@@ -28,6 +28,10 @@ export default function ExifFrame() {
     const [downloadImageSrc, setDownloadImageSrc] = createSignal("");
     const [downloadFileName, setDownloadFileName] = createSignal("");
     const [uploadedImageSrc, setUploadedImageSrc] = createSignal("");
+    const [isProcessing, setIsProcessing] = createSignal(false);
+    const [processingProgress, setProcessingProgress] = createSignal(0);
+    const [processingStepText, setProcessingStepText] = createSignal("");
+    let preparedDownloadBlob: Blob | null = null;
 
     const [useCustomTitle, setUseCustomTitle] = createSignal(false);
     const [customTitleLine1, setCustomTitleLine1] =
@@ -115,10 +119,22 @@ export default function ExifFrame() {
     };
     let overlayDragStart = {
         pointerId: -1,
+        mode: "move" as "move" | "resize",
         startCanvasX: 0,
         startCanvasY: 0,
         initialItemX: 0,
         initialItemY: 0,
+        initialScale: 40,
+        initialDist: 1,
+        centerX: 0,
+        centerY: 0,
+    };
+    const activeOverlayPointers = new Map<number, { x: number; y: number }>();
+    let overlayPinchStart = {
+        active: false,
+        initialDist: 1,
+        initialScale: 40,
+        targetId: null as string | null,
     };
 
     const handleOverlayFilesChange = (e: Event) => {
@@ -215,21 +231,60 @@ export default function ExifFrame() {
         };
     };
 
-    const hitTestOverlayItem = (canvasX: number, canvasY: number): string | null => {
+    const getOverlayItemMetrics = (item: OverlayImageItem) => {
+        const { imgX, imgY, imgW, imgH, longSide } = lastImgLayout;
+        const natW = item.image.naturalWidth || item.image.width || 1;
+        const natH = item.image.naturalHeight || item.image.height || 1;
+        const targetMaxDim = Math.max(8, longSide * (item.scale / 100) * 0.5);
+        const ratio = targetMaxDim / Math.max(natW, natH);
+        const drawW = natW * ratio;
+        const drawH = natH * ratio;
+        const cx = imgX + (item.x / 100) * imgW;
+        const cy = imgY + (item.y / 100) * imgH;
+        return { cx, cy, drawW, drawH, longSide };
+    };
+
+    const hitTestOverlayItem = (
+        canvasX: number,
+        canvasY: number,
+    ): { id: string; mode: "move" | "resize" } | null => {
         const items = overlayImages();
         if (items.length === 0) return null;
-        const { imgX, imgY, imgW, imgH, longSide } = lastImgLayout;
 
+        // 1. まず選択中のアイテムの四隅リサイズハンドルを優先判定
+        const selId = selectedOverlayId();
+        if (selId) {
+            const selItem = items.find((i) => i.id === selId);
+            if (selItem) {
+                const { cx, cy, drawW, drawH, longSide } =
+                    getOverlayItemMetrics(selItem);
+                const dx = canvasX - cx;
+                const dy = canvasY - cy;
+                const rad = (-selItem.rotation * Math.PI) / 180;
+                const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+                const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+                const handleRadius = Math.max(22, longSide * 0.022);
+                const corners = [
+                    { x: -drawW / 2, y: -drawH / 2 },
+                    { x: drawW / 2, y: -drawH / 2 },
+                    { x: -drawW / 2, y: drawH / 2 },
+                    { x: drawW / 2, y: drawH / 2 },
+                ];
+                for (const c of corners) {
+                    if (
+                        Math.hypot(localX - c.x, localY - c.y) <= handleRadius
+                    ) {
+                        return { id: selItem.id, mode: "resize" };
+                    }
+                }
+            }
+        }
+
+        // 2. 各アイテム本体の当たり判定（手前のレイヤーから）
         for (let i = items.length - 1; i >= 0; i--) {
             const item = items[i];
-            const natW = item.image.naturalWidth || item.image.width || 1;
-            const natH = item.image.naturalHeight || item.image.height || 1;
-            const targetMaxDim = Math.max(8, longSide * (item.scale / 100) * 0.5);
-            const ratio = targetMaxDim / Math.max(natW, natH);
-            const drawW = natW * ratio;
-            const drawH = natH * ratio;
-            const cx = imgX + (item.x / 100) * imgW;
-            const cy = imgY + (item.y / 100) * imgH;
+            const { cx, cy, drawW, drawH, longSide } =
+                getOverlayItemMetrics(item);
 
             const dx = canvasX - cx;
             const dy = canvasY - cy;
@@ -237,12 +292,25 @@ export default function ExifFrame() {
             const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
             const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
 
+            const handleRadius = Math.max(20, longSide * 0.02);
+            const corners = [
+                { x: -drawW / 2, y: -drawH / 2 },
+                { x: drawW / 2, y: -drawH / 2 },
+                { x: -drawW / 2, y: drawH / 2 },
+                { x: drawW / 2, y: drawH / 2 },
+            ];
+            for (const c of corners) {
+                if (Math.hypot(localX - c.x, localY - c.y) <= handleRadius) {
+                    return { id: item.id, mode: "resize" };
+                }
+            }
+
             const hitPad = Math.max(12, longSide * 0.01);
             if (
                 Math.abs(localX) <= drawW / 2 + hitPad &&
                 Math.abs(localY) <= drawH / 2 + hitPad
             ) {
-                return item.id;
+                return { id: item.id, mode: "move" };
             }
         }
         return null;
@@ -253,42 +321,141 @@ export default function ExifFrame() {
         const coords = getCanvasCoordinates(e.clientX, e.clientY);
         if (!coords) return;
 
-        let targetId = hitTestOverlayItem(coords.x, coords.y);
-        if (!targetId && activeTab() === "overlay") {
-            targetId =
-                selectedOverlayId() ||
-                overlayImages()[overlayImages().length - 1]?.id ||
-                null;
-        }
-        if (!targetId) return;
-
-        const targetItem = overlayImages().find((item) => item.id === targetId);
-        if (!targetItem) return;
-
-        e.preventDefault();
-        setSelectedOverlayId(targetId);
-        setDraggingOverlayId(targetId);
-        overlayDragStart = {
-            pointerId: e.pointerId,
-            startCanvasX: coords.x,
-            startCanvasY: coords.y,
-            initialItemX: targetItem.x,
-            initialItemY: targetItem.y,
-        };
+        activeOverlayPointers.set(e.pointerId, coords);
         try {
             (e.currentTarget as HTMLElement)?.setPointerCapture?.(e.pointerId);
         } catch {
             // PointerCapture 非対応環境では無視
         }
+
+        // 2本指タッチ時はピンチ拡大縮小モードへ移行
+        if (activeOverlayPointers.size === 2) {
+            const pts = Array.from(activeOverlayPointers.values());
+            const dist = Math.max(
+                1,
+                Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y),
+            );
+            const targetId =
+                selectedOverlayId() ||
+                overlayImages()[overlayImages().length - 1]?.id ||
+                null;
+            const targetItem = overlayImages().find((i) => i.id === targetId);
+            if (targetItem) {
+                e.preventDefault();
+                setSelectedOverlayId(targetItem.id);
+                setDraggingOverlayId(targetItem.id);
+                overlayPinchStart = {
+                    active: true,
+                    initialDist: dist,
+                    initialScale: targetItem.scale,
+                    targetId: targetItem.id,
+                };
+            }
+            return;
+        }
+
+        const hit = hitTestOverlayItem(coords.x, coords.y);
+        let targetId = hit?.id ?? null;
+        let mode: "move" | "resize" = hit?.mode ?? "move";
+
+        if (!targetId && activeTab() === "overlay") {
+            targetId =
+                selectedOverlayId() ||
+                overlayImages()[overlayImages().length - 1]?.id ||
+                null;
+            mode = "move";
+        }
+        if (!targetId) {
+            activeOverlayPointers.delete(e.pointerId);
+            return;
+        }
+
+        const targetItem = overlayImages().find((item) => item.id === targetId);
+        if (!targetItem) {
+            activeOverlayPointers.delete(e.pointerId);
+            return;
+        }
+
+        e.preventDefault();
+        setSelectedOverlayId(targetId);
+        setDraggingOverlayId(targetId);
+        const { cx, cy } = getOverlayItemMetrics(targetItem);
+        const initialDist = Math.max(1, Math.hypot(coords.x - cx, coords.y - cy));
+        overlayDragStart = {
+            pointerId: e.pointerId,
+            mode,
+            startCanvasX: coords.x,
+            startCanvasY: coords.y,
+            initialItemX: targetItem.x,
+            initialItemY: targetItem.y,
+            initialScale: targetItem.scale,
+            initialDist,
+            centerX: cx,
+            centerY: cy,
+        };
     };
 
     const handleCanvasPointerMove = (e: PointerEvent) => {
+        if (activeOverlayPointers.has(e.pointerId)) {
+            const coords = getCanvasCoordinates(e.clientX, e.clientY);
+            if (coords) {
+                activeOverlayPointers.set(e.pointerId, coords);
+            }
+        }
+
+        // 2本指ピンチ拡大縮小中
+        if (overlayPinchStart.active && activeOverlayPointers.size >= 2) {
+            const targetId = overlayPinchStart.targetId;
+            if (!targetId) return;
+            e.preventDefault();
+            const pts = Array.from(activeOverlayPointers.values());
+            const dist = Math.max(
+                1,
+                Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y),
+            );
+            const nextScale = Math.max(
+                5,
+                Math.min(
+                    250,
+                    Math.round(
+                        overlayPinchStart.initialScale *
+                            (dist / overlayPinchStart.initialDist),
+                    ),
+                ),
+            );
+            updateOverlayItem(targetId, { scale: nextScale });
+            return;
+        }
+
         const currentId = draggingOverlayId();
         if (!currentId || e.pointerId !== overlayDragStart.pointerId) return;
         const coords = getCanvasCoordinates(e.clientX, e.clientY);
         if (!coords) return;
 
         e.preventDefault();
+
+        if (overlayDragStart.mode === "resize") {
+            const currentDist = Math.max(
+                1,
+                Math.hypot(
+                    coords.x - overlayDragStart.centerX,
+                    coords.y - overlayDragStart.centerY,
+                ),
+            );
+            const nextScale = Math.max(
+                5,
+                Math.min(
+                    250,
+                    Math.round(
+                        overlayDragStart.initialScale *
+                            (currentDist / overlayDragStart.initialDist),
+                    ),
+                ),
+            );
+            updateOverlayItem(currentId, { scale: nextScale });
+            return;
+        }
+
         const { imgW, imgH } = lastImgLayout;
         if (imgW <= 0 || imgH <= 0) return;
 
@@ -310,15 +477,42 @@ export default function ExifFrame() {
     };
 
     const handleCanvasPointerUp = (e: PointerEvent) => {
-        if (!draggingOverlayId() || e.pointerId !== overlayDragStart.pointerId)
-            return;
-        setDraggingOverlayId(null);
-        overlayDragStart.pointerId = -1;
+        activeOverlayPointers.delete(e.pointerId);
+        if (activeOverlayPointers.size < 2) {
+            overlayPinchStart.active = false;
+        }
+        if (activeOverlayPointers.size === 0) {
+            setDraggingOverlayId(null);
+            overlayDragStart.pointerId = -1;
+        }
         try {
             (e.currentTarget as HTMLElement)?.releasePointerCapture?.(e.pointerId);
         } catch {
             // 無視
         }
+    };
+
+    const handleCanvasWheel = (e: WheelEvent) => {
+        if (overlayImages().length === 0) return;
+        const coords = getCanvasCoordinates(e.clientX, e.clientY);
+        if (!coords) return;
+
+        const hit = hitTestOverlayItem(coords.x, coords.y);
+        const targetId =
+            hit?.id || (activeTab() === "overlay" ? selectedOverlayId() : null);
+        if (!targetId) return;
+
+        const targetItem = overlayImages().find((i) => i.id === targetId);
+        if (!targetItem) return;
+
+        e.preventDefault();
+        setSelectedOverlayId(targetId);
+        const delta = e.deltaY < 0 ? 4 : -4;
+        const nextScale = Math.max(
+            5,
+            Math.min(250, Math.round(targetItem.scale + delta)),
+        );
+        updateOverlayItem(targetId, { scale: nextScale });
     };
 
     // SEO対策：メタデータの動的挿入
@@ -518,7 +712,7 @@ export default function ExifFrame() {
         return luminance > 0.6 ? "#000000" : "#ffffff";
     };
 
-    const drawFrame = () => {
+    const drawFrame = (hideEditorGuides = false) => {
         if (!canvasRef || !sourceImage) return;
         const ctx = canvasRef.getContext("2d");
         if (!ctx) return;
@@ -1690,6 +1884,48 @@ export default function ExifFrame() {
         }
 
         drawOverlayItems(true);
+
+        // 重ね画像タブを開いている、またはドラッグ操作中のときは選択枠と四隅のリサイズハンドルを描画（出力画像には含めない）
+        if (
+            !hideEditorGuides &&
+            (activeTab() === "overlay" || draggingOverlayId() !== null)
+        ) {
+            const selId = selectedOverlayId();
+            const selItem = overlayImages().find((i) => i.id === selId);
+            if (selItem) {
+                const { cx, cy, drawW, drawH } = getOverlayItemMetrics(selItem);
+                const handleR = Math.max(6, Math.round(longSide * 0.008));
+                const strokeW = Math.max(2, Math.round(longSide * 0.002));
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate((selItem.rotation * Math.PI) / 180);
+
+                ctx.strokeStyle = "#3b82f6";
+                ctx.lineWidth = strokeW;
+                ctx.setLineDash([strokeW * 3, strokeW * 2]);
+                ctx.strokeRect(-drawW / 2, -drawH / 2, drawW, drawH);
+                ctx.setLineDash([]);
+
+                const corners = [
+                    { x: -drawW / 2, y: -drawH / 2 },
+                    { x: drawW / 2, y: -drawH / 2 },
+                    { x: -drawW / 2, y: drawH / 2 },
+                    { x: drawW / 2, y: drawH / 2 },
+                ];
+                corners.forEach((c) => {
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, handleR, 0, Math.PI * 2);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+                    ctx.lineWidth = strokeW;
+                    ctx.strokeStyle = "#2563eb";
+                    ctx.stroke();
+                });
+
+                ctx.restore();
+            }
+        }
     };
 
     // リアクティブに自動で再描画が走るように一元化するにゃん！
@@ -1729,6 +1965,9 @@ export default function ExifFrame() {
             separatorType();
             customSeparator();
             overlayImages();
+            selectedOverlayId();
+            draggingOverlayId();
+            activeTab();
             copyrightText();
             copyrightPosition();
 
@@ -1737,46 +1976,85 @@ export default function ExifFrame() {
         }
     });
 
-    const handleGenerate = () => {
-        if (!canvasRef) return;
+    const yieldToBrowser = () =>
+        new Promise<void>((resolve) => setTimeout(resolve, 16));
 
-        let baseName = customExportName().trim();
-        if (!baseName) {
-            baseName = `framed_${(fileName() || "image").split(".")[0]}`;
-        }
+    const handleGenerate = async () => {
+        if (!canvasRef || isProcessing()) return;
 
-        let finalDataUrl = canvasRef.toDataURL(saveFormat(), 0.95);
+        setIsProcessing(true);
+        setProcessingProgress(12);
+        setProcessingStepText("フレームと重ね画像を高解像度で描画中...");
+        await yieldToBrowser();
 
-        if (
-            keepOriginalExif() &&
-            rawFileBase64Str &&
-            saveFormat() === "image/jpeg"
-        ) {
-            try {
-                const exifObj = piexif.load(rawFileBase64Str);
-                if (exifObj["0th"]) {
-                    // キャンバス上の描画はすでに適切な向きで回転補正されているため、
-                    // 保存するExifのOrientationは「1（標準 / 0度回転）」に上書き固定する
-                    exifObj["0th"][piexif.ImageIFD.Orientation] = 1;
-                    exifObj["0th"][piexif.ImageIFD.ImageWidth] = canvasRef.width;
-                    exifObj["0th"][piexif.ImageIFD.ImageLength] = canvasRef.height;
-                }
-                if (exifObj["Exif"]) {
-                    exifObj["Exif"][piexif.ExifIFD.PixelXDimension] = canvasRef.width;
-                    exifObj["Exif"][piexif.ExifIFD.PixelYDimension] = canvasRef.height;
-                }
-                const exifDump = piexif.dump(exifObj);
-                finalDataUrl = piexif.insert(exifDump, finalDataUrl);
-            } catch (exifErr) {
-                console.error("Failed to insert EXIF metadata:", exifErr);
+        try {
+            // 保存時は選択枠やリサイズハンドルを非表示にして描画
+            drawFrame(true);
+
+            setProcessingProgress(45);
+            setProcessingStepText("画像データをエンコード中...");
+            await yieldToBrowser();
+
+            let baseName = customExportName().trim();
+            if (!baseName) {
+                baseName = `framed_${(fileName() || "image").split(".")[0]}`;
             }
-        }
 
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        const downloadName = `${baseName}_${randomNum}.${saveFormat().split("/")[1]}`;
-        setDownloadImageSrc(finalDataUrl);
-        setDownloadFileName(downloadName);
-        setShowMobileSaveModal(true);
+            let finalDataUrl = canvasRef.toDataURL(saveFormat(), 0.95);
+            drawFrame(false);
+
+            if (
+                keepOriginalExif() &&
+                rawFileBase64Str &&
+                saveFormat() === "image/jpeg"
+            ) {
+                setProcessingProgress(72);
+                setProcessingStepText("Exifメタデータを書き込み中...");
+                await yieldToBrowser();
+                try {
+                    const exifObj = piexif.load(rawFileBase64Str);
+                    if (exifObj["0th"]) {
+                        // キャンバス上の描画はすでに適切な向きで回転補正されているため、
+                        // 保存するExifのOrientationは「1（標準 / 0度回転）」に上書き固定する
+                        exifObj["0th"][piexif.ImageIFD.Orientation] = 1;
+                        exifObj["0th"][piexif.ImageIFD.ImageWidth] =
+                            canvasRef.width;
+                        exifObj["0th"][piexif.ImageIFD.ImageLength] =
+                            canvasRef.height;
+                    }
+                    if (exifObj["Exif"]) {
+                        exifObj["Exif"][piexif.ExifIFD.PixelXDimension] =
+                            canvasRef.width;
+                        exifObj["Exif"][piexif.ExifIFD.PixelYDimension] =
+                            canvasRef.height;
+                    }
+                    const exifDump = piexif.dump(exifObj);
+                    finalDataUrl = piexif.insert(exifDump, finalDataUrl);
+                } catch (exifErr) {
+                    console.error("Failed to insert EXIF metadata:", exifErr);
+                }
+            }
+
+            setProcessingProgress(90);
+            setProcessingStepText("保存用ファイルデータを準備中...");
+            await yieldToBrowser();
+
+            try {
+                preparedDownloadBlob = dataUrlToBlob(finalDataUrl);
+            } catch {
+                preparedDownloadBlob = null;
+            }
+
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            const downloadName = `${baseName}_${randomNum}.${saveFormat().split("/")[1]}`;
+            setDownloadImageSrc(finalDataUrl);
+            setDownloadFileName(downloadName);
+            setProcessingProgress(100);
+            setProcessingStepText("完了しました！");
+            setShowMobileSaveModal(true);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const dataUrlToBlob = (dataUrl: string): Blob => {
@@ -1798,7 +2076,7 @@ export default function ExifFrame() {
         if (!dataUrl) return;
 
         try {
-            const blob = dataUrlToBlob(dataUrl);
+            const blob = preparedDownloadBlob ?? dataUrlToBlob(dataUrl);
             const blobUrl = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = blobUrl;
@@ -1808,10 +2086,7 @@ export default function ExifFrame() {
             delayedCall(1, () => {
                 document.body.removeChild(link);
                 URL.revokeObjectURL(blobUrl);
-
             });
-
-
 
             e.preventDefault();
         } catch (err) {
@@ -2157,14 +2432,17 @@ export default function ExifFrame() {
                                     <Show when={hasImage()}>
                                         <button
                                             type="button"
+                                            disabled={isProcessing()}
                                             onClick={handleGenerate}
-                                            class="lg:hidden flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 rounded-lg text-[10px] sm:text-[11px] font-bold bg-success text-success-content shadow-xs active:scale-95 transition-transform cursor-pointer select-none"
+                                            class="lg:hidden flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 rounded-lg text-[10px] sm:text-[11px] font-bold bg-success text-success-content shadow-xs active:scale-95 transition-transform cursor-pointer select-none disabled:opacity-60"
                                             aria-label="額縁付き画像を生成"
                                         >
                                             <span class="text-base sm:text-lg leading-none" aria-hidden="true">
                                                 ✨
                                             </span>
-                                            <span class="truncate">生成</span>
+                                            <span class="truncate">
+                                                {isProcessing() ? "生成中" : "生成"}
+                                            </span>
                                         </button>
                                     </Show>
                                 </div>
@@ -3407,7 +3685,7 @@ export default function ExifFrame() {
                                         <div class="text-[11px] text-primary font-bold bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 flex items-center gap-1.5">
                                             <span>👆</span>
                                             <span>
-                                                プレビュー画像上の重ね画像を直接ドラッグ（スマホは指でスライド）して位置を動かせます！
+                                                プレビュー上で直接ドラッグして移動、四隅の丸（またはピンチ・マウスホイール）で拡大縮小できます！
                                             </span>
                                         </div>
                                         <div class="flex flex-col gap-3">
@@ -3606,7 +3884,7 @@ export default function ExifFrame() {
                                                                 <input
                                                                     type="range"
                                                                     min="5"
-                                                                    max="200"
+                                                                    max="250"
                                                                     value={item.scale}
                                                                     onInput={(e) =>
                                                                         updateOverlayItem(item.id, {
@@ -3864,10 +4142,21 @@ export default function ExifFrame() {
                                     <Show when={hasImage()}>
                                         <button
                                             type="button"
+                                            disabled={isProcessing()}
                                             onClick={handleGenerate}
                                             class="btn btn-success text-white h-12 px-6 text-sm rounded-xl shadow-xs flex items-center justify-center gap-2 w-full mt-1"
                                         >
-                                            ✨ 額縁付き画像を生成
+                                            <Show
+                                                when={!isProcessing()}
+                                                fallback={
+                                                    <>
+                                                        <span class="loading loading-spinner loading-xs" />
+                                                        <span>生成中... ({processingProgress()}%)</span>
+                                                    </>
+                                                }
+                                            >
+                                                ✨ 額縁付き画像を生成
+                                            </Show>
                                         </button>
                                     </Show>
                                 </div>
@@ -3894,7 +4183,7 @@ export default function ExifFrame() {
                             <Show when={overlayImages().length > 0}>
                                 <div class="absolute top-2 left-2 lg:top-4 lg:left-4 bg-slate-900/75 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-lg shadow-md z-10 pointer-events-none flex items-center gap-1">
                                     <span>👆</span>
-                                    <span>重ね画像をドラッグして移動可能</span>
+                                    <span>ドラッグで移動・四隅/ピンチで拡縮</span>
                                 </div>
                             </Show>
                             <button
@@ -3910,6 +4199,7 @@ export default function ExifFrame() {
                                 onPointerMove={handleCanvasPointerMove}
                                 onPointerUp={handleCanvasPointerUp}
                                 onPointerCancel={handleCanvasPointerUp}
+                                onWheel={handleCanvasWheel}
                                 class={`max-w-full max-h-full w-auto h-auto object-contain rounded-none shadow-lg bg-slate-200 ${
                                     overlayImages().length > 0
                                         ? draggingOverlayId()
@@ -4075,6 +4365,32 @@ export default function ExifFrame() {
                         </div>
                     );
                 })()}
+            </Show>
+
+            <Show when={isProcessing()}>
+                <div
+                    role="status"
+                    aria-live="polite"
+                    class="fixed inset-0 bg-black/75 backdrop-blur-xs flex flex-col justify-center items-center z-[10001] p-4 animate-fade-in"
+                >
+                    <div class="bg-base-100 text-base-content max-w-sm w-full p-6 rounded-2xl shadow-2xl flex flex-col gap-3.5 text-center border border-base-300">
+                        <div class="flex items-center justify-center gap-2 font-bold text-sm text-base-content">
+                            <span class="loading loading-spinner loading-sm text-primary" />
+                            <span>画像を生成しています...</span>
+                        </div>
+                        <progress
+                            class="progress progress-primary w-full h-3"
+                            value={processingProgress()}
+                            max="100"
+                        />
+                        <div class="flex items-center justify-between text-[11px] text-base-content/70 font-medium px-0.5">
+                            <span class="truncate">{processingStepText()}</span>
+                            <span class="font-mono font-bold text-primary shrink-0">
+                                {processingProgress()}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </Show>
 
             <Show when={showMobileSaveModal()}>
