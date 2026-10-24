@@ -110,23 +110,23 @@ export default function ExifFrame() {
             rafId = 0;
             let offset = 0;
             const vh = window.innerHeight;
+            // 通常のアンカー広告、アンカーフレーム、広告インテントのアンカー要素(#google-anno-sa)などを包括検出
             document
                 .querySelectorAll<HTMLElement>(
-                    "ins.adsbygoogle, ins[data-anchor-status], ins[data-anchor-shown]",
+                    "ins.adsbygoogle, ins[data-anchor-status], ins[data-anchor-shown], #google-anno-sa, .google-anno-sa, iframe[id*='aswift'][id*='anchor']",
                 )
                 .forEach((el) => {
                     const style = getComputedStyle(el);
                     if (
-                        style.position !== "fixed" ||
                         style.display === "none" ||
                         style.visibility === "hidden"
                     )
                         return;
                     const rect = el.getBoundingClientRect();
-                    // 画面下端に接していて、実際に表示されているもののみ対象
+                    // 画面下端付近に固定表示されており、高さを持っている要素を対象とする
                     if (
-                        rect.height > 0 &&
-                        rect.bottom >= vh - 2 &&
+                        rect.height > 20 &&
+                        rect.bottom >= vh - 10 &&
                         rect.top < vh
                     ) {
                         offset = Math.max(offset, Math.round(vh - rect.top));
@@ -1746,7 +1746,7 @@ export default function ExifFrame() {
     };
 
     return (
-        <div ref={containerRef} class="exif-tool h-full w-full p-0 sm:p-4 pb-28 sm:pb-28 lg:pb-4 flex flex-col gap-4 bg-base-100">
+        <div ref={containerRef} class="exif-tool h-full w-full p-0 sm:p-4 pb-36 sm:pb-36 lg:pb-4 flex flex-col gap-4 bg-base-100">
             <For each={fontList}>
                 {(f) => (
                     <link
@@ -1797,7 +1797,7 @@ export default function ExifFrame() {
                             <div
                                 role="tablist"
                                 aria-label="設定カテゴリ"
-                                class="fixed bottom-[var(--exif-anchor-offset,0px)] inset-x-0 z-10 bg-base-100/95 backdrop-blur-md border-t border-base-300 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)] lg:sticky lg:top-0 lg:bottom-auto lg:inset-x-auto lg:border lg:rounded-xl lg:shadow-xs lg:pb-0"
+                                class="fixed bottom-[var(--exif-anchor-offset,0px)] inset-x-0 z-[2147483646] bg-base-100/95 backdrop-blur-md border-t border-base-300 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)] lg:sticky lg:top-0 lg:bottom-auto lg:inset-x-auto lg:z-10 lg:border lg:rounded-xl lg:shadow-xs lg:pb-0"
                                 style={{
                                     "--exif-anchor-offset": `${anchorAdOffset()}px`,
                                 }}
@@ -3346,10 +3346,10 @@ export default function ExifFrame() {
             </Show>
             <AdSense />
             <AdSense />
-            {/* アンカー広告分、ページ末尾の余白を広げてタブバー裏に内容が隠れないようにする */}
+            {/* スマホ固定タブバーとアンカー広告分、末尾に十分な余白を確保して最下部広告やコンテンツが被らないようにする */}
             <div
-                class="lg:hidden shrink-0"
-                style={{ height: `${anchorAdOffset()}px` }}
+                class="lg:hidden shrink-0 w-full"
+                style={{ height: `calc(5rem + env(safe-area-inset-bottom, 0px) + ${anchorAdOffset()}px)` }}
                 aria-hidden="true"
             />
         </div>
