@@ -85,14 +85,15 @@ export default function ExifFrame() {
     const [fontSizeScale, setFontSizeScale] = createSignal(100);
     const [imageRotation, setImageRotation] = createSignal(0);
 
-    type SettingTab = "text" | "layout" | "design" | "save";
+    type SettingTab = "photo" | "text" | "layout" | "design" | "save";
     const settingTabs: { id: SettingTab; icon: string; label: string }[] = [
+        { id: "photo", icon: "📷", label: "写真" },
         { id: "text", icon: "📝", label: "文字" },
         { id: "layout", icon: "📍", label: "配置" },
         { id: "design", icon: "🎨", label: "デザイン" },
         { id: "save", icon: "💾", label: "保存" },
     ];
-    const [activeTab, setActiveTab] = createSignal<SettingTab>("text");
+    const [activeTab, setActiveTab] = createSignal<SettingTab>("photo");
 
     let rawFileBase64Str: string | null = null;
     let canvasRef: HTMLCanvasElement | undefined;
@@ -1652,22 +1653,26 @@ export default function ExifFrame() {
         },
     ];
 
-    // タブ切替時、スマホでは設定パネルの先頭が見えるようにスクロールする
+    // タブ切替時、設定パネルの先頭へとページのスクロール位置を戻す
     let settingsTopRef: HTMLDivElement | undefined;
+    let settingsDesktopScrollRef: HTMLDivElement | undefined;
     const selectTab = (id: SettingTab) => {
         setActiveTab(id);
-        if (
-            settingsTopRef &&
-            typeof window !== "undefined" &&
-            window.matchMedia?.("(max-width: 1023.98px)")?.matches
-        ) {
-            const rect = settingsTopRef.getBoundingClientRect();
-            if (rect.top < 0 || rect.top > window.innerHeight * 0.6) {
-                settingsTopRef.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                });
+        if (typeof window === "undefined") return;
+
+        // PC表示: 左カラムのスクロール領域を先頭に戻す
+        if (settingsDesktopScrollRef) {
+            settingsDesktopScrollRef.scrollTop = 0;
+        }
+
+        // スマホ表示: ページ最上部（または設定パネルの先頭）へスクロールを戻す
+        if (window.matchMedia?.("(max-width: 1023.98px)")?.matches) {
+            const mainEl = document.querySelector("main");
+            if (mainEl) {
+                mainEl.scrollTo?.({ top: 0, behavior: "smooth" });
+                mainEl.scrollTop = 0;
             }
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
     };
 
@@ -1694,38 +1699,10 @@ export default function ExifFrame() {
 
             <div class="card bg-base-100 shadow-xl p-3 sm:p-6 w-full border border-base-300">
                 <div class="flex flex-col lg:flex-row gap-4 lg:gap-8 w-full items-stretch">
-                    <div class="contents lg:flex lg:flex-col lg:w-[360px] lg:flex-shrink-0 lg:gap-4 lg:max-h-[85vh] lg:overflow-y-auto lg:pr-1">
-                        <div class="order-1 lg:order-none grid grid-cols-2 gap-2 lg:flex lg:flex-col bg-base-200 p-2 sm:p-3 rounded-xl border border-base-300 shadow-xs">
-                            <label class="btn btn-primary text-white h-12 px-3 lg:px-6 text-sm rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 w-full"
-                                classList={{ "col-span-2": !hasImage() }}>
-                                <span>📁 写真を選択する</span>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    class="hidden"
-                                />
-                            </label>
-                            <Show when={hasImage()}>
-                                <button
-                                    type="button"
-                                    onClick={handleGenerate}
-                                    class="btn btn-success text-white h-12 px-6 text-sm rounded-xl shadow-xs hidden lg:flex items-center justify-center gap-2 w-full"
-                                >
-                                    ✨ 額縁付き画像を生成
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={rotateImage}
-                                    class="btn btn-outline btn-primary btn-sm h-12 lg:h-10 px-2 lg:px-4 rounded-xl flex items-center justify-center gap-2 w-full border-base-300 text-xs"
-                                >
-                                    <span class="lg:hidden">🔄 右に90°回転</span>
-                                    <span class="hidden lg:inline">
-                                        🔄 画像を右に90度回転
-                                    </span>
-                                </button>
-                            </Show>
-                        </div>
+                    <div
+                        ref={settingsDesktopScrollRef}
+                        class="contents lg:flex lg:flex-col lg:w-[360px] lg:flex-shrink-0 lg:gap-4 lg:max-h-[85vh] lg:overflow-y-auto lg:pr-1"
+                    >
                         <div
                             ref={settingsTopRef}
                             class="order-3 lg:order-none flex flex-col gap-4 scroll-mt-68 sm:scroll-mt-76 lg:scroll-mt-0"
@@ -1745,14 +1722,14 @@ export default function ExifFrame() {
                                                 aria-controls={`exif-panel-${tab.id}`}
                                                 aria-selected={activeTab() === tab.id}
                                                 onClick={() => selectTab(tab.id)}
-                                                class={`flex-1 min-w-0 flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-1.5 h-14 lg:h-10 rounded-lg text-[11px] lg:text-xs font-bold transition-colors cursor-pointer select-none ${
+                                                class={`flex-1 min-w-0 flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-1 h-14 lg:h-10 rounded-lg text-[10px] sm:text-[11px] lg:text-xs font-bold transition-colors cursor-pointer select-none ${
                                                     activeTab() === tab.id
                                                         ? "bg-primary text-primary-content shadow-xs"
                                                         : "text-base-content/70 hover:bg-base-200 active:bg-base-200"
                                                 }`}
                                             >
                                                 <span
-                                                    class="text-lg lg:text-sm leading-none"
+                                                    class="text-base sm:text-lg lg:text-sm leading-none"
                                                     aria-hidden="true"
                                                 >
                                                     {tab.icon}
@@ -1765,13 +1742,56 @@ export default function ExifFrame() {
                                         <button
                                             type="button"
                                             onClick={handleGenerate}
-                                            class="lg:hidden flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 rounded-lg text-[11px] font-bold bg-success text-success-content shadow-xs active:scale-95 transition-transform cursor-pointer select-none"
+                                            class="lg:hidden flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 rounded-lg text-[10px] sm:text-[11px] font-bold bg-success text-success-content shadow-xs active:scale-95 transition-transform cursor-pointer select-none"
                                             aria-label="額縁付き画像を生成"
                                         >
-                                            <span class="text-lg leading-none" aria-hidden="true">
+                                            <span class="text-base sm:text-lg leading-none" aria-hidden="true">
                                                 ✨
                                             </span>
                                             <span class="truncate">生成</span>
+                                        </button>
+                                    </Show>
+                                </div>
+                            </div>
+                            <div
+                                role="tabpanel"
+                                id="exif-panel-photo"
+                                aria-labelledby="exif-tab-photo"
+                                hidden={activeTab() !== "photo"}
+                                class="flex flex-col gap-4"
+                            >
+                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3">
+                                    <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
+                                        📷 写真の読み込み・回転
+                                    </span>
+                                    <label class="btn btn-primary text-white h-12 px-6 text-sm rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 w-full">
+                                        <span>📁 写真を選択する</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            class="hidden"
+                                        />
+                                    </label>
+                                    <Show when={fileName()}>
+                                        <div class="text-xs text-base-content/70 bg-base-100 px-3 py-2 rounded-lg border border-base-300 truncate">
+                                            選択中: <span class="font-mono font-semibold text-base-content">{fileName()}</span>
+                                        </div>
+                                    </Show>
+                                    <Show when={hasImage()}>
+                                        <button
+                                            type="button"
+                                            onClick={rotateImage}
+                                            class="btn btn-outline btn-primary h-11 px-4 rounded-xl flex items-center justify-center gap-2 w-full border-base-300 text-xs"
+                                        >
+                                            🔄 画像を右に90度回転
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleGenerate}
+                                            class="btn btn-success text-white h-12 px-6 text-sm rounded-xl shadow-xs flex items-center justify-center gap-2 w-full"
+                                        >
+                                            ✨ 額縁付き画像を生成
                                         </button>
                                     </Show>
                                 </div>

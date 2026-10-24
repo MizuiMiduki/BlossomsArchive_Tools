@@ -54,11 +54,16 @@ describe("ExifFrameGenerator", () => {
         const panel = (id: string) =>
             container.querySelector(`#exif-panel-${id}`) as HTMLElement;
 
-        // 初期状態は「文字」タブ
-        expect(panel("text").hidden).toBe(false);
+        // 初期状態は「写真」タブ
+        expect(panel("photo").hidden).toBe(false);
+        expect(panel("text").hidden).toBe(true);
         expect(panel("layout").hidden).toBe(true);
         expect(panel("design").hidden).toBe(true);
         expect(panel("save").hidden).toBe(true);
+
+        fireEvent.click(screen.getByRole("tab", { name: /文字/ }));
+        expect(panel("text").hidden).toBe(false);
+        expect(panel("photo").hidden).toBe(true);
 
         fireEvent.click(screen.getByRole("tab", { name: /保存/ }));
         expect(panel("save").hidden).toBe(false);

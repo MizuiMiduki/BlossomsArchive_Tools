@@ -88,10 +88,18 @@ export default function Layout(props: LayoutProps) {
             }
         }
 
-        if (mainRef) {
-            mainRef.scrollTop = 0;
-        }
-        window.scrollTo(0, 0);
+        const resetScroll = () => {
+            if (mainRef) {
+                mainRef.scrollTop = 0;
+                mainRef.scrollTo?.({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+            }
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        };
+
+        resetScroll();
+        requestAnimationFrame(resetScroll);
     });
 
     createEffect(() => {
