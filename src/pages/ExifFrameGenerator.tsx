@@ -1961,10 +1961,10 @@ export default function ExifFrame() {
             </For>
 
             <div class="card bg-base-100 shadow-xl p-3 sm:p-6 w-full border border-base-300">
-                <div class="flex flex-col lg:flex-row gap-4 lg:gap-8 w-full items-stretch">
+                <div class="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full items-stretch">
                     <div
                         ref={settingsDesktopScrollRef}
-                        class="contents lg:flex lg:flex-col lg:w-[360px] lg:flex-shrink-0 lg:gap-4 lg:max-h-[85vh] lg:overflow-y-auto lg:pr-1"
+                        class="contents lg:flex lg:flex-col lg:w-[440px] xl:w-[500px] lg:flex-shrink-0 lg:gap-4 lg:max-h-[82vh] lg:overflow-y-auto lg:pr-1"
                     >
                         <div
                             ref={settingsTopRef}
@@ -1985,19 +1985,19 @@ export default function ExifFrame() {
                                                 aria-controls={`exif-panel-${tab.id}`}
                                                 aria-selected={activeTab() === tab.id}
                                                 onClick={() => selectTab(tab.id)}
-                                                class={`relative flex-1 min-w-0 flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-1 h-14 lg:h-10 rounded-lg text-[10px] sm:text-[11px] lg:text-xs font-bold transition-colors cursor-pointer select-none ${
+                                                class={`relative flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 lg:h-12 rounded-lg text-[10px] sm:text-[11px] font-bold transition-colors cursor-pointer select-none ${
                                                     activeTab() === tab.id
                                                         ? "bg-primary text-primary-content shadow-xs"
                                                         : "text-base-content/70 hover:bg-base-200 active:bg-base-200"
                                                 }`}
                                             >
                                                 <Show when={tab.isBeta}>
-                                                    <span class="absolute top-0.5 right-0.5 lg:-top-1 lg:right-0.5 px-1 py-0 rounded-full text-[8px] leading-tight font-extrabold bg-warning text-warning-content shadow-2xs pointer-events-none">
+                                                    <span class="absolute top-0.5 right-0.5 px-1 py-0 rounded-full text-[8px] leading-tight font-extrabold bg-warning text-warning-content shadow-2xs pointer-events-none">
                                                         BETA
                                                     </span>
                                                 </Show>
                                                 <span
-                                                    class="text-base sm:text-lg lg:text-sm leading-none"
+                                                    class="text-base sm:text-lg lg:text-base leading-none"
                                                     aria-hidden="true"
                                                 >
                                                     {tab.icon}
@@ -3710,7 +3710,7 @@ export default function ExifFrame() {
                     </div>
 
                     <div
-                        class="order-2 lg:order-none flex-1 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative h-64 sm:h-72 lg:h-[620px] shrink-0 overflow-hidden shadow-inner"
+                        class="order-2 lg:order-none flex-1 min-w-0 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative h-64 sm:h-72 lg:h-[520px] xl:h-[560px] shrink-0 overflow-hidden shadow-inner"
                         classList={{
                             "sticky top-0 z-[5] shadow-md lg:static lg:shadow-inner":
                                 hasImage(),
