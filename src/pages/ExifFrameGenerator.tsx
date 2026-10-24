@@ -85,12 +85,92 @@ export default function ExifFrame() {
     const [fontSizeScale, setFontSizeScale] = createSignal(100);
     const [imageRotation, setImageRotation] = createSignal(0);
 
-    type SettingTab = "photo" | "text" | "layout" | "design" | "save";
-    const settingTabs: { id: SettingTab; icon: string; label: string }[] = [
+    type OverlayImageItem = {
+        id: string;
+        name: string;
+        src: string;
+        image: HTMLImageElement;
+        x: number; // 0..100 (%)
+        y: number; // 0..100 (%)
+        scale: number; // 5..200 (% of longSide * 0.25)
+        rotation: number; // -180..180 (deg)
+        opacity: number; // 0..100 (%)
+        flipX: boolean;
+        overFrame: boolean; // true: フレームの上に重ねる / false: 写真領域内にクリップ
+    };
+    const [overlayImages, setOverlayImages] = createSignal<OverlayImageItem[]>([]);
+    const [copyrightText, setCopyrightText] = createSignal("");
+    const [copyrightPosition, setCopyrightPosition] = createSignal<
+        "auto" | "frame-bottom-right" | "frame-bottom-left" | "frame-top-right" | "frame-top-left" | "image-bottom-right" | "image-bottom-left"
+    >("auto");
+
+    const handleOverlayFilesChange = (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        if (!target.files || target.files.length === 0) return;
+        const files = Array.from(target.files);
+        files.forEach((file) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                setOverlayImages((prev) => [
+                    ...prev,
+                    {
+                        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                        name: file.name,
+                        src: url,
+                        image: img,
+                        x: 80,
+                        y: 80,
+                        scale: 40,
+                        rotation: 0,
+                        opacity: 100,
+                        flipX: false,
+                        overFrame: false,
+                    },
+                ]);
+            };
+            img.src = url;
+        });
+        target.value = "";
+    };
+
+    const updateOverlayItem = (
+        id: string,
+        patch: Partial<Omit<OverlayImageItem, "id" | "image" | "src">>,
+    ) => {
+        setOverlayImages((prev) =>
+            prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+        );
+    };
+
+    const removeOverlayItem = (id: string) => {
+        setOverlayImages((prev) => {
+            const target = prev.find((item) => item.id === id);
+            if (target) URL.revokeObjectURL(target.src);
+            return prev.filter((item) => item.id !== id);
+        });
+    };
+
+    const moveOverlayItemOrder = (id: string, dir: -1 | 1) => {
+        setOverlayImages((prev) => {
+            const idx = prev.findIndex((i) => i.id === id);
+            if (idx < 0) return prev;
+            const nextIdx = idx + dir;
+            if (nextIdx < 0 || nextIdx >= prev.length) return prev;
+            const copy = [...prev];
+            const [moved] = copy.splice(idx, 1);
+            copy.splice(nextIdx, 0, moved);
+            return copy;
+        });
+    };
+
+    type SettingTab = "photo" | "text" | "layout" | "design" | "overlay" | "save";
+    const settingTabs: { id: SettingTab; icon: string; label: string; isBeta?: boolean }[] = [
         { id: "photo", icon: "📷", label: "写真" },
         { id: "text", icon: "📝", label: "文字" },
         { id: "layout", icon: "📍", label: "配置" },
         { id: "design", icon: "🎨", label: "デザイン" },
+        { id: "overlay", icon: "🪄", label: "重ね画像", isBeta: true },
         { id: "save", icon: "💾", label: "保存" },
     ];
     const [activeTab, setActiveTab] = createSignal<SettingTab>("photo");
@@ -460,6 +540,50 @@ export default function ExifFrame() {
         ctx.rotate((imageRotation() * Math.PI) / 180);
         ctx.drawImage(sourceImage, -origW / 2, -origH / 2, origW, origH);
         ctx.restore();
+
+        const drawOverlayItems = (overFrameFilter: boolean) => {
+            const items = overlayImages().filter(
+                (item) => item.overFrame === overFrameFilter,
+            );
+            if (items.length === 0) return;
+
+            ctx.save();
+            if (!overFrameFilter) {
+                ctx.beginPath();
+                if (scaledRadius > 0)
+                    ctx.roundRect(imgX, imgY, imgW, imgH, scaledRadius);
+                else ctx.rect(imgX, imgY, imgW, imgH);
+                ctx.clip();
+            }
+
+            items.forEach((item) => {
+                const natW = item.image.naturalWidth || item.image.width || 1;
+                const natH = item.image.naturalHeight || item.image.height || 1;
+                const targetMaxDim = Math.max(
+                    8,
+                    longSide * (item.scale / 100) * 0.5,
+                );
+                const ratio = targetMaxDim / Math.max(natW, natH);
+                const drawW = natW * ratio;
+                const drawH = natH * ratio;
+                const cx = imgX + (item.x / 100) * imgW;
+                const cy = imgY + (item.y / 100) * imgH;
+
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, Math.min(1, item.opacity / 100));
+                ctx.translate(cx, cy);
+                ctx.rotate((item.rotation * Math.PI) / 180);
+                if (item.flipX) {
+                    ctx.scale(-1, 1);
+                }
+                ctx.drawImage(item.image, -drawW / 2, -drawH / 2, drawW, drawH);
+                ctx.restore();
+            });
+
+            ctx.restore();
+        };
+
+        drawOverlayItems(false);
 
         if (isAdvancedMode() && !isRealFrame) {
             ctx.save();
@@ -1282,6 +1406,142 @@ export default function ExifFrame() {
             }
             ctx.restore();
         }
+
+        const cText = copyrightText().trim();
+        if (cText) {
+            ctx.save();
+            const cFontSize = Math.max(
+                9,
+                Math.round(longSide * 0.0085 * scale),
+            );
+            ctx.font = `400 ${cFontSize}px ${selectedFont()}`;
+            ctx.textBaseline = "middle";
+
+            const posMode = copyrightPosition();
+            const margin = Math.max(8, Math.round(basePadding * 0.45));
+            let cx = finalCanvasW - realFrameWidth - margin;
+            let cy = finalCanvasH - realFrameWidth - margin;
+            let cAlign: CanvasTextAlign = "right";
+            let maxCWidth = Math.max(80, innerCanvasW - margin * 2);
+            let isInPhoto = false;
+
+            if (posMode === "image-bottom-right") {
+                cx = imgX + imgW - margin;
+                cy = imgY + imgH - margin;
+                cAlign = "right";
+                maxCWidth = Math.max(80, imgW - margin * 2);
+                isInPhoto = true;
+            } else if (posMode === "image-bottom-left") {
+                cx = imgX + margin;
+                cy = imgY + imgH - margin;
+                cAlign = "left";
+                maxCWidth = Math.max(80, imgW - margin * 2);
+                isInPhoto = true;
+            } else if (posMode === "frame-bottom-right") {
+                cx = finalCanvasW - realFrameWidth - margin;
+                cy = finalCanvasH - realFrameWidth - margin;
+                cAlign = "right";
+            } else if (posMode === "frame-bottom-left") {
+                cx = realFrameWidth + margin;
+                cy = finalCanvasH - realFrameWidth - margin;
+                cAlign = "left";
+            } else if (posMode === "frame-top-right") {
+                cx = finalCanvasW - realFrameWidth - margin;
+                cy = realFrameWidth + margin;
+                cAlign = "right";
+            } else if (posMode === "frame-top-left") {
+                cx = realFrameWidth + margin;
+                cy = realFrameWidth + margin;
+                cAlign = "left";
+            } else {
+                // auto: フレームの空きスペースを自動判定して配置
+                if (isChekiMode()) {
+                    cx = imgX + imgW;
+                    cy = finalCanvasH - realFrameWidth - margin;
+                    cAlign = "right";
+                    maxCWidth = Math.max(80, imgW);
+                } else if (framePosition() === "bottom") {
+                    if (textAlign() === "right") {
+                        cx = imgX + basePadding;
+                        cAlign = "left";
+                    } else {
+                        cx = imgX + imgW - basePadding;
+                        cAlign = "right";
+                    }
+                    cy = finalCanvasH - realFrameWidth - margin;
+                    maxCWidth = Math.max(80, imgW - basePadding * 2);
+                } else if (framePosition() === "top") {
+                    if (textAlign() === "right") {
+                        cx = imgX + basePadding;
+                        cAlign = "left";
+                    } else {
+                        cx = imgX + imgW - basePadding;
+                        cAlign = "right";
+                    }
+                    cy = realFrameWidth + margin;
+                    maxCWidth = Math.max(80, imgW - basePadding * 2);
+                } else if (
+                    framePosition() === "left" ||
+                    framePosition() === "left-horizontal"
+                ) {
+                    cx = realFrameWidth + sideArea / 2;
+                    cy = finalCanvasH - realFrameWidth - margin;
+                    cAlign = "center";
+                    maxCWidth = Math.max(40, sideArea - margin * 1.5);
+                } else if (
+                    framePosition() === "right" ||
+                    framePosition() === "right-horizontal"
+                ) {
+                    cx = realFrameWidth + imgW + sideArea / 2;
+                    cy = finalCanvasH - realFrameWidth - margin;
+                    cAlign = "center";
+                    maxCWidth = Math.max(40, sideArea - margin * 1.5);
+                } else {
+                    // overlay-* モード時はExifと被らない側の下隅に配置
+                    isInPhoto = true;
+                    cy = imgY + imgH - margin;
+                    maxCWidth = Math.max(80, imgW - margin * 2);
+                    if (framePosition() === "overlay-br") {
+                        cx = imgX + margin;
+                        cAlign = "left";
+                    } else {
+                        cx = imgX + imgW - margin;
+                        cAlign = "right";
+                    }
+                }
+            }
+
+            const baseTextColor = isAdvancedMode()
+                ? customTextColor()
+                : frameColor() === "white"
+                  ? "#222222"
+                  : "#e2e8f0";
+
+            if (isInPhoto) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+                ctx.shadowBlur = Math.max(2, Math.round(cFontSize * 0.25));
+            } else {
+                ctx.fillStyle = baseTextColor;
+                ctx.globalAlpha = 0.78;
+            }
+
+            let fittedFontSize = cFontSize;
+            const measuredW = ctx.measureText(cText).width;
+            if (measuredW > maxCWidth && measuredW > 0) {
+                fittedFontSize = Math.max(
+                    7,
+                    Math.floor(cFontSize * (maxCWidth / measuredW)),
+                );
+                ctx.font = `400 ${fittedFontSize}px ${selectedFont()}`;
+            }
+
+            ctx.textAlign = cAlign;
+            ctx.fillText(cText, cx, cy);
+            ctx.restore();
+        }
+
+        drawOverlayItems(true);
     };
 
     // リアクティブに自動で再描画が走るように一元化するにゃん！
@@ -1320,6 +1580,9 @@ export default function ExifFrame() {
             showIso();
             separatorType();
             customSeparator();
+            overlayImages();
+            copyrightText();
+            copyrightPosition();
 
             // 設定が切り替わったら自動で再描画にゃん！
             drawFrame();
@@ -1722,12 +1985,17 @@ export default function ExifFrame() {
                                                 aria-controls={`exif-panel-${tab.id}`}
                                                 aria-selected={activeTab() === tab.id}
                                                 onClick={() => selectTab(tab.id)}
-                                                class={`flex-1 min-w-0 flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-1 h-14 lg:h-10 rounded-lg text-[10px] sm:text-[11px] lg:text-xs font-bold transition-colors cursor-pointer select-none ${
+                                                class={`relative flex-1 min-w-0 flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-1 h-14 lg:h-10 rounded-lg text-[10px] sm:text-[11px] lg:text-xs font-bold transition-colors cursor-pointer select-none ${
                                                     activeTab() === tab.id
                                                         ? "bg-primary text-primary-content shadow-xs"
                                                         : "text-base-content/70 hover:bg-base-200 active:bg-base-200"
                                                 }`}
                                             >
+                                                <Show when={tab.isBeta}>
+                                                    <span class="absolute top-0.5 right-0.5 lg:-top-1 lg:right-0.5 px-1 py-0 rounded-full text-[8px] leading-tight font-extrabold bg-warning text-warning-content shadow-2xs pointer-events-none">
+                                                        BETA
+                                                    </span>
+                                                </Show>
                                                 <span
                                                     class="text-base sm:text-lg lg:text-sm leading-none"
                                                     aria-hidden="true"
@@ -1785,13 +2053,6 @@ export default function ExifFrame() {
                                             class="btn btn-outline btn-primary h-11 px-4 rounded-xl flex items-center justify-center gap-2 w-full border-base-300 text-xs"
                                         >
                                             🔄 画像を右に90度回転
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleGenerate}
-                                            class="btn btn-success text-white h-12 px-6 text-sm rounded-xl shadow-xs flex items-center justify-center gap-2 w-full"
-                                        >
-                                            ✨ 額縁付き画像を生成
                                         </button>
                                     </Show>
                                 </div>
@@ -2947,6 +3208,400 @@ export default function ExifFrame() {
                             </div>
                             <div
                                 role="tabpanel"
+                                id="exif-panel-overlay"
+                                aria-labelledby="exif-tab-overlay"
+                                hidden={activeTab() !== "overlay"}
+                                class="flex flex-col gap-4"
+                            >
+                                <div class="rounded-xl border border-warning/40 bg-warning/10 p-3 flex items-start gap-2.5 text-xs">
+                                    <span class="badge badge-warning badge-xs font-extrabold mt-0.5 shrink-0">
+                                        BETA
+                                    </span>
+                                    <div class="flex flex-col gap-0.5 text-base-content/80 leading-relaxed">
+                                        <span class="font-bold text-base-content">
+                                            🧪 重ね画像（透過PNG）＆著作権表記（ベータ版）
+                                        </span>
+                                        <span class="text-[11px] text-base-content/70">
+                                            透過PNGやロゴ・キャラクター素材を複数読み込んで自由な位置に配置できます。フレームの空きスペースに著作権表記（©）を入れることも可能です。
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
+                                    <div class="flex items-center justify-between border-b border-base-300 pb-1.5">
+                                        <span class="text-xs font-bold text-base-content uppercase tracking-wider">
+                                            🪄 重ねる画像の追加・管理
+                                        </span>
+                                        <span class="text-[10px] text-base-content/50 font-medium">
+                                            複数選択可（PNG / WebP 等）
+                                        </span>
+                                    </div>
+
+                                    <label class="btn btn-secondary text-white h-11 px-4 text-xs rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 w-full">
+                                        <span>➕ 透過PNG・重ねる画像を追加（複数可）</span>
+                                        <input
+                                            type="file"
+                                            accept="image/png,image/webp,image/gif,image/svg+xml,image/*"
+                                            multiple
+                                            onChange={handleOverlayFilesChange}
+                                            class="hidden"
+                                        />
+                                    </label>
+
+                                    <Show
+                                        when={overlayImages().length > 0}
+                                        fallback={
+                                            <div class="text-[11px] text-base-content/50 bg-base-100/70 border border-dashed border-base-300 rounded-lg p-3 text-center">
+                                                まだ重ねる画像が追加されていません。上のボタンから透過PNGなどを選択してください。
+                                            </div>
+                                        }
+                                    >
+                                        <div class="flex flex-col gap-3">
+                                            <For each={overlayImages()}>
+                                                {(item, index) => (
+                                                    <div class="bg-base-100 border border-base-300 rounded-xl p-3 flex flex-col gap-2.5 shadow-2xs">
+                                                        <div class="flex items-center gap-2.5 border-b border-base-200 pb-2">
+                                                            <div class="w-11 h-11 rounded-lg border border-base-300 bg-base-200/60 flex items-center justify-center overflow-hidden shrink-0">
+                                                                <img
+                                                                    src={item.src}
+                                                                    alt={item.name}
+                                                                    class="max-w-full max-h-full object-contain"
+                                                                />
+                                                            </div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <div class="font-bold text-xs text-base-content truncate">
+                                                                    #{index() + 1} {item.name}
+                                                                </div>
+                                                                <div class="text-[10px] text-base-content/50">
+                                                                    X:{item.x}% / Y:{item.y}% / サイズ:{item.scale}%
+                                                                </div>
+                                                            </div>
+                                                            <div class="flex items-center gap-1 shrink-0">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => moveOverlayItemOrder(item.id, -1)}
+                                                                    disabled={index() === 0}
+                                                                    class="btn btn-xs btn-ghost border border-base-300 px-1.5"
+                                                                    title="奥のレイヤーへ移動"
+                                                                >
+                                                                    ↑
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => moveOverlayItemOrder(item.id, 1)}
+                                                                    disabled={index() === overlayImages().length - 1}
+                                                                    class="btn btn-xs btn-ghost border border-base-300 px-1.5"
+                                                                    title="手前のレイヤーへ移動"
+                                                                >
+                                                                    ↓
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeOverlayItem(item.id)}
+                                                                    class="btn btn-xs btn-error btn-outline px-2"
+                                                                    title="この重ね画像を削除"
+                                                                >
+                                                                    削除
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <label class="flex items-center justify-between cursor-pointer bg-base-200/50 px-2.5 py-2 rounded-lg border border-base-300">
+                                                            <div class="flex flex-col">
+                                                                <span class="text-[11px] font-bold text-base-content">
+                                                                    🖼️ フレームの上に被せる
+                                                                </span>
+                                                                <span class="text-[10px] text-base-content/60">
+                                                                    OFFの時は写真の内側のみで切り抜かれます
+                                                                </span>
+                                                            </div>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={item.overFrame}
+                                                                onChange={(e) =>
+                                                                    updateOverlayItem(item.id, {
+                                                                        overFrame: e.currentTarget.checked,
+                                                                    })
+                                                                }
+                                                                class="toggle toggle-secondary toggle-sm"
+                                                            />
+                                                        </label>
+
+                                                        <div class="flex flex-col gap-1">
+                                                            <span class="text-[10px] font-bold text-base-content/60">
+                                                                クイック配置プリセット
+                                                            </span>
+                                                            <div class="grid grid-cols-4 gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        updateOverlayItem(item.id, { x: 18, y: 18 })
+                                                                    }
+                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px]"
+                                                                >
+                                                                    ↖ 左上
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        updateOverlayItem(item.id, { x: 82, y: 18 })
+                                                                    }
+                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px]"
+                                                                >
+                                                                    ↗ 右上
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        updateOverlayItem(item.id, { x: 18, y: 82 })
+                                                                    }
+                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px]"
+                                                                >
+                                                                    ↙ 左下
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        updateOverlayItem(item.id, { x: 82, y: 82 })
+                                                                    }
+                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px]"
+                                                                >
+                                                                    ↘ 右下
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        updateOverlayItem(item.id, { x: 50, y: 50 })
+                                                                    }
+                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px] col-span-2"
+                                                                >
+                                                                    🎯 中央 (50%, 50%)
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        updateOverlayItem(item.id, {
+                                                                            flipX: !item.flipX,
+                                                                        })
+                                                                    }
+                                                                    class={`btn btn-xs border-base-300 text-[10px] col-span-2 ${
+                                                                        item.flipX
+                                                                            ? "btn-secondary text-white"
+                                                                            : "btn-outline"
+                                                                    }`}
+                                                                >
+                                                                    ↔ 左右反転 {item.flipX ? "ON" : "OFF"}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                            <div class="flex flex-col gap-1">
+                                                                <div class="flex justify-between text-[10px] font-bold text-base-content/70">
+                                                                    <span>横位置 (X)</span>
+                                                                    <span class="font-mono">{item.x}%</span>
+                                                                </div>
+                                                                <input
+                                                                    type="range"
+                                                                    min="-20"
+                                                                    max="120"
+                                                                    value={item.x}
+                                                                    onInput={(e) =>
+                                                                        updateOverlayItem(item.id, {
+                                                                            x: Number(e.currentTarget.value),
+                                                                        })
+                                                                    }
+                                                                    class="range range-primary range-xs"
+                                                                />
+                                                            </div>
+                                                            <div class="flex flex-col gap-1">
+                                                                <div class="flex justify-between text-[10px] font-bold text-base-content/70">
+                                                                    <span>縦位置 (Y)</span>
+                                                                    <span class="font-mono">{item.y}%</span>
+                                                                </div>
+                                                                <input
+                                                                    type="range"
+                                                                    min="-20"
+                                                                    max="120"
+                                                                    value={item.y}
+                                                                    onInput={(e) =>
+                                                                        updateOverlayItem(item.id, {
+                                                                            y: Number(e.currentTarget.value),
+                                                                        })
+                                                                    }
+                                                                    class="range range-primary range-xs"
+                                                                />
+                                                            </div>
+                                                            <div class="flex flex-col gap-1">
+                                                                <div class="flex justify-between text-[10px] font-bold text-base-content/70">
+                                                                    <span>サイズ (拡大率)</span>
+                                                                    <span class="font-mono">{item.scale}%</span>
+                                                                </div>
+                                                                <input
+                                                                    type="range"
+                                                                    min="5"
+                                                                    max="200"
+                                                                    value={item.scale}
+                                                                    onInput={(e) =>
+                                                                        updateOverlayItem(item.id, {
+                                                                            scale: Number(e.currentTarget.value),
+                                                                        })
+                                                                    }
+                                                                    class="range range-secondary range-xs"
+                                                                />
+                                                            </div>
+                                                            <div class="flex flex-col gap-1">
+                                                                <div class="flex justify-between items-center text-[10px] font-bold text-base-content/70">
+                                                                    <span>回転角度</span>
+                                                                    <div class="flex items-center gap-1">
+                                                                        <span class="font-mono">{item.rotation}°</span>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                updateOverlayItem(item.id, {
+                                                                                    rotation: 0,
+                                                                                })
+                                                                            }
+                                                                            class="text-[9px] underline text-primary cursor-pointer"
+                                                                        >
+                                                                            0°に戻す
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <input
+                                                                    type="range"
+                                                                    min="-180"
+                                                                    max="180"
+                                                                    value={item.rotation}
+                                                                    onInput={(e) =>
+                                                                        updateOverlayItem(item.id, {
+                                                                            rotation: Number(e.currentTarget.value),
+                                                                        })
+                                                                    }
+                                                                    class="range range-secondary range-xs"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="flex flex-col gap-1">
+                                                            <div class="flex justify-between text-[10px] font-bold text-base-content/70">
+                                                                <span>不透明度</span>
+                                                                <span class="font-mono">{item.opacity}%</span>
+                                                            </div>
+                                                            <input
+                                                                type="range"
+                                                                min="10"
+                                                                max="100"
+                                                                value={item.opacity}
+                                                                onInput={(e) =>
+                                                                    updateOverlayItem(item.id, {
+                                                                        opacity: Number(e.currentTarget.value),
+                                                                    })
+                                                                }
+                                                                class="range range-xs"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </For>
+                                        </div>
+                                    </Show>
+                                </div>
+
+                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
+                                    <div class="flex items-center justify-between border-b border-base-300 pb-1.5">
+                                        <span class="text-xs font-bold text-base-content uppercase tracking-wider">
+                                            © 著作権・クレジット表記
+                                        </span>
+                                        <span class="text-[10px] text-base-content/50 font-medium">
+                                            版権画像利用時の権利表記など
+                                        </span>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1.5">
+                                        <span class="text-[10px] font-bold text-base-content/70">
+                                            著作権・権利表記テキスト
+                                        </span>
+                                        <div class="flex gap-1.5">
+                                            <input
+                                                type="text"
+                                                placeholder="例: © 2026 Project / Character Name"
+                                                value={copyrightText()}
+                                                onInput={(e) =>
+                                                    handleTextChange(
+                                                        setCopyrightText,
+                                                        e.currentTarget.value,
+                                                    )
+                                                }
+                                                class="input input-bordered input-sm flex-1 bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setCopyrightText((prev) =>
+                                                        prev.startsWith("©")
+                                                            ? prev
+                                                            : `© ${prev}`,
+                                                    )
+                                                }
+                                                class="btn btn-sm btn-outline border-base-300 px-2.5 text-xs font-bold shrink-0"
+                                                title="先頭に © を挿入"
+                                            >
+                                                ©
+                                            </button>
+                                        </div>
+                                        <span class="text-[10px] text-base-content/50">
+                                            ※入力するとフレームの空きスペース（または指定位置）に自動で小さく刻印されます。
+                                        </span>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1.5">
+                                        <span class="text-[10px] font-bold text-base-content/70">
+                                            表記の位置
+                                        </span>
+                                        <select
+                                            value={copyrightPosition()}
+                                            onChange={(e) =>
+                                                setCopyrightPosition(
+                                                    e.currentTarget.value as
+                                                        | "auto"
+                                                        | "frame-bottom-right"
+                                                        | "frame-bottom-left"
+                                                        | "frame-top-right"
+                                                        | "frame-top-left"
+                                                        | "image-bottom-right"
+                                                        | "image-bottom-left",
+                                                )
+                                            }
+                                            class="select select-bordered select-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                        >
+                                            <option value="auto">
+                                                ✨ 自動（フレームの空きスペースに配置）
+                                            </option>
+                                            <option value="frame-bottom-right">
+                                                フレームの右下
+                                            </option>
+                                            <option value="frame-bottom-left">
+                                                フレームの左下
+                                            </option>
+                                            <option value="frame-top-right">
+                                                フレームの右上
+                                            </option>
+                                            <option value="frame-top-left">
+                                                フレームの左上
+                                            </option>
+                                            <option value="image-bottom-right">
+                                                写真内の右下
+                                            </option>
+                                            <option value="image-bottom-left">
+                                                写真内の左下
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                role="tabpanel"
                                 id="exif-panel-save"
                                 aria-labelledby="exif-tab-save"
                                 hidden={activeTab() !== "save"}
@@ -3040,6 +3695,15 @@ export default function ExifFrame() {
                                             </span>
                                         </Show>
                                     </div>
+                                    <Show when={hasImage()}>
+                                        <button
+                                            type="button"
+                                            onClick={handleGenerate}
+                                            class="btn btn-success text-white h-12 px-6 text-sm rounded-xl shadow-xs flex items-center justify-center gap-2 w-full mt-1"
+                                        >
+                                            ✨ 額縁付き画像を生成
+                                        </button>
+                                    </Show>
                                 </div>
                             </div>
                         </div>

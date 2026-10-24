@@ -15,6 +15,7 @@ beforeEach(() => {
         restore: vi.fn(),
         translate: vi.fn(),
         rotate: vi.fn(),
+        scale: vi.fn(),
         measureText: vi.fn().mockReturnValue({ width: 100 }),
         fillText: vi.fn(),
         beginPath: vi.fn(),
@@ -59,15 +60,23 @@ describe("ExifFrameGenerator", () => {
         expect(panel("text").hidden).toBe(true);
         expect(panel("layout").hidden).toBe(true);
         expect(panel("design").hidden).toBe(true);
+        expect(panel("overlay").hidden).toBe(true);
         expect(panel("save").hidden).toBe(true);
 
         fireEvent.click(screen.getByRole("tab", { name: /文字/ }));
         expect(panel("text").hidden).toBe(false);
         expect(panel("photo").hidden).toBe(true);
 
+        fireEvent.click(screen.getByRole("tab", { name: /重ね画像/ }));
+        expect(panel("overlay").hidden).toBe(false);
+        expect(panel("text").hidden).toBe(true);
+        expect(
+            screen.getByPlaceholderText("例: © 2026 Project / Character Name"),
+        ).toBeInTheDocument();
+
         fireEvent.click(screen.getByRole("tab", { name: /保存/ }));
         expect(panel("save").hidden).toBe(false);
-        expect(panel("text").hidden).toBe(true);
+        expect(panel("overlay").hidden).toBe(true);
         expect(
             screen.getByRole("tab", { name: /保存/ }).getAttribute("aria-selected"),
         ).toBe("true");

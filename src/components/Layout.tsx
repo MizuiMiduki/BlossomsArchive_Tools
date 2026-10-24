@@ -3,7 +3,7 @@ import { JSX, For, createEffect, createSignal } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { Link, Meta, Title } from "@solidjs/meta";
 import { createScriptLoader } from "@solid-primitives/script-loader";
-import { getPageMetadata, routes } from "../routes";
+import { getPageMetadata, normalizePath, routes } from "../routes";
 import ThemeToggle from "./ThemeToggle";
 import { delayedCall } from "../utils/gsapAnimations";
 
@@ -59,18 +59,20 @@ export default function Layout(props: LayoutProps) {
           })
         : null;
 
+    const currentPath = () => normalizePath(location.pathname);
+
     const getHeaderTitle = () => {
-        const route = routes.find((r) => r.path === location.pathname);
+        const route = routes.find((r) => r.path === currentPath());
         return route ? route.title : "ツールダッシュボード";
     };
 
-    const getMetadata = () => getPageMetadata(location.pathname);
-    const getCurrentUrl = () => window.location.origin + location.pathname;
+    const getMetadata = () => getPageMetadata(currentPath());
+    const getCurrentUrl = () => window.location.origin + currentPath();
 
     const getShareText = () => {
         const baseTitle = "BlossomsArchive Tools";
         const title =
-            location.pathname === "/"
+            currentPath() === "/"
                 ? baseTitle
                 : `${getHeaderTitle()} | ${baseTitle}`;
         return title + "\n" + getCurrentUrl();
@@ -194,7 +196,7 @@ export default function Layout(props: LayoutProps) {
                                 {(route) => (
                                     <a
                                         href={route.path}
-                                        class={`block py-2 px-4 rounded-lg font-medium transition-colors ${location.pathname === route.path ? "bg-primary text-white" : "hover:bg-base-200"}`}
+                                        class={`block py-2 px-4 rounded-lg font-medium transition-colors ${currentPath() === route.path ? "bg-primary text-white" : "hover:bg-base-200"}`}
                                     >
                                         {route.title}
                                     </a>
@@ -264,7 +266,7 @@ export default function Layout(props: LayoutProps) {
                                 </a>
                                 {/* Mastodon */}
                                 <a
-                                    href={`https://www.addtoany.com/add_to/mastodon?linkurl=${encodeURIComponent(getCurrentUrl())}&linkname=${encodeURIComponent(location.pathname === "/" ? "BlossomsArchive Tools" : `${getHeaderTitle()} | BlossomsArchive Tools`)}`}
+                                    href={`https://www.addtoany.com/add_to/mastodon?linkurl=${encodeURIComponent(getCurrentUrl())}&linkname=${encodeURIComponent(currentPath() === "/" ? "BlossomsArchive Tools" : `${getHeaderTitle()} | BlossomsArchive Tools`)}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
@@ -290,7 +292,7 @@ export default function Layout(props: LayoutProps) {
                                             const baseTitle =
                                                 "BlossomsArchive Tools";
                                             const title =
-                                                location.pathname === "/"
+                                                currentPath() === "/"
                                                     ? baseTitle
                                                     : `${getHeaderTitle()} | ${baseTitle}`;
                                             navigator

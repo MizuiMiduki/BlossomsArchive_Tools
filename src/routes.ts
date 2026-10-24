@@ -98,8 +98,14 @@ export interface PageMetadata {
     url: string;
 }
 
+export function normalizePath(pathname: string): string {
+    if (!pathname || pathname === "/") return "/";
+    return pathname.replace(/\/+$/, "");
+}
+
 export function getPageMetadata(pathname: string): PageMetadata {
-    const route = routes.find((item) => item.path === pathname);
+    const normalized = normalizePath(pathname);
+    const route = routes.find((item) => item.path === normalized);
     const title =
         !route || route.path === "/"
             ? SITE_TITLE
@@ -110,6 +116,6 @@ export function getPageMetadata(pathname: string): PageMetadata {
         description:
             route?.description ??
             "BlossomsArchive Toolsの便利な無料Webツールをご利用ください。",
-        url: `${SITE_URL}${pathname}`,
+        url: `${SITE_URL}${normalized}`,
     };
 }
