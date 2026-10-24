@@ -445,7 +445,9 @@ export default function ExifFrame() {
             innerCanvasH,
         );
 
-        if (framePosition() === "left-horizontal") {
+        // チェキ風モードでは framePosition に直前の配置（左右横書きなど）が残っているため、
+        // サイドパネルの塗り・区切り線を描かないようにする（右下に謎の縦線が出る不具合の対策）
+        if (!isChekiMode() && framePosition() === "left-horizontal") {
             ctx.fillStyle =
                 frameColor() === "white"
                     ? "rgba(255,255,255,0.98)"
@@ -468,7 +470,7 @@ export default function ExifFrame() {
                 realFrameWidth + innerCanvasH - 2,
             );
             ctx.stroke();
-        } else if (framePosition() === "right-horizontal") {
+        } else if (!isChekiMode() && framePosition() === "right-horizontal") {
             const sideX = realFrameWidth + imgW;
             ctx.fillStyle =
                 frameColor() === "white"
