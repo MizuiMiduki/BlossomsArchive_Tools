@@ -1,2 +1,10 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+/* Exifフレーム: スマホでの入力時にiOSが自動ズームしないよう16px以上にする */
+@media (max-width: 1023.98px) {
+    .exif-tool input[type="text"],
+    .exif-tool select {
+        font-size: 16px;
+    }
+}

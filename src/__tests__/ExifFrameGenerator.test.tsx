@@ -49,6 +49,29 @@ describe("ExifFrameGenerator", () => {
         expect(screen.getByText("⚡ 区切り文字")).toBeInTheDocument();
     });
 
+    it("設定タブを切り替えると対応するパネルだけが表示されること", () => {
+        const { container } = render(() => <ExifFrame />);
+        const panel = (id: string) =>
+            container.querySelector(`#exif-panel-${id}`) as HTMLElement;
+
+        // 初期状態は「文字」タブ
+        expect(panel("text").hidden).toBe(false);
+        expect(panel("layout").hidden).toBe(true);
+        expect(panel("design").hidden).toBe(true);
+        expect(panel("save").hidden).toBe(true);
+
+        fireEvent.click(screen.getByRole("tab", { name: /保存/ }));
+        expect(panel("save").hidden).toBe(false);
+        expect(panel("text").hidden).toBe(true);
+        expect(
+            screen.getByRole("tab", { name: /保存/ }).getAttribute("aria-selected"),
+        ).toBe("true");
+
+        fireEvent.click(screen.getByRole("tab", { name: /配置/ }));
+        expect(panel("layout").hidden).toBe(false);
+        expect(panel("save").hidden).toBe(true);
+    });
+
     it("区切り文字プリセットの選択および自由入力の切り替えができること", () => {
         render(() => <ExifFrame />);
         const slashBtn = screen.getByTitle("スラッシュ ( / )");
