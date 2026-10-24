@@ -99,10 +99,27 @@ export default function ExifFrame() {
         overFrame: boolean; // true: フレームの上に重ねる / false: 写真領域内にクリップ
     };
     const [overlayImages, setOverlayImages] = createSignal<OverlayImageItem[]>([]);
+    const [selectedOverlayId, setSelectedOverlayId] = createSignal<string | null>(null);
+    const [draggingOverlayId, setDraggingOverlayId] = createSignal<string | null>(null);
     const [copyrightText, setCopyrightText] = createSignal("");
     const [copyrightPosition, setCopyrightPosition] = createSignal<
         "auto" | "frame-bottom-right" | "frame-bottom-left" | "frame-top-right" | "frame-top-left" | "image-bottom-right" | "image-bottom-left"
     >("auto");
+
+    let lastImgLayout = {
+        imgX: 0,
+        imgY: 0,
+        imgW: 1,
+        imgH: 1,
+        longSide: 1,
+    };
+    let overlayDragStart = {
+        pointerId: -1,
+        startCanvasX: 0,
+        startCanvasY: 0,
+        initialItemX: 0,
+        initialItemY: 0,
+    };
 
     const handleOverlayFilesChange = (e: Event) => {
         const target = e.target as HTMLInputElement;
@@ -112,10 +129,11 @@ export default function ExifFrame() {
             const url = URL.createObjectURL(file);
             const img = new Image();
             img.onload = () => {
+                const newId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
                 setOverlayImages((prev) => [
                     ...prev,
                     {
-                        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                        id: newId,
                         name: file.name,
                         src: url,
                         image: img,
@@ -128,6 +146,7 @@ export default function ExifFrame() {
                         overFrame: false,
                     },
                 ]);
+                setSelectedOverlayId(newId);
             };
             img.src = url;
         });
@@ -147,7 +166,11 @@ export default function ExifFrame() {
         setOverlayImages((prev) => {
             const target = prev.find((item) => item.id === id);
             if (target) URL.revokeObjectURL(target.src);
-            return prev.filter((item) => item.id !== id);
+            const next = prev.filter((item) => item.id !== id);
+            if (selectedOverlayId() === id) {
+                setSelectedOverlayId(next.length > 0 ? next[next.length - 1].id : null);
+            }
+            return next;
         });
     };
 
@@ -179,6 +202,124 @@ export default function ExifFrame() {
     let canvasRef: HTMLCanvasElement | undefined;
     let sourceImage: HTMLImageElement | null = null;
     let containerRef: HTMLDivElement | undefined;
+
+    const getCanvasCoordinates = (clientX: number, clientY: number) => {
+        if (!canvasRef) return null;
+        const rect = canvasRef.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return null;
+        const scaleX = canvasRef.width / rect.width;
+        const scaleY = canvasRef.height / rect.height;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY,
+        };
+    };
+
+    const hitTestOverlayItem = (canvasX: number, canvasY: number): string | null => {
+        const items = overlayImages();
+        if (items.length === 0) return null;
+        const { imgX, imgY, imgW, imgH, longSide } = lastImgLayout;
+
+        for (let i = items.length - 1; i >= 0; i--) {
+            const item = items[i];
+            const natW = item.image.naturalWidth || item.image.width || 1;
+            const natH = item.image.naturalHeight || item.image.height || 1;
+            const targetMaxDim = Math.max(8, longSide * (item.scale / 100) * 0.5);
+            const ratio = targetMaxDim / Math.max(natW, natH);
+            const drawW = natW * ratio;
+            const drawH = natH * ratio;
+            const cx = imgX + (item.x / 100) * imgW;
+            const cy = imgY + (item.y / 100) * imgH;
+
+            const dx = canvasX - cx;
+            const dy = canvasY - cy;
+            const rad = (-item.rotation * Math.PI) / 180;
+            const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+            const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+            const hitPad = Math.max(12, longSide * 0.01);
+            if (
+                Math.abs(localX) <= drawW / 2 + hitPad &&
+                Math.abs(localY) <= drawH / 2 + hitPad
+            ) {
+                return item.id;
+            }
+        }
+        return null;
+    };
+
+    const handleCanvasPointerDown = (e: PointerEvent) => {
+        if (overlayImages().length === 0) return;
+        const coords = getCanvasCoordinates(e.clientX, e.clientY);
+        if (!coords) return;
+
+        let targetId = hitTestOverlayItem(coords.x, coords.y);
+        if (!targetId && activeTab() === "overlay") {
+            targetId =
+                selectedOverlayId() ||
+                overlayImages()[overlayImages().length - 1]?.id ||
+                null;
+        }
+        if (!targetId) return;
+
+        const targetItem = overlayImages().find((item) => item.id === targetId);
+        if (!targetItem) return;
+
+        e.preventDefault();
+        setSelectedOverlayId(targetId);
+        setDraggingOverlayId(targetId);
+        overlayDragStart = {
+            pointerId: e.pointerId,
+            startCanvasX: coords.x,
+            startCanvasY: coords.y,
+            initialItemX: targetItem.x,
+            initialItemY: targetItem.y,
+        };
+        try {
+            (e.currentTarget as HTMLElement)?.setPointerCapture?.(e.pointerId);
+        } catch {
+            // PointerCapture 非対応環境では無視
+        }
+    };
+
+    const handleCanvasPointerMove = (e: PointerEvent) => {
+        const currentId = draggingOverlayId();
+        if (!currentId || e.pointerId !== overlayDragStart.pointerId) return;
+        const coords = getCanvasCoordinates(e.clientX, e.clientY);
+        if (!coords) return;
+
+        e.preventDefault();
+        const { imgW, imgH } = lastImgLayout;
+        if (imgW <= 0 || imgH <= 0) return;
+
+        const deltaXPercent =
+            ((coords.x - overlayDragStart.startCanvasX) / imgW) * 100;
+        const deltaYPercent =
+            ((coords.y - overlayDragStart.startCanvasY) / imgH) * 100;
+
+        const nextX = Math.max(
+            -30,
+            Math.min(130, Math.round(overlayDragStart.initialItemX + deltaXPercent)),
+        );
+        const nextY = Math.max(
+            -30,
+            Math.min(130, Math.round(overlayDragStart.initialItemY + deltaYPercent)),
+        );
+
+        updateOverlayItem(currentId, { x: nextX, y: nextY });
+    };
+
+    const handleCanvasPointerUp = (e: PointerEvent) => {
+        if (!draggingOverlayId() || e.pointerId !== overlayDragStart.pointerId)
+            return;
+        setDraggingOverlayId(null);
+        overlayDragStart.pointerId = -1;
+        try {
+            (e.currentTarget as HTMLElement)?.releasePointerCapture?.(e.pointerId);
+        } catch {
+            // 無視
+        }
+    };
 
     // SEO対策：メタデータの動的挿入
     onMount(() => {
@@ -452,6 +593,13 @@ export default function ExifFrame() {
 
         imgX += realFrameWidth;
         imgY += realFrameWidth;
+        lastImgLayout = {
+            imgX,
+            imgY,
+            imgW,
+            imgH,
+            longSide,
+        };
 
         let fColor = frameColor() === "white" ? "#ffffff" : "#121212";
         if (isAdvancedMode()) fColor = customFrameColor();
@@ -3256,10 +3404,23 @@ export default function ExifFrame() {
                                             </div>
                                         }
                                     >
+                                        <div class="text-[11px] text-primary font-bold bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                                            <span>👆</span>
+                                            <span>
+                                                プレビュー画像上の重ね画像を直接ドラッグ（スマホは指でスライド）して位置を動かせます！
+                                            </span>
+                                        </div>
                                         <div class="flex flex-col gap-3">
                                             <For each={overlayImages()}>
                                                 {(item, index) => (
-                                                    <div class="bg-base-100 border border-base-300 rounded-xl p-3 flex flex-col gap-2.5 shadow-2xs">
+                                                    <div
+                                                        onClick={() => setSelectedOverlayId(item.id)}
+                                                        class={`bg-base-100 border rounded-xl p-3 flex flex-col gap-2.5 shadow-2xs transition-colors ${
+                                                            selectedOverlayId() === item.id
+                                                                ? "border-primary ring-2 ring-primary/20"
+                                                                : "border-base-300"
+                                                        }`}
+                                                    >
                                                         <div class="flex items-center gap-2.5 border-b border-base-200 pb-2">
                                                             <div class="w-11 h-11 rounded-lg border border-base-300 bg-base-200/60 flex items-center justify-center overflow-hidden shrink-0">
                                                                 <img
@@ -3269,8 +3430,13 @@ export default function ExifFrame() {
                                                                 />
                                                             </div>
                                                             <div class="flex-1 min-w-0">
-                                                                <div class="font-bold text-xs text-base-content truncate">
-                                                                    #{index() + 1} {item.name}
+                                                                <div class="font-bold text-xs text-base-content truncate flex items-center gap-1.5">
+                                                                    <span>#{index() + 1} {item.name}</span>
+                                                                    <Show when={selectedOverlayId() === item.id}>
+                                                                        <span class="badge badge-primary badge-xs text-[9px] font-bold">
+                                                                            操作中
+                                                                        </span>
+                                                                    </Show>
                                                                 </div>
                                                                 <div class="text-[10px] text-base-content/50">
                                                                     X:{item.x}% / Y:{item.y}% / サイズ:{item.scale}%
@@ -3403,8 +3569,8 @@ export default function ExifFrame() {
                                                                 </div>
                                                                 <input
                                                                     type="range"
-                                                                    min="-20"
-                                                                    max="120"
+                                                                    min="-30"
+                                                                    max="130"
                                                                     value={item.x}
                                                                     onInput={(e) =>
                                                                         updateOverlayItem(item.id, {
@@ -3421,8 +3587,8 @@ export default function ExifFrame() {
                                                                 </div>
                                                                 <input
                                                                     type="range"
-                                                                    min="-20"
-                                                                    max="120"
+                                                                    min="-30"
+                                                                    max="130"
                                                                     value={item.y}
                                                                     onInput={(e) =>
                                                                         updateOverlayItem(item.id, {
@@ -3725,6 +3891,12 @@ export default function ExifFrame() {
                                 </div>
                             }
                         >
+                            <Show when={overlayImages().length > 0}>
+                                <div class="absolute top-2 left-2 lg:top-4 lg:left-4 bg-slate-900/75 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-lg shadow-md z-10 pointer-events-none flex items-center gap-1">
+                                    <span>👆</span>
+                                    <span>重ね画像をドラッグして移動可能</span>
+                                </div>
+                            </Show>
                             <button
                                 type="button"
                                 onClick={() => setIsMaximized(true)}
@@ -3734,7 +3906,17 @@ export default function ExifFrame() {
                             </button>
                             <canvas
                                 ref={(el) => (canvasRef = el)}
-                                class="max-w-full max-h-full w-auto h-auto object-contain rounded-none shadow-lg bg-slate-200"
+                                onPointerDown={handleCanvasPointerDown}
+                                onPointerMove={handleCanvasPointerMove}
+                                onPointerUp={handleCanvasPointerUp}
+                                onPointerCancel={handleCanvasPointerUp}
+                                class={`max-w-full max-h-full w-auto h-auto object-contain rounded-none shadow-lg bg-slate-200 ${
+                                    overlayImages().length > 0
+                                        ? draggingOverlayId()
+                                            ? "cursor-grabbing touch-none select-none"
+                                            : "cursor-grab touch-none select-none"
+                                        : ""
+                                }`}
                             />
                         </Show>
                     </div>
