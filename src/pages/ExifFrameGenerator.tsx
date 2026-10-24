@@ -668,16 +668,17 @@ export default function ExifFrame() {
             let { prefixW, mainW, w1, w2 } = measureWidths();
             let targetMaxTextWidth = Math.max(w1, w2);
             if (targetMaxTextWidth > availableWidth) {
-                currentScale = Math.max(
-                    0.75,
-                    availableWidth / targetMaxTextWidth,
+                // 枠幅(availableWidth)に必ず収まるよう動的にスケーリング（最小下限 0.25 まで縮小可能に）
+                currentScale = Math.min(
+                    1,
+                    Math.max(0.25, availableWidth / targetMaxTextWidth),
                 );
                 measuredFontSize1 = Math.max(
-                    12,
+                    8,
                     Math.floor(fontSize1 * currentScale),
                 );
                 measuredFontSize2 = Math.max(
-                    10,
+                    6,
                     Math.floor(fontSize2 * currentScale),
                 );
                 ({ prefixW, mainW, w1, w2 } = measureWidths());
@@ -971,6 +972,10 @@ export default function ExifFrame() {
             ctx.rect(clipX, realFrameWidth, clipWidth, innerCanvasH);
             ctx.clip();
             ctx.fillStyle = tColor;
+            const horizontalSideAvailableWidth = Math.max(
+                80,
+                clipWidth - sidePadding * 2,
+            );
             drawCombinedTextAndPlate(
                 prefix,
                 textLine1Main,
@@ -978,7 +983,7 @@ export default function ExifFrame() {
                 x,
                 y,
                 "center",
-                Math.max(100, clipWidth - 16),
+                horizontalSideAvailableWidth,
             );
             ctx.restore();
         } else {
