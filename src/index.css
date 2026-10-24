@@ -8,3 +8,11 @@
         font-size: 16px;
     }
 }
+
+/* シークバー(range)がドラッグ・タッチスワイプでページスクロールに奪われずスムーズに動くようにする */
+.exif-tool input[type="range"] {
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
+}

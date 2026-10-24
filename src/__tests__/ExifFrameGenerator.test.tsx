@@ -35,7 +35,13 @@ beforeEach(() => {
 
     HTMLCanvasElement.prototype.toDataURL = vi
         .fn()
-        .mockReturnValue("data:image/jpeg;base64,mockdata");
+        .mockReturnValue("data:image/jpeg;base64,aGVsbG8=");
+
+    HTMLCanvasElement.prototype.toBlob = vi
+        .fn()
+        .mockImplementation((callback: BlobCallback, type?: string) => {
+            callback(new Blob(["mock-image-binary"], { type: type || "image/jpeg" }));
+        });
 
     // Global URL APIs Mock
     globalThis.URL.createObjectURL = vi.fn().mockReturnValue("blob:http://localhost/mock-url");
@@ -195,7 +201,7 @@ describe("ExifFrameGenerator", () => {
 
         const loadSpy = vi.spyOn(piexif, "load").mockReturnValue(mockExifObj);
         const dumpSpy = vi.spyOn(piexif, "dump").mockReturnValue("dumped_exif");
-        const insertSpy = vi.spyOn(piexif, "insert").mockReturnValue("data:image/jpeg;base64,with_exif");
+        const insertSpy = vi.spyOn(piexif, "insert").mockReturnValue("data:image/jpeg;base64,aGVsbG8=");
 
         const { container } = render(() => <ExifFrame />);
         

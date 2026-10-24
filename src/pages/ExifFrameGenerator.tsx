@@ -31,7 +31,10 @@ export default function ExifFrame() {
     const [isProcessing, setIsProcessing] = createSignal(false);
     const [processingProgress, setProcessingProgress] = createSignal(0);
     const [processingStepText, setProcessingStepText] = createSignal("");
+    const [exportMaxEdge, setExportMaxEdge] = createSignal<number>(0); // 0 = 元画像のまま(フル解像度), 4096 = 4K, 2048 = SNS推奨
     let preparedDownloadBlob: Blob | null = null;
+    let currentModalBlobUrl: string | null = null;
+    let rafDrawId = 0;
 
     const [useCustomTitle, setUseCustomTitle] = createSignal(false);
     const [customTitleLine1, setCustomTitleLine1] =
@@ -135,6 +138,78 @@ export default function ExifFrame() {
         initialDist: 1,
         initialScale: 40,
         targetId: null as string | null,
+    };
+
+    let sliderPointerDrag = {
+        active: false,
+        pointerId: -1,
+        input: null as HTMLInputElement | null,
+    };
+
+    const updateRangeFromPointer = (input: HTMLInputElement, clientX: number) => {
+        const rect = input.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const min = Number(input.min || 0);
+        const max = Number(input.max || 100);
+        const step = Number(input.step || 1);
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const raw = min + ratio * (max - min);
+        const stepped = step > 0 ? Math.round(raw / step) * step : raw;
+        const clamped = Math.max(min, Math.min(max, stepped));
+        if (Number(input.value) !== clamped) {
+            input.value = String(clamped);
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+    };
+
+    const handleSliderPointerDown = (e: PointerEvent) => {
+        const input = e.currentTarget as HTMLInputElement;
+        if (!input) return;
+        e.stopPropagation();
+        sliderPointerDrag = {
+            active: true,
+            pointerId: e.pointerId,
+            input,
+        };
+        try {
+            input.setPointerCapture?.(e.pointerId);
+        } catch {
+            // 無視
+        }
+        updateRangeFromPointer(input, e.clientX);
+    };
+
+    const handleSliderPointerMove = (e: PointerEvent) => {
+        if (
+            !sliderPointerDrag.active ||
+            e.pointerId !== sliderPointerDrag.pointerId ||
+            !sliderPointerDrag.input
+        ) {
+            return;
+        }
+        e.stopPropagation();
+        if (e.cancelable) e.preventDefault();
+        updateRangeFromPointer(sliderPointerDrag.input, e.clientX);
+    };
+
+    const handleSliderPointerUp = (e: PointerEvent) => {
+        if (
+            !sliderPointerDrag.active ||
+            e.pointerId !== sliderPointerDrag.pointerId
+        ) {
+            return;
+        }
+        e.stopPropagation();
+        try {
+            sliderPointerDrag.input?.releasePointerCapture?.(e.pointerId);
+        } catch {
+            // 無視
+        }
+        sliderPointerDrag = {
+            active: false,
+            pointerId: -1,
+            input: null,
+        };
     };
 
     const handleOverlayFilesChange = (e: Event) => {
@@ -712,13 +787,21 @@ export default function ExifFrame() {
         return luminance > 0.6 ? "#000000" : "#ffffff";
     };
 
-    const drawFrame = (hideEditorGuides = false) => {
+    const drawFrame = (hideEditorGuides = false, targetMaxLongSide = 2048) => {
         if (!canvasRef || !sourceImage) return;
         const ctx = canvasRef.getContext("2d");
         if (!ctx) return;
 
-        const origW = sourceImage.width;
-        const origH = sourceImage.height;
+        const rawOrigW = sourceImage.naturalWidth || sourceImage.width || 1;
+        const rawOrigH = sourceImage.naturalHeight || sourceImage.height || 1;
+        const rawLongSide = Math.max(rawOrigW, rawOrigH);
+        const renderScale =
+            targetMaxLongSide > 0 && rawLongSide > targetMaxLongSide
+                ? targetMaxLongSide / rawLongSide
+                : 1;
+
+        const origW = Math.max(1, Math.round(rawOrigW * renderScale));
+        const origH = Math.max(1, Math.round(rawOrigH * renderScale));
         const isRotated90 = imageRotation() % 180 === 90;
         const imgW = isRotated90 ? origH : origW;
         const imgH = isRotated90 ? origW : origH;
@@ -1971,25 +2054,64 @@ export default function ExifFrame() {
             copyrightText();
             copyrightPosition();
 
-            // 設定が切り替わったら自動で再描画にゃん！
-            drawFrame();
+            // 設定が切り替わったら自動で再描画にゃん！（高速化のため rAF でバッチ化＆プレビュー解像度 2048px 上限）
+            if (typeof window !== "undefined" && "requestAnimationFrame" in window && !isProcessing()) {
+                if (rafDrawId) cancelAnimationFrame(rafDrawId);
+                rafDrawId = requestAnimationFrame(() => {
+                    rafDrawId = 0;
+                    drawFrame(false, 2048);
+                });
+            } else {
+                drawFrame(false, 2048);
+            }
         }
     });
 
     const yieldToBrowser = () =>
         new Promise<void>((resolve) => setTimeout(resolve, 16));
 
+    const canvasToBlobAsync = (
+        canvas: HTMLCanvasElement,
+        mime: string,
+        quality: number,
+    ): Promise<Blob> => {
+        if (typeof canvas.toBlob === "function") {
+            return new Promise<Blob>((resolve, reject) => {
+                try {
+                    canvas.toBlob(
+                        (blob) => {
+                            if (blob) resolve(blob);
+                            else reject(new Error("toBlob returned null"));
+                        },
+                        mime,
+                        quality,
+                    );
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+        return Promise.resolve(dataUrlToBlob(canvas.toDataURL(mime, quality)));
+    };
+
     const handleGenerate = async () => {
         if (!canvasRef || isProcessing()) return;
 
+        if (rafDrawId && typeof cancelAnimationFrame === "function") {
+            cancelAnimationFrame(rafDrawId);
+            rafDrawId = 0;
+        }
+
         setIsProcessing(true);
-        setProcessingProgress(12);
+        setProcessingProgress(15);
         setProcessingStepText("フレームと重ね画像を高解像度で描画中...");
         await yieldToBrowser();
 
         try {
-            // 保存時は選択枠やリサイズハンドルを非表示にして描画
-            drawFrame(true);
+            // 保存時は選択枠を非表示にし、選択された出力解像度（0 = オリジナル解像度）で描画
+            drawFrame(true, exportMaxEdge());
+            const exportWidth = canvasRef.width;
+            const exportHeight = canvasRef.height;
 
             setProcessingProgress(45);
             setProcessingStepText("画像データをエンコード中...");
@@ -2000,54 +2122,90 @@ export default function ExifFrame() {
                 baseName = `framed_${(fileName() || "image").split(".")[0]}`;
             }
 
-            let finalDataUrl = canvasRef.toDataURL(saveFormat(), 0.95);
-            drawFrame(false);
-
-            if (
+            const needsExifInsert =
                 keepOriginalExif() &&
-                rawFileBase64Str &&
-                saveFormat() === "image/jpeg"
-            ) {
-                setProcessingProgress(72);
+                Boolean(rawFileBase64Str) &&
+                saveFormat() === "image/jpeg";
+
+            let finalBlob: Blob | null = null;
+            let finalModalSrc = "";
+
+            if (needsExifInsert && rawFileBase64Str) {
+                let finalDataUrl = canvasRef.toDataURL(saveFormat(), 0.95);
+                // エンコード完了後すぐにプレビュー表示を軽量解像度に戻す
+                drawFrame(false, 2048);
+
+                setProcessingProgress(75);
                 setProcessingStepText("Exifメタデータを書き込み中...");
                 await yieldToBrowser();
+
                 try {
                     const exifObj = piexif.load(rawFileBase64Str);
                     if (exifObj["0th"]) {
                         // キャンバス上の描画はすでに適切な向きで回転補正されているため、
                         // 保存するExifのOrientationは「1（標準 / 0度回転）」に上書き固定する
                         exifObj["0th"][piexif.ImageIFD.Orientation] = 1;
-                        exifObj["0th"][piexif.ImageIFD.ImageWidth] =
-                            canvasRef.width;
-                        exifObj["0th"][piexif.ImageIFD.ImageLength] =
-                            canvasRef.height;
+                        exifObj["0th"][piexif.ImageIFD.ImageWidth] = exportWidth;
+                        exifObj["0th"][piexif.ImageIFD.ImageLength] = exportHeight;
                     }
                     if (exifObj["Exif"]) {
                         exifObj["Exif"][piexif.ExifIFD.PixelXDimension] =
-                            canvasRef.width;
+                            exportWidth;
                         exifObj["Exif"][piexif.ExifIFD.PixelYDimension] =
-                            canvasRef.height;
+                            exportHeight;
                     }
                     const exifDump = piexif.dump(exifObj);
                     finalDataUrl = piexif.insert(exifDump, finalDataUrl);
                 } catch (exifErr) {
                     console.error("Failed to insert EXIF metadata:", exifErr);
                 }
+
+                setProcessingProgress(92);
+                setProcessingStepText("保存用ファイルデータを準備中...");
+                await yieldToBrowser();
+
+                try {
+                    finalBlob = dataUrlToBlob(finalDataUrl);
+                    if (currentModalBlobUrl) {
+                        URL.revokeObjectURL(currentModalBlobUrl);
+                    }
+                    currentModalBlobUrl = URL.createObjectURL(finalBlob);
+                    finalModalSrc = currentModalBlobUrl;
+                } catch {
+                    finalBlob = null;
+                    finalModalSrc = finalDataUrl;
+                }
+            } else {
+                // Exif引き継ぎ不要時（またはPNG/WebP保存時）は非同期 toBlob で高速エンコード（Base64文字列化を完全スキップ）
+                try {
+                    finalBlob = await canvasToBlobAsync(
+                        canvasRef,
+                        saveFormat(),
+                        0.95,
+                    );
+                    drawFrame(false, 2048);
+                    setProcessingProgress(90);
+                    setProcessingStepText("保存用ファイルデータを準備中...");
+                    if (currentModalBlobUrl) {
+                        URL.revokeObjectURL(currentModalBlobUrl);
+                    }
+                    currentModalBlobUrl = URL.createObjectURL(finalBlob);
+                    finalModalSrc = currentModalBlobUrl;
+                } catch {
+                    const fallbackDataUrl = canvasRef.toDataURL(
+                        saveFormat(),
+                        0.95,
+                    );
+                    drawFrame(false, 2048);
+                    finalBlob = dataUrlToBlob(fallbackDataUrl);
+                    finalModalSrc = fallbackDataUrl;
+                }
             }
 
-            setProcessingProgress(90);
-            setProcessingStepText("保存用ファイルデータを準備中...");
-            await yieldToBrowser();
-
-            try {
-                preparedDownloadBlob = dataUrlToBlob(finalDataUrl);
-            } catch {
-                preparedDownloadBlob = null;
-            }
-
+            preparedDownloadBlob = finalBlob;
             const randomNum = Math.floor(1000 + Math.random() * 9000);
             const downloadName = `${baseName}_${randomNum}.${saveFormat().split("/")[1]}`;
-            setDownloadImageSrc(finalDataUrl);
+            setDownloadImageSrc(finalModalSrc);
             setDownloadFileName(downloadName);
             setProcessingProgress(100);
             setProcessingStepText("完了しました！");
@@ -3435,6 +3593,10 @@ export default function ExifFrame() {
                                             min="50"
                                             max="180"
                                             value={fontSizeScale()}
+                                            onPointerDown={handleSliderPointerDown}
+                                            onPointerMove={handleSliderPointerMove}
+                                            onPointerUp={handleSliderPointerUp}
+                                            onPointerCancel={handleSliderPointerUp}
                                             onInput={(e) =>
                                                 handleSizeScaleChange(
                                                     Number(
@@ -3442,7 +3604,7 @@ export default function ExifFrame() {
                                                     ),
                                                 )
                                             }
-                                            class="range range-primary range-sm mt-1"
+                                            class="range range-primary range-sm mt-1 touch-none"
                                         />
                                     </div>
                                 </div>
@@ -3527,6 +3689,10 @@ export default function ExifFrame() {
                                                     min="0"
                                                     max="150"
                                                     value={imageBorderRadius()}
+                                                    onPointerDown={handleSliderPointerDown}
+                                                    onPointerMove={handleSliderPointerMove}
+                                                    onPointerUp={handleSliderPointerUp}
+                                                    onPointerCancel={handleSliderPointerUp}
                                                     onInput={(e) => {
                                                         setImageBorderRadius(
                                                             Number(
@@ -3534,7 +3700,7 @@ export default function ExifFrame() {
                                                             ),
                                                         );
                                                     }}
-                                                    class="range range-secondary range-sm mt-1"
+                                                    class="range range-secondary range-sm mt-1 touch-none"
                                                 />
                                             </div>
 
@@ -3750,132 +3916,45 @@ export default function ExifFrame() {
                                                             </div>
                                                         </div>
 
-                                                        <label class="flex items-center justify-between cursor-pointer bg-base-200/50 px-2.5 py-2 rounded-lg border border-base-300">
-                                                            <div class="flex flex-col">
-                                                                <span class="text-[11px] font-bold text-base-content">
-                                                                    🖼️ フレームの上に被せる
-                                                                </span>
-                                                                <span class="text-[10px] text-base-content/60">
-                                                                    OFFの時は写真の内側のみで切り抜かれます
-                                                                </span>
-                                                            </div>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={item.overFrame}
-                                                                onChange={(e) =>
+                                                        <div class="flex items-center gap-2">
+                                                            <label class="flex-1 flex items-center justify-between cursor-pointer bg-base-200/50 px-2.5 py-2 rounded-lg border border-base-300">
+                                                                <div class="flex flex-col">
+                                                                    <span class="text-[11px] font-bold text-base-content">
+                                                                        🖼️ フレームの上に被せる
+                                                                    </span>
+                                                                    <span class="text-[10px] text-base-content/60">
+                                                                        OFFの時は写真の内側のみで切り抜かれます
+                                                                    </span>
+                                                                </div>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={item.overFrame}
+                                                                    onChange={(e) =>
+                                                                        updateOverlayItem(item.id, {
+                                                                            overFrame: e.currentTarget.checked,
+                                                                        })
+                                                                    }
+                                                                    class="toggle toggle-secondary toggle-sm"
+                                                                />
+                                                            </label>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
                                                                     updateOverlayItem(item.id, {
-                                                                        overFrame: e.currentTarget.checked,
+                                                                        flipX: !item.flipX,
                                                                     })
                                                                 }
-                                                                class="toggle toggle-secondary toggle-sm"
-                                                            />
-                                                        </label>
-
-                                                        <div class="flex flex-col gap-1">
-                                                            <span class="text-[10px] font-bold text-base-content/60">
-                                                                クイック配置プリセット
-                                                            </span>
-                                                            <div class="grid grid-cols-4 gap-1">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        updateOverlayItem(item.id, { x: 18, y: 18 })
-                                                                    }
-                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px]"
-                                                                >
-                                                                    ↖ 左上
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        updateOverlayItem(item.id, { x: 82, y: 18 })
-                                                                    }
-                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px]"
-                                                                >
-                                                                    ↗ 右上
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        updateOverlayItem(item.id, { x: 18, y: 82 })
-                                                                    }
-                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px]"
-                                                                >
-                                                                    ↙ 左下
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        updateOverlayItem(item.id, { x: 82, y: 82 })
-                                                                    }
-                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px]"
-                                                                >
-                                                                    ↘ 右下
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        updateOverlayItem(item.id, { x: 50, y: 50 })
-                                                                    }
-                                                                    class="btn btn-xs btn-outline border-base-300 text-[10px] col-span-2"
-                                                                >
-                                                                    🎯 中央 (50%, 50%)
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        updateOverlayItem(item.id, {
-                                                                            flipX: !item.flipX,
-                                                                        })
-                                                                    }
-                                                                    class={`btn btn-xs border-base-300 text-[10px] col-span-2 ${
-                                                                        item.flipX
-                                                                            ? "btn-secondary text-white"
-                                                                            : "btn-outline"
-                                                                    }`}
-                                                                >
-                                                                    ↔ 左右反転 {item.flipX ? "ON" : "OFF"}
-                                                                </button>
-                                                            </div>
+                                                                class={`btn btn-sm h-11 px-3 rounded-lg border border-base-300 text-[11px] font-bold shrink-0 ${
+                                                                    item.flipX
+                                                                        ? "btn-secondary text-white"
+                                                                        : "btn-outline bg-base-100"
+                                                                }`}
+                                                            >
+                                                                ↔ 左右反転
+                                                            </button>
                                                         </div>
 
-                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                                            <div class="flex flex-col gap-1">
-                                                                <div class="flex justify-between text-[10px] font-bold text-base-content/70">
-                                                                    <span>横位置 (X)</span>
-                                                                    <span class="font-mono">{item.x}%</span>
-                                                                </div>
-                                                                <input
-                                                                    type="range"
-                                                                    min="-30"
-                                                                    max="130"
-                                                                    value={item.x}
-                                                                    onInput={(e) =>
-                                                                        updateOverlayItem(item.id, {
-                                                                            x: Number(e.currentTarget.value),
-                                                                        })
-                                                                    }
-                                                                    class="range range-primary range-xs"
-                                                                />
-                                                            </div>
-                                                            <div class="flex flex-col gap-1">
-                                                                <div class="flex justify-between text-[10px] font-bold text-base-content/70">
-                                                                    <span>縦位置 (Y)</span>
-                                                                    <span class="font-mono">{item.y}%</span>
-                                                                </div>
-                                                                <input
-                                                                    type="range"
-                                                                    min="-30"
-                                                                    max="130"
-                                                                    value={item.y}
-                                                                    onInput={(e) =>
-                                                                        updateOverlayItem(item.id, {
-                                                                            y: Number(e.currentTarget.value),
-                                                                        })
-                                                                    }
-                                                                    class="range range-primary range-xs"
-                                                                />
-                                                            </div>
+                                                        <div class="flex flex-col gap-3 pt-1">
                                                             <div class="flex flex-col gap-1">
                                                                 <div class="flex justify-between text-[10px] font-bold text-base-content/70">
                                                                     <span>サイズ (拡大率)</span>
@@ -3886,18 +3965,22 @@ export default function ExifFrame() {
                                                                     min="5"
                                                                     max="250"
                                                                     value={item.scale}
+                                                                    onPointerDown={handleSliderPointerDown}
+                                                                    onPointerMove={handleSliderPointerMove}
+                                                                    onPointerUp={handleSliderPointerUp}
+                                                                    onPointerCancel={handleSliderPointerUp}
                                                                     onInput={(e) =>
                                                                         updateOverlayItem(item.id, {
                                                                             scale: Number(e.currentTarget.value),
                                                                         })
                                                                     }
-                                                                    class="range range-secondary range-xs"
+                                                                    class="range range-secondary range-sm touch-none"
                                                                 />
                                                             </div>
                                                             <div class="flex flex-col gap-1">
                                                                 <div class="flex justify-between items-center text-[10px] font-bold text-base-content/70">
-                                                                    <span>回転角度</span>
-                                                                    <div class="flex items-center gap-1">
+                                                                    <span>回転率 (角度)</span>
+                                                                    <div class="flex items-center gap-1.5">
                                                                         <span class="font-mono">{item.rotation}°</span>
                                                                         <button
                                                                             type="button"
@@ -3906,7 +3989,7 @@ export default function ExifFrame() {
                                                                                     rotation: 0,
                                                                                 })
                                                                             }
-                                                                            class="text-[9px] underline text-primary cursor-pointer"
+                                                                            class="text-[10px] underline text-primary cursor-pointer"
                                                                         >
                                                                             0°に戻す
                                                                         </button>
@@ -3917,33 +4000,40 @@ export default function ExifFrame() {
                                                                     min="-180"
                                                                     max="180"
                                                                     value={item.rotation}
+                                                                    onPointerDown={handleSliderPointerDown}
+                                                                    onPointerMove={handleSliderPointerMove}
+                                                                    onPointerUp={handleSliderPointerUp}
+                                                                    onPointerCancel={handleSliderPointerUp}
                                                                     onInput={(e) =>
                                                                         updateOverlayItem(item.id, {
                                                                             rotation: Number(e.currentTarget.value),
                                                                         })
                                                                     }
-                                                                    class="range range-secondary range-xs"
+                                                                    class="range range-secondary range-sm touch-none"
                                                                 />
                                                             </div>
-                                                        </div>
-
-                                                        <div class="flex flex-col gap-1">
-                                                            <div class="flex justify-between text-[10px] font-bold text-base-content/70">
-                                                                <span>不透明度</span>
-                                                                <span class="font-mono">{item.opacity}%</span>
+                                                            <div class="flex flex-col gap-1">
+                                                                <div class="flex justify-between text-[10px] font-bold text-base-content/70">
+                                                                    <span>不透明度</span>
+                                                                    <span class="font-mono">{item.opacity}%</span>
+                                                                </div>
+                                                                <input
+                                                                    type="range"
+                                                                    min="10"
+                                                                    max="100"
+                                                                    value={item.opacity}
+                                                                    onPointerDown={handleSliderPointerDown}
+                                                                    onPointerMove={handleSliderPointerMove}
+                                                                    onPointerUp={handleSliderPointerUp}
+                                                                    onPointerCancel={handleSliderPointerUp}
+                                                                    onInput={(e) =>
+                                                                        updateOverlayItem(item.id, {
+                                                                            opacity: Number(e.currentTarget.value),
+                                                                        })
+                                                                    }
+                                                                    class="range range-primary range-sm touch-none"
+                                                                />
                                                             </div>
-                                                            <input
-                                                                type="range"
-                                                                min="10"
-                                                                max="100"
-                                                                value={item.opacity}
-                                                                onInput={(e) =>
-                                                                    updateOverlayItem(item.id, {
-                                                                        opacity: Number(e.currentTarget.value),
-                                                                    })
-                                                                }
-                                                                class="range range-xs"
-                                                            />
                                                         </div>
                                                     </div>
                                                 )}
@@ -4106,6 +4196,30 @@ export default function ExifFrame() {
                                                 )}
                                             </For>
                                         </div>
+                                    </div>
+                                    <div class="flex flex-col gap-1 border-t border-base-300 pt-2 text-base-content">
+                                        <span class="text-[10px] font-bold text-base-content/60">
+                                            出力サイズ（解像度）:
+                                        </span>
+                                        <select
+                                            value={String(exportMaxEdge())}
+                                            onChange={(e) =>
+                                                setExportMaxEdge(
+                                                    Number(e.currentTarget.value),
+                                                )
+                                            }
+                                            class="select select-bordered select-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                        >
+                                            <option value="0">
+                                                オリジナル解像度（最高画質）
+                                            </option>
+                                            <option value="4096">
+                                                高画質・高速（長辺 最大4096px / 4K相当）
+                                            </option>
+                                            <option value="2048">
+                                                SNS投稿向け・超高速（長辺 最大2048px）
+                                            </option>
+                                        </select>
                                     </div>
                                     <div class="form-control border-t border-base-300 pt-2 text-base-content">
                                         <label class="flex items-center justify-between cursor-pointer">
@@ -4432,7 +4546,9 @@ export default function ExifFrame() {
                                     try {
                                         const dataUrl = downloadImageSrc();
                                         const fileName = downloadFileName();
-                                        const blob = dataUrlToBlob(dataUrl);
+                                        const blob =
+                                            preparedDownloadBlob ??
+                                            dataUrlToBlob(dataUrl);
                                         const file = new File([blob], fileName, { type: blob.type });
                                         if ((navigator as any).canShare({ files: [file] })) {
                                             await navigator.share({
