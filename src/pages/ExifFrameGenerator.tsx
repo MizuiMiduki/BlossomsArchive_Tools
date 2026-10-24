@@ -19,6 +19,8 @@ export default function ExifFrame() {
     const [saveFormat, setSaveFormat] = createSignal("image/jpeg");
     const [isChekiMode, setIsChekiMode] = createSignal(false);
     const [isMaximized, setIsMaximized] = createSignal(false);
+    const [modalZoomScale, setModalZoomScale] = createSignal(1);
+    const [modalTranslate, setModalTranslate] = createSignal({ x: 0, y: 0 });
     const [hasImage, setHasImage] = createSignal(false);
     const [keepOriginalExif, setKeepOriginalExif] = createSignal(false);
 
@@ -3123,33 +3125,157 @@ export default function ExifFrame() {
             </div>
 
             <Show when={isMaximized()}>
-                <div
-                    class="fixed inset-0 bg-black/95 flex flex-col justify-center items-center z-[9999] p-4"
-                    onClick={() => setIsMaximized(false)}
-                >
-                    <div
-                        class="absolute top-4 right-4 flex gap-4"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button
-                            type="button"
-                            onClick={() => setIsMaximized(false)}
-                            class="btn btn-circle btn-outline border-white/40 text-white"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                    <canvas
-                        ref={(el) => {
-                            if (el && canvasRef) {
-                                el.width = canvasRef.width;
-                                el.height = canvasRef.height;
-                                el.getContext("2d")?.drawImage(canvasRef, 0, 0);
+                {(() => {
+                    let initialDistance = 0;
+                    let initialScale = 1;
+                    let lastTouchCenter = { x: 0, y: 0 };
+                    let isDragging = false;
+                    let dragStart = { x: 0, y: 0 };
+                    let initialTranslate = { x: 0, y: 0 };
+
+                    const handleTouchStart = (e: TouchEvent) => {
+                        if (e.touches.length === 2) {
+                            e.preventDefault();
+                            const dx = e.touches[0].clientX - e.touches[1].clientX;
+                            const dy = e.touches[0].clientY - e.touches[1].clientY;
+                            initialDistance = Math.hypot(dx, dy);
+                            initialScale = modalZoomScale();
+                            lastTouchCenter = {
+                                x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                                y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+                            };
+                            initialTranslate = { ...modalTranslate() };
+                        } else if (e.touches.length === 1 && modalZoomScale() > 1) {
+                            isDragging = true;
+                            dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                            initialTranslate = { ...modalTranslate() };
+                        }
+                    };
+
+                    const handleTouchMove = (e: TouchEvent) => {
+                        if (e.touches.length === 2) {
+                            e.preventDefault();
+                            const dx = e.touches[0].clientX - e.touches[1].clientX;
+                            const dy = e.touches[0].clientY - e.touches[1].clientY;
+                            const dist = Math.hypot(dx, dy);
+                            if (initialDistance > 0) {
+                                const newScale = Math.min(
+                                    5,
+                                    Math.max(1, initialScale * (dist / initialDistance)),
+                                );
+                                setModalZoomScale(newScale);
+
+                                const currentCenter = {
+                                    x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                                    y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+                                };
+                                const deltaX = currentCenter.x - lastTouchCenter.x;
+                                const deltaY = currentCenter.y - lastTouchCenter.y;
+                                setModalTranslate({
+                                    x: initialTranslate.x + deltaX,
+                                    y: initialTranslate.y + deltaY,
+                                });
                             }
-                        }}
-                        class="max-w-full max-h-[90vh] object-contain shadow-2xl bg-slate-200"
-                    />
-                </div>
+                        } else if (e.touches.length === 1 && isDragging && modalZoomScale() > 1) {
+                            e.preventDefault();
+                            const deltaX = e.touches[0].clientX - dragStart.x;
+                            const deltaY = e.touches[0].clientY - dragStart.y;
+                            setModalTranslate({
+                                x: initialTranslate.x + deltaX,
+                                y: initialTranslate.y + deltaY,
+                            });
+                        }
+                    };
+
+                    const handleTouchEnd = (e: TouchEvent) => {
+                        if (e.touches.length < 2) {
+                            initialDistance = 0;
+                        }
+                        if (e.touches.length === 0) {
+                            isDragging = false;
+                            if (modalZoomScale() <= 1.05) {
+                                setModalZoomScale(1);
+                                setModalTranslate({ x: 0, y: 0 });
+                            }
+                        }
+                    };
+
+                    const handleWheel = (e: WheelEvent) => {
+                        e.preventDefault();
+                        const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+                        const newScale = Math.min(
+                            5,
+                            Math.max(1, modalZoomScale() * zoomFactor),
+                        );
+                        setModalZoomScale(newScale);
+                        if (newScale === 1) {
+                            setModalTranslate({ x: 0, y: 0 });
+                        }
+                    };
+
+                    return (
+                        <div
+                            class="fixed inset-0 bg-black/95 flex flex-col justify-center items-center z-[9999] p-4 select-none touch-none overflow-hidden"
+                            onClick={() => {
+                                setIsMaximized(false);
+                                setModalZoomScale(1);
+                                setModalTranslate({ x: 0, y: 0 });
+                            }}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onWheel={handleWheel}
+                        >
+                            <div
+                                class="absolute top-4 right-4 flex items-center gap-2 z-20"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Show when={modalZoomScale() > 1}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setModalZoomScale(1);
+                                            setModalTranslate({ x: 0, y: 0 });
+                                        }}
+                                        class="btn btn-sm btn-ghost bg-slate-800/80 text-white rounded-lg text-xs"
+                                    >
+                                        リセット
+                                    </button>
+                                </Show>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsMaximized(false);
+                                        setModalZoomScale(1);
+                                        setModalTranslate({ x: 0, y: 0 });
+                                    }}
+                                    class="btn btn-circle btn-outline border-white/40 text-white"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <div
+                                class="w-full h-full flex items-center justify-center transition-transform duration-75 ease-out"
+                                style={{
+                                    transform: `translate(${modalTranslate().x}px, ${modalTranslate().y}px) scale(${modalZoomScale()})`,
+                                    "transform-origin": "center center",
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <canvas
+                                    ref={(el) => {
+                                        if (el && canvasRef) {
+                                            el.width = canvasRef.width;
+                                            el.height = canvasRef.height;
+                                            el.getContext("2d")?.drawImage(canvasRef, 0, 0);
+                                        }
+                                    }}
+                                    class="max-w-full max-h-[90vh] object-contain shadow-2xl bg-slate-200 pointer-events-auto"
+                                />
+                            </div>
+                        </div>
+                    );
+                })()}
             </Show>
 
             <Show when={showMobileSaveModal()}>
