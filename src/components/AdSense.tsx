@@ -1,4 +1,4 @@
-import { createEffect, createMemo, onCleanup } from "solid-js";
+import { createEffect, onCleanup, Show } from "solid-js";
 import { useLocation } from "@solidjs/router";
 
 interface AdSenseProps {
@@ -7,78 +7,88 @@ interface AdSenseProps {
     class?: string;
 }
 
-export default function AdSense(props: AdSenseProps) {
-    const clientId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
-    const defaultSlot = import.meta.env.VITE_ADSENSE_DEFAULT_SLOT;
+declare global {
+    interface Window {
+        adsbygoogle?: unknown[];
+    }
+}
 
-    if (!clientId) return null;
+const CLIENT_ID = import.meta.env.VITE_ADSENSE_CLIENT_ID;
+const DEFAULT_SLOT = import.meta.env.VITE_ADSENSE_DEFAULT_SLOT;
 
+/** コンテナ幅が確定するまで待つ間隔 (ms) */
+const RETRY_INTERVAL_MS = 100;
+
+/**
+ * 広告ユニットを生成し、コンテナ幅が確定してから push する。
+ * 幅0の状態で push すると AdSense がエラーを返すため、
+ * push 直前まで "adsbygoogle" クラスを付与しない。
+ * 戻り値はキャンセル用のクリーンアップ関数。
+ */
+function mountAd(
+    container: HTMLDivElement,
+    slot: string,
+    format: string,
+): () => void {
+    container.innerHTML = "";
+
+    const ins = document.createElement("ins");
+    ins.className = "adsbygoogle-stealth";
+    ins.style.display = "block";
+    // Google の幅チェックを通すため <ins> 自体にも幅を指定する
+    ins.style.width = "100%";
+    ins.style.minWidth = "250px";
+    ins.dataset.adClient = CLIENT_ID;
+    ins.dataset.adSlot = slot;
+    ins.dataset.adFormat = format;
+    ins.dataset.fullWidthResponsive = "true";
+    container.appendChild(ins);
+
+    let timerId: number | undefined;
+
+    const tryPush = () => {
+        if (container.offsetWidth === 0) {
+            timerId = window.setTimeout(tryPush, RETRY_INTERVAL_MS);
+            return;
+        }
+        try {
+            ins.className = "adsbygoogle";
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {
+            console.error("AdSense push error:", e);
+        }
+    };
+
+    timerId = window.setTimeout(tryPush, RETRY_INTERVAL_MS);
+
+    return () => window.clearTimeout(timerId);
+}
+
+function AdSenseUnit(props: AdSenseProps) {
     const location = useLocation();
-    const currentSlot = () => props.slot ?? defaultSlot;
-    const key = createMemo(() => location.pathname + currentSlot());
-
     let container!: HTMLDivElement;
-    let timerId: number | null = null;
 
     createEffect(() => {
-        key();
-        const activeSlot = currentSlot();
+        // ルート遷移時に広告を再生成する
+        location.pathname;
+        const slot = props.slot ?? DEFAULT_SLOT;
+        if (!slot) return;
 
-        if (!container || !activeSlot) return;
-
-        if (timerId) clearTimeout(timerId);
-
-        container.innerHTML = "";
-
-        // 1. <ins> 要素をステルス生成
-        const ins = document.createElement("ins");
-        ins.className = "adsbygoogle-stealth";
-        ins.style.display = "block";
-
-        // 🌟 ここが超重要！<ins> 自体にもインラインで幅を強制適用して、Googleのチェックをすり抜けさせる！
-        ins.style.width = "100%";
-        ins.style.minWidth = "250px";
-
-        ins.setAttribute("data-ad-client", clientId);
-        ins.setAttribute("data-ad-slot", activeSlot);
-        ins.setAttribute("data-ad-format", props.format ?? "auto");
-        ins.setAttribute("data-full-width-responsive", "true");
-        container.appendChild(ins);
-
-        const pushAd = () => {
-            if (!container || !ins) return;
-
-            const width = container.offsetWidth;
-
-            // コンテナ自体の幅がまだ0なら当然リトライ
-            if (width === 0) {
-                timerId = window.setTimeout(pushAd, 100);
-                return;
-            }
-
-            try {
-                // クラス名を本来のものに変える
-                ins.className = "adsbygoogle";
-
-                (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-                (window as any).adsbygoogle.push({});
-            } catch (e) {
-                console.error("AdSense push error inside safety check:", e);
-            }
-        };
-
-        // ブラウザのレンダリングが完全に一段落するのを待つために 100ms に伸ばした
-        timerId = window.setTimeout(pushAd, 100);
-    });
-
-    onCleanup(() => {
-        if (timerId) clearTimeout(timerId);
+        onCleanup(mountAd(container, slot, props.format ?? "auto"));
     });
 
     return (
         <div
-            ref={container!}
+            ref={container}
             class={`my-6 flex justify-center overflow-hidden w-full min-h-[90px] ${props.class ?? ""}`}
         />
+    );
+}
+
+export default function AdSense(props: AdSenseProps) {
+    return (
+        <Show when={CLIENT_ID}>
+            <AdSenseUnit {...props} />
+        </Show>
     );
 }
