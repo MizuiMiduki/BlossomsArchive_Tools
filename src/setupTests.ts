@@ -2,6 +2,44 @@ import "@testing-library/jest-dom/vitest";
 import { vi, afterEach } from "vitest";
 import gsap from "gsap";
 
+// 0. Node 25+ environment fallback for localStorage
+if (
+    typeof window !== "undefined" &&
+    (!window.localStorage || typeof window.localStorage.getItem !== "function")
+) {
+    const store = new Map<string, string>();
+    const storageMock: Storage = {
+        get length() {
+            return store.size;
+        },
+        clear() {
+            store.clear();
+        },
+        getItem(key: string) {
+            return store.has(key) ? store.get(key)! : null;
+        },
+        key(index: number) {
+            return Array.from(store.keys())[index] ?? null;
+        },
+        removeItem(key: string) {
+            store.delete(key);
+        },
+        setItem(key: string, value: string) {
+            store.set(key, String(value));
+        },
+    };
+    Object.defineProperty(window, "localStorage", {
+        value: storageMock,
+        writable: true,
+        configurable: true,
+    });
+    Object.defineProperty(globalThis, "localStorage", {
+        value: storageMock,
+        writable: true,
+        configurable: true,
+    });
+}
+
 // 1. window.matchMedia mock
 Object.defineProperty(window, "matchMedia", {
     writable: true,

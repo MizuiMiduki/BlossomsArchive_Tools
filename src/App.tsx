@@ -9,6 +9,7 @@ import PasswordGenerator from "./pages/PasswordGenerator";
 import Lottery from "./pages/Lottery";
 import ImageConverter from "./pages/ImageConverter";
 import AccessInfo from "./pages/AccessInfo";
+import OgpChecker from "./pages/OgpChecker";
 import ExifFrameGenerator from "./pages/ExifFrameGenerator";
 import Clock from "./pages/Clock";
 import TimerStopwatch from "./pages/TimerStopwatch";
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/lottery" component={Lottery} />
                 <Route path="/image_conversion" component={ImageConverter} />
                 <Route path="/access-info" component={AccessInfo} />
+                <Route path="/ogp-checker" component={OgpChecker} />
                 <Route path="/exif-frame" component={ExifFrameGenerator} />
                 <Route path="/clock" component={Clock} />
                 <Route path="/timer" component={TimerStopwatch} />

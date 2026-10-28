@@ -24,6 +24,10 @@ describe("routes", () => {
         const meta = getPageMetadata("/calculator");
         expect(meta.title).toBe(`電卓ツール | ${SITE_TITLE}`);
         expect(meta.url).toBe(`${SITE_URL}/calculator`);
+
+        const ogpMeta = getPageMetadata("/ogp-checker");
+        expect(ogpMeta.title).toBe(`OGP確認 | ${SITE_TITLE}`);
+        expect(ogpMeta.url).toBe(`${SITE_URL}/ogp-checker`);
     });
 
     it("未定義ルート（404等）のメタデータがデフォルトにフォールバックすること", () => {

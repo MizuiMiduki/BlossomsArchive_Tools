@@ -49,6 +49,12 @@ export const routes: Route[] = [
             "IPアドレスやブラウザなど、現在のアクセス情報を確認できます。",
     },
     {
+        path: "/ogp-checker",
+        title: "OGP確認",
+        description:
+            "URLやHTMLからOGPタグ・Twitterカードの設定状況とSNS表示プレビューを確認できます。",
+    },
+    {
         path: "/exif-frame",
         title: "EXIFフレーム生成",
         description:
