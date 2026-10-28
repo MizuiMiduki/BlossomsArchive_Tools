@@ -301,17 +301,15 @@ export function buildDiagnostics(data: OgpData): DiagnosticItem[] {
             key: "og:image",
             label: "og:image",
             status: data.ogImage
-                ? /^https?:\/\//i.test(data.ogImage) ||
-                  data.ogImage.startsWith("data:")
+                ? /^(https?:|data:|blob:)/i.test(data.ogImage)
                     ? "ok"
                     : "warn"
                 : "missing",
             value: data.ogImage || "未設定",
             message: !data.ogImage
                 ? "未設定です（SNSシェア時にサムネイル画像が表示されません）"
-                : /^https?:\/\//i.test(data.ogImage) ||
-                    data.ogImage.startsWith("data:")
-                  ? "絶対URLで設定されています（推奨サイズ: 1200×630px）"
+                : /^(https?:|data:|blob:)/i.test(data.ogImage)
+                  ? "有効な画像URLが設定されています（推奨サイズ: 1200×630px）"
                   : "相対パスの可能性があります。https:// から始まる絶対URLでの指定を推奨します",
         },
         {
@@ -367,6 +365,7 @@ export default function OgpChecker() {
     const [copiedKey, setCopiedKey] = createSignal<string | null>(null);
     const [allCopied, setAllCopied] = createSignal(false);
     const [imageError, setImageError] = createSignal(false);
+    const [localPreviewImage, setLocalPreviewImage] = createSignal("");
 
     onMount(() => {
         document.title =
@@ -380,7 +379,7 @@ export default function OgpChecker() {
         }
         metaDesc.setAttribute(
             "content",
-            "URLまたはHTMLソースからOGP（Open Graph Protocol）タグやTwitter Cardの設定状況を即座に解析・診断。X（旧Twitter）、Facebook、LINE、Discord等でシェアされた際のカード表示をプレビュー確認できる無料Webツールです。",
+            "URLまたはHTMLソースからOGP（Open Graph Protocol）タグやTwitter Cardの設定状況をブラウザ上で解析・診断。X（旧Twitter）、Facebook、LINE、Discord等でシェアされた際のカード表示をプレビュー確認できる無料Webツールです。",
         );
 
         const script = document.createElement("script");
@@ -394,7 +393,7 @@ export default function OgpChecker() {
             applicationCategory: "DeveloperApplication",
             browserRequirements: "Requires JavaScript. Requires HTML5.",
             description:
-                "WebページのOGPタグおよびTwitter Cardメタデータを解析し、SNSシェア時のカード表示をシミュレーションする確認ツール。",
+                "WebページのOGPタグおよびTwitter Cardメタデータをブラウザ上で解析し、SNSシェア時のカード表示をシミュレーションする確認ツール。",
         });
         document.head.appendChild(script);
 
@@ -403,11 +402,14 @@ export default function OgpChecker() {
 
     onCleanup(() => {
         document.getElementById("ogp-checker-jsonld")?.remove();
+        if (localPreviewImage()) {
+            URL.revokeObjectURL(localPreviewImage());
+        }
     });
 
     const fetchWithTimeout = async (
         url: string,
-        timeoutMs = 8000,
+        timeoutMs = 6000,
     ): Promise<Response> => {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -494,39 +496,9 @@ export default function OgpChecker() {
     };
 
     const fetchOgpDataFromUrl = async (targetUrl: string): Promise<OgpData> => {
-        // 1. 同一オリジンのサーバーサイドプロキシ (/ogp-proxy.php) を試行
+        // 1. 直接 fetch を試行（同一オリジンやCORS許可サイト向け）
         try {
-            const proxyRes = await fetchWithTimeout(
-                `/ogp-proxy.php?url=${encodeURIComponent(targetUrl)}`,
-                10000,
-            );
-            if (proxyRes.ok) {
-                const rawText =
-                    typeof proxyRes.text === "function"
-                        ? await proxyRes.text()
-                        : JSON.stringify(await proxyRes.json());
-                const parsedJson = JSON.parse(rawText);
-                if (
-                    parsedJson &&
-                    parsedJson.ok &&
-                    typeof parsedJson.html === "string" &&
-                    parsedJson.html.trim()
-                ) {
-                    const effectiveUrl = parsedJson.finalUrl || targetUrl;
-                    return enrichDevSameOriginOgp(
-                        parseOgpFromHtml(parsedJson.html, effectiveUrl),
-                        parsedJson.html,
-                        effectiveUrl,
-                    );
-                }
-            }
-        } catch {
-            // PHP未稼働環境やエラー時は次の取得手段へフォールバック
-        }
-
-        // 2. 直接 fetch を試行（同一オリジンやCORS許可サイト向け）
-        try {
-            const directRes = await fetchWithTimeout(targetUrl, 6000);
+            const directRes = await fetchWithTimeout(targetUrl, 4000);
             if (directRes.ok) {
                 const text = await directRes.text();
                 if (text && text.includes("<")) {
@@ -538,87 +510,71 @@ export default function OgpChecker() {
                 }
             }
         } catch {
-            // CORS制限等の場合は外部プロキシ経由へフォールバック
+            // CORS制限等の場合はクライアントサイド対応エンドポイントへフォールバック
         }
 
-        // 3. corsproxy.io
-        try {
-            const corsProxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
-            const corsRes = await fetchWithTimeout(corsProxyUrl, 7000);
-            if (corsRes.ok) {
-                const text = await corsRes.text();
-                if (text && text.includes("<")) {
-                    return parseOgpFromHtml(text, targetUrl);
-                }
+        // 2. CORS対応の複数エンドポイントを並列で問い合わせて最速の有効レスポンスを採用
+        const fetchRawHtmlViaCorsLol = async (): Promise<OgpData> => {
+            const res = await fetchWithTimeout(
+                `https://api.cors.lol/?url=${encodeURIComponent(targetUrl)}`,
+                7000,
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const text = await res.text();
+            if (!text || !text.includes("<")) {
+                throw new Error("Invalid HTML");
             }
-        } catch {
-            // 次のフォールバックへ
-        }
-
-        // 4. AllOrigins (raw)
-        try {
-            const rawUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-            const rawRes = await fetchWithTimeout(rawUrl, 7000);
-            if (rawRes.ok) {
-                const text = await rawRes.text();
-                if (text && text.includes("<")) {
-                    return parseOgpFromHtml(text, targetUrl);
-                }
+            const parsed = parseOgpFromHtml(text, targetUrl);
+            if (!parsed.ogTitle && !parsed.pageTitle && !parsed.ogImage) {
+                throw new Error("Empty metadata");
             }
-        } catch {
-            // 次のフォールバックへ
-        }
+            return parsed;
+        };
 
-        // 5. AllOrigins (JSON)
-        try {
-            const allOriginsUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-            const allOriginsRes = await fetchWithTimeout(allOriginsUrl, 7000);
-            if (allOriginsRes.ok) {
-                const json = await allOriginsRes.json();
-                if (
-                    json &&
-                    typeof json.contents === "string" &&
-                    json.contents.includes("<")
-                ) {
-                    return parseOgpFromHtml(json.contents, targetUrl);
-                }
+        const fetchViaMicrolink = async (): Promise<OgpData> => {
+            const res = await fetchWithTimeout(
+                `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`,
+                7000,
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const parsed = parseOgpFromMicrolink(json, targetUrl);
+            if (!parsed) throw new Error("Empty Microlink data");
+            return parsed;
+        };
+
+        const fetchViaAllOrigins = async (): Promise<OgpData> => {
+            const res = await fetchWithTimeout(
+                `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
+                7000,
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            if (
+                !json ||
+                typeof json.contents !== "string" ||
+                !json.contents.includes("<")
+            ) {
+                throw new Error("Invalid AllOrigins contents");
             }
-        } catch {
-            // 次のフォールバックへ
-        }
-
-        // 6. CodeTabs プロキシ
-        try {
-            const codeTabsUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
-            const codeTabsRes = await fetchWithTimeout(codeTabsUrl, 7000);
-            if (codeTabsRes.ok) {
-                const text = await codeTabsRes.text();
-                if (text && text.includes("<")) {
-                    return parseOgpFromHtml(text, targetUrl);
-                }
+            const parsed = parseOgpFromHtml(json.contents, targetUrl);
+            if (!parsed.ogTitle && !parsed.pageTitle && !parsed.ogImage) {
+                throw new Error("Empty metadata");
             }
-        } catch {
-            // 次のフォールバックへ
-        }
+            return parsed;
+        };
 
-        // 7. Microlink メタデータ解析API (CORS対応のフォールバック)
         try {
-            const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
-            const microlinkRes = await fetchWithTimeout(microlinkUrl, 8000);
-            if (microlinkRes.ok) {
-                const json = await microlinkRes.json();
-                const parsed = parseOgpFromMicrolink(json, targetUrl);
-                if (parsed) {
-                    return parsed;
-                }
-            }
+            return await Promise.any([
+                fetchRawHtmlViaCorsLol(),
+                fetchViaMicrolink(),
+                fetchViaAllOrigins(),
+            ]);
         } catch {
-            // すべて失敗した場合
+            throw new Error(
+                "ページの取得に失敗しました。対象サイトのアクセス制限（CORS等）により直接取得できない場合は、「HTMLを直接入力 / ファイル読込」タブからHTMLを貼り付けるかファイルを選択して解析してください。",
+            );
         }
-
-        throw new Error(
-            "ページの取得に失敗しました。URLが正しいか確認するか、「HTMLを直接入力」タブからページのソースコードを貼り付けて解析してください。",
-        );
     };
 
     const handleAnalyzeUrl = async () => {
@@ -648,7 +604,7 @@ export default function OgpChecker() {
         } catch (err: any) {
             setError(
                 err?.message ||
-                    "OGP情報の取得中にエラーが発生しました。時間を空けて再度お試しいただくか、HTML直接入力をお試しください。",
+                    "OGP情報の取得中にエラーが発生しました。「HTMLを直接入力 / ファイル読込」をお試しください。",
             );
         } finally {
             setLoading(false);
@@ -666,6 +622,49 @@ export default function OgpChecker() {
         setImageError(false);
         const parsed = parseOgpFromHtml(raw, normalizeInputUrl(urlInput()));
         setOgpData(parsed);
+    };
+
+    const handleHtmlFileUpload = async (e: Event) => {
+        const target = e.currentTarget as HTMLInputElement;
+        const file = target.files?.[0];
+        if (!file) return;
+        try {
+            const content = await file.text();
+            setHtmlInput(content);
+            setError("");
+            setImageError(false);
+            const parsed = parseOgpFromHtml(
+                content,
+                normalizeInputUrl(urlInput()),
+            );
+            setOgpData(parsed);
+        } catch {
+            setError("HTMLファイルの読み込みに失敗しました。");
+        } finally {
+            target.value = "";
+        }
+    };
+
+    const handleLocalImageUpload = (e: Event) => {
+        const target = e.currentTarget as HTMLInputElement;
+        const file = target.files?.[0];
+        if (!file) return;
+        if (localPreviewImage()) {
+            URL.revokeObjectURL(localPreviewImage());
+        }
+        const objectUrl = URL.createObjectURL(file);
+        setLocalPreviewImage(objectUrl);
+        setImageError(false);
+        setOgpData((prev) =>
+            prev
+                ? {
+                      ...prev,
+                      ogImage: objectUrl,
+                      twitterImage: objectUrl,
+                  }
+                : null,
+        );
+        target.value = "";
     };
 
     const loadSample = () => {
@@ -841,7 +840,7 @@ export default function OgpChecker() {
                             <BudouX
                                 as="p"
                                 class="text-xs font-semibold text-base-content/70 mt-2 leading-relaxed"
-                                text="WebページのURLまたはHTMLソースコードからOGP（Open Graph Protocol）とTwitterカードのメタタグを解析し、X（旧Twitter）やFacebook・LINE・Discordなどでシェアされた際の表示をプレビューします。"
+                                text="WebページのURLまたはHTMLソースコード（ファイル読込対応）からOGP（Open Graph Protocol）とTwitterカードのメタタグをブラウザ上で解析し、X（旧Twitter）やFacebook・LINE・Discordなどでシェアされた際の表示をプレビューします。"
                             />
                         </div>
                         <button
@@ -854,7 +853,7 @@ export default function OgpChecker() {
                     </div>
 
                     {/* 入力モード切替タブ */}
-                    <div class="grid grid-cols-2 gap-2 p-1.5 bg-base-200 rounded-xl mb-6 max-w-md">
+                    <div class="grid grid-cols-2 gap-2 p-1.5 bg-base-200 rounded-xl mb-6 max-w-lg">
                         <button
                             type="button"
                             onClick={() => {
@@ -881,7 +880,7 @@ export default function OgpChecker() {
                                     : "text-base-content/70 hover:bg-base-300/50"
                             }`}
                         >
-                            📝 HTMLを直接入力
+                            📝 HTML直接入力 / ファイル読込
                         </button>
                     </div>
 
@@ -922,15 +921,24 @@ export default function OgpChecker() {
                         </form>
                     </Show>
 
-                    {/* HTML直接入力フォーム */}
+                    {/* HTML直接入力・ローカルファイル読込フォーム */}
                     <Show when={inputMode() === "html"}>
                         <div class="flex flex-col gap-4 w-full">
                             <div class="form-control w-full">
-                                <label class="label py-1">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1 mb-1">
                                     <span class="label-text font-bold text-xs sm:text-sm text-base-content/80">
                                         HTMLソースコード（&lt;head&gt;内のメタタグまたはページ全体のHTML）
                                     </span>
-                                </label>
+                                    <label class="btn btn-outline btn-xs h-8 px-3 font-bold cursor-pointer self-start sm:self-auto">
+                                        📂 HTMLファイルを読み込む
+                                        <input
+                                            type="file"
+                                            accept=".html,.htm,text/html"
+                                            onChange={handleHtmlFileUpload}
+                                            class="hidden"
+                                        />
+                                    </label>
+                                </div>
                                 <textarea
                                     value={htmlInput()}
                                     onInput={(e) =>
@@ -993,14 +1001,10 @@ export default function OgpChecker() {
                         <div class="mt-8 border-2 border-dashed border-base-300 bg-base-200/40 rounded-2xl p-8 text-center flex flex-col items-center gap-3">
                             <span class="text-4xl">🔍</span>
                             <p class="text-sm font-bold text-base-content/80">
-                                URLを入力して「OGPを取得・解析」を押すか、HTMLソースを貼り付けて解析してください。
+                                URLを入力して「OGPを取得・解析」を押すか、HTMLソース・HTMLファイルを読み込んで解析してください。
                             </p>
                             <p class="text-xs text-base-content/60 max-w-xl leading-relaxed">
-                                ローカル開発中のサイトや公開前のステージング環境を確認したい場合は、「HTMLを直接入力」タブにHTMLの
-                                <code class="px-1.5 py-0.5 mx-1 bg-base-300 rounded font-mono">
-                                    &lt;head&gt;
-                                </code>
-                                部分を貼り付けることで、外部通信なしで即座にプレビューできます。
+                                ローカル開発中のファイルや公開前のページを確認したい場合は、「HTML直接入力 / ファイル読込」タブからブラウザ内完結（外部通信なし）で即座にプレビューできます。
                             </p>
                         </div>
                     </Show>
@@ -1017,56 +1021,72 @@ export default function OgpChecker() {
                                     <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
                                         <span>📱</span> SNSシェア表示プレビュー
                                     </h2>
-                                    {/* Xカード表示切替 */}
-                                    <div class="flex items-center gap-1.5 bg-base-200 p-1 rounded-lg self-start sm:self-auto">
-                                        <span class="text-[11px] font-bold text-base-content/70 px-2">
-                                            Xカード形式:
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setTwitterPreviewStyle("auto")
-                                            }
-                                            class={`btn btn-xs rounded-md ${
-                                                twitterPreviewStyle() === "auto"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            自動
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setTwitterPreviewStyle(
-                                                    "summary_large_image",
-                                                )
-                                            }
-                                            class={`btn btn-xs rounded-md ${
-                                                twitterPreviewStyle() ===
-                                                "summary_large_image"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            大画像
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setTwitterPreviewStyle(
-                                                    "summary",
-                                                )
-                                            }
-                                            class={`btn btn-xs rounded-md ${
-                                                twitterPreviewStyle() ===
-                                                "summary"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            小画像
-                                        </button>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <label class="btn btn-outline btn-xs h-7 px-2.5 font-bold cursor-pointer">
+                                            🖼️ ローカル画像で試す
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={
+                                                    handleLocalImageUpload
+                                                }
+                                                class="hidden"
+                                            />
+                                        </label>
+                                        {/* Xカード表示切替 */}
+                                        <div class="flex items-center gap-1.5 bg-base-200 p-1 rounded-lg">
+                                            <span class="text-[11px] font-bold text-base-content/70 px-2">
+                                                Xカード形式:
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setTwitterPreviewStyle(
+                                                        "auto",
+                                                    )
+                                                }
+                                                class={`btn btn-xs rounded-md ${
+                                                    twitterPreviewStyle() ===
+                                                    "auto"
+                                                        ? "btn-primary text-white"
+                                                        : "btn-ghost"
+                                                }`}
+                                            >
+                                                自動
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setTwitterPreviewStyle(
+                                                        "summary_large_image",
+                                                    )
+                                                }
+                                                class={`btn btn-xs rounded-md ${
+                                                    twitterPreviewStyle() ===
+                                                    "summary_large_image"
+                                                        ? "btn-primary text-white"
+                                                        : "btn-ghost"
+                                                }`}
+                                            >
+                                                大画像
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setTwitterPreviewStyle(
+                                                        "summary",
+                                                    )
+                                                }
+                                                class={`btn btn-xs rounded-md ${
+                                                    twitterPreviewStyle() ===
+                                                    "summary"
+                                                        ? "btn-primary text-white"
+                                                        : "btn-ghost"
+                                                }`}
+                                            >
+                                                小画像
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1405,7 +1425,7 @@ export default function OgpChecker() {
                                     から始まる絶対URLを使用する必要があります。
                                 </p>
                                 <p>
-                                    公開前のローカル環境やアクセス制限のあるページのOGPを検証したい場合は、「HTMLを直接入力」タブにHTMLソースを貼り付けることで、ブラウザ内完結で安全に解析できます。
+                                    公開前のローカル環境やアクセス制限のあるページのOGPを検証したい場合は、「HTML直接入力 / ファイル読込」タブからHTMLの貼り付けやファイル選択、ローカル画像の適用を行うことで、ブラウザ内完結で安全に解析できます。
                                 </p>
                             </div>
                         </div>
@@ -1466,10 +1486,10 @@ export default function OgpChecker() {
                             <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-base-content">
-                                    Q. URLから取得できないサイトがあるのはなぜですか？
+                                    Q. 完全オフライン・ローカル環境で確認する方法は？
                                 </div>
                                 <div class="collapse-content text-xs text-base-content/80 pt-3">
-                                    対象サイトのセキュリティ設定（WAFやBot対策、CORS制限など）やイントラネット環境によっては外部からのHTML取得がブロックされる場合があります。その場合はブラウザで対象ページの「ページのソースを表示」を開き、「HTMLを直接入力」タブへ貼り付けることで確実に確認できます。
+                                    「HTML直接入力 / ファイル読込」タブから手元のHTMLファイルを選択するかソースコードを貼り付け、さらに「ローカル画像で試す」ボタンから画像ファイルを選択することで、外部通信を一切行わずにブラウザのDOMParserのみでOGP表示を検証できます。
                                 </div>
                             </div>
                         </div>

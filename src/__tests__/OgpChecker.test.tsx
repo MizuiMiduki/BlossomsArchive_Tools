@@ -114,7 +114,7 @@ describe("OgpChecker Component", () => {
             screen.getByRole("button", { name: /URLから取得/ }),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: /HTMLを直接入力/ }),
+            screen.getByRole("button", { name: /HTML直接入力/ }),
         ).toBeInTheDocument();
     });
 
@@ -137,7 +137,7 @@ describe("OgpChecker Component", () => {
     it("HTML直接入力モードでHTMLを貼り付けて解析できること", async () => {
         render(() => <OgpChecker />);
 
-        fireEvent.click(screen.getByRole("button", { name: /HTMLを直接入力/ }));
+        fireEvent.click(screen.getByRole("button", { name: /HTML直接入力/ }));
 
         const textarea = screen.getByLabelText("解析するHTMLソースコード");
         fireEvent.input(textarea, {
@@ -210,22 +210,28 @@ describe("OgpChecker Component", () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalled();
     });
 
-    it("サーバーサイドプロキシ (/ogp-proxy.php) のJSONレスポンスからOGPを取得できること", async () => {
-        const proxyPayload = {
-            ok: true,
-            finalUrl: "https://example.org/post",
-            html: `<html><head>
-                <meta property="og:title" content="Proxy Fetched Title" />
-                <meta property="og:description" content="Proxy Fetched Desc" />
-                <meta property="og:image" content="/og-proxy.png" />
-            </head></html>`,
+    it("直接fetchがCORSエラーの場合でもフォールバック経由でOGPを取得できること", async () => {
+        const microlinkPayload = {
+            status: "success",
+            data: {
+                title: "Fallback OGP Title",
+                description: "Fallback OGP Description",
+                image: { url: "https://example.org/fallback.png" },
+                url: "https://example.org/post",
+                publisher: "Example Org",
+                lang: "ja",
+            },
         };
 
-        globalThis.fetch = vi.fn().mockResolvedValue({
-            ok: true,
-            text: async () => JSON.stringify(proxyPayload),
-            json: async () => proxyPayload,
-        } as any);
+        globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+            if (String(url).includes("api.microlink.io")) {
+                return {
+                    ok: true,
+                    json: async () => microlinkPayload,
+                };
+            }
+            throw new Error("CORS blocked");
+        });
 
         render(() => <OgpChecker />);
 
@@ -237,10 +243,10 @@ describe("OgpChecker Component", () => {
         );
 
         expect(
-            await screen.findAllByText("Proxy Fetched Title"),
+            await screen.findAllByText("Fallback OGP Title"),
         ).not.toHaveLength(0);
         expect(
-            screen.getAllByText("https://example.org/og-proxy.png"),
+            screen.getAllByText("https://example.org/fallback.png"),
         ).not.toHaveLength(0);
     });
 
