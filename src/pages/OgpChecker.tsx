@@ -8,6 +8,7 @@ import {
 } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import { getPageMetadata, routes } from "../routes";
 import {
     animateFadeIn,
     animatePop,
@@ -188,6 +189,82 @@ export function parseOgpFromHtml(html: string, sourceUrl = ""): OgpData {
     };
 }
 
+export function parseOgpFromMicrolink(
+    payload: any,
+    sourceUrl = "",
+): OgpData | null {
+    const data = payload?.data;
+    if (!data || typeof data !== "object") return null;
+
+    const title = typeof data.title === "string" ? data.title.trim() : "";
+    const description =
+        typeof data.description === "string" ? data.description.trim() : "";
+    const imageUrl =
+        typeof data.image?.url === "string" ? data.image.url.trim() : "";
+    const url =
+        typeof data.url === "string" && data.url.trim()
+            ? data.url.trim()
+            : sourceUrl;
+    const siteName =
+        typeof data.publisher === "string" ? data.publisher.trim() : "";
+    const logoUrl =
+        typeof data.logo?.url === "string" ? data.logo.url.trim() : "";
+    const lang = typeof data.lang === "string" ? data.lang.trim() : "";
+
+    if (!title && !description && !imageUrl) {
+        return null;
+    }
+
+    const rawTags: MetaTagItem[] = [];
+    if (title) {
+        rawTags.push({ key: "og:title", value: title, category: "ogp" });
+    }
+    if (description) {
+        rawTags.push({
+            key: "og:description",
+            value: description,
+            category: "ogp",
+        });
+    }
+    if (imageUrl) {
+        rawTags.push({ key: "og:image", value: imageUrl, category: "ogp" });
+    }
+    if (url) {
+        rawTags.push({ key: "og:url", value: url, category: "ogp" });
+    }
+    if (siteName) {
+        rawTags.push({ key: "og:site_name", value: siteName, category: "ogp" });
+    }
+    const cardType = imageUrl ? "summary_large_image" : "summary";
+    rawTags.push({
+        key: "twitter:card",
+        value: cardType,
+        category: "twitter",
+    });
+
+    return {
+        pageTitle: title,
+        metaDescription: description,
+        canonicalUrl: url,
+        faviconUrl: logoUrl,
+        ogTitle: title,
+        ogDescription: description,
+        ogImage: imageUrl,
+        ogImageAlt: "",
+        ogUrl: url,
+        ogType: "website",
+        ogSiteName: siteName,
+        ogLocale: lang,
+        twitterCard: cardType,
+        twitterTitle: title,
+        twitterDescription: description,
+        twitterImage: imageUrl,
+        twitterSite: "",
+        twitterCreator: "",
+        rawTags,
+    };
+}
+
 export function buildDiagnostics(data: OgpData): DiagnosticItem[] {
     const items: DiagnosticItem[] = [
         {
@@ -328,53 +405,220 @@ export default function OgpChecker() {
         document.getElementById("ogp-checker-jsonld")?.remove();
     });
 
-    const fetchHtmlWithFallback = async (targetUrl: string): Promise<string> => {
-        // 1. 直接 fetch を試行（同一オリジンやCORS許可サイト向け）
+    const fetchWithTimeout = async (
+        url: string,
+        timeoutMs = 8000,
+    ): Promise<Response> => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
         try {
-            const directRes = await fetch(targetUrl);
-            if (directRes.ok) {
-                const text = await directRes.text();
-                if (text && text.includes("<")) {
-                    return text;
+            return await fetch(url, { signal: controller.signal });
+        } finally {
+            clearTimeout(timer);
+        }
+    };
+
+    const enrichDevSameOriginOgp = (
+        parsed: OgpData,
+        html: string,
+        targetUrl: string,
+    ): OgpData => {
+        if (parsed.ogTitle || !html.includes("/src/index.tsx")) {
+            return parsed;
+        }
+        try {
+            const urlObj = new URL(targetUrl);
+            const matched = routes.some(
+                (r) => r.path === (urlObj.pathname.replace(/\/+$/, "") || "/"),
+            );
+            if (!matched && urlObj.origin !== window.location.origin) {
+                return parsed;
+            }
+            const meta = getPageMetadata(urlObj.pathname);
+            return {
+                ...parsed,
+                pageTitle: meta.title,
+                metaDescription: meta.description,
+                canonicalUrl: meta.url,
+                ogTitle: meta.title,
+                ogDescription: meta.description,
+                ogUrl: meta.url,
+                ogType: "website",
+                ogSiteName: "BlossomsArchive Tools",
+                ogLocale: "ja_JP",
+                twitterCard: "summary",
+                twitterTitle: meta.title,
+                twitterDescription: meta.description,
+                rawTags: [
+                    { key: "<title>", value: meta.title, category: "basic" },
+                    {
+                        key: "description",
+                        value: meta.description,
+                        category: "basic",
+                    },
+                    {
+                        key: 'link[rel="canonical"]',
+                        value: meta.url,
+                        category: "basic",
+                    },
+                    { key: "og:type", value: "website", category: "ogp" },
+                    {
+                        key: "og:site_name",
+                        value: "BlossomsArchive Tools",
+                        category: "ogp",
+                    },
+                    { key: "og:locale", value: "ja_JP", category: "ogp" },
+                    { key: "og:title", value: meta.title, category: "ogp" },
+                    {
+                        key: "og:description",
+                        value: meta.description,
+                        category: "ogp",
+                    },
+                    { key: "og:url", value: meta.url, category: "ogp" },
+                    { key: "twitter:card", value: "summary", category: "twitter" },
+                    {
+                        key: "twitter:title",
+                        value: meta.title,
+                        category: "twitter",
+                    },
+                    {
+                        key: "twitter:description",
+                        value: meta.description,
+                        category: "twitter",
+                    },
+                ],
+            };
+        } catch {
+            return parsed;
+        }
+    };
+
+    const fetchOgpDataFromUrl = async (targetUrl: string): Promise<OgpData> => {
+        // 1. 同一オリジンのサーバーサイドプロキシ (/ogp-proxy.php) を試行
+        try {
+            const proxyRes = await fetchWithTimeout(
+                `/ogp-proxy.php?url=${encodeURIComponent(targetUrl)}`,
+                10000,
+            );
+            if (proxyRes.ok) {
+                const rawText =
+                    typeof proxyRes.text === "function"
+                        ? await proxyRes.text()
+                        : JSON.stringify(await proxyRes.json());
+                const parsedJson = JSON.parse(rawText);
+                if (
+                    parsedJson &&
+                    parsedJson.ok &&
+                    typeof parsedJson.html === "string" &&
+                    parsedJson.html.trim()
+                ) {
+                    const effectiveUrl = parsedJson.finalUrl || targetUrl;
+                    return enrichDevSameOriginOgp(
+                        parseOgpFromHtml(parsedJson.html, effectiveUrl),
+                        parsedJson.html,
+                        effectiveUrl,
+                    );
                 }
             }
         } catch {
-            // CORS制限等の場合はプロキシ経由へフォールバック
+            // PHP未稼働環境やエラー時は次の取得手段へフォールバック
         }
 
-        // 2. AllOrigins プロキシ (JSON形式)
+        // 2. 直接 fetch を試行（同一オリジンやCORS許可サイト向け）
         try {
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-            const proxyRes = await fetch(proxyUrl);
-            if (proxyRes.ok) {
-                const json = await proxyRes.json();
-                if (json && typeof json.contents === "string" && json.contents.trim()) {
-                    return json.contents;
+            const directRes = await fetchWithTimeout(targetUrl, 6000);
+            if (directRes.ok) {
+                const text = await directRes.text();
+                if (text && text.includes("<")) {
+                    return enrichDevSameOriginOgp(
+                        parseOgpFromHtml(text, targetUrl),
+                        text,
+                        targetUrl,
+                    );
+                }
+            }
+        } catch {
+            // CORS制限等の場合は外部プロキシ経由へフォールバック
+        }
+
+        // 3. corsproxy.io
+        try {
+            const corsProxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+            const corsRes = await fetchWithTimeout(corsProxyUrl, 7000);
+            if (corsRes.ok) {
+                const text = await corsRes.text();
+                if (text && text.includes("<")) {
+                    return parseOgpFromHtml(text, targetUrl);
                 }
             }
         } catch {
             // 次のフォールバックへ
         }
 
-        // 3. CodeTabs プロキシ
-        const fallbackUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
-        const fallbackRes = await fetch(fallbackUrl).catch(() => {
-            throw new Error(
-                "ページの取得に失敗しました。URLが正しいか確認するか、「HTMLを直接入力」タブからページのソースコードを貼り付けて解析してください。",
-            );
-        });
-
-        if (!fallbackRes.ok) {
-            throw new Error(
-                `対象ページの取得に失敗しました（ステータス: ${fallbackRes.status}）。アクセス制限がある場合は「HTMLを直接入力」をご利用ください。`,
-            );
+        // 4. AllOrigins (raw)
+        try {
+            const rawUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+            const rawRes = await fetchWithTimeout(rawUrl, 7000);
+            if (rawRes.ok) {
+                const text = await rawRes.text();
+                if (text && text.includes("<")) {
+                    return parseOgpFromHtml(text, targetUrl);
+                }
+            }
+        } catch {
+            // 次のフォールバックへ
         }
 
-        const htmlText = await fallbackRes.text();
-        if (!htmlText || !htmlText.trim()) {
-            throw new Error("空のレスポンスが返されました。");
+        // 5. AllOrigins (JSON)
+        try {
+            const allOriginsUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+            const allOriginsRes = await fetchWithTimeout(allOriginsUrl, 7000);
+            if (allOriginsRes.ok) {
+                const json = await allOriginsRes.json();
+                if (
+                    json &&
+                    typeof json.contents === "string" &&
+                    json.contents.includes("<")
+                ) {
+                    return parseOgpFromHtml(json.contents, targetUrl);
+                }
+            }
+        } catch {
+            // 次のフォールバックへ
         }
-        return htmlText;
+
+        // 6. CodeTabs プロキシ
+        try {
+            const codeTabsUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
+            const codeTabsRes = await fetchWithTimeout(codeTabsUrl, 7000);
+            if (codeTabsRes.ok) {
+                const text = await codeTabsRes.text();
+                if (text && text.includes("<")) {
+                    return parseOgpFromHtml(text, targetUrl);
+                }
+            }
+        } catch {
+            // 次のフォールバックへ
+        }
+
+        // 7. Microlink メタデータ解析API (CORS対応のフォールバック)
+        try {
+            const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
+            const microlinkRes = await fetchWithTimeout(microlinkUrl, 8000);
+            if (microlinkRes.ok) {
+                const json = await microlinkRes.json();
+                const parsed = parseOgpFromMicrolink(json, targetUrl);
+                if (parsed) {
+                    return parsed;
+                }
+            }
+        } catch {
+            // すべて失敗した場合
+        }
+
+        throw new Error(
+            "ページの取得に失敗しました。URLが正しいか確認するか、「HTMLを直接入力」タブからページのソースコードを貼り付けて解析してください。",
+        );
     };
 
     const handleAnalyzeUrl = async () => {
@@ -398,8 +642,7 @@ export default function OgpChecker() {
         setImageError(false);
 
         try {
-            const html = await fetchHtmlWithFallback(normalized);
-            const parsed = parseOgpFromHtml(html, normalized);
+            const parsed = await fetchOgpDataFromUrl(normalized);
             setOgpData(parsed);
             setUrlInput(normalized);
         } catch (err: any) {

@@ -2,6 +2,7 @@ import { render, fireEvent, screen } from "@solidjs/testing-library";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import OgpChecker, {
     parseOgpFromHtml,
+    parseOgpFromMicrolink,
     buildDiagnostics,
     normalizeInputUrl,
     resolveUrl,
@@ -62,6 +63,29 @@ describe("OgpChecker helper functions", () => {
 
         const diag = buildDiagnostics(parsed);
         expect(diag.every((d) => d.status === "ok")).toBe(true);
+    });
+
+    it("parseOgpFromMicrolink がMicrolink APIのJSONレスポンスからOgpDataを構築できること", () => {
+        const payload = {
+            status: "success",
+            data: {
+                title: "Microlink Title",
+                description: "Microlink Description",
+                image: { url: "https://example.com/microlink.png" },
+                url: "https://example.com/article",
+                publisher: "Microlink Publisher",
+                lang: "ja",
+            },
+        };
+        const parsed = parseOgpFromMicrolink(
+            payload,
+            "https://example.com/article",
+        );
+        expect(parsed).not.toBeNull();
+        expect(parsed?.ogTitle).toBe("Microlink Title");
+        expect(parsed?.ogDescription).toBe("Microlink Description");
+        expect(parsed?.ogImage).toBe("https://example.com/microlink.png");
+        expect(parsed?.ogSiteName).toBe("Microlink Publisher");
     });
 });
 
@@ -184,6 +208,40 @@ describe("OgpChecker Component", () => {
         });
         fireEvent.click(copyAllBtn);
         expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    });
+
+    it("サーバーサイドプロキシ (/ogp-proxy.php) のJSONレスポンスからOGPを取得できること", async () => {
+        const proxyPayload = {
+            ok: true,
+            finalUrl: "https://example.org/post",
+            html: `<html><head>
+                <meta property="og:title" content="Proxy Fetched Title" />
+                <meta property="og:description" content="Proxy Fetched Desc" />
+                <meta property="og:image" content="/og-proxy.png" />
+            </head></html>`,
+        };
+
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            text: async () => JSON.stringify(proxyPayload),
+            json: async () => proxyPayload,
+        } as any);
+
+        render(() => <OgpChecker />);
+
+        const input = screen.getByLabelText("確認するページのURL");
+        fireEvent.input(input, { target: { value: "https://example.org/post" } });
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "OGPを取得・解析" }),
+        );
+
+        expect(
+            await screen.findAllByText("Proxy Fetched Title"),
+        ).not.toHaveLength(0);
+        expect(
+            screen.getAllByText("https://example.org/og-proxy.png"),
+        ).not.toHaveLength(0);
     });
 
     it("URL取得がすべて失敗した場合にエラーメッセージが表示されること", async () => {
