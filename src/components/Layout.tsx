@@ -1,5 +1,5 @@
 // src/components/Layout.tsx
-import { JSX, For, createEffect, createSignal } from "solid-js";
+import { JSX, For, createEffect, createSignal, onCleanup } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { Link, Meta, Title } from "@solidjs/meta";
 import { createScriptLoader } from "@solid-primitives/script-loader";
@@ -24,6 +24,11 @@ export default function Layout(props: LayoutProps) {
 
     let hoverTween: ReturnType<typeof delayedCall> | undefined;
     let mainRef: HTMLElement | undefined;
+
+    // ブラウザの自動スクロール復元を無効化（戻る/進む時の位置ずれ防止）
+    if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+    }
 
     createEffect(() => {
         localStorage.setItem("isPcMenuOpen", String(isPcMenuOpen()));
@@ -100,8 +105,15 @@ export default function Layout(props: LayoutProps) {
             document.body.scrollTop = 0;
         };
 
+        // 新ページの描画・レイアウト確定やブラウザのスクロール復元で
+        // 位置がずれることがあるため、少し遅らせて複数回リセットする
         resetScroll();
-        requestAnimationFrame(resetScroll);
+        requestAnimationFrame(() => {
+            resetScroll();
+            requestAnimationFrame(resetScroll);
+        });
+        const timer = setTimeout(resetScroll, 100);
+        onCleanup(() => clearTimeout(timer));
     });
 
     createEffect(() => {
