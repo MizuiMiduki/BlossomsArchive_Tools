@@ -61,6 +61,13 @@ describe("textConverter", () => {
             expect(md).toContain("| 太郎 | 20 |");
         });
 
+        it("テーブルセル内のバックスラッシュおよびパイプ記号が安全にエスケープされること", () => {
+            const html = "<table><thead><tr><th>キー</th><th>値</th></tr></thead><tbody><tr><td>C:\\path\\dir</td><td>a | b</td></tr></tbody></table>";
+            const md = htmlToMarkdown(html);
+            expect(md).toContain("C:\\\\path\\\\dir");
+            expect(md).toContain("a \\| b");
+        });
+
         it("不要なscriptやstyleタグを除去すること", () => {
             const html = '<p>こんにちは</p><script>alert("xss")</script><style>body { color: red; }</style>';
             const md = htmlToMarkdown(html);

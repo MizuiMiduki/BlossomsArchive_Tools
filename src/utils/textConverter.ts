@@ -186,7 +186,12 @@ export function htmlToMarkdown(html: string, options: HtmlToMarkdownOptions = {}
                 el.querySelectorAll("tr").forEach((tr) => {
                     const row: string[] = [];
                     tr.querySelectorAll("th, td").forEach((cell) => {
-                        row.push((cell.textContent || "").trim().replace(/\|/g, "\\|"));
+                        row.push(
+                            (cell.textContent || "")
+                                .trim()
+                                .replace(/\\/g, "\\\\")
+                                .replace(/\|/g, "\\|"),
+                        );
                     });
                     if (row.length > 0) rows.push(row);
                 });
