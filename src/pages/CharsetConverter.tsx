@@ -55,7 +55,7 @@ export default function CharsetConverter() {
     const [showHexDump, setShowHexDump] = createSignal(false);
 
     // コード表記・進数変換ステート
-    const [cfInput, setCfInput] = createSignal("こんにちは");
+    const [cfInput, setCfInput] = createSignal("");
     const [cfEncoding, setCfEncoding] = createSignal<SupportedEncoding>("UTF8");
     const [cfHexFormat, setCfHexFormat] = createSignal<"space" | "comma" | "0x-comma" | "percent">("space");
     const [cfUnicodeFormat, setCfUnicodeFormat] = createSignal<"u-plus" | "backslash-u" | "backslash-u-bracket">("u-plus");
@@ -75,7 +75,7 @@ export default function CharsetConverter() {
     const [mojibakeCopiedIndex, setMojibakeCopiedIndex] = createSignal<number | null>(null);
 
     // Unicode正規化ステート
-    const [normalizeInput, setNormalizeInput] = createSignal("ガンダム トﾞﾗｴﾓﾝ ㈱ ① Ⅵ");
+    const [normalizeInput, setNormalizeInput] = createSignal("");
     const [normCopiedKey, setNormCopiedKey] = createSignal<string | null>(null);
 
     // SEOと構造化データの動的注入
@@ -197,16 +197,6 @@ export default function CharsetConverter() {
         if (onDone) {
             onDone();
         }
-    };
-
-    // サンプルテキスト挿入
-    const handleInsertSample = () => {
-        setInputText(
-            "BlossomsArchive Tools 文字コード変換テスト\n" +
-            "ひらがな・カタカナ・漢字（日本語対応）\n" +
-            "半角ｶﾅや記号: ① ㈱ 髙 﨑 〜\n" +
-            "英数字: ABC 123 !?#",
-        );
     };
 
     // テキストダウンロード
@@ -526,23 +516,14 @@ export default function CharsetConverter() {
                             <div class="card-body p-4 md:p-6 flex-1 flex flex-col space-y-3">
                                 <div class="flex items-center justify-between">
                                     <h2 class="card-title text-base font-bold">入力テキスト</h2>
-                                    <div class="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-primary"
-                                            onClick={handleInsertSample}
-                                        >
-                                            サンプル挿入
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-error"
-                                            onClick={() => setInputText("")}
-                                            disabled={!inputText()}
-                                        >
-                                            クリア
-                                        </button>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        class="btn btn-ghost btn-xs text-error"
+                                        onClick={() => setInputText("")}
+                                        disabled={!inputText()}
+                                    >
+                                        クリア
+                                    </button>
                                 </div>
 
                                 <textarea
@@ -1330,15 +1311,8 @@ export default function CharsetConverter() {
                         </div>
 
                         <div class="form-control">
-                            <div class="flex justify-between items-center mb-1">
+                            <div class="mb-1">
                                 <label class="label-text font-semibold">文字化けしたテキスト</label>
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-xs text-primary"
-                                    onClick={() => setMojibakeInput("縺薙ｓ縺ｫ縺｡縺ｯ縲∽ｸ也阜")}
-                                >
-                                    サンプル挿入（縺...）
-                                </button>
                             </div>
                             <textarea
                                 class="textarea textarea-bordered w-full font-mono text-sm min-h-[120px]"
