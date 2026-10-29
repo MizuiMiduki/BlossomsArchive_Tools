@@ -223,12 +223,17 @@ describe("OgpChecker Component", () => {
             },
         };
 
-        globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
-            if (String(url).includes("api.microlink.io")) {
-                return {
-                    ok: true,
-                    json: async () => microlinkPayload,
-                };
+        globalThis.fetch = vi.fn().mockImplementation(async (input: unknown) => {
+            try {
+                const targetUrl = new URL(String(input), "http://localhost");
+                if (targetUrl.hostname === "api.microlink.io") {
+                    return {
+                        ok: true,
+                        json: async () => microlinkPayload,
+                    };
+                }
+            } catch {
+                // ignore
             }
             throw new Error("CORS blocked");
         });

@@ -96,26 +96,59 @@ export function normalizeInputUrl(input: string): string {
     return `https://${trimmed}`;
 }
 
-export function parseOgpFromHtml(html: string, sourceUrl = ""): OgpData {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
+function decodeHtmlEntities(text: string): string {
+    return text
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/&apos;/gi, "'")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&#(\d+);/g, (_, dec) => {
+            const num = Number(dec);
+            return Number.isFinite(num) ? String.fromCharCode(num) : "";
+        })
+        .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+            const num = parseInt(hex, 16);
+            return Number.isFinite(num) ? String.fromCharCode(num) : "";
+        })
+        .replace(/&amp;/gi, "&");
+}
 
+function extractTagAttributes(tagString: string): Record<string, string> {
+    const attrs: Record<string, string> = {};
+    const attrRegex =
+        /([a-zA-Z0-9_:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
+    let match: RegExpExecArray | null;
+    while ((match = attrRegex.exec(tagString)) !== null) {
+        const name = match[1].toLowerCase();
+        const rawVal = match[2] ?? match[3] ?? match[4] ?? "";
+        attrs[name] = decodeHtmlEntities(rawVal.trim());
+    }
+    return attrs;
+}
+
+export function parseOgpFromHtml(html: string, sourceUrl = ""): OgpData {
     const ogMap: Record<string, string> = {};
     const twitterMap: Record<string, string> = {};
     const basicMap: Record<string, string> = {};
     const rawTags: MetaTagItem[] = [];
 
-    const pageTitle = doc.querySelector("title")?.textContent?.trim() ?? "";
+    // 1. <title>タグの抽出
+    const titleMatch = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+    const pageTitle = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : "";
     if (pageTitle) {
         basicMap["title"] = pageTitle;
         rawTags.push({ key: "<title>", value: pageTitle, category: "basic" });
     }
 
-    const metaElements = Array.from(doc.querySelectorAll("meta"));
-    for (const meta of metaElements) {
-        const property = (meta.getAttribute("property") || "").trim().toLowerCase();
-        const name = (meta.getAttribute("name") || "").trim().toLowerCase();
-        const content = (meta.getAttribute("content") || "").trim();
+    // 2. <meta>タグの抽出
+    const metaRegex = /<meta\b[^>]*>/gi;
+    let metaMatch: RegExpExecArray | null;
+    while ((metaMatch = metaRegex.exec(html)) !== null) {
+        const attrs = extractTagAttributes(metaMatch[0]);
+        const property = (attrs["property"] || "").trim().toLowerCase();
+        const name = (attrs["name"] || "").trim().toLowerCase();
+        const content = (attrs["content"] || "").trim();
 
         if (!content && !property && !name) continue;
 
@@ -134,9 +167,27 @@ export function parseOgpFromHtml(html: string, sourceUrl = ""): OgpData {
         }
     }
 
-    const canonicalHref =
-        doc.querySelector('link[rel="canonical"]')?.getAttribute("href")?.trim() ??
-        "";
+    // 3. <link>タグ（canonical, icon）の抽出
+    let canonicalHref = "";
+    let iconHref = "";
+    const linkRegex = /<link\b[^>]*>/gi;
+    let linkMatch: RegExpExecArray | null;
+    while ((linkMatch = linkRegex.exec(html)) !== null) {
+        const attrs = extractTagAttributes(linkMatch[0]);
+        const rel = (attrs["rel"] || "").toLowerCase();
+        const href = (attrs["href"] || "").trim();
+        if (!href) continue;
+
+        if (rel === "canonical" && !canonicalHref) {
+            canonicalHref = href;
+        } else if (
+            /(^|\s)(icon|shortcut icon|apple-touch-icon)($|\s)/.test(rel) &&
+            !iconHref
+        ) {
+            iconHref = href;
+        }
+    }
+
     const effectiveBaseUrl =
         ogMap["og:url"] || canonicalHref || sourceUrl || undefined;
 
@@ -149,13 +200,6 @@ export function parseOgpFromHtml(html: string, sourceUrl = ""): OgpData {
         });
     }
 
-    const iconHref =
-        doc
-            .querySelector(
-                'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]',
-            )
-            ?.getAttribute("href")
-            ?.trim() ?? "";
     const resolvedFavicon = resolveUrl(iconHref, effectiveBaseUrl);
 
     const resolvedOgUrl = resolveUrl(ogMap["og:url"] || "", sourceUrl || undefined);
