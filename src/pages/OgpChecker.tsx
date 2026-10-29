@@ -539,86 +539,62 @@ export default function OgpChecker() {
         }
     };
 
+    const isSameOrigin = (targetUrl: string): boolean => {
+        try {
+            return (
+                typeof window !== "undefined" &&
+                new URL(targetUrl).origin === window.location.origin
+            );
+        } catch {
+            return false;
+        }
+    };
+
     const fetchOgpDataFromUrl = async (targetUrl: string): Promise<OgpData> => {
-        // 1. 直接 fetch を試行（同一オリジンやCORS許可サイト向け）
-        try {
-            const directRes = await fetchWithTimeout(targetUrl, 4000);
-            if (directRes.ok) {
-                const text = await directRes.text();
-                if (text && text.includes("<")) {
-                    return enrichDevSameOriginOgp(
-                        parseOgpFromHtml(text, targetUrl),
-                        text,
-                        targetUrl,
-                    );
+        // 1. 同一オリジンの場合のみ直接 fetch を試行（不要なCORSエラーのコンソール出力を防止）
+        if (isSameOrigin(targetUrl)) {
+            try {
+                const directRes = await fetchWithTimeout(targetUrl, 4000);
+                if (directRes.ok) {
+                    const text = await directRes.text();
+                    if (text && text.includes("<")) {
+                        return enrichDevSameOriginOgp(
+                            parseOgpFromHtml(text, targetUrl),
+                            text,
+                            targetUrl,
+                        );
+                    }
                 }
+            } catch {
+                // 同一オリジンでの取得が失敗した場合は後続のAPIへフォールバック
             }
-        } catch {
-            // CORS制限等の場合はクライアントサイド対応エンドポイントへフォールバック
         }
 
-        // 2. CORS対応の複数エンドポイントを並列で問い合わせて最速の有効レスポンスを採用
-        const fetchRawHtmlViaCorsLol = async (): Promise<OgpData> => {
-            const res = await fetchWithTimeout(
-                `https://api.cors.lol/?url=${encodeURIComponent(targetUrl)}`,
-                7000,
-            );
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const text = await res.text();
-            if (!text || !text.includes("<")) {
-                throw new Error("Invalid HTML");
-            }
-            const parsed = parseOgpFromHtml(text, targetUrl);
-            if (!parsed.ogTitle && !parsed.pageTitle && !parsed.ogImage) {
-                throw new Error("Empty metadata");
-            }
-            return parsed;
-        };
-
-        const fetchViaMicrolink = async (): Promise<OgpData> => {
-            const res = await fetchWithTimeout(
-                `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`,
-                7000,
-            );
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const json = await res.json();
-            const parsed = parseOgpFromMicrolink(json, targetUrl);
-            if (!parsed) throw new Error("Empty Microlink data");
-            return parsed;
-        };
-
-        const fetchViaAllOrigins = async (): Promise<OgpData> => {
-            const res = await fetchWithTimeout(
-                `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
-                7000,
-            );
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const json = await res.json();
-            if (
-                !json ||
-                typeof json.contents !== "string" ||
-                !json.contents.includes("<")
-            ) {
-                throw new Error("Invalid AllOrigins contents");
-            }
-            const parsed = parseOgpFromHtml(json.contents, targetUrl);
-            if (!parsed.ogTitle && !parsed.pageTitle && !parsed.ogImage) {
-                throw new Error("Empty metadata");
-            }
-            return parsed;
-        };
-
-        try {
-            return await Promise.any([
-                fetchRawHtmlViaCorsLol(),
-                fetchViaMicrolink(),
-                fetchViaAllOrigins(),
-            ]);
-        } catch {
+        // 2. クロスオリジンの場合はCORSエラー・429レート制限エラーを防ぐためMicrolink APIを利用
+        const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
+        const res = await fetchWithTimeout(microlinkUrl, 8000).catch(() => {
             throw new Error(
-                "ページの取得に失敗しました。対象サイトのアクセス制限（CORS等）により直接取得できない場合は、「HTMLを直接入力 / ファイル読込」タブからHTMLを貼り付けるかファイルを選択して解析してください。",
+                "ページの取得に失敗しました。対象サイトへのアクセス制限がある場合は、「HTML直接入力 / ファイル読込」タブをご利用ください。",
+            );
+        });
+
+        if (!res.ok) {
+            throw new Error(
+                `ページの取得に失敗しました（HTTPステータス: ${res.status}）。「HTML直接入力 / ファイル読込」タブをご利用ください。`,
             );
         }
+
+        const json = await res.json().catch(() => {
+            throw new Error("データの解析に失敗しました。");
+        });
+
+        const parsed = parseOgpFromMicrolink(json, targetUrl);
+        if (!parsed) {
+            throw new Error(
+                "OGP情報が見つかりませんでした。「HTML直接入力 / ファイル読込」タブからHTMLソースを貼り付けてお試しください。",
+            );
+        }
+        return parsed;
     };
 
     const handleAnalyzeUrl = async () => {

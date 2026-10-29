@@ -180,9 +180,20 @@ describe("OgpChecker Component", () => {
         <body></body>
         </html>`;
 
+        const mockMicrolink = {
+            status: "success",
+            data: {
+                title: "Fetched Site Title",
+                description: "Fetched Site Description",
+                image: { url: "https://example.com/fetched.jpg" },
+                url: "https://example.com",
+            },
+        };
+
         globalThis.fetch = vi.fn().mockResolvedValue({
             ok: true,
             text: async () => mockHtml,
+            json: async () => mockMicrolink,
         } as any);
 
         render(() => <OgpChecker />);
@@ -208,6 +219,42 @@ describe("OgpChecker Component", () => {
         });
         fireEvent.click(copyAllBtn);
         expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    });
+
+    it("同一オリジンURLの場合は直接fetchでHTMLを取得して解析すること", async () => {
+        const mockHtml = `<!doctype html>
+        <html>
+        <head>
+            <title>Same Origin Title</title>
+            <meta property="og:title" content="Same Origin OGP" />
+            <meta property="og:description" content="Same Origin Description" />
+            <meta property="og:image" content="http://localhost:3000/local.png" />
+        </head>
+        <body></body>
+        </html>`;
+
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            text: async () => mockHtml,
+        } as any);
+
+        render(() => <OgpChecker />);
+
+        const input = screen.getByLabelText("確認するページのURL");
+        fireEvent.input(input, {
+            target: { value: `${window.location.origin}/test-page` },
+        });
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "OGPを取得・解析" }),
+        );
+
+        expect(
+            await screen.findAllByText("Same Origin OGP"),
+        ).not.toHaveLength(0);
+        expect(
+            screen.getAllByText("Same Origin Description"),
+        ).not.toHaveLength(0);
     });
 
     it("直接fetchがCORSエラーの場合でもフォールバック経由でOGPを取得できること", async () => {
