@@ -55,6 +55,11 @@ const libraries: Library[] = [
         url: "https://github.com/hMatoba/piexifjs",
     },
     {
+        name: "encoding-japanese",
+        license: "MIT",
+        url: "https://github.com/polygonplanet/encoding.js",
+    },
+    {
         name: "Vite",
         license: "MIT",
         url: "https://github.com/vitejs/vite",

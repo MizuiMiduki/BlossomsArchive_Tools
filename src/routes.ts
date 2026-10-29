@@ -43,6 +43,12 @@ export const routes: Route[] = [
         description: "画像ファイルを別の形式に変換できる無料ツールです。",
     },
     {
+        path: "/charset-converter",
+        title: "文字コード変換",
+        description:
+            "UTF-8、Shift_JIS、EUC-JP、JIS等の文字コードや改行コードを相互変換。文字化け修復やファイル一括変換も可能です。",
+    },
+    {
         path: "/access-info",
         title: "アクセス情報確認",
         description:

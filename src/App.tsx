@@ -18,6 +18,7 @@ import Credits from "./pages/Credits";
 import HyperfocalCalculator from "./pages/Hyperfocal";
 import HeadphoneDriveability from "./pages/HeadphoneDriveability";
 import TextConverter from "./pages/TextConverter";
+import CharsetConverter from "./pages/CharsetConverter";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -33,6 +34,10 @@ function App() {
                 />
                 <Route path="/lottery" component={Lottery} />
                 <Route path="/image_conversion" component={ImageConverter} />
+                <Route
+                    path="/charset-converter"
+                    component={CharsetConverter}
+                />
                 <Route path="/access-info" component={AccessInfo} />
                 <Route path="/ogp-checker" component={OgpChecker} />
                 <Route path="/exif-frame" component={ExifFrameGenerator} />
