@@ -29,6 +29,9 @@ importers:
       budoux:
         specifier: ^0.10.0
         version: 0.10.0
+      encoding-japanese:
+        specifier: ^2.4.0
+        version: 2.4.0
       exifr:
         specifier: ^7.1.3
         version: 7.1.3
@@ -60,6 +63,9 @@ importers:
       '@testing-library/jest-dom':
         specifier: ^7.0.1
         version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.12(@types/node@26.2.0)(jsdom@30.0.1)(vite@7.3.7(@types/node@26.2.0)(jiti@2.7.0)(lightningcss@1.33.0)))
+      '@types/encoding-japanese':
+        specifier: ^2.4.0
+        version: 2.4.0
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
@@ -801,6 +807,10 @@ packages:
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
+  '@types/encoding-japanese@2.4.0':
+    resolution: {integrity: sha512-3+DRbiNkPVZ9qcKmRDHwsPl/hA36EBj3r4gGHm0wA1bcVE4/c8X1sHEl0yJ6Uf+1NKwumRbdQI+CPYVv+lOHZA==}
+    deprecated: This is a stub types definition. encoding-japanese provides its own type definitions, so you do not need this installed.
+
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
@@ -1160,6 +1170,10 @@ packages:
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
+
+  encoding-japanese@2.4.0:
+    resolution: {integrity: sha512-PE0KjlsDy9JSsoU4C2Q8NXb1kC4c+bZRac9ZvHXUE4q1Ht63gScKMdEy9jst9+Fi3M4eDkqzkEhBZvix4blP2A==}
+    engines: {node: '>=18.0.0'}
 
   enhanced-resolve@5.24.5:
     resolution: {integrity: sha512-L1l8TNvomm6UVW5B253AGxQagSQr+vGwhMlrrfRS2qmhx46AMpMVJKQYLvWYbysTMY8VoicOvzHzoHMbyzB+4A==}
@@ -2447,6 +2461,10 @@ snapshots:
 
   '@types/deep-eql@4.0.2': {}
 
+  '@types/encoding-japanese@2.4.0':
+    dependencies:
+      encoding-japanese: 2.4.0
+
   '@types/estree@1.0.9': {}
 
   '@types/node@26.2.0':
@@ -2743,6 +2761,8 @@ snapshots:
   electron-to-chromium@1.5.408: {}
 
   emoji-regex@8.0.0: {}
+
+  encoding-japanese@2.4.0: {}
 
   enhanced-resolve@5.24.5:
     dependencies:

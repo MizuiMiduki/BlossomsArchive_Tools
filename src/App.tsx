@@ -17,6 +17,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Credits from "./pages/Credits";
 import HyperfocalCalculator from "./pages/Hyperfocal";
 import HeadphoneDriveability from "./pages/HeadphoneDriveability";
+import TextConverter from "./pages/TextConverter";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
                     path="/headphone-driveability"
                     component={HeadphoneDriveability}
                 />
+                <Route path="/text-converter" component={TextConverter} />
                 <Route path="*" component={NotFound} />
             </Router>
         </MetaProvider>

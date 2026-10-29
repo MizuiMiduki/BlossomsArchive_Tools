@@ -84,6 +84,12 @@ export const routes: Route[] = [
             "インピーダンスと音圧感度から、イヤホンやヘッドホンに必要な出力を計算します。",
     },
     {
+        path: "/text-converter",
+        title: "テキスト・マークアップ変換",
+        description:
+            "HTMLからプレーンテキスト、MarkdownからHTMLなど、テキストやマークアップの相互変換ができる無料ツールです。",
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。",
