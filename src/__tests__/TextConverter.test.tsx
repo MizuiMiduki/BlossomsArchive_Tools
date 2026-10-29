@@ -12,12 +12,15 @@ describe("TextConverter", () => {
         });
     });
 
-    it("初期状態でタイトルやモードボタン、エディターが表示されていること", () => {
+    it("初期状態でタイトルやモードボタン、エディターが表示され、入力・出力が空であること", () => {
         render(() => <TextConverter />);
         expect(screen.getByText("テキスト・HTML・Markdown変換ツール")).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /HTML → Markdown/ })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /Markdown → HTML/ })).toBeInTheDocument();
-        expect(screen.getByPlaceholderText(/変換したいテキストまたはHTML/)).toBeInTheDocument();
+        const textarea = screen.getByPlaceholderText(/変換したいテキストまたはHTML/) as HTMLTextAreaElement;
+        const outputTextarea = screen.getByPlaceholderText(/変換されたテキストがここに表示されます/) as HTMLTextAreaElement;
+        expect(textarea.value).toBe("");
+        expect(outputTextarea.value).toBe("");
     });
 
     it("入力テキストを変更すると自動でMarkdownに変換されること", () => {

@@ -25,7 +25,6 @@ interface ModeDefinition {
     from: "html" | "markdown" | "plain" | "entities" | "url";
     to: "html" | "markdown" | "plain" | "entities" | "url";
     description: string;
-    sample: string;
     reverseMode?: ConversionMode;
 }
 
@@ -36,22 +35,6 @@ const CONVERSION_MODES: ModeDefinition[] = [
         from: "html",
         to: "markdown",
         description: "HTMLタグを見出し、太字、リンク、テーブルなどのMarkdown記法に変換します。",
-        sample: `<h1>見出し1</h1>
-<p>これは <strong>太字</strong> と <em>斜体</em>、および <a href="https://example.com">リンク</a> のサンプルです。</p>
-<ul>
-  <li>リスト項目 A</li>
-  <li>リスト項目 B</li>
-</ul>
-<pre><code class="language-javascript">console.log("Hello, World!");</code></pre>
-<table>
-  <thead>
-    <tr><th>商品</th><th>価格</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>りんご</td><td>150円</td></tr>
-    <tr><td>みかん</td><td>100円</td></tr>
-  </tbody>
-</table>`,
         reverseMode: "markdown-to-html",
     },
     {
@@ -60,21 +43,6 @@ const CONVERSION_MODES: ModeDefinition[] = [
         from: "markdown",
         to: "html",
         description: "Markdown記法のテキストをクリーンなHTMLコードに変換します。",
-        sample: `# タイトル見出し
-
-これは **太字** と *斜体*、そして [リンク](https://example.com) です。
-
-- 箇条書きアイテム1
-- 箇条書きアイテム2
-
-\`\`\`typescript
-const greet = (name: string): string => \`Hello, \${name}!\`;
-\`\`\`
-
-| 名前 | 役割 |
-| --- | --- |
-| 太郎 | エンジニア |
-| 花子 | デザイナー |`,
         reverseMode: "html-to-markdown",
     },
     {
@@ -83,13 +51,6 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
         from: "html",
         to: "plain",
         description: "HTMLタグやスタイル、スクリプトを除去し、純粋な可読テキストを抽出します。",
-        sample: `<h2>記事のタイトル</h2>
-<p>ウェブサイトからコピーしたテキストには、余分なHTMLタグや書式が含まれることがあります。</p>
-<ul>
-  <li>不要なタグを一括削除</li>
-  <li>改行や箇条書きを綺麗に整理</li>
-  <li>メルマガやメモ帳への貼り付けに最適</li>
-</ul>`,
         reverseMode: "plain-to-html",
     },
     {
@@ -98,13 +59,6 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
         from: "plain",
         to: "html",
         description: "通常のテキストをHTML段落（<p>）や改行（<br>）に変換し、特殊文字を安全にエスケープします。",
-        sample: `日常で役立つWebツール集
-
-入力したテキストは自動でHTMLタグに変換されます。
-空行を入れると段落に分割されます。
-
-参考URL: https://example.com
-特殊文字: 5 < 10 && 20 > 15`,
         reverseMode: "html-to-plain",
     },
     {
@@ -113,13 +67,6 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
         from: "markdown",
         to: "plain",
         description: "Markdownの見出し記号やリンク構文などを取り除き、プレーンな文章にします。",
-        sample: `# 重要なお知らせ
-
-**日時:** 2026年11月1日 10:00〜
-**場所:** [公式オンライン会場](https://example.com)
-
-- 事前登録が必要です
-- 参加費は無料です`,
         reverseMode: "plain-to-markdown",
     },
     {
@@ -128,10 +75,6 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
         from: "plain",
         to: "markdown",
         description: "プレーンテキストをMarkdown形式のドキュメントとして整えます。",
-        sample: `第1章 はじめに
-
-このドキュメントはプレーンテキストからMarkdownに変換するサンプルです。
-改行や段落の構造を保持します。`,
         reverseMode: "markdown-to-plain",
     },
     {
@@ -140,8 +83,6 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
         from: "plain",
         to: "entities",
         description: "<, >, &, \", ' などの特殊文字を &lt;, &gt;, &amp; などのHTMLエンティティに変換します。",
-        sample: `<script>alert("XSS & danger!");</script>
-<div class='box' id="main">こんにちは & さようなら</div>`,
         reverseMode: "html-entities-decode",
     },
     {
@@ -150,7 +91,6 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
         from: "entities",
         to: "plain",
         description: "&amp;, &lt;, &gt;, &quot;, &#39; などのエンティティを元の文字に戻します。",
-        sample: `&lt;div class=&quot;sample&quot;&gt;5 &amp;gt; 3 &amp;&amp; 2 &amp;lt; 4&#39;s result&lt;/div&gt;`,
         reverseMode: "html-entities-encode",
     },
     {
@@ -159,7 +99,6 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
         from: "plain",
         to: "url",
         description: "文字列をURLで安全に送信できるパーセントエンコード形式に変換します。",
-        sample: `https://example.com/search?q=ウェブ ツール & 変換=1`,
         reverseMode: "url-decode",
     },
     {
@@ -168,7 +107,6 @@ const greet = (name: string): string => \`Hello, \${name}!\`;
         from: "url",
         to: "plain",
         description: "パーセントエンコードされたURL文字列を人間が読める通常の文字列に復元します。",
-        sample: `https%3A%2F%2Fexample.com%2Fsearch%3Fq%3D%E3%82%A6%E3%82%A7%E3%83%96%20%E3%83%84%E3%83%BC%E3%83%AB%20%26%20%E5%A4%89%E6%8F%9B%3D1`,
         reverseMode: "url-encode",
     },
 ];
@@ -263,9 +201,6 @@ export default function TextConverter() {
         });
         document.head.appendChild(script);
 
-        // 初期状態でHTML→Markdownのサンプルを設定
-        setInputText(CONVERSION_MODES[0].sample);
-
         if (containerRef) {
             playPageEntrance(containerRef, ".card");
         }
@@ -288,11 +223,6 @@ export default function TextConverter() {
             const curOut = outputText();
             setInputText(curOut);
         }
-    };
-
-    // サンプルテキスト読み込み
-    const handleLoadSample = () => {
-        setInputText(currentModeDef().sample);
     };
 
     // クリア
@@ -489,15 +419,6 @@ export default function TextConverter() {
                             </div>
 
                             <div class="flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-xs text-base-content/70 hover:text-primary"
-                                    onClick={handleLoadSample}
-                                    title="サンプルコードを読み込む"
-                                    aria-label="サンプルコードを読み込む"
-                                >
-                                    サンプル
-                                </button>
                                 <button
                                     type="button"
                                     class="btn btn-ghost btn-xs text-base-content/70 hover:text-primary"
