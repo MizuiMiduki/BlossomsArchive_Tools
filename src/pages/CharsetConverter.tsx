@@ -334,74 +334,86 @@ export default function CharsetConverter() {
             </div>
 
             {/* ナビゲーションタブ */}
-            <div class="flex justify-center border-b border-base-300 overflow-x-auto">
-                <div class="tabs tabs-boxed bg-base-200 p-1 flex-nowrap">
-                    <button
-                        type="button"
-                        class={`tab whitespace-nowrap transition-all ${
-                            activeTab() === "text"
-                                ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                : ""
-                        }`}
-                        onClick={() => setActiveTab("text")}
-                    >
-                        テキスト文字コード変換
-                    </button>
-                    <button
-                        type="button"
-                        class={`tab whitespace-nowrap transition-all ${
-                            activeTab() === "code-formats"
-                                ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                : ""
-                        }`}
-                        onClick={() => setActiveTab("code-formats")}
-                    >
-                        進数・コード表記変換
-                    </button>
-                    <button
-                        type="button"
-                        class={`tab whitespace-nowrap transition-all ${
-                            activeTab() === "inspector"
-                                ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                : ""
-                        }`}
-                        onClick={() => setActiveTab("inspector")}
-                    >
-                        1文字コード解析
-                    </button>
-                    <button
-                        type="button"
-                        class={`tab whitespace-nowrap transition-all ${
-                            activeTab() === "file"
-                                ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                : ""
-                        }`}
-                        onClick={() => setActiveTab("file")}
-                    >
-                        ファイル変換
-                    </button>
-                    <button
-                        type="button"
-                        class={`tab whitespace-nowrap transition-all ${
-                            activeTab() === "normalize"
-                                ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                : ""
-                        }`}
-                        onClick={() => setActiveTab("normalize")}
-                    >
-                        Unicode正規化 (NFC/NFD)
-                    </button>
-                    <button
-                        type="button"
-                        class={`tab whitespace-nowrap transition-all ${
-                            activeTab() === "mojibake"
-                                ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                : ""
-                        }`}
-                        onClick={() => setActiveTab("mojibake")}
-                    >
-                        文字化け修復
-                    </button>
+            <div class="w-full overflow-x-auto border-b border-base-300 pb-2 [-webkit-overflow-scrolling:touch]">
+                <div class="flex justify-start md:justify-center items-center min-w-max px-2">
+                    <div class="tabs tabs-boxed bg-base-200 p-1 flex-nowrap shadow-sm">
+                        <button
+                            type="button"
+                            aria-label="テキスト文字コード変換"
+                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                                activeTab() === "text"
+                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
+                                    : ""
+                            }`}
+                            onClick={() => setActiveTab("text")}
+                        >
+                            <span class="md:hidden">文字コード変換</span>
+                            <span class="hidden md:inline">テキスト文字コード変換</span>
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="進数・コード表記変換"
+                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                                activeTab() === "code-formats"
+                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
+                                    : ""
+                            }`}
+                            onClick={() => setActiveTab("code-formats")}
+                        >
+                            <span class="md:hidden">進数・コード表記</span>
+                            <span class="hidden md:inline">進数・コード表記変換</span>
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="1文字コード解析"
+                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                                activeTab() === "inspector"
+                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
+                                    : ""
+                            }`}
+                            onClick={() => setActiveTab("inspector")}
+                        >
+                            <span class="md:hidden">1文字解析</span>
+                            <span class="hidden md:inline">1文字コード解析</span>
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="ファイル変換"
+                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                                activeTab() === "file"
+                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
+                                    : ""
+                            }`}
+                            onClick={() => setActiveTab("file")}
+                        >
+                            ファイル変換
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Unicode正規化 (NFC/NFD)"
+                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                                activeTab() === "normalize"
+                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
+                                    : ""
+                            }`}
+                            onClick={() => setActiveTab("normalize")}
+                        >
+                            <span class="md:hidden">Unicode正規化</span>
+                            <span class="hidden md:inline">Unicode正規化 (NFC/NFD)</span>
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="文字化け修復"
+                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                                activeTab() === "mojibake"
+                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
+                                    : ""
+                            }`}
+                            onClick={() => setActiveTab("mojibake")}
+                        >
+                            文字化け修復
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -544,7 +556,7 @@ export default function CharsetConverter() {
 
                         <div class="card bg-base-100 border border-base-300 shadow-sm flex flex-col">
                             <div class="card-body p-4 md:p-6 flex-1 flex flex-col space-y-3">
-                                <div class="flex items-center justify-between">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
                                     <h2 class="card-title text-base font-bold flex items-center gap-2">
                                         <span>変換結果プレビュー</span>
                                         <span class="badge badge-primary badge-sm">
@@ -707,9 +719,9 @@ export default function CharsetConverter() {
                         {/* 16進数 (HEX) */}
                         <div class="card bg-base-100 border border-base-300 shadow-sm">
                             <div class="card-body p-4 space-y-2">
-                                <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
                                     <span class="font-bold text-sm text-primary">16進数バイト列 (HEX)</span>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-1.5">
                                         <select
                                             class="select select-bordered select-xs"
                                             value={cfHexFormat()}
@@ -717,8 +729,8 @@ export default function CharsetConverter() {
                                                 setCfHexFormat(e.currentTarget.value as any)
                                             }
                                         >
-                                            <option value="space">スペース区切り (E3 81 82)</option>
-                                            <option value="comma">カンマ区切り (E3, 81)</option>
+                                            <option value="space">スペース (E3 81 82)</option>
+                                            <option value="comma">カンマ (E3, 81)</option>
                                             <option value="0x-comma">0xカンマ (0xE3, 0x81)</option>
                                             <option value="percent">パーセント (%E3%81%82)</option>
                                         </select>
@@ -759,9 +771,9 @@ export default function CharsetConverter() {
                         {/* 10進数 (DEC) */}
                         <div class="card bg-base-100 border border-base-300 shadow-sm">
                             <div class="card-body p-4 space-y-2">
-                                <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
                                     <span class="font-bold text-sm text-primary">10進数バイト列 (DEC)</span>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-1.5">
                                         <button
                                             type="button"
                                             class="btn btn-outline btn-xs"
@@ -799,9 +811,9 @@ export default function CharsetConverter() {
                         {/* 2進数 (BIN) */}
                         <div class="card bg-base-100 border border-base-300 shadow-sm">
                             <div class="card-body p-4 space-y-2">
-                                <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
                                     <span class="font-bold text-sm text-primary">2進数ビット列 (BIN)</span>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-1.5">
                                         <button
                                             type="button"
                                             class="btn btn-outline btn-xs"
@@ -839,9 +851,9 @@ export default function CharsetConverter() {
                         {/* Unicodeコードポイント */}
                         <div class="card bg-base-100 border border-base-300 shadow-sm">
                             <div class="card-body p-4 space-y-2">
-                                <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
                                     <span class="font-bold text-sm text-primary">Unicode表記</span>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-1.5">
                                         <select
                                             class="select select-bordered select-xs"
                                             value={cfUnicodeFormat()}
@@ -849,9 +861,9 @@ export default function CharsetConverter() {
                                                 setCfUnicodeFormat(e.currentTarget.value as any)
                                             }
                                         >
-                                            <option value="u-plus">U+XXXX 形式</option>
-                                            <option value="backslash-u">\uXXXX 形式</option>
-                                            <option value="backslash-u-bracket">\u&#123;XXXX&#125; 形式</option>
+                                            <option value="u-plus">U+XXXX</option>
+                                            <option value="backslash-u">\uXXXX</option>
+                                            <option value="backslash-u-bracket">\u&#123;XXXX&#125;</option>
                                         </select>
                                         <button
                                             type="button"
@@ -889,9 +901,9 @@ export default function CharsetConverter() {
                         {/* HTML数値文字参照 (NCR) */}
                         <div class="card bg-base-100 border border-base-300 shadow-sm">
                             <div class="card-body p-4 space-y-2">
-                                <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
                                     <span class="font-bold text-sm text-primary">HTML数値文字参照 (NCR)</span>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-1.5">
                                         <select
                                             class="select select-bordered select-xs"
                                             value={cfHtmlFormat()}
@@ -899,8 +911,8 @@ export default function CharsetConverter() {
                                                 setCfHtmlFormat(e.currentTarget.value as any)
                                             }
                                         >
-                                            <option value="dec">10進数 (&#12354;)</option>
-                                            <option value="hex">16進数 (&#x3042;)</option>
+                                            <option value="dec">10進 (&#12354;)</option>
+                                            <option value="hex">16進 (&#x3042;)</option>
                                         </select>
                                         <button
                                             type="button"
@@ -938,9 +950,9 @@ export default function CharsetConverter() {
                         {/* Base64 */}
                         <div class="card bg-base-100 border border-base-300 shadow-sm">
                             <div class="card-body p-4 space-y-2">
-                                <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
                                     <span class="font-bold text-sm text-primary">Base64</span>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-1.5">
                                         <button
                                             type="button"
                                             class="btn btn-outline btn-xs"
@@ -982,11 +994,11 @@ export default function CharsetConverter() {
                         {/* URLエンコード */}
                         <div class="card bg-base-100 border border-base-300 shadow-sm md:col-span-2">
                             <div class="card-body p-4 space-y-2">
-                                <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
                                     <span class="font-bold text-sm text-primary">
                                         URLパーセントエンコード ({cfEncoding()})
                                     </span>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-1.5">
                                         <button
                                             type="button"
                                             class="btn btn-outline btn-xs"
