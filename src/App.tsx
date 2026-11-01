@@ -8,6 +8,7 @@ import QrGenerator from "./pages/QrGenerator";
 import PasswordGenerator from "./pages/PasswordGenerator";
 import Lottery from "./pages/Lottery";
 import ImageConverter from "./pages/ImageConverter";
+import VideoCompressor from "./pages/VideoCompressor";
 import AccessInfo from "./pages/AccessInfo";
 import OgpChecker from "./pages/OgpChecker";
 import ExifFrameGenerator from "./pages/ExifFrameGenerator";
@@ -34,6 +35,10 @@ function App() {
                 />
                 <Route path="/lottery" component={Lottery} />
                 <Route path="/image_conversion" component={ImageConverter} />
+                <Route
+                    path="/video-compressor"
+                    component={VideoCompressor}
+                />
                 <Route
                     path="/charset-converter"
                     component={CharsetConverter}

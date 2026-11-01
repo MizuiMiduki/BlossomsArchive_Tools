@@ -43,6 +43,12 @@ export const routes: Route[] = [
         description: "画像ファイルを別の形式に変換できる無料ツールです。",
     },
     {
+        path: "/video-compressor",
+        title: "動画圧縮",
+        description:
+            "動画ファイルの解像度やビットレートを調整してブラウザ上で圧縮・軽量化できる無料ツールです。",
+    },
+    {
         path: "/charset-converter",
         title: "文字コード変換",
         description:
