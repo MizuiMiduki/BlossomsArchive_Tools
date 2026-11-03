@@ -10,6 +10,7 @@ import {
     calculateReductionPercent,
     calculateTargetDimensions,
     compressVideo,
+    createSafeObjectUrl,
     estimateCompressedSize,
     extractVideoMetadata,
     formatBytes,
@@ -142,11 +143,14 @@ export default function VideoCompressor() {
         setProgressPercent(0);
 
         try {
-            const meta = await extractVideoMetadata(file);
             setSelectedFile(file);
+            const currentFile = selectedFile();
+            if (!currentFile) return;
+            const meta = await extractVideoMetadata(currentFile);
             setMetadata(meta);
-            setPreviewUrl(URL.createObjectURL(file));
+            setPreviewUrl(createSafeObjectUrl(currentFile));
         } catch (err) {
+            setSelectedFile(null);
             setErrorMessage(err instanceof Error ? err.message : "動画の読み込みに失敗しました。");
         }
     };
@@ -210,7 +214,7 @@ export default function VideoCompressor() {
             });
 
             setCompressedBlob(blob);
-            setCompressedUrl(URL.createObjectURL(blob));
+            setCompressedUrl(createSafeObjectUrl(blob));
         } catch (err) {
             if ((err as Error)?.name !== "AbortError" && !abortController.signal.aborted) {
                 setErrorMessage(err instanceof Error ? err.message : "圧縮処理中にエラーが発生しました。");

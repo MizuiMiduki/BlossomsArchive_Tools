@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
     calculateReductionPercent,
     calculateTargetDimensions,
+    createSafeObjectUrl,
     estimateCompressedSize,
     formatBytes,
     formatDuration,
@@ -115,6 +116,22 @@ describe("videoCompressor utilities", () => {
             expect(codecs.length).toBeGreaterThan(0);
             expect(codecs[0]).toHaveProperty("mimeType");
             expect(codecs[0]).toHaveProperty("extension");
+        });
+    });
+
+    describe("createSafeObjectUrl", () => {
+        it("正常なblob:スキームのURLを返し、HTMLメタ文字を除去すること", () => {
+            globalThis.URL.createObjectURL = vi.fn().mockReturnValue("blob:http://localhost/1234-5678");
+            const blob = new Blob(["test"], { type: "video/mp4" });
+            expect(createSafeObjectUrl(blob)).toBe("blob:http://localhost/1234-5678");
+        });
+
+        it("blob:以外の不正なスキームの場合は破棄して例外をスローすること", () => {
+            globalThis.URL.createObjectURL = vi.fn().mockReturnValue("javascript:alert(1)");
+            globalThis.URL.revokeObjectURL = vi.fn();
+            const blob = new Blob(["test"], { type: "video/mp4" });
+            expect(() => createSafeObjectUrl(blob)).toThrow("不正なオブジェクトURLが検出されました。");
+            expect(globalThis.URL.revokeObjectURL).toHaveBeenCalledWith("javascript:alert(1)");
         });
     });
 });

@@ -14,12 +14,8 @@ export function escapeHtml(str: string): string {
     return str.replace(/[&<>"']/g, (char) => map[char] || char);
 }
 
-// HTML特殊文字のデコード
+// HTML特殊文字のデコード（DOMParserを使用せず文字列置換のみで安全にデコード）
 export function unescapeHtml(str: string): string {
-    if (typeof document !== "undefined") {
-        const doc = new DOMParser().parseFromString(str, "text/html");
-        return doc.body.textContent || "";
-    }
     const map: Record<string, string> = {
         "&amp;": "&",
         "&lt;": "<",
@@ -29,7 +25,141 @@ export function unescapeHtml(str: string): string {
         "&apos;": "'",
         "&nbsp;": " ",
     };
-    return str.replace(/&(?:amp|lt|gt|quot|#39|apos|nbsp);/g, (match) => map[match] || match);
+    return str
+        .replace(/&#(\d+);/g, (match, dec) => {
+            const code = Number(dec);
+            return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+        })
+        .replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+            const code = parseInt(hex, 16);
+            return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+        })
+        .replace(/&(?:amp|lt|gt|quot|#39|apos|nbsp);/gi, (match) => {
+            return map[match.toLowerCase()] ?? match;
+        });
+}
+
+export interface HtmlTextNode {
+    type: "text";
+    content: string;
+}
+
+export interface HtmlElementNode {
+    type: "element";
+    tag: string;
+    attrs: Record<string, string>;
+    children: HtmlNode[];
+}
+
+export type HtmlNode = HtmlTextNode | HtmlElementNode;
+
+const VOID_TAGS = new Set([
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+]);
+
+function extractHtmlAttributes(attrString: string): Record<string, string> {
+    const attrs: Record<string, string> = {};
+    const attrRegex = /([a-zA-Z0-9_:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+    let match: RegExpExecArray | null;
+    while ((match = attrRegex.exec(attrString)) !== null) {
+        const name = match[1].toLowerCase();
+        const rawVal = match[2] ?? match[3] ?? match[4] ?? "";
+        attrs[name] = unescapeHtml(rawVal);
+    }
+    return attrs;
+}
+
+/**
+ * DOMParserを使用せず安全にHTML文字列を軽量ASTへ変換する
+ */
+export function parseHtmlToAst(html: string): HtmlElementNode {
+    const root: HtmlElementNode = {
+        type: "element",
+        tag: "root",
+        attrs: {},
+        children: [],
+    };
+
+    const cleaned = html
+        .replace(/<!--[\s\S]*?-->/g, "")
+        .replace(/<(script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
+
+    const stack: HtmlElementNode[] = [root];
+    const tokenRegex = /<(\/?)([a-zA-Z][a-zA-Z0-9-]*)([^>]*?)(\/?)>|([^<]+)/g;
+    let match: RegExpExecArray | null;
+
+    while ((match = tokenRegex.exec(cleaned)) !== null) {
+        const textPart = match[5];
+        if (textPart !== undefined) {
+            const current = stack[stack.length - 1];
+            current.children.push({
+                type: "text",
+                content: unescapeHtml(textPart),
+            });
+            continue;
+        }
+
+        const isClosing = Boolean(match[1]);
+        const tag = match[2].toLowerCase();
+        const attrPart = match[3] || "";
+        const isSelfClosing = Boolean(match[4]) || VOID_TAGS.has(tag);
+
+        if (isClosing) {
+            for (let i = stack.length - 1; i >= 1; i--) {
+                if (stack[i].tag === tag) {
+                    stack.length = i;
+                    break;
+                }
+            }
+        } else {
+            const element: HtmlElementNode = {
+                type: "element",
+                tag,
+                attrs: extractHtmlAttributes(attrPart),
+                children: [],
+            };
+            const current = stack[stack.length - 1];
+            current.children.push(element);
+            if (!isSelfClosing) {
+                stack.push(element);
+            }
+        }
+    }
+
+    return root;
+}
+
+function getAstTextContent(node: HtmlNode): string {
+    if (node.type === "text") {
+        return node.content;
+    }
+    return node.children.map(getAstTextContent).join("");
+}
+
+function findAstElements(node: HtmlElementNode, targetTags: Set<string>): HtmlElementNode[] {
+    const results: HtmlElementNode[] = [];
+    for (const child of node.children) {
+        if (child.type === "element") {
+            if (targetTags.has(child.tag)) {
+                results.push(child);
+            }
+            results.push(...findAstElements(child, targetTags));
+        }
+    }
+    return results;
 }
 
 // すべての非ASCII文字または特殊文字を数値文字参照（数値エンティティ）に変換
@@ -59,42 +189,22 @@ export function htmlToMarkdown(html: string, options: HtmlToMarkdownOptions = {}
     if (!html.trim()) return "";
 
     const bullet = options.bulletListMarker || "-";
+    const root = parseHtmlToAst(html);
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-
-    // 不要タグの削除
-    const removals = doc.querySelectorAll("script, style, noscript, svg");
-    removals.forEach((el) => el.remove());
-
-    function walk(node: Node, depth: number = 0): string {
-        if (node.nodeType === Node.TEXT_NODE) {
-            let text = node.textContent || "";
-            // pre要素内でない場合は連続空白を1つに圧縮
-            let parent = node.parentElement;
-            let inPre = false;
-            while (parent) {
-                if (parent.tagName.toLowerCase() === "pre") {
-                    inPre = true;
-                    break;
-                }
-                parent = parent.parentElement;
-            }
+    function walk(node: HtmlNode, depth: number = 0, inPre: boolean = false, parentTag: string = ""): string {
+        if (node.type === "text") {
+            let text = node.content;
             if (!inPre) {
                 text = text.replace(/[\t\r\n]+/g, " ");
             }
             return text;
         }
 
-        if (node.nodeType !== Node.ELEMENT_NODE) {
-            return "";
-        }
+        const tag = node.tag;
+        const nextInPre = inPre || tag === "pre";
 
-        const el = node as HTMLElement;
-        const tag = el.tagName.toLowerCase();
-
-        const childMarkdown = Array.from(el.childNodes)
-            .map((child) => walk(child, depth))
+        const childMarkdown = node.children
+            .map((child) => walk(child, depth, nextInPre, tag))
             .join("");
 
         switch (tag) {
@@ -123,18 +233,18 @@ export function htmlToMarkdown(html: string, options: HtmlToMarkdownOptions = {}
             case "strike":
                 return childMarkdown.trim() ? `~~${childMarkdown.trim()}~~` : "";
             case "code": {
-                if (el.parentElement?.tagName.toLowerCase() === "pre") {
+                if (parentTag === "pre") {
                     return childMarkdown;
                 }
-                const codeText = el.textContent || "";
+                const codeText = getAstTextContent(node);
                 return `\`${codeText}\``;
             }
             case "pre": {
-                const codeEl = el.querySelector("code");
-                const codeContent = codeEl ? codeEl.textContent || "" : el.textContent || "";
+                const codeEl = findAstElements(node, new Set(["code"]))[0];
+                const codeContent = codeEl ? getAstTextContent(codeEl) : getAstTextContent(node);
                 let lang = "";
                 if (codeEl) {
-                    const classList = codeEl.className || "";
+                    const classList = codeEl.attrs["class"] || "";
                     const langMatch = classList.match(/(?:language-|lang-)(\w+)/);
                     if (langMatch) lang = langMatch[1];
                 }
@@ -148,14 +258,14 @@ export function htmlToMarkdown(html: string, options: HtmlToMarkdownOptions = {}
                 return `\n\n${lines.join("\n")}\n\n`;
             }
             case "a": {
-                const href = el.getAttribute("href") || "";
+                const href = node.attrs["href"] || "";
                 const linkText = childMarkdown.trim() || href;
                 if (!href) return linkText;
                 return `[${linkText}](${href})`;
             }
             case "img": {
-                const src = el.getAttribute("src") || "";
-                const alt = el.getAttribute("alt") || "";
+                const src = node.attrs["src"] || "";
+                const alt = node.attrs["alt"] || "";
                 return `![${alt}](${src})`;
             }
             case "hr":
@@ -167,10 +277,10 @@ export function htmlToMarkdown(html: string, options: HtmlToMarkdownOptions = {}
                 const isOrdered = tag === "ol";
                 let index = 1;
                 const items: string[] = [];
-                for (const child of Array.from(el.children)) {
-                    if (child.tagName.toLowerCase() === "li") {
-                        const itemText = Array.from(child.childNodes)
-                            .map((c) => walk(c, depth + 1))
+                for (const child of node.children) {
+                    if (child.type === "element" && child.tag === "li") {
+                        const itemText = child.children
+                            .map((c) => walk(c, depth + 1, nextInPre, "li"))
                             .join("")
                             .trim();
                         const prefix = isOrdered ? `${index++}. ` : `${bullet} `;
@@ -183,18 +293,20 @@ export function htmlToMarkdown(html: string, options: HtmlToMarkdownOptions = {}
                 return childMarkdown;
             case "table": {
                 const rows: string[][] = [];
-                el.querySelectorAll("tr").forEach((tr) => {
+                const trElements = findAstElements(node, new Set(["tr"]));
+                for (const tr of trElements) {
                     const row: string[] = [];
-                    tr.querySelectorAll("th, td").forEach((cell) => {
+                    const cells = findAstElements(tr, new Set(["th", "td"]));
+                    for (const cell of cells) {
                         row.push(
-                            (cell.textContent || "")
+                            getAstTextContent(cell)
                                 .trim()
                                 .replace(/\\/g, "\\\\")
                                 .replace(/\|/g, "\\|"),
                         );
-                    });
+                    }
                     if (row.length > 0) rows.push(row);
-                });
+                }
 
                 if (rows.length === 0) return "";
 
@@ -218,7 +330,7 @@ export function htmlToMarkdown(html: string, options: HtmlToMarkdownOptions = {}
         }
     }
 
-    let result = walk(doc.body);
+    let result = walk(root);
     // 連続する空行を整える（最大2行）
     result = result.replace(/\n{3,}/g, "\n\n").trim();
     return result;
@@ -474,34 +586,24 @@ export interface HtmlToPlainTextOptions {
 export function htmlToPlainText(html: string, options: HtmlToPlainTextOptions = {}): string {
     if (!html.trim()) return "";
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-
-    // 不要タグの削除
-    const removals = doc.querySelectorAll("script, style, noscript, svg");
-    removals.forEach((el) => el.remove());
-
+    const root = parseHtmlToAst(html);
     const bullet = options.preserveListBullets ?? true ? "• " : "";
 
-    function walk(node: Node): string {
-        if (node.nodeType === Node.TEXT_NODE) {
-            return node.textContent || "";
-        }
-        if (node.nodeType !== Node.ELEMENT_NODE) {
-            return "";
+    function walk(node: HtmlNode): string {
+        if (node.type === "text") {
+            return node.content;
         }
 
-        const el = node as HTMLElement;
-        const tag = el.tagName.toLowerCase();
+        const tag = node.tag;
 
         if (tag === "br") return "\n";
 
-        const childText = Array.from(el.childNodes)
+        const childText = node.children
             .map((c) => walk(c))
             .join("");
 
         if (tag === "a" && options.includeLinks) {
-            const href = el.getAttribute("href");
+            const href = node.attrs["href"];
             if (href && href !== childText.trim()) {
                 return `${childText} (${href})`;
             }
@@ -523,7 +625,7 @@ export function htmlToPlainText(html: string, options: HtmlToPlainTextOptions = 
         return childText;
     }
 
-    let result = walk(doc.body);
+    let result = walk(root);
     // 連続する空行を最大2行に圧縮し、余分なスペースを整える
     result = result
         .split("\n")

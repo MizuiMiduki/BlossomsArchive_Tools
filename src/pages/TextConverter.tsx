@@ -1,4 +1,4 @@
-import { createSignal, createMemo, createEffect, onMount, onCleanup, Show, For } from "solid-js";
+import { createSignal, createMemo, createEffect, onMount, onCleanup, Show, For, JSX } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import {
@@ -17,7 +17,95 @@ import {
     markdownToPlainText,
     escapeHtml,
     unescapeHtml,
+    parseHtmlToAst,
+    HtmlNode,
 } from "../utils/textConverter";
+
+function sanitizeSafeUrl(url: string | undefined): string | undefined {
+    if (!url) return undefined;
+    const trimmed = url.trim().replace(/[<>"'&\s\\]/g, "");
+    if (/^https?:\/\//i.test(trimmed)) {
+        return trimmed;
+    }
+    return undefined;
+}
+
+function renderSafeHtmlNode(node: HtmlNode): JSX.Element {
+    if (node.type === "text") {
+        return node.content;
+    }
+    const children = () => <For each={node.children}>{(child) => renderSafeHtmlNode(child)}</For>;
+    switch (node.tag) {
+        case "h1":
+            return <h1>{children()}</h1>;
+        case "h2":
+            return <h2>{children()}</h2>;
+        case "h3":
+            return <h3>{children()}</h3>;
+        case "h4":
+            return <h4>{children()}</h4>;
+        case "h5":
+            return <h5>{children()}</h5>;
+        case "h6":
+            return <h6>{children()}</h6>;
+        case "p":
+            return <p>{children()}</p>;
+        case "strong":
+        case "b":
+            return <strong>{children()}</strong>;
+        case "em":
+        case "i":
+            return <em>{children()}</em>;
+        case "del":
+        case "s":
+        case "strike":
+            return <del>{children()}</del>;
+        case "code":
+            return <code class={node.attrs["class"]}>{children()}</code>;
+        case "pre":
+            return <pre class={node.attrs["class"]}>{children()}</pre>;
+        case "blockquote":
+            return <blockquote>{children()}</blockquote>;
+        case "ul":
+            return <ul>{children()}</ul>;
+        case "ol":
+            return <ol>{children()}</ol>;
+        case "li":
+            return <li>{children()}</li>;
+        case "table":
+            return <table>{children()}</table>;
+        case "thead":
+            return <thead>{children()}</thead>;
+        case "tbody":
+            return <tbody>{children()}</tbody>;
+        case "tr":
+            return <tr>{children()}</tr>;
+        case "th":
+            return <th>{children()}</th>;
+        case "td":
+            return <td>{children()}</td>;
+        case "hr":
+            return <hr />;
+        case "br":
+            return <br />;
+        case "a": {
+            const safeHref = sanitizeSafeUrl(node.attrs["href"]);
+            return safeHref ? (
+                <a href={safeHref} target="_blank" rel="noopener noreferrer">
+                    {children()}
+                </a>
+            ) : (
+                <span>{children()}</span>
+            );
+        }
+        case "img": {
+            const safeSrc = sanitizeSafeUrl(node.attrs["src"]);
+            return safeSrc ? <img src={safeSrc} alt={node.attrs["alt"] || ""} /> : null;
+        }
+        default:
+            return <span>{children()}</span>;
+    }
+}
 
 interface ModeDefinition {
     id: ConversionMode;
@@ -592,10 +680,11 @@ export default function TextConverter() {
                             <Show
                                 when={activeTab() === "code"}
                                 fallback={
-                                    <div
-                                        class="w-full flex-1 p-4 bg-base-200/50 rounded-lg border border-base-300 overflow-y-auto h-80 lg:h-96 prose max-w-none text-xs sm:text-sm text-base-content"
-                                        innerHTML={previewHtml()}
-                                    />
+                                    <div class="w-full flex-1 p-4 bg-base-200/50 rounded-lg border border-base-300 overflow-y-auto h-80 lg:h-96 prose max-w-none text-xs sm:text-sm text-base-content">
+                                        <For each={parseHtmlToAst(previewHtml()).children}>
+                                            {(node) => renderSafeHtmlNode(node)}
+                                        </For>
+                                    </div>
                                 }
                             >
                                 <textarea

@@ -193,13 +193,32 @@ export function getSupportedVideoCodecs(): SupportedCodec[] {
 }
 
 /**
+ * BlobまたはFileから安全なObject URLを生成し、DOMベースのXSS（不正スキーム注入）を防止する
+ */
+export function createSafeObjectUrl(source: Blob): string {
+    const rawUrl = URL.createObjectURL(source);
+    const sanitized = rawUrl.replace(/[<>"'&\s\\]/g, "");
+    if (!/^blob:/i.test(sanitized)) {
+        URL.revokeObjectURL(rawUrl);
+        throw new Error("不正なオブジェクトURLが検出されました。");
+    }
+    return sanitized;
+}
+
+/**
  * 動画ファイルからメタデータを抽出
  */
 export function extractVideoMetadata(file: File): Promise<VideoMetadata> {
     return new Promise((resolve, reject) => {
         const video = document.createElement("video");
         video.preload = "metadata";
-        const objectUrl = URL.createObjectURL(file);
+        let objectUrl = "";
+        try {
+            objectUrl = createSafeObjectUrl(file);
+        } catch (err) {
+            reject(err instanceof Error ? err : new Error("動画URLの生成に失敗しました。"));
+            return;
+        }
         video.src = objectUrl;
 
         video.onloadedmetadata = () => {
@@ -264,7 +283,12 @@ export async function compressVideo(options: CompressVideoOptions): Promise<Blob
         }
 
         const video = document.createElement("video");
-        const objectUrl = URL.createObjectURL(file);
+        let objectUrl = "";
+        try {
+            objectUrl = createSafeObjectUrl(file);
+        } catch (err) {
+            return reject(err instanceof Error ? err : new Error("動画URLの生成に失敗しました。"));
+        }
         video.src = objectUrl;
         video.playsInline = true;
         video.muted = false;
