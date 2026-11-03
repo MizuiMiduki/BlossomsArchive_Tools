@@ -75,6 +75,15 @@ describe("textConverter", () => {
             expect(md).not.toContain("alert");
             expect(md).not.toContain("body { color: red; }");
         });
+
+        it("不正構文の終了タグ(</script foo='bar'>)や--!>終端のコメントも安全に除去すること", () => {
+            const html = '<p>安全</p><!-- 秘密コメント --!><SCRIPT>alert(1)</SCRIPT foo="bar"><p>末尾</p>';
+            const md = htmlToMarkdown(html);
+            expect(md).toContain("安全");
+            expect(md).toContain("末尾");
+            expect(md).not.toContain("秘密コメント");
+            expect(md).not.toContain("alert");
+        });
     });
 
     describe("markdownToHtml", () => {

@@ -90,7 +90,7 @@ function extractHtmlAttributes(attrString: string): Record<string, string> {
 }
 
 /**
- * DOMParserや正規表現による文字列削除を使用せず、トークナイザで安全にHTML文字列を軽量ASTへ変換する
+ * DOMParserや正規表現によるタグ判定を使用せず、文字インデックス走査で安全にHTML文字列を軽量ASTへ変換する
  */
 export function parseHtmlToAst(html: string): HtmlElementNode {
     const root: HtmlElementNode = {
@@ -102,34 +102,92 @@ export function parseHtmlToAst(html: string): HtmlElementNode {
 
     const stack: HtmlElementNode[] = [root];
     let ignoredTag: string | null = null;
-    const tokenRegex = /(<!--[\s\S]*?-->)|<(\/?)([a-zA-Z][a-zA-Z0-9-]*)([^>]*?)(\/?)>|([^<]+)/g;
-    let match: RegExpExecArray | null;
+    let pos = 0;
+    const len = html.length;
 
-    while ((match = tokenRegex.exec(html)) !== null) {
-        // コメントトークンはASTに含めずスキップ
-        if (match[1] !== undefined) {
-            continue;
+    const appendText = (rawText: string) => {
+        if (!rawText || ignoredTag !== null) return;
+        const current = stack[stack.length - 1];
+        current.children.push({
+            type: "text",
+            content: unescapeHtml(rawText),
+        });
+    };
+
+    while (pos < len) {
+        const ltIdx = html.indexOf("<", pos);
+        if (ltIdx === -1) {
+            appendText(html.slice(pos));
+            break;
         }
 
-        const textPart = match[6];
-        if (textPart !== undefined) {
-            if (ignoredTag !== null) {
-                continue;
+        if (ltIdx > pos) {
+            appendText(html.slice(pos, ltIdx));
+            pos = ltIdx;
+        }
+
+        // HTMLコメント (<!-- ... --> または <!-- ... --!>) のスキップ
+        if (html.startsWith("<!--", pos)) {
+            let commentEnd = -1;
+            for (let i = pos + 4; i < len; i++) {
+                if (html.startsWith("-->", i)) {
+                    commentEnd = i + 3;
+                    break;
+                }
+                if (html.startsWith("--!>", i)) {
+                    commentEnd = i + 4;
+                    break;
+                }
             }
-            const current = stack[stack.length - 1];
-            current.children.push({
-                type: "text",
-                content: unescapeHtml(textPart),
-            });
+            if (commentEnd === -1) {
+                break;
+            }
+            pos = commentEnd;
             continue;
         }
 
-        const isClosing = Boolean(match[2]);
-        const tag = match[3].toLowerCase();
-        const attrPart = match[4] || "";
-        const isSelfClosing = Boolean(match[5]) || VOID_TAGS.has(tag);
+        const gtIdx = html.indexOf(">", pos + 1);
+        if (gtIdx === -1) {
+            appendText(html.slice(pos));
+            break;
+        }
+
+        const rawInside = html.slice(pos + 1, gtIdx).trim();
+        const fullSlice = html.slice(pos, gtIdx + 1);
+        pos = gtIdx + 1;
+
+        if (!rawInside || rawInside.startsWith("!") || rawInside.startsWith("?")) {
+            continue;
+        }
+
+        const isClosing = rawInside.startsWith("/");
+        const afterSlash = isClosing ? rawInside.slice(1).trim() : rawInside;
+        const hasTrailingSlash = !isClosing && afterSlash.endsWith("/");
+        const cleanBody = hasTrailingSlash ? afterSlash.slice(0, -1).trim() : afterSlash;
+
+        let splitIdx = -1;
+        for (let i = 0; i < cleanBody.length; i++) {
+            const code = cleanBody.charCodeAt(i);
+            if (code === 32 || code === 9 || code === 10 || code === 13 || code === 47) {
+                splitIdx = i;
+                break;
+            }
+        }
+
+        const tag = (splitIdx === -1 ? cleanBody : cleanBody.slice(0, splitIdx)).toLowerCase();
+        const attrPart = splitIdx === -1 ? "" : cleanBody.slice(splitIdx + 1);
+
+        // タグ名が英字で始まらない場合はテキストとして扱う
+        const firstCode = tag.charCodeAt(0);
+        if (!tag || !(firstCode >= 97 && firstCode <= 122)) {
+            appendText(fullSlice);
+            continue;
+        }
+
+        const isSelfClosing = hasTrailingSlash || VOID_TAGS.has(tag);
 
         if (ignoredTag !== null) {
+            // </script foo="bar"> のような属性付き終了タグもすべて認識して閉じる
             if (isClosing && tag === ignoredTag) {
                 ignoredTag = null;
             }
