@@ -14,29 +14,34 @@ export function escapeHtml(str: string): string {
     return str.replace(/[&<>"']/g, (char) => map[char] || char);
 }
 
-// HTML特殊文字のデコード（DOMParserを使用せず文字列置換のみで安全にデコード）
+// HTML特殊文字のデコード（単一パスの文字列置換のみで安全にデコード）
 export function unescapeHtml(str: string): string {
     const map: Record<string, string> = {
-        "&amp;": "&",
-        "&lt;": "<",
-        "&gt;": ">",
-        "&quot;": '"',
-        "&#39;": "'",
-        "&apos;": "'",
-        "&nbsp;": " ",
+        amp: "&",
+        lt: "<",
+        gt: ">",
+        quot: '"',
+        "#39": "'",
+        apos: "'",
+        nbsp: " ",
     };
-    return str
-        .replace(/&#(\d+);/g, (match, dec) => {
-            const code = Number(dec);
-            return Number.isFinite(code) ? String.fromCodePoint(code) : match;
-        })
-        .replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
-            const code = parseInt(hex, 16);
-            return Number.isFinite(code) ? String.fromCodePoint(code) : match;
-        })
-        .replace(/&(?:amp|lt|gt|quot|#39|apos|nbsp);/gi, (match) => {
-            return map[match.toLowerCase()] ?? match;
-        });
+    return str.replace(
+        /&(?:#(\d+)|#x([0-9a-fA-F]+)|(amp|lt|gt|quot|#39|apos|nbsp));/gi,
+        (match, dec, hex, named) => {
+            if (dec !== undefined) {
+                const code = Number(dec);
+                return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+            }
+            if (hex !== undefined) {
+                const code = parseInt(hex, 16);
+                return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+            }
+            if (named !== undefined) {
+                return map[named.toLowerCase()] ?? match;
+            }
+            return match;
+        },
+    );
 }
 
 export interface HtmlTextNode {
@@ -70,6 +75,8 @@ const VOID_TAGS = new Set([
     "wbr",
 ]);
 
+const IGNORED_TAGS = new Set(["script", "style", "noscript", "svg"]);
+
 function extractHtmlAttributes(attrString: string): Record<string, string> {
     const attrs: Record<string, string> = {};
     const attrRegex = /([a-zA-Z0-9_:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
@@ -83,7 +90,7 @@ function extractHtmlAttributes(attrString: string): Record<string, string> {
 }
 
 /**
- * DOMParserを使用せず安全にHTML文字列を軽量ASTへ変換する
+ * DOMParserや正規表現による文字列削除を使用せず、トークナイザで安全にHTML文字列を軽量ASTへ変換する
  */
 export function parseHtmlToAst(html: string): HtmlElementNode {
     const root: HtmlElementNode = {
@@ -93,17 +100,22 @@ export function parseHtmlToAst(html: string): HtmlElementNode {
         children: [],
     };
 
-    const cleaned = html
-        .replace(/<!--[\s\S]*?-->/g, "")
-        .replace(/<(script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
-
     const stack: HtmlElementNode[] = [root];
-    const tokenRegex = /<(\/?)([a-zA-Z][a-zA-Z0-9-]*)([^>]*?)(\/?)>|([^<]+)/g;
+    let ignoredTag: string | null = null;
+    const tokenRegex = /(<!--[\s\S]*?-->)|<(\/?)([a-zA-Z][a-zA-Z0-9-]*)([^>]*?)(\/?)>|([^<]+)/g;
     let match: RegExpExecArray | null;
 
-    while ((match = tokenRegex.exec(cleaned)) !== null) {
-        const textPart = match[5];
+    while ((match = tokenRegex.exec(html)) !== null) {
+        // コメントトークンはASTに含めずスキップ
+        if (match[1] !== undefined) {
+            continue;
+        }
+
+        const textPart = match[6];
         if (textPart !== undefined) {
+            if (ignoredTag !== null) {
+                continue;
+            }
             const current = stack[stack.length - 1];
             current.children.push({
                 type: "text",
@@ -112,10 +124,24 @@ export function parseHtmlToAst(html: string): HtmlElementNode {
             continue;
         }
 
-        const isClosing = Boolean(match[1]);
-        const tag = match[2].toLowerCase();
-        const attrPart = match[3] || "";
-        const isSelfClosing = Boolean(match[4]) || VOID_TAGS.has(tag);
+        const isClosing = Boolean(match[2]);
+        const tag = match[3].toLowerCase();
+        const attrPart = match[4] || "";
+        const isSelfClosing = Boolean(match[5]) || VOID_TAGS.has(tag);
+
+        if (ignoredTag !== null) {
+            if (isClosing && tag === ignoredTag) {
+                ignoredTag = null;
+            }
+            continue;
+        }
+
+        if (!isClosing && IGNORED_TAGS.has(tag)) {
+            if (!isSelfClosing) {
+                ignoredTag = tag;
+            }
+            continue;
+        }
 
         if (isClosing) {
             for (let i = stack.length - 1; i >= 1; i--) {
