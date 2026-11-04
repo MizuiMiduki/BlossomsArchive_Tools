@@ -63,5 +63,14 @@ describe("Layout Component", () => {
         expect(await screen.findByText("サブページ本文")).toBeInTheDocument();
         expect(currentScrollTop).toBe(0);
         expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+
+        // スクロール量0になったあとに遅延して広告要素が差し込まれ、スクロール位置が下に戻された場合を模擬
+        currentScrollTop = 420;
+        const adIns = document.createElement("ins");
+        adIns.className = "adsbygoogle";
+        mainElement.appendChild(adIns);
+        fireEvent.scroll(mainElement);
+
+        expect(currentScrollTop).toBe(0);
     });
 });

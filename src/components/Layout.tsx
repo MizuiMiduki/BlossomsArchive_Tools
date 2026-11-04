@@ -95,7 +95,14 @@ export default function Layout(props: LayoutProps) {
             }
         }
 
+        let userScrolled = false;
+        const markUserScrolled = () => {
+            userScrolled = true;
+            cleanupScrollLock();
+        };
+
         const resetScroll = () => {
+            if (userScrolled) return;
             if (mainRef) {
                 mainRef.scrollTop = 0;
                 mainRef.scrollTo?.({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
@@ -105,15 +112,72 @@ export default function Layout(props: LayoutProps) {
             document.body.scrollTop = 0;
         };
 
-        // 新ページの描画・レイアウト確定やブラウザのスクロール復元で
-        // 位置がずれることがあるため、少し遅らせて複数回リセットする
+        const handleNonUserScroll = () => {
+            if (userScrolled) return;
+            if ((mainRef && mainRef.scrollTop > 0) || window.scrollY > 0) {
+                resetScroll();
+            }
+        };
+
+        let mutationObserver: MutationObserver | undefined;
+        let resizeObserver: ResizeObserver | undefined;
+        const timers: number[] = [];
+
+        const cleanupScrollLock = () => {
+            mutationObserver?.disconnect();
+            resizeObserver?.disconnect();
+            timers.forEach((id) => window.clearTimeout(id));
+            timers.length = 0;
+            mainRef?.removeEventListener("scroll", handleNonUserScroll);
+            window.removeEventListener("scroll", handleNonUserScroll);
+            window.removeEventListener("wheel", markUserScrolled);
+            window.removeEventListener("touchmove", markUserScrolled);
+            window.removeEventListener("pointerdown", markUserScrolled);
+            window.removeEventListener("keydown", markUserScrolled);
+        };
+
+        window.addEventListener("wheel", markUserScrolled, { passive: true });
+        window.addEventListener("touchmove", markUserScrolled, { passive: true });
+        window.addEventListener("pointerdown", markUserScrolled, { passive: true });
+        window.addEventListener("keydown", markUserScrolled, { passive: true });
+        mainRef?.addEventListener("scroll", handleNonUserScroll, { passive: true });
+        window.addEventListener("scroll", handleNonUserScroll, { passive: true });
+
+        if (mainRef && typeof MutationObserver !== "undefined") {
+            mutationObserver = new MutationObserver(() => {
+                resetScroll();
+            });
+            mutationObserver.observe(mainRef, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ["style", "class", "data-adsbygoogle-status"],
+            });
+        }
+
+        if (mainRef && typeof ResizeObserver !== "undefined") {
+            resizeObserver = new ResizeObserver(() => {
+                resetScroll();
+            });
+            resizeObserver.observe(mainRef);
+            if (mainRef.firstElementChild) {
+                resizeObserver.observe(mainRef.firstElementChild);
+            }
+        }
+
+        // 新ページの描画・レイアウト確定や遅延広告（AdSense）の差し込みで
+        // 位置が下に戻されることがあるため、ユーザー操作があるまで0を維持する
         resetScroll();
         requestAnimationFrame(() => {
             resetScroll();
             requestAnimationFrame(resetScroll);
         });
-        const timer = setTimeout(resetScroll, 100);
-        onCleanup(() => clearTimeout(timer));
+        for (const delay of [100, 250, 500, 1000]) {
+            timers.push(window.setTimeout(resetScroll, delay));
+        }
+        timers.push(window.setTimeout(cleanupScrollLock, 2000));
+
+        onCleanup(cleanupScrollLock);
     });
 
     createEffect(() => {
@@ -127,7 +191,7 @@ export default function Layout(props: LayoutProps) {
     });
 
     return (
-        <div class="min-h-screen bg-base-200 flex overflow-x-hidden">
+        <div class="h-screen max-h-screen bg-base-200 flex overflow-hidden">
             <Title>{getMetadata().title}</Title>
             <Meta name="description" content={getMetadata().description} />
             <Link rel="canonical" href={getMetadata().url} />
@@ -352,9 +416,9 @@ export default function Layout(props: LayoutProps) {
 
             {/* メインエリア */}
             <div
-                class={`flex-1 flex flex-col min-w-0 h-screen overflow-hidden transition-all duration-300 ${isPcMenuOpen() ? "lg:ml-64" : "lg:ml-0"}`}
+                class={`flex-1 flex flex-col min-w-0 h-screen max-h-screen overflow-hidden transition-all duration-300 ${isPcMenuOpen() ? "lg:ml-64" : "lg:ml-0"}`}
             >
-                <header class="h-16 bg-base-100/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-40 flex items-center px-4 lg:px-8 shadow-sm justify-between gap-4">
+                <header class="h-16 shrink-0 bg-base-100/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-40 flex items-center px-4 lg:px-8 shadow-sm justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <button
                             class={`btn btn-ghost btn-square ${isPcMenuOpen() ? "lg:hidden" : "flex"}`}
@@ -386,7 +450,7 @@ export default function Layout(props: LayoutProps) {
                     <ThemeToggle />
                 </header>
 
-                <main ref={mainRef} class="flex-1 overflow-y-auto">
+                <main ref={mainRef} class="flex-1 min-h-0 max-h-[calc(100vh-4rem)] overflow-y-auto [overflow-anchor:none]">
                     <div class="p-4 lg:p-8">{props.children}</div>
                 </main>
             </div>

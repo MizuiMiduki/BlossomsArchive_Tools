@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* 広告の遅延挿入・展開によるブラウザの自動スクロール位置補正（Scroll Anchoring）で下に戻される現象を防止 */
+html,
+body,
+main {
+    overflow-anchor: none;
+}
+
 /* Exifフレーム: スマホでの入力時にiOSが自動ズームしないよう16px以上にする */
 @media (max-width: 1023.98px) {
     .exif-tool input[type="text"],

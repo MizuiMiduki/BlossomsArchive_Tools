@@ -2513,10 +2513,12 @@ export default function ExifFrame() {
         if (window.matchMedia?.("(max-width: 1023.98px)")?.matches) {
             const mainEl = document.querySelector("main");
             if (mainEl) {
-                mainEl.scrollTo?.({ top: 0, behavior: "smooth" });
                 mainEl.scrollTop = 0;
+                mainEl.scrollTo?.({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
             }
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
         }
     };
 
