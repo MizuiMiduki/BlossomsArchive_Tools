@@ -67,6 +67,12 @@ export const routes: Route[] = [
             "URLやHTMLからOGPタグ・Twitterカードの設定状況とSNS表示プレビューを確認できます。",
     },
     {
+        path: "/seo-checker",
+        title: "メタタグ(SEO)確認",
+        description:
+            "URLやHTMLからtitle、description、canonical、robots、JSON-LD等のSEOメタタグを解析し、Google検索結果の表示をプレビュー確認できます。",
+    },
+    {
         path: "/exif-frame",
         title: "EXIFフレーム生成",
         description:

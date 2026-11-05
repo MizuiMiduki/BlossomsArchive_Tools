@@ -11,6 +11,7 @@ import ImageConverter from "./pages/ImageConverter";
 import VideoCompressor from "./pages/VideoCompressor";
 import AccessInfo from "./pages/AccessInfo";
 import OgpChecker from "./pages/OgpChecker";
+import SeoChecker from "./pages/SeoChecker";
 import ExifFrameGenerator from "./pages/ExifFrameGenerator";
 import Clock from "./pages/Clock";
 import TimerStopwatch from "./pages/TimerStopwatch";
@@ -45,6 +46,7 @@ function App() {
                 />
                 <Route path="/access-info" component={AccessInfo} />
                 <Route path="/ogp-checker" component={OgpChecker} />
+                <Route path="/seo-checker" component={SeoChecker} />
                 <Route path="/exif-frame" component={ExifFrameGenerator} />
                 <Route path="/clock" component={Clock} />
                 <Route path="/timer" component={TimerStopwatch} />
