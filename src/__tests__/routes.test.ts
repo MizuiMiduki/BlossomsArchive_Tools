@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { routes, getPageMetadata, SITE_TITLE, SITE_URL } from "../routes";
+import {
+    routes,
+    getPageMetadata,
+    getPageJsonLd,
+    SITE_TITLE,
+    SITE_URL,
+    PUBLISHER_NAME,
+} from "../routes";
 
 describe("routes", () => {
     it("ルート配列が正しく定義されていること", () => {
@@ -28,6 +35,10 @@ describe("routes", () => {
         const ogpMeta = getPageMetadata("/ogp-checker");
         expect(ogpMeta.title).toBe(`OGP確認 | ${SITE_TITLE}`);
         expect(ogpMeta.url).toBe(`${SITE_URL}/ogp-checker`);
+
+        const seoMeta = getPageMetadata("/seo-checker");
+        expect(seoMeta.title).toBe(`メタタグ(SEO)確認 | ${SITE_TITLE}`);
+        expect(seoMeta.url).toBe(`${SITE_URL}/seo-checker`);
     });
 
     it("未定義ルート（404等）のメタデータがデフォルトにフォールバックすること", () => {
@@ -35,5 +46,58 @@ describe("routes", () => {
         expect(meta.title).toBe(SITE_TITLE);
         expect(meta.description).toContain("BlossomsArchive Tools");
         expect(meta.url).toBe(`${SITE_URL}/unknown-path`);
+    });
+
+    describe("getPageJsonLd", () => {
+        it("トップページ (/) 用のJSON-LDにWebSiteとOrganizationが含まれること", () => {
+            const schema = getPageJsonLd("/");
+            expect(schema["@context"]).toBe("https://schema.org");
+            expect(Array.isArray(schema["@graph"])).toBe(true);
+
+            const org = schema["@graph"].find((item) => item["@type"] === "Organization");
+            expect(org).toBeDefined();
+            expect(org.name).toBe(PUBLISHER_NAME);
+
+            const website = schema["@graph"].find((item) => item["@type"] === "WebSite");
+            expect(website).toBeDefined();
+            expect(website.name).toBe(SITE_TITLE);
+            expect(website.url).toBe(`${SITE_URL}/`);
+        });
+
+        it("ツールページ用のJSON-LDにWebApplicationとBreadcrumbListが含まれること", () => {
+            const schema = getPageJsonLd("/seo-checker");
+            expect(schema["@context"]).toBe("https://schema.org");
+
+            const webapp = schema["@graph"].find(
+                (item) => item["@type"] === "WebApplication",
+            );
+            expect(webapp).toBeDefined();
+            expect(webapp.name).toContain("メタタグ(SEO)確認");
+            expect(webapp.url).toBe(`${SITE_URL}/seo-checker`);
+            expect(webapp.offers.price).toBe("0");
+
+            const breadcrumb = schema["@graph"].find(
+                (item) => item["@type"] === "BreadcrumbList",
+            );
+            expect(breadcrumb).toBeDefined();
+            expect(breadcrumb.itemListElement.length).toBe(2);
+            expect(breadcrumb.itemListElement[0].name).toBe("ホーム");
+            expect(breadcrumb.itemListElement[1].name).toBe("メタタグ(SEO)確認");
+        });
+
+        it("静的ページ (/privacy) 用のJSON-LDにWebPageとBreadcrumbListが含まれること", () => {
+            const schema = getPageJsonLd("/privacy");
+            const webpage = schema["@graph"].find(
+                (item) => item["@type"] === "WebPage",
+            );
+            expect(webpage).toBeDefined();
+            expect(webpage.name).toContain("プライバシーポリシー");
+
+            const breadcrumb = schema["@graph"].find(
+                (item) => item["@type"] === "BreadcrumbList",
+            );
+            expect(breadcrumb).toBeDefined();
+            expect(breadcrumb.itemListElement[1].name).toBe("プライバシーポリシー");
+        });
     });
 });

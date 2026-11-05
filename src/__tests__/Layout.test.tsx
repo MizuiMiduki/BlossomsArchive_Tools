@@ -10,7 +10,7 @@ describe("Layout Component", () => {
         window.scrollTo = vi.fn();
     });
 
-    it("ヘッダー、サイドバー、メインコンテンツが正常にレンダリングされること", () => {
+    it("ヘッダー、サイドバー、メインコンテンツが正常にレンダリングされ、JSON-LDがheadに生成されること", () => {
         render(() => (
             <MetaProvider>
                 <Router root={Layout}>
@@ -21,6 +21,12 @@ describe("Layout Component", () => {
 
         expect(screen.getByText("テストページ本文")).toBeInTheDocument();
         expect(screen.getByText("BA Tools")).toBeInTheDocument();
+
+        // JSON-LD スクリプトが head 内に生成されていること
+        const jsonLdScript = document.getElementById("ba-tools-global-jsonld");
+        expect(jsonLdScript).not.toBeNull();
+        expect(jsonLdScript?.textContent).toContain("https://schema.org");
+        expect(jsonLdScript?.textContent).toContain("BlossomsArchive Tools");
     });
 
     it("ページ遷移時に main 要素の scrollTop が 0 にリセットされること", async () => {

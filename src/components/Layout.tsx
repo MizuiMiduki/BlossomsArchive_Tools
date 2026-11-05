@@ -1,9 +1,18 @@
 // src/components/Layout.tsx
-import { JSX, For, createEffect, createSignal, onCleanup } from "solid-js";
+import { JSX, For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { Link, Meta, Title } from "@solidjs/meta";
 import { createScriptLoader } from "@solid-primitives/script-loader";
-import { getPageMetadata, normalizePath, routes } from "../routes";
+import {
+    getPageMetadata,
+    getPageJsonLd,
+    normalizePath,
+    routes,
+    DEFAULT_OG_IMAGE,
+    SITE_LOGO,
+    SITE_TITLE,
+    PUBLISHER_NAME,
+} from "../routes";
 import ThemeToggle from "./ThemeToggle";
 import { delayedCall } from "../utils/gsapAnimations";
 
@@ -73,6 +82,7 @@ export default function Layout(props: LayoutProps) {
 
     const getMetadata = () => getPageMetadata(currentPath());
     const getCurrentUrl = () => window.location.origin + currentPath();
+    const getKeywordsText = () => (getMetadata().keywords ?? []).join(", ");
 
     const getShareText = () => {
         const baseTitle = "BlossomsArchive Tools";
@@ -188,15 +198,53 @@ export default function Layout(props: LayoutProps) {
                 page_title: fullTitle,
             });
         }
+
+        // 全ページ共通 JSON-LD 構造化データの動的更新
+        if (typeof document !== "undefined") {
+            const jsonLd = getPageJsonLd(location.pathname);
+            let script = document.getElementById(
+                "ba-tools-global-jsonld",
+            ) as HTMLScriptElement | null;
+            if (!script) {
+                script = document.createElement("script");
+                script.type = "application/ld+json";
+                script.id = "ba-tools-global-jsonld";
+                document.head.appendChild(script);
+            }
+            script.textContent = JSON.stringify(jsonLd);
+        }
+    });
+
+    onCleanup(() => {
+        if (typeof document !== "undefined") {
+            document.getElementById("ba-tools-global-jsonld")?.remove();
+        }
     });
 
     return (
         <div class="h-screen max-h-screen bg-base-200 flex overflow-hidden">
+            {/* 基本SEOメタタグ */}
             <Title>{getMetadata().title}</Title>
             <Meta name="description" content={getMetadata().description} />
             <Link rel="canonical" href={getMetadata().url} />
+            <Meta
+                name="robots"
+                content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+            />
+            <Meta name="format-detection" content="telephone=no" />
+            <Meta name="author" content={PUBLISHER_NAME} />
+            <Show when={getKeywordsText()}>
+                <Meta
+                    name="keywords"
+                    content={getKeywordsText()}
+                />
+            </Show>
+            <Link rel="icon" href={SITE_LOGO} />
+            <Link rel="apple-touch-icon" href={SITE_LOGO} />
+
+            {/* OGP (Open Graph Protocol) タグ */}
             <Meta property="og:type" content="website" />
-            <Meta property="og:site_name" content="BlossomsArchive Tools" />
+            <Meta property="og:site_name" content={SITE_TITLE} />
             <Meta property="og:locale" content="ja_JP" />
             <Meta property="og:title" content={getMetadata().title} />
             <Meta
@@ -204,12 +252,19 @@ export default function Layout(props: LayoutProps) {
                 content={getMetadata().description}
             />
             <Meta property="og:url" content={getMetadata().url} />
+            <Meta property="og:image" content={DEFAULT_OG_IMAGE} />
+            <Meta property="og:image:width" content="192" />
+            <Meta property="og:image:height" content="192" />
+            <Meta property="og:image:alt" content={getMetadata().title} />
+
+            {/* Twitter カード */}
             <Meta name="twitter:card" content="summary" />
             <Meta name="twitter:title" content={getMetadata().title} />
             <Meta
                 name="twitter:description"
                 content={getMetadata().description}
             />
+            <Meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
             {gaTag}
             {adsenseTag}
 
