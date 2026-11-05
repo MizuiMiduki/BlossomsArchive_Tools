@@ -215,12 +215,6 @@ export default function Layout(props: LayoutProps) {
         }
     });
 
-    onCleanup(() => {
-        if (typeof document !== "undefined") {
-            document.getElementById("ba-tools-global-jsonld")?.remove();
-        }
-    });
-
     return (
         <div class="h-screen max-h-screen bg-base-200 flex overflow-hidden">
             {/* 基本SEOメタタグ */}

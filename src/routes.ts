@@ -248,6 +248,21 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
 
     if (normalized === "/") {
         // トップページ
+        graph.push({
+            "@type": "WebPage",
+            "@id": `${SITE_URL}/#webpage`,
+            url: `${SITE_URL}/`,
+            name: SITE_TITLE,
+            description: SITE_DESCRIPTION,
+            inLanguage: "ja",
+            isPartOf: {
+                "@id": `${SITE_URL}/#website`,
+            },
+            about: {
+                "@id": `${PUBLISHER_URL}#organization`,
+            },
+        });
+
         return {
             "@context": "https://schema.org",
             "@graph": graph,
@@ -256,6 +271,25 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
 
     if (route) {
         if (!route.hidden) {
+            // 各WebツールのWebPage
+            graph.push({
+                "@type": "WebPage",
+                "@id": `${currentUrl}#webpage`,
+                url: currentUrl,
+                name: `${route.title} | ${SITE_TITLE}`,
+                description: route.description,
+                inLanguage: "ja",
+                isPartOf: {
+                    "@id": `${SITE_URL}/#website`,
+                },
+                breadcrumb: {
+                    "@id": `${currentUrl}#breadcrumb`,
+                },
+                mainEntity: {
+                    "@id": `${currentUrl}#webapp`,
+                },
+            });
+
             // 各Webアプリケーションツール
             graph.push({
                 "@type": "WebApplication",
@@ -286,6 +320,12 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
                 url: currentUrl,
                 description: route.description,
                 inLanguage: "ja",
+                isPartOf: {
+                    "@id": `${SITE_URL}/#website`,
+                },
+                breadcrumb: {
+                    "@id": `${currentUrl}#breadcrumb`,
+                },
             });
         }
 

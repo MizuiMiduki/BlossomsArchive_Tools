@@ -49,7 +49,7 @@ describe("routes", () => {
     });
 
     describe("getPageJsonLd", () => {
-        it("トップページ (/) 用のJSON-LDにWebSiteとOrganizationが含まれること", () => {
+        it("トップページ (/) 用のJSON-LDにWebSite、Organization、WebPageが含まれること", () => {
             const schema = getPageJsonLd("/");
             expect(schema["@context"]).toBe("https://schema.org");
             expect(Array.isArray(schema["@graph"])).toBe(true);
@@ -62,11 +62,21 @@ describe("routes", () => {
             expect(website).toBeDefined();
             expect(website.name).toBe(SITE_TITLE);
             expect(website.url).toBe(`${SITE_URL}/`);
+
+            const webpage = schema["@graph"].find((item) => item["@type"] === "WebPage");
+            expect(webpage).toBeDefined();
+            expect(webpage.name).toBe(SITE_TITLE);
+            expect(webpage.url).toBe(`${SITE_URL}/`);
         });
 
-        it("ツールページ用のJSON-LDにWebApplicationとBreadcrumbListが含まれること", () => {
+        it("ツールページ用のJSON-LDにWebApplication、WebPage、BreadcrumbListが含まれること", () => {
             const schema = getPageJsonLd("/seo-checker");
             expect(schema["@context"]).toBe("https://schema.org");
+
+            const webpage = schema["@graph"].find((item) => item["@type"] === "WebPage");
+            expect(webpage).toBeDefined();
+            expect(webpage.name).toContain("メタタグ(SEO)確認");
+            expect(webpage.url).toBe(`${SITE_URL}/seo-checker`);
 
             const webapp = schema["@graph"].find(
                 (item) => item["@type"] === "WebApplication",
