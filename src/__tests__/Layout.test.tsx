@@ -79,4 +79,29 @@ describe("Layout Component", () => {
 
         expect(currentScrollTop).toBe(0);
     });
+
+    it("Threadsを含む各SNS共有ボタンが正常にレンダリングされ、正しいリンク先が設定されていること", () => {
+        render(() => (
+            <MetaProvider>
+                <Router root={Layout}>
+                    <Route path="/" component={() => <div>テストページ</div>} />
+                </Router>
+            </MetaProvider>
+        ));
+
+        // Threads 共有ボタンの確認
+        const threadsLink = screen.getByRole("link", { name: "Threads" });
+        expect(threadsLink).toBeInTheDocument();
+        expect(threadsLink).toHaveAttribute("target", "_blank");
+        expect(threadsLink).toHaveAttribute("rel", "noopener noreferrer");
+        expect(threadsLink.getAttribute("href")).toContain("https://www.threads.net/intent/post");
+        expect(threadsLink.getAttribute("href")).toContain("text=");
+        expect(threadsLink.getAttribute("href")).toContain("url=");
+
+        // 他のSNS共有ボタンも確認
+        expect(screen.getByRole("link", { name: "X" })).toBeInTheDocument();
+        expect(screen.getByRole("link", { name: "Misskey" })).toBeInTheDocument();
+        expect(screen.getByRole("link", { name: "Bluesky" })).toBeInTheDocument();
+        expect(screen.getByRole("link", { name: "Mastodon" })).toBeInTheDocument();
+    });
 });
