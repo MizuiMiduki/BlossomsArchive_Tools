@@ -1,7 +1,6 @@
 import { createSignal, For, onSettled, untrack } from "solid-js";
 import AdSense from "../components/AdSense";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
-import gsap from "gsap";
 
 function safeCalculate(expression: string): number {
     const sanitized = expression.replace(/×/g, "*").replace(/÷/g, "/");
@@ -105,11 +104,10 @@ export default function Calculator() {
             setHistory((prev) => [entry, ...prev]);
             setDisplay(String(result));
 
-            if (displayInputRef) {
-                gsap.fromTo(
-                    displayInputRef,
-                    { scale: 1.03 },
-                    { scale: 1, duration: 0.25, ease: "back.out(2)" },
+            if (displayInputRef && typeof displayInputRef.animate === "function") {
+                displayInputRef.animate(
+                    [{ transform: "scale(1.03)" }, { transform: "scale(1)" }],
+                    { duration: 200, easing: "ease-out" },
                 );
             }
         } catch {

@@ -1,8 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent } from "@solidjs/testing-library";
 import { flush } from "solid-js";
-import { vi, afterEach } from "vitest";
-import gsap from "gsap";
+import { vi } from "vitest";
 
 // Solid 2.0: microtask-batched な更新をテスト中の fireEvent 後に即時 flush して同期的に DOM を更新
 for (const key of Object.keys(fireEvent)) {
@@ -85,7 +84,11 @@ window.getComputedStyle = function (elt: Element, pseudoElt?: string | null) {
     }
 };
 
-// 4. 各テスト終了時に GSAP のアクティブなトゥイーンをすべて停止
-afterEach(() => {
-    gsap.killTweensOf("*");
-});
+// 4. Web Animations API (Element.prototype.animate) mock for jsdom
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+    Element.prototype.animate = vi.fn().mockReturnValue({
+        finished: Promise.resolve(),
+        cancel: vi.fn(),
+        onfinish: null,
+    });
+}

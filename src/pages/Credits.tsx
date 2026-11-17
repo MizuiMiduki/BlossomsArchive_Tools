@@ -10,11 +10,6 @@ interface Library {
 
 const libraries: Library[] = [
     {
-        name: "GSAP",
-        license: "Standard 'No-Charge' GreenSock License",
-        url: "https://gsap.com/",
-    },
-    {
         name: "Solid.js",
         license: "MIT",
         url: "https://github.com/solidjs/solid",

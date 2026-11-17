@@ -66,7 +66,7 @@ export default function Layout(props: LayoutProps) {
     );
 
     const handleMouseEnter = () => {
-        if (hoverTween) hoverTween.kill();
+        if (hoverTween !== undefined) window.clearTimeout(hoverTween);
         if (!isPcMenuOpen()) setIsPcMenuHovered(true);
     };
 

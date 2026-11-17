@@ -1,5 +1,4 @@
 import { createSignal, Switch, Match, For, Show, createEffect, onSettled } from "solid-js";
-import gsap from "gsap";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function TimerStopwatch() {
@@ -25,7 +24,7 @@ export default function TimerStopwatch() {
     const [s, setS] = createSignal(0);
 
     let containerRef: HTMLDivElement | undefined;
-    let timerId: gsap.core.Tween | undefined;
+    let timerId: number | undefined;
     let timeDisplayRef: HTMLDivElement | undefined;
 
     // 設定値が変わったら即座に時間を反映（動いていない時だけ）
@@ -63,8 +62,8 @@ export default function TimerStopwatch() {
     const stop = (targetEl?: HTMLElement) => {
         if (targetEl) animatePop(targetEl, 0.92, 0.15);
         setIsRunning(false);
-        if (timerId) {
-            timerId.kill();
+        if (timerId !== undefined) {
+            window.clearInterval(timerId);
             timerId = undefined;
         }
     };
@@ -73,9 +72,8 @@ export default function TimerStopwatch() {
         if (targetEl) animatePop(targetEl, 0.92, 0.15);
         if (isRunning()) return;
         setIsRunning(true);
-        const intervalSec = mode() === "stopwatch" ? 0.01 : 1;
+        const intervalMs = mode() === "stopwatch" ? 10 : 1000;
 
-        // gsap.delayedCall を再帰的に呼び出してインターバルを実現
         const tick = () => {
             if (mode() === "stopwatch") {
                 setTime((t) => t + 1);
@@ -89,20 +87,22 @@ export default function TimerStopwatch() {
                     } else {
                         stop();
                         modalRef?.showModal();
-                        if (modalRef) {
-                            gsap.fromTo(
-                                modalRef.querySelector(".modal-box"),
-                                { scale: 0.8, opacity: 0 },
-                                { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2)" },
+                        const modalBox = modalRef?.querySelector<HTMLElement>(".modal-box");
+                        if (modalBox && typeof modalBox.animate === "function") {
+                            modalBox.animate(
+                                [
+                                    { transform: "scale(0.8)", opacity: 0 },
+                                    { transform: "scale(1)", opacity: 1 },
+                                ],
+                                { duration: 300, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
                             );
                         }
                         return;
                     }
                 }
             }
-            timerId = gsap.delayedCall(intervalSec, tick);
         };
-        timerId = gsap.delayedCall(intervalSec, tick);
+        timerId = window.setInterval(tick, intervalMs);
     };
 
     const changeMode = (newMode: "stopwatch" | "timer" | "pomodoro") => {
@@ -122,8 +122,8 @@ export default function TimerStopwatch() {
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
         return () => {
-            if (timerId) {
-                timerId.kill();
+            if (timerId !== undefined) {
+                window.clearInterval(timerId);
                 timerId = undefined;
             }
         };

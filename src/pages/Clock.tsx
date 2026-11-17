@@ -1,8 +1,7 @@
 // src/pages/Clock.tsx
 import { createSignal, onSettled, Switch, Match, For, createEffect } from "solid-js";
 import AdSense from "../components/AdSense";
-import gsap from "gsap";
-import { animateFadeIn, playPageEntrance } from "../utils/gsapAnimations";
+import { animateFadeIn, playPageEntrance } from "../utils/animations";
 
 export default function Clock() {
     const [time, setTime] = createSignal(new Date());
@@ -15,51 +14,17 @@ export default function Clock() {
     const initialMin = initialDate.getMinutes() * 6 + initialDate.getSeconds() * 0.1;
     const initialHour = (initialDate.getHours() % 12) * 30 + initialDate.getMinutes() * 0.5;
 
-    // GSAP でアニメーション描画するための針の角度シグナル
     const [secAngle, setSecAngle] = createSignal(initialSec);
     const [minAngle, setMinAngle] = createSignal(initialMin);
     const [hourAngle, setHourAngle] = createSignal(initialHour);
 
-    // GSAP トゥイーン用オブジェクト（連続角度で回転をスムーズに維持）
-    const animatedAngles = {
-        sec: initialSec,
-        min: initialMin,
-        hour: initialHour,
-    };
     let continuousSecAngle = initialSec;
     let isFirstTick = true;
 
     const updateAnalogHands = (now: Date) => {
-        const targetSec = continuousSecAngle;
-        const targetMin = now.getMinutes() * 6 + now.getSeconds() * 0.1;
-        const targetHour = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
-
-        // 秒針：機械式時計のようにコチッと弾む弾性アニメーション
-        gsap.to(animatedAngles, {
-            sec: targetSec,
-            duration: 0.35,
-            ease: "elastic.out(1, 0.4)",
-            onUpdate: () => setSecAngle(animatedAngles.sec),
-            overwrite: "auto",
-        });
-
-        // 分針：スムーズなイージング
-        gsap.to(animatedAngles, {
-            min: targetMin,
-            duration: 0.5,
-            ease: "power2.out",
-            onUpdate: () => setMinAngle(animatedAngles.min),
-            overwrite: "auto",
-        });
-
-        // 時針：スムーズなイージング
-        gsap.to(animatedAngles, {
-            hour: targetHour,
-            duration: 0.5,
-            ease: "power2.out",
-            onUpdate: () => setHourAngle(animatedAngles.hour),
-            overwrite: "auto",
-        });
+        setSecAngle(continuousSecAngle);
+        setMinAngle(now.getMinutes() * 6 + now.getSeconds() * 0.1);
+        setHourAngle((now.getHours() % 12) * 30 + now.getMinutes() * 0.5);
     };
 
     // SEO対策：メタデータの動的挿入
@@ -92,9 +57,9 @@ export default function Clock() {
         });
         document.head.appendChild(script);
 
-        // 時計のタイマー処理 (gsap.ticker で毎秒更新)
+        // 時計のタイマー処理 (毎秒更新)
         let lastSec = -1;
-        const tickHandler = () => {
+        const tick = () => {
             const current = new Date();
             const currentSec = current.getSeconds();
             if (currentSec !== lastSec) {
@@ -110,17 +75,16 @@ export default function Clock() {
                 }
                 isFirstTick = false;
 
-                // GSAP による針のアニメーション描画
                 updateAnalogHands(current);
             }
         };
-        gsap.ticker.add(tickHandler);
+        const intervalId = window.setInterval(tick, 200);
 
         // ページエントランスアニメーション
         if (containerRef) playPageEntrance(containerRef);
 
         return () => {
-            gsap.ticker.remove(tickHandler);
+            window.clearInterval(intervalId);
             const script = document.getElementById("clock-jsonld");
             if (script) {
                 script.remove();
@@ -136,12 +100,9 @@ export default function Clock() {
                 const currentSec = now.getSeconds();
                 const baseRounds = Math.floor(continuousSecAngle / 360) * 360;
                 continuousSecAngle = baseRounds + currentSec * 6;
-                animatedAngles.sec = continuousSecAngle;
-                animatedAngles.min = now.getMinutes() * 6 + now.getSeconds() * 0.1;
-                animatedAngles.hour = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
-                setSecAngle(animatedAngles.sec);
-                setMinAngle(animatedAngles.min);
-                setHourAngle(animatedAngles.hour);
+                setSecAngle(continuousSecAngle);
+                setMinAngle(now.getMinutes() * 6 + now.getSeconds() * 0.1);
+                setHourAngle((now.getHours() % 12) * 30 + now.getMinutes() * 0.5);
             }
         }
     );
@@ -222,7 +183,7 @@ export default function Clock() {
                                 )}
                             </For>
 
-                            {/* 針 (GSAPで滑らかにアニメーション描画、(50, 50)を中心に確実に回転) */}
+                            {/* 針 (CSSトランジションで滑らかにアニメーション描画) */}
                             {/* 時針 */}
                             <line
                                 x1="50"
@@ -232,6 +193,7 @@ export default function Clock() {
                                 stroke-width="4"
                                 stroke-linecap="round"
                                 transform={`rotate(${hourAngle()} 50 50)`}
+                                style={{ transition: "transform 0.4s ease-out" }}
                             />
                             {/* 分針 */}
                             <line
@@ -242,6 +204,7 @@ export default function Clock() {
                                 stroke-width="3"
                                 stroke-linecap="round"
                                 transform={`rotate(${minAngle()} 50 50)`}
+                                style={{ transition: "transform 0.4s ease-out" }}
                             />
                             {/* 秒針 */}
                             <line
@@ -253,6 +216,7 @@ export default function Clock() {
                                 stroke="red"
                                 stroke-linecap="round"
                                 transform={`rotate(${secAngle()} 50 50)`}
+                                style={{ transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
                             />
                             {/* 時計の中心ピン */}
                             <circle cx="50" cy="50" r="2.5" fill="red" stroke="none" />

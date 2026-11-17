@@ -30,7 +30,7 @@ describe("Static & Informational Pages", () => {
             render(() => <Credits />);
             expect(screen.getByText("使用ライブラリ")).toBeInTheDocument();
             expect(screen.getByText("Solid.js")).toBeInTheDocument();
-            expect(screen.getByText("GSAP")).toBeInTheDocument();
+            expect(screen.getByText("Tailwind CSS")).toBeInTheDocument();
         });
     });
 

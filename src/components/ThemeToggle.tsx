@@ -1,6 +1,5 @@
 // src/components/ThemeToggle.tsx
 import { createSignal, onSettled } from "solid-js";
-import gsap from "gsap";
 
 export default function ThemeToggle() {
     let buttonRef: HTMLButtonElement | undefined;
@@ -28,11 +27,16 @@ export default function ThemeToggle() {
         localStorage.setItem("theme", newTheme);
         setIsDark(!isDark());
 
-        if (buttonRef) {
-            gsap.fromTo(
-                buttonRef,
-                { rotation: -90, scale: 0.6 },
-                { rotation: 0, scale: 1, duration: 0.4, ease: "back.out(2)" },
+        if (buttonRef && typeof buttonRef.animate === "function") {
+            buttonRef.animate(
+                [
+                    { transform: "rotate(-90deg) scale(0.6)" },
+                    { transform: "rotate(0deg) scale(1)" },
+                ],
+                {
+                    duration: 350,
+                    easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+                },
             );
         }
     };
