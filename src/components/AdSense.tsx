@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, Show } from "solid-js";
+import { createEffect, Show } from "solid-js";
 import { useLocation } from "@solidjs/router";
 
 interface AdSenseProps {
@@ -132,14 +132,17 @@ function AdSenseUnit(props: AdSenseProps) {
     const location = useLocation();
     let container!: HTMLDivElement;
 
-    createEffect(() => {
-        // ルート遷移時に広告を再生成する
-        location.pathname;
-        const slot = props.slot ?? DEFAULT_SLOT;
-        if (!slot) return;
-
-        onCleanup(mountAd(container, slot, props.format ?? "auto"));
-    });
+    createEffect(
+        () => ({
+            pathname: location.pathname,
+            slot: props.slot ?? DEFAULT_SLOT,
+            format: props.format ?? "auto",
+        }),
+        ({ slot, format }) => {
+            if (!slot || !container) return;
+            return mountAd(container, slot, format);
+        }
+    );
 
     return (
         <div

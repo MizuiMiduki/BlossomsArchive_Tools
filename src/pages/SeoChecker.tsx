@@ -2,8 +2,7 @@ import {
     createMemo,
     createSignal,
     For,
-    onCleanup,
-    onMount,
+    onSettled,
     Show,
 } from "solid-js";
 import AdSense from "../components/AdSense";
@@ -896,7 +895,7 @@ export default function SeoChecker() {
     const [copiedKey, setCopiedKey] = createSignal<string | null>(null);
     const [allCopied, setAllCopied] = createSignal(false);
 
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "メタタグ(SEO)確認ツール | Google検索結果プレビュー＆診断";
 
@@ -927,10 +926,10 @@ export default function SeoChecker() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef, ".card");
-    });
 
-    onCleanup(() => {
-        document.getElementById("seo-checker-jsonld")?.remove();
+        return () => {
+            document.getElementById("seo-checker-jsonld")?.remove();
+        };
     });
 
     const fetchWithTimeout = async (

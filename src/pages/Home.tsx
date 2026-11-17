@@ -1,4 +1,4 @@
-import { For, onMount } from "solid-js";
+import { For, onSettled } from "solid-js";
 import { routes } from "../routes";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
@@ -7,7 +7,7 @@ import { playPageEntrance } from "../utils/gsapAnimations";
 export default function Home() {
     let containerRef: HTMLDivElement | undefined;
 
-    onMount(() => {
+    onSettled(() => {
         if (containerRef) {
             playPageEntrance(containerRef, ".card");
         }

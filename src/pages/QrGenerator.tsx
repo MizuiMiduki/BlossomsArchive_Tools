@@ -1,5 +1,4 @@
-// 1. Solid-js からのインポートに「For」を追加しました
-import { createSignal, onMount, onCleanup, Show, For } from "solid-js";
+import { createSignal, onSettled, Show, For } from "solid-js";
 import QRCode from "qrcode";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
@@ -22,7 +21,7 @@ export default function QrGenerator() {
     let generateButtonRef: HTMLButtonElement | undefined;
 
     // SEO対策：メタデータおよび構造化データの動的注入
-    onMount(() => {
+    onSettled(() => {
         document.title = "QRコード作成・生成ツール｜商用利用可・高画質SVG対応";
 
         let metaDesc = document.querySelector('meta[name="description"]');
@@ -52,13 +51,13 @@ export default function QrGenerator() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef, ".card");
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("qr-generator-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("qr-generator-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     const getMimeType = (format: string) => {

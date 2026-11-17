@@ -2,8 +2,7 @@ import {
     createMemo,
     createSignal,
     For,
-    onCleanup,
-    onMount,
+    onSettled,
     Show,
 } from "solid-js";
 import AdSense from "../components/AdSense";
@@ -411,7 +410,7 @@ export default function OgpChecker() {
     const [imageError, setImageError] = createSignal(false);
     const [localPreviewImage, setLocalPreviewImage] = createSignal("");
 
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "OGP確認・SNSシェアプレビューツール | X(Twitter)・LINE・Facebook対応";
 
@@ -442,13 +441,13 @@ export default function OgpChecker() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef, ".card");
-    });
 
-    onCleanup(() => {
-        document.getElementById("ogp-checker-jsonld")?.remove();
-        if (localPreviewImage()) {
-            URL.revokeObjectURL(localPreviewImage());
-        }
+        return () => {
+            document.getElementById("ogp-checker-jsonld")?.remove();
+            if (localPreviewImage()) {
+                URL.revokeObjectURL(localPreviewImage());
+            }
+        };
     });
 
     const fetchWithTimeout = async (

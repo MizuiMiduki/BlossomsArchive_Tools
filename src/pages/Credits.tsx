@@ -1,5 +1,5 @@
 // src/pages/Credits.tsx
-import { onMount } from "solid-js";
+import { onSettled } from "solid-js";
 import { playPageEntrance } from "../utils/gsapAnimations";
 
 interface Library {
@@ -69,7 +69,7 @@ const libraries: Library[] = [
 export default function Credits() {
     let containerRef: HTMLDivElement | undefined;
 
-    onMount(() => {
+    onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
     });
 

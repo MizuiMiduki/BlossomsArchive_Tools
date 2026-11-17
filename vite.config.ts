@@ -1,11 +1,11 @@
 /// <reference types="vitest" />
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
-import solidPlugin from "vite-plugin-solid";
+import solidPlugin from "@solidjs/vite-plugin";
 
 export default defineConfig(({ mode }) => ({
     plugins: [
-        solidPlugin({ hot: false }),
+        solidPlugin(),
         tailwindcss(),
     ],
     resolve: {

@@ -1,4 +1,4 @@
-import { createSignal, Switch, Match, For, createEffect, onMount } from "solid-js";
+import { createSignal, Switch, Match, For, createEffect, onSettled } from "solid-js";
 import gsap from "gsap";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
@@ -29,11 +29,20 @@ export default function TimerStopwatch() {
     let timeDisplayRef: HTMLDivElement | undefined;
 
     // 設定値が変わったら即座に時間を反映（動いていない時だけ）
-    createEffect(() => {
-        if (mode() === "pomodoro" && !isRunning()) {
-            setTime(isBreak() ? breakMin() * 60 : focusMin() * 60);
+    createEffect(
+        () => ({
+            mode: mode(),
+            isRunning: isRunning(),
+            isBreak: isBreak(),
+            breakMin: breakMin(),
+            focusMin: focusMin(),
+        }),
+        ({ mode, isRunning, isBreak, breakMin, focusMin }) => {
+            if (mode === "pomodoro" && !isRunning) {
+                setTime(isBreak ? breakMin * 60 : focusMin * 60);
+            }
         }
-    });
+    );
 
     const formatTime = (val: number, isStopwatch: boolean) => {
         if (isStopwatch) {
@@ -110,7 +119,7 @@ export default function TimerStopwatch() {
         }
     };
 
-    onMount(() => {
+    onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
     });
 

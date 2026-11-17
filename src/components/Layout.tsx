@@ -1,5 +1,6 @@
 // src/components/Layout.tsx
-import { JSX, For, Show, createEffect, createSignal, onCleanup } from "solid-js";
+import { For, Show, createEffect, createSignal } from "solid-js";
+import type { JSX } from "@solidjs/web";
 import { useLocation } from "@solidjs/router";
 import { Link, Meta, Title } from "@solidjs/meta";
 import { createScriptLoader } from "@solid-primitives/script-loader";
@@ -39,9 +40,12 @@ export default function Layout(props: LayoutProps) {
         history.scrollRestoration = "manual";
     }
 
-    createEffect(() => {
-        localStorage.setItem("isPcMenuOpen", String(isPcMenuOpen()));
-    });
+    createEffect(
+        () => isPcMenuOpen(),
+        (open) => {
+            localStorage.setItem("isPcMenuOpen", String(open));
+        }
+    );
 
     const handleMouseEnter = () => {
         if (hoverTween) hoverTween.kill();
@@ -69,7 +73,7 @@ export default function Layout(props: LayoutProps) {
     const adsenseTag = adsenseId
         ? createScriptLoader({
               src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
-              crossOrigin: "anonymous",
+              crossorigin: "anonymous",
           })
         : null;
 
@@ -95,127 +99,131 @@ export default function Layout(props: LayoutProps) {
         return getShareTitle() + "\n" + getCurrentUrl();
     };
 
-    createEffect(() => {
-        const _path = location.pathname;
-        setIsMenuOpen(false);
+    createEffect(
+        () => ({ pathname: location.pathname, hash: location.hash }),
+        ({ hash }) => {
+            setIsMenuOpen(false);
 
-        if (location.hash) {
-            const target = document.getElementById(location.hash.slice(1));
-            if (target) {
-                target.scrollIntoView();
-                return;
+            if (hash) {
+                const target = document.getElementById(hash.slice(1));
+                if (target) {
+                    target.scrollIntoView();
+                    return;
+                }
             }
-        }
 
-        let userScrolled = false;
-        const markUserScrolled = () => {
-            userScrolled = true;
-            cleanupScrollLock();
-        };
+            let userScrolled = false;
+            const markUserScrolled = () => {
+                userScrolled = true;
+                cleanupScrollLock();
+            };
 
-        const resetScroll = () => {
-            if (userScrolled) return;
-            if (mainRef) {
-                mainRef.scrollTop = 0;
-                mainRef.scrollTo?.({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+            const resetScroll = () => {
+                if (userScrolled) return;
+                if (mainRef) {
+                    mainRef.scrollTop = 0;
+                    mainRef.scrollTo?.({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+                }
+                window.scrollTo(0, 0);
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            };
+
+            const handleNonUserScroll = () => {
+                if (userScrolled) return;
+                if ((mainRef && mainRef.scrollTop > 0) || window.scrollY > 0) {
+                    resetScroll();
+                }
+            };
+
+            let mutationObserver: MutationObserver | undefined;
+            let resizeObserver: ResizeObserver | undefined;
+            const timers: number[] = [];
+
+            const cleanupScrollLock = () => {
+                mutationObserver?.disconnect();
+                resizeObserver?.disconnect();
+                timers.forEach((id) => window.clearTimeout(id));
+                timers.length = 0;
+                mainRef?.removeEventListener("scroll", handleNonUserScroll);
+                window.removeEventListener("scroll", handleNonUserScroll);
+                window.removeEventListener("wheel", markUserScrolled);
+                window.removeEventListener("touchmove", markUserScrolled);
+                window.removeEventListener("pointerdown", markUserScrolled);
+                window.removeEventListener("keydown", markUserScrolled);
+            };
+
+            window.addEventListener("wheel", markUserScrolled, { passive: true });
+            window.addEventListener("touchmove", markUserScrolled, { passive: true });
+            window.addEventListener("pointerdown", markUserScrolled, { passive: true });
+            window.addEventListener("keydown", markUserScrolled, { passive: true });
+            mainRef?.addEventListener("scroll", handleNonUserScroll, { passive: true });
+            window.addEventListener("scroll", handleNonUserScroll, { passive: true });
+
+            if (mainRef && typeof MutationObserver !== "undefined") {
+                mutationObserver = new MutationObserver(() => {
+                    resetScroll();
+                });
+                mutationObserver.observe(mainRef, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ["style", "class", "data-adsbygoogle-status"],
+                });
             }
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-        };
 
-        const handleNonUserScroll = () => {
-            if (userScrolled) return;
-            if ((mainRef && mainRef.scrollTop > 0) || window.scrollY > 0) {
-                resetScroll();
+            if (mainRef && typeof ResizeObserver !== "undefined") {
+                resizeObserver = new ResizeObserver(() => {
+                    resetScroll();
+                });
+                resizeObserver.observe(mainRef);
+                if (mainRef.firstElementChild) {
+                    resizeObserver.observe(mainRef.firstElementChild);
+                }
             }
-        };
 
-        let mutationObserver: MutationObserver | undefined;
-        let resizeObserver: ResizeObserver | undefined;
-        const timers: number[] = [];
-
-        const cleanupScrollLock = () => {
-            mutationObserver?.disconnect();
-            resizeObserver?.disconnect();
-            timers.forEach((id) => window.clearTimeout(id));
-            timers.length = 0;
-            mainRef?.removeEventListener("scroll", handleNonUserScroll);
-            window.removeEventListener("scroll", handleNonUserScroll);
-            window.removeEventListener("wheel", markUserScrolled);
-            window.removeEventListener("touchmove", markUserScrolled);
-            window.removeEventListener("pointerdown", markUserScrolled);
-            window.removeEventListener("keydown", markUserScrolled);
-        };
-
-        window.addEventListener("wheel", markUserScrolled, { passive: true });
-        window.addEventListener("touchmove", markUserScrolled, { passive: true });
-        window.addEventListener("pointerdown", markUserScrolled, { passive: true });
-        window.addEventListener("keydown", markUserScrolled, { passive: true });
-        mainRef?.addEventListener("scroll", handleNonUserScroll, { passive: true });
-        window.addEventListener("scroll", handleNonUserScroll, { passive: true });
-
-        if (mainRef && typeof MutationObserver !== "undefined") {
-            mutationObserver = new MutationObserver(() => {
-                resetScroll();
-            });
-            mutationObserver.observe(mainRef, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ["style", "class", "data-adsbygoogle-status"],
-            });
-        }
-
-        if (mainRef && typeof ResizeObserver !== "undefined") {
-            resizeObserver = new ResizeObserver(() => {
-                resetScroll();
-            });
-            resizeObserver.observe(mainRef);
-            if (mainRef.firstElementChild) {
-                resizeObserver.observe(mainRef.firstElementChild);
-            }
-        }
-
-        // 新ページの描画・レイアウト確定や遅延広告（AdSense）の差し込みで
-        // 位置が下に戻されることがあるため、ユーザー操作があるまで0を維持する
-        resetScroll();
-        requestAnimationFrame(() => {
+            // 新ページの描画・レイアウト確定や遅延広告（AdSense）の差し込みで
+            // 位置が下に戻されることがあるため、ユーザー操作があるまで0を維持する
             resetScroll();
-            requestAnimationFrame(resetScroll);
-        });
-        for (const delay of [100, 250, 500, 1000]) {
-            timers.push(window.setTimeout(resetScroll, delay));
-        }
-        timers.push(window.setTimeout(cleanupScrollLock, 2000));
-
-        onCleanup(cleanupScrollLock);
-    });
-
-    createEffect(() => {
-        const fullTitle = getMetadata().title;
-        if (gaId && (window as any).gtag) {
-            (window as any).gtag("config", gaId, {
-                page_path: location.pathname,
-                page_title: fullTitle,
+            requestAnimationFrame(() => {
+                resetScroll();
+                requestAnimationFrame(resetScroll);
             });
-        }
-
-        // 全ページ共通 JSON-LD 構造化データの動的更新
-        if (typeof document !== "undefined") {
-            const jsonLd = getPageJsonLd(location.pathname);
-            let script = document.getElementById(
-                "ba-tools-global-jsonld",
-            ) as HTMLScriptElement | null;
-            if (!script) {
-                script = document.createElement("script");
-                script.type = "application/ld+json";
-                script.id = "ba-tools-global-jsonld";
-                document.head.appendChild(script);
+            for (const delay of [100, 250, 500, 1000]) {
+                timers.push(window.setTimeout(resetScroll, delay));
             }
-            script.textContent = JSON.stringify(jsonLd);
+            timers.push(window.setTimeout(cleanupScrollLock, 2000));
+
+            return cleanupScrollLock;
         }
-    });
+    );
+
+    createEffect(
+        () => ({ pathname: location.pathname, title: getMetadata().title }),
+        ({ pathname, title }) => {
+            if (gaId && (window as any).gtag) {
+                (window as any).gtag("config", gaId, {
+                    page_path: pathname,
+                    page_title: title,
+                });
+            }
+
+            // 全ページ共通 JSON-LD 構造化データの動的更新
+            if (typeof document !== "undefined") {
+                const jsonLd = getPageJsonLd(pathname);
+                let script = document.getElementById(
+                    "ba-tools-global-jsonld",
+                ) as HTMLScriptElement | null;
+                if (!script) {
+                    script = document.createElement("script");
+                    script.type = "application/ld+json";
+                    script.id = "ba-tools-global-jsonld";
+                    document.head.appendChild(script);
+                }
+                script.textContent = JSON.stringify(jsonLd);
+            }
+        }
+    );
 
     return (
         <div class="h-screen max-h-screen bg-base-200 flex overflow-hidden">

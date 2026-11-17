@@ -3,8 +3,7 @@ import {
     Show,
     For,
     createEffect,
-    onMount,
-    onCleanup,
+    onSettled,
 } from "solid-js";
 import exifr from "exifr";
 import piexif from "piexifjs";
@@ -591,7 +590,7 @@ export default function ExifFrame() {
     };
 
     // SEO対策：メタデータの動的挿入
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "Exif情報付きフレーム作成ツール | 写真編集ユーティリティ";
 
@@ -622,13 +621,13 @@ export default function ExifFrame() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef);
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("exif-frame-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("exif-frame-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     const fontList = [
@@ -2012,50 +2011,55 @@ export default function ExifFrame() {
     };
 
     // リアクティブに自動で再描画が走るように一元化するにゃん！
-    createEffect(() => {
-        if (hasImage()) {
-            // 追跡したいすべてのStateをここに並べるにゃん
-            frameColor();
-            framePosition();
-            textAlign();
-            isChekiMode();
-            selectedFont();
-            fontSizeScale();
-            imageRotation();
-            useCustomTitle();
-            customTitleLine1();
-            customTitleLine2();
-            prefixText();
-            showPrefix();
-            isAdvancedMode();
-            customFrameColor();
-            customTextColor();
-            imageBorderRadius();
-            frameStyle();
-            textPlateStyle();
-            cameraModel();
-            lensModel();
-            focalLength();
-            fNumber();
-            shutterSpeed();
-            isoValue();
-            showCamera();
-            showLens();
-            showFocal();
-            showFNumber();
-            showSpeed();
-            showIso();
-            separatorType();
-            customSeparator();
-            overlayImages();
-            selectedOverlayId();
-            draggingOverlayId();
-            activeTab();
-            copyrightText();
-            copyrightPosition();
-
+    createEffect(
+        () => {
+            if (!hasImage()) return null;
+            return {
+                _fc: frameColor(),
+                _fp: framePosition(),
+                _ta: textAlign(),
+                _cm: isChekiMode(),
+                _sf: selectedFont(),
+                _fs: fontSizeScale(),
+                _ir: imageRotation(),
+                _ut: useCustomTitle(),
+                _t1: customTitleLine1(),
+                _t2: customTitleLine2(),
+                _pt: prefixText(),
+                _sp: showPrefix(),
+                _am: isAdvancedMode(),
+                _cfc: customFrameColor(),
+                _ctc: customTextColor(),
+                _ibr: imageBorderRadius(),
+                _fs2: frameStyle(),
+                _tps: textPlateStyle(),
+                _cm2: cameraModel(),
+                _lm: lensModel(),
+                _fl: focalLength(),
+                _fn: fNumber(),
+                _ss: shutterSpeed(),
+                _iv: isoValue(),
+                _sc: showCamera(),
+                _sl: showLens(),
+                _sf2: showFocal(),
+                _sfn: showFNumber(),
+                _ss2: showSpeed(),
+                _si: showIso(),
+                _st: separatorType(),
+                _cs: customSeparator(),
+                _oi: overlayImages(),
+                _soi: selectedOverlayId(),
+                _doi: draggingOverlayId(),
+                _at: activeTab(),
+                _cpt: copyrightText(),
+                _cpp: copyrightPosition(),
+                _proc: isProcessing(),
+            };
+        },
+        (val) => {
+            if (!val || val._proc) return;
             // 設定が切り替わったら自動で再描画にゃん！（高速化のため rAF でバッチ化＆プレビュー解像度 2048px 上限）
-            if (typeof window !== "undefined" && "requestAnimationFrame" in window && !isProcessing()) {
+            if (typeof window !== "undefined" && "requestAnimationFrame" in window) {
                 if (rafDrawId) cancelAnimationFrame(rafDrawId);
                 rafDrawId = requestAnimationFrame(() => {
                     rafDrawId = 0;
@@ -2065,7 +2069,7 @@ export default function ExifFrame() {
                 drawFrame(false, 2048);
             }
         }
-    });
+    );
 
     const yieldToBrowser = () =>
         new Promise<void>((resolve) => setTimeout(resolve, 16));
@@ -2566,7 +2570,7 @@ export default function ExifFrame() {
                                                 role="tab"
                                                 id={`exif-tab-${tab.id}`}
                                                 aria-controls={`exif-panel-${tab.id}`}
-                                                aria-selected={activeTab() === tab.id}
+                                                aria-selected={activeTab() === tab.id ? "true" : "false"}
                                                 onClick={() => selectTab(tab.id)}
                                                 class={`relative flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 lg:h-12 rounded-lg text-[10px] sm:text-[11px] font-bold transition-colors cursor-pointer select-none ${
                                                     activeTab() === tab.id
@@ -4281,11 +4285,13 @@ export default function ExifFrame() {
                     </div>
 
                     <div
-                        class="order-2 lg:order-none flex-1 min-w-0 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative h-64 sm:h-72 lg:h-[520px] xl:h-[560px] shrink-0 overflow-hidden shadow-inner"
-                        classList={{
-                            "sticky top-0 z-[5] shadow-md lg:static lg:shadow-inner":
-                                hasImage(),
-                        }}
+                        class={[
+                            "order-2 lg:order-none flex-1 min-w-0 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative h-64 sm:h-72 lg:h-[520px] xl:h-[560px] shrink-0 overflow-hidden shadow-inner",
+                            {
+                                "sticky top-0 z-[5] shadow-md lg:static lg:shadow-inner":
+                                    hasImage(),
+                            },
+                        ]}
                     >
                         <Show
                             when={hasImage()}

@@ -1,5 +1,5 @@
 // src/pages/Clock.tsx
-import { createSignal, onMount, onCleanup, Switch, Match, For, createEffect } from "solid-js";
+import { createSignal, onSettled, Switch, Match, For, createEffect } from "solid-js";
 import AdSense from "../components/AdSense";
 import gsap from "gsap";
 import { animateFadeIn, playPageEntrance } from "../utils/gsapAnimations";
@@ -63,7 +63,7 @@ export default function Clock() {
     };
 
     // SEO対策：メタデータの動的挿入
-    onMount(() => {
+    onSettled(() => {
         document.title = "リアルタイム時計 | デジタル＆アナログ時計表示";
 
         let metaDesc = document.querySelector('meta[name="description"]');
@@ -119,30 +119,32 @@ export default function Clock() {
         // ページエントランスアニメーション
         if (containerRef) playPageEntrance(containerRef);
 
-        onCleanup(() => {
+        return () => {
             gsap.ticker.remove(tickHandler);
             const script = document.getElementById("clock-jsonld");
             if (script) {
                 script.remove();
             }
-        });
+        };
     });
 
     // モード切り替え時に最新の針の位置を即時反映
-    createEffect(() => {
-        if (mode() === "analog") {
-            const now = time();
-            const currentSec = now.getSeconds();
-            const baseRounds = Math.floor(continuousSecAngle / 360) * 360;
-            continuousSecAngle = baseRounds + currentSec * 6;
-            animatedAngles.sec = continuousSecAngle;
-            animatedAngles.min = now.getMinutes() * 6 + now.getSeconds() * 0.1;
-            animatedAngles.hour = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
-            setSecAngle(animatedAngles.sec);
-            setMinAngle(animatedAngles.min);
-            setHourAngle(animatedAngles.hour);
+    createEffect(
+        () => ({ m: mode(), now: time() }),
+        ({ m, now }) => {
+            if (m === "analog") {
+                const currentSec = now.getSeconds();
+                const baseRounds = Math.floor(continuousSecAngle / 360) * 360;
+                continuousSecAngle = baseRounds + currentSec * 6;
+                animatedAngles.sec = continuousSecAngle;
+                animatedAngles.min = now.getMinutes() * 6 + now.getSeconds() * 0.1;
+                animatedAngles.hour = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
+                setSecAngle(animatedAngles.sec);
+                setMinAngle(animatedAngles.min);
+                setHourAngle(animatedAngles.hour);
+            }
         }
-    });
+    );
 
     const switchMode = (newMode: "digital" | "analog") => {
         if (mode() === newMode) return;

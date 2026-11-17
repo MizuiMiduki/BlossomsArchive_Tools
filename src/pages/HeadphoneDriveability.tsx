@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onCleanup, onMount, Show } from "solid-js";
+import { createMemo, createSignal, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/gsapAnimations";
@@ -22,7 +22,7 @@ export default function HeadphoneDriveability() {
         createSignal("1000");
     const [targetSpl, setTargetSpl] = createSignal("110");
 
-    onMount(() => {
+    onSettled(() => {
         document.title = "イヤホン・ヘッドホンの鳴らしやすさ";
 
         let metaDesc = document.querySelector('meta[name="description"]');
@@ -51,10 +51,10 @@ export default function HeadphoneDriveability() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef);
-    });
 
-    onCleanup(() => {
-        document.getElementById("headphone-driveability-jsonld")?.remove();
+        return () => {
+            document.getElementById("headphone-driveability-jsonld")?.remove();
+        };
     });
 
     const result = createMemo(() => {

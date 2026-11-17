@@ -1,4 +1,4 @@
-import { createSignal, Show, onMount, onCleanup } from "solid-js";
+import { createSignal, Show, onSettled } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { delayedCall, playPageEntrance, animateFadeIn, animatePop } from "../utils/gsapAnimations";
@@ -35,7 +35,7 @@ export default function AccessInfo() {
     let containerRef: HTMLDivElement | undefined;
 
     // SEO対策：メタデータの動的挿入
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "アクセス環境解析ツール | IP・端末・回線情報チェッカー";
 
@@ -66,13 +66,13 @@ export default function AccessInfo() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef);
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("access-info-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("access-info-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     const fetchAccessInfo = async () => {

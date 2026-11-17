@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@solidjs/testing-library";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { Router, Route, useNavigate } from "@solidjs/router";
-import { MetaProvider } from "@solidjs/meta";
+import { createRouter, useNavigate, memoryHistory } from "@solidjs/router";
 import Layout from "../components/Layout";
 
 describe("Layout Component", () => {
@@ -11,12 +10,17 @@ describe("Layout Component", () => {
     });
 
     it("ヘッダー、サイドバー、メインコンテンツが正常にレンダリングされ、JSON-LDがheadに生成されること", () => {
+        const TestRouter = createRouter({
+            history: memoryHistory(),
+            routes: [
+                { path: "/", component: () => <div>テストページ本文</div> },
+            ],
+        });
+
         render(() => (
-            <MetaProvider>
-                <Router root={Layout}>
-                    <Route path="/" component={() => <div>テストページ本文</div>} />
-                </Router>
-            </MetaProvider>
+            <TestRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </TestRouter>
         ));
 
         expect(screen.getByText("テストページ本文")).toBeInTheDocument();
@@ -40,13 +44,18 @@ describe("Layout Component", () => {
             );
         }
 
+        const SubpageRouter = createRouter({
+            history: memoryHistory(),
+            routes: [
+                { path: "/", component: PageOne },
+                { path: "/subpage", component: () => <div>サブページ本文</div> },
+            ],
+        });
+
         const { container } = render(() => (
-            <MetaProvider>
-                <Router root={Layout}>
-                    <Route path="/" component={PageOne} />
-                    <Route path="/subpage" component={() => <div>サブページ本文</div>} />
-                </Router>
-            </MetaProvider>
+            <SubpageRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </SubpageRouter>
         ));
 
         const mainElement = container.querySelector("main") as HTMLElement;
@@ -81,12 +90,17 @@ describe("Layout Component", () => {
     });
 
     it("Threadsを含む各SNS共有ボタンが正常にレンダリングされ、正しいリンク先が設定されていること", () => {
+        const ShareRouter = createRouter({
+            history: memoryHistory(),
+            routes: [
+                { path: "/", component: () => <div>テストページ</div> },
+            ],
+        });
+
         render(() => (
-            <MetaProvider>
-                <Router root={Layout}>
-                    <Route path="/" component={() => <div>テストページ</div>} />
-                </Router>
-            </MetaProvider>
+            <ShareRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </ShareRouter>
         ));
 
         // Threads 共有ボタンの確認

@@ -1,6 +1,5 @@
 import { render, screen } from "@solidjs/testing-library";
 import { describe, it, expect } from "vitest";
-import { MetaProvider } from "@solidjs/meta";
 import Home from "../pages/Home";
 import NotFound from "../pages/NotFound";
 import Credits from "../pages/Credits";
@@ -19,11 +18,7 @@ describe("Static & Informational Pages", () => {
 
     describe("NotFound", () => {
         it("404メッセージとホームへのリンクが表示されること", () => {
-            render(() => (
-                <MetaProvider>
-                    <NotFound />
-                </MetaProvider>
-            ));
+            render(() => <NotFound />);
             expect(screen.getByText("404")).toBeInTheDocument();
             expect(screen.getByText("お探しのページは見つかりませんでした。")).toBeInTheDocument();
             expect(screen.getByRole("link", { name: "ホームに戻る" })).toBeInTheDocument();
