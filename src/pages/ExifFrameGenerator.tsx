@@ -622,22 +622,6 @@ export default function ExifFrame() {
 
         if (containerRef) playPageEntrance(containerRef);
 
-        // Google Fonts を非ブロッキング・1リクエストに集約して遅延ロード（LCP高速化）
-        const fontQuery = fontList.map((f) => `family=${f.link}`).join("&");
-        const fontHref = `https://fonts.googleapis.com/css2?${fontQuery}&display=swap`;
-        let fontLink = document.querySelector(`link[data-exif-fonts="true"]`) as HTMLLinkElement | null;
-        if (!fontLink) {
-            fontLink = document.createElement("link");
-            fontLink.rel = "stylesheet";
-            fontLink.setAttribute("data-exif-fonts", "true");
-            fontLink.media = "print";
-            fontLink.onload = () => {
-                if (fontLink) fontLink.media = "all";
-            };
-            fontLink.href = fontHref;
-            document.head.appendChild(fontLink);
-        }
-
         return () => {
             const el = document.getElementById("exif-frame-jsonld");
             if (el) {
@@ -2332,6 +2316,7 @@ export default function ExifFrame() {
             setHasImage(true);
             setImageRotation(0);
             setUploadedImageSrc(img.src);
+            ensureFontLoaded(selectedFont());
         };
         img.src = URL.createObjectURL(file);
     };
@@ -2355,7 +2340,20 @@ export default function ExifFrame() {
         setter(val);
     };
 
+    const loadedFontValues = new Set<string>();
+    const ensureFontLoaded = (fontVal: string) => {
+        if (typeof document === "undefined" || loadedFontValues.has(fontVal)) return;
+        const font = fontList.find((f) => f.value === fontVal || f.id === fontVal);
+        if (!font) return;
+        loadedFontValues.add(fontVal);
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = `https://fonts.googleapis.com/css2?family=${font.link}&display=swap`;
+        document.head.appendChild(link);
+    };
+
     const handleFontChange = async (val: string) => {
+        ensureFontLoaded(val);
         setSelectedFont(val);
         try {
             await document.fonts.load(`16px ${val}`);
