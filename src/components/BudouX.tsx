@@ -1,4 +1,4 @@
-import { createMemo, For, omit } from "solid-js";
+import { createMemo, For, omit, Show } from "solid-js";
 import { Dynamic } from "@solidjs/web";
 import type { JSX } from "@solidjs/web";
 import { parseBudouX } from "../utils/budoux";
@@ -35,7 +35,9 @@ export default function BudouX(props: BudouXProps) {
             <For each={words()}>
                 {(word, index) => (
                     <>
-                        {index() > 0 && <wbr />}
+                        <Show when={index() > 0}>
+                            <wbr />
+                        </Show>
                         {word}
                     </>
                 )}

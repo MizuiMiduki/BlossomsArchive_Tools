@@ -1,4 +1,4 @@
-import { createSignal, Switch, Match, For, createEffect, onSettled } from "solid-js";
+import { createSignal, Switch, Match, For, Show, createEffect, onSettled } from "solid-js";
 import gsap from "gsap";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
@@ -121,6 +121,12 @@ export default function TimerStopwatch() {
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
+        return () => {
+            if (timerId) {
+                timerId.kill();
+                timerId = undefined;
+            }
+        };
     });
 
     return (
@@ -179,13 +185,13 @@ export default function TimerStopwatch() {
 
             {/* 表示部分 */}
             <div ref={timeDisplayRef} class="text-center">
-                {mode() === "pomodoro" && (
+                <Show when={mode() === "pomodoro"}>
                     <div
                         class={`badge ${isBreak() ? "badge-accent" : "badge-primary"} mb-2`}
                     >
                         {isBreak() ? "休憩中" : "集中タイム"}
                     </div>
-                )}
+                </Show>
                 <div class="text-6xl font-mono font-black text-primary tabular-nums">
                     {formatTime(time(), mode() === "stopwatch")}
                 </div>

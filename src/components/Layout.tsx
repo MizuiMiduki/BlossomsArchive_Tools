@@ -439,7 +439,7 @@ export default function Layout(props: LayoutProps) {
                                         </svg>
                                     </a>
                                     {/* OS標準の共有 */}
-                                    {"share" in navigator && (
+                                    <Show when={typeof navigator !== "undefined" && "share" in navigator}>
                                         <button
                                             type="button"
                                             class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
@@ -467,7 +467,7 @@ export default function Layout(props: LayoutProps) {
                                                 />
                                             </svg>
                                         </button>
-                                    )}
+                                    </Show>
                                 </div>
                             </div>
 
