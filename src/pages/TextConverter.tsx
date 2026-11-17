@@ -518,10 +518,10 @@ export default function TextConverter() {
                             <div class="flex items-center gap-1">
                                 <button
                                     type="button"
-                                    class="btn btn-ghost btn-xs text-base-content/70 hover:text-primary"
+                                    class="btn btn-ghost btn-xs text-base-content/80 hover:text-primary"
                                     onClick={() => fileInputRef?.click()}
                                     title="テキストファイルを読み込む"
-                                    aria-label="テキストファイルを読み込む"
+                                    aria-label="読込"
                                 >
                                     読込
                                 </button>
@@ -535,10 +535,10 @@ export default function TextConverter() {
                                 />
                                 <button
                                     type="button"
-                                    class="btn btn-ghost btn-xs text-error/80 hover:text-error"
+                                    class="btn btn-ghost btn-xs text-red-600 dark:text-red-400 font-bold hover:text-red-700"
                                     onClick={handleClear}
                                     title="入力をクリア"
-                                    aria-label="入力をクリア"
+                                    aria-label="クリア"
                                 >
                                     クリア
                                 </button>

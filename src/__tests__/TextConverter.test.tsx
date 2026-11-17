@@ -60,7 +60,7 @@ describe("TextConverter", () => {
 
     it("クリアボタンをクリックすると入力と出力が空になること", () => {
         render(() => <TextConverter />);
-        const clearBtn = screen.getByRole("button", { name: "入力をクリア" });
+        const clearBtn = screen.getByRole("button", { name: /クリア/ });
         fireEvent.click(clearBtn);
 
         const textarea = screen.getByPlaceholderText(/変換したいテキストまたはHTML/) as HTMLTextAreaElement;

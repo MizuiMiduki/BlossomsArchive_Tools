@@ -256,7 +256,7 @@ export default function HyperfocalCalculator() {
                         <Show when={sensorType() === "custom"}>
                             <div ref={(el) => animateFadeIn(el)} class="form-control w-full bg-base-100 p-3 rounded-xl border border-base-300 text-xs overflow-hidden">
                                 <label class="label py-1 flex flex-col items-start gap-0.5">
-                                    <span class="label-text font-black text-xs text-secondary">
+                                    <span class="label-text font-black text-xs text-purple-900 dark:text-purple-200">
                                         ⚙️ 許容錯乱円の直径 (CoC)
                                     </span>
                                 </label>
@@ -449,7 +449,7 @@ export default function HyperfocalCalculator() {
                                 <span class="label-text font-black text-sm text-base-content flex-1 break-words">
                                     🎯 4. 実際のピント合わせ位置
                                 </span>
-                                <span class="text-xs font-black text-secondary bg-secondary/10 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                <span class="text-xs font-black text-purple-900 dark:text-purple-200 bg-purple-100 dark:bg-purple-950/60 px-2 py-0.5 rounded-full whitespace-nowrap">
                                     {customSubjectDistance()} m
                                 </span>
                             </div>
@@ -541,7 +541,7 @@ export default function HyperfocalCalculator() {
                                 </p>
                                 <p class="text-base-content opacity-80" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
                                     💡{" "}
-                                    <strong class="text-secondary">
+                                    <strong class="text-purple-900 dark:text-purple-200">
                                         実際のピント合わせ位置
                                     </strong>{" "}
                                     <BudouX text="は、撮影者が「直接狙った特定の被写体（人物）」の位置です。その前後どこまでピントが合うかをシミュレーションしています。" />
@@ -607,7 +607,7 @@ export default function HyperfocalCalculator() {
                                     }}
                                 >
                                     <span class="text-xl">🚶</span>
-                                    <span class="text-[9.5px] font-black text-secondary bg-secondary/10 px-1.5 py-0.5 rounded-sm whitespace-nowrap overflow-hidden truncate max-w-[110px]">
+                                    <span class="text-[9.5px] font-black text-purple-900 dark:text-purple-200 bg-purple-100 dark:bg-purple-950/60 px-1.5 py-0.5 rounded-sm whitespace-nowrap overflow-hidden truncate max-w-[110px]">
                                         被写体 ({customSubjectDistance()}m)
                                     </span>
                                 </div>
@@ -675,7 +675,7 @@ export default function HyperfocalCalculator() {
                             {/* 任意指定位置のピント範囲カード */}
                             <div class="bg-secondary/10 border-2 border-secondary/45 p-4 rounded-xl flex flex-col gap-2.5 mt-1 shadow-xs overflow-hidden">
                                 <div class="flex items-center justify-between border-b border-secondary/20 pb-2 gap-2 flex-wrap leading-normal">
-                                    <span class="text-[10px] font-black text-secondary uppercase tracking-wider break-words flex-1 min-w-[150px]">
+                                    <span class="text-[10px] font-black text-purple-900 dark:text-purple-200 uppercase tracking-wider break-words flex-1 min-w-[150px]">
                                         仮に {customSubjectDistance()}m
                                         の被写体にピントを合わせた場合
                                     </span>
@@ -713,7 +713,7 @@ export default function HyperfocalCalculator() {
                                         <span class="text-[11px] font-black text-base-content opacity-80 flex-1 break-words min-w-[120px]">
                                             ピントが綺麗に合う全体の厚み（幅）:
                                         </span>
-                                        <span class="text-sm font-black text-secondary font-mono bg-secondary/10 px-2 py-0.5 rounded-md break-words max-w-full leading-normal">
+                                        <span class="text-sm font-black text-purple-900 dark:text-purple-200 font-mono bg-purple-100 dark:bg-purple-950/60 px-2 py-0.5 rounded-md break-words max-w-full leading-normal">
                                             {dofData().totalDepthString}
                                         </span>
                                     </div>

@@ -622,6 +622,22 @@ export default function ExifFrame() {
 
         if (containerRef) playPageEntrance(containerRef);
 
+        // Google Fonts を非ブロッキング・1リクエストに集約して遅延ロード（LCP高速化）
+        const fontQuery = fontList.map((f) => `family=${f.link}`).join("&");
+        const fontHref = `https://fonts.googleapis.com/css2?${fontQuery}&display=swap`;
+        let fontLink = document.querySelector(`link[data-exif-fonts="true"]`) as HTMLLinkElement | null;
+        if (!fontLink) {
+            fontLink = document.createElement("link");
+            fontLink.rel = "stylesheet";
+            fontLink.setAttribute("data-exif-fonts", "true");
+            fontLink.media = "print";
+            fontLink.onload = () => {
+                if (fontLink) fontLink.media = "all";
+            };
+            fontLink.href = fontHref;
+            document.head.appendChild(fontLink);
+        }
+
         return () => {
             const el = document.getElementById("exif-frame-jsonld");
             if (el) {
@@ -2539,14 +2555,6 @@ export default function ExifFrame() {
     return (
         <div ref={containerRef} class="exif-tool h-full w-full p-0 sm:p-4 pb-36 sm:pb-36 lg:pb-4 flex flex-col gap-4 bg-base-100">
             <h1 class="sr-only">EXIFフレーム生成ツール</h1>
-            <For each={fontList}>
-                {(f) => (
-                    <link
-                        rel="stylesheet"
-                        href={`https://fonts.googleapis.com/css2?family=${f.link}&display=swap`}
-                    />
-                )}
-            </For>
 
             <div class="card bg-base-100 shadow-xl p-3 sm:p-6 w-full border border-base-300">
                 <div class="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full items-stretch">
