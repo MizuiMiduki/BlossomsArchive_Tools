@@ -28,6 +28,7 @@
     # セキュリティヘッダー
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 
     # HTMLファイルはキャッシュ検証を強制
     <FilesMatch "\.(html|htm)$">
@@ -44,6 +45,10 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+
+    # 常時HTTPSリダイレクト
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
     # 旧URLをpagesのない正規URLへ恒久リダイレクト
     RewriteRule ^pages/(.*)$ /$1 [R=301,L]
