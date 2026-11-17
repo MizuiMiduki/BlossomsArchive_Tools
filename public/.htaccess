@@ -46,7 +46,8 @@
     RewriteEngine On
     RewriteBase /
 
-    # 常時HTTPSリダイレクト
+    # 常時HTTPSリダイレクト (リバースプロキシ対応)
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
     RewriteCond %{HTTPS} off
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
