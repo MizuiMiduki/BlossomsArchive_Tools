@@ -113,12 +113,12 @@ export default function Clock() {
     };
 
     return (
-        <div ref={containerRef} class="flex flex-col items-center justify-center min-h-[400px] p-6">
+        <div ref={containerRef} class="flex flex-col items-center justify-center min-h-[350px] p-2 sm:p-6 w-full min-w-0 max-w-md mx-auto">
             <h1 class="sr-only">リアルタイム時計</h1>
             {/* 切り替えボタン */}
-            <div class="inline-flex p-1 bg-base-200 rounded-2xl mb-12 shadow-inner border border-base-300">
+            <div class="inline-flex p-1 bg-base-200 rounded-2xl mb-8 sm:mb-12 shadow-inner border border-base-300">
                 <button
-                    class={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
+                    class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                         mode() === "digital"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -128,7 +128,7 @@ export default function Clock() {
                     デジタル
                 </button>
                 <button
-                    class={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
+                    class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                         mode() === "analog"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -143,7 +143,7 @@ export default function Clock() {
                 <Match when={mode() === "digital"}>
                     <div
                         ref={(el) => animateFadeIn(el, { duration: 0.3 })}
-                        class="text-6xl md:text-8xl font-mono font-black text-primary tracking-tighter"
+                        class="text-4xl sm:text-6xl md:text-8xl font-mono font-black text-primary tracking-tighter text-center select-none"
                     >
                         {time().toLocaleTimeString([], {
                             hour: "2-digit",
@@ -156,7 +156,7 @@ export default function Clock() {
                 <Match when={mode() === "analog"}>
                     <div
                         ref={(el) => animateFadeIn(el, { duration: 0.4 })}
-                        class="relative w-64 h-64 md:w-80 md:h-80"
+                        class="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 max-w-[80vw] max-h-[80vw]"
                     >
                         <svg
                             viewBox="0 0 100 100"

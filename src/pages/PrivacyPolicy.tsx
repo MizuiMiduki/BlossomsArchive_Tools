@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
     });
 
     return (
-        <div ref={containerRef} class="max-w-2xl mx-auto p-6 space-y-8">
+        <div ref={containerRef} class="w-full max-w-2xl mx-auto space-y-6 sm:space-y-8 min-w-0">
             <h1 class="text-3xl font-bold">プライバシーポリシー</h1>
 
             <section class="space-y-4">

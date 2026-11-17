@@ -428,10 +428,10 @@ export default function TextConverter() {
     });
 
     return (
-        <div ref={containerRef} class="max-w-6xl mx-auto space-y-8 px-2 sm:px-4">
+        <div ref={containerRef} class="w-full max-w-6xl mx-auto space-y-6 sm:space-y-8 min-w-0">
             {/* ページタイトル & 概要 */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm">
-                <div class="card-body p-6 sm:p-8">
+            <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0">
+                <div class="card-body p-4 sm:p-8">
                     <h1 class="card-title text-2xl sm:text-3xl font-bold text-primary mb-2">
                         <BudouX text="テキスト・HTML・Markdown変換ツール" />
                     </h1>

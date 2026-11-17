@@ -845,15 +845,15 @@ export default function OgpChecker() {
     return (
         <div
             ref={containerRef}
-            class="h-full w-full p-4 md:p-8 flex flex-col items-center bg-base-300/30 overflow-x-hidden"
+            class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0"
         >
-            <div class="w-full max-w-7xl flex flex-col gap-8">
+            <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
                 {/* メインカード */}
-                <div class="card bg-base-100 shadow-xl p-6 md:p-10 w-full border border-base-300">
+                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-base-300 min-w-0">
                     {/* ヘッダー */}
-                    <div class="mb-6 border-b border-base-300 pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div class="mb-4 sm:mb-6 border-b border-base-300 pb-4 sm:pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-2xl md:text-3xl font-black text-base-content">
+                            <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-base-content">
                                 <BudouX text="OGP確認・SNSシェアプレビューツール" />
                             </h1>
                             <BudouX
@@ -872,14 +872,14 @@ export default function OgpChecker() {
                     </div>
 
                     {/* 入力モード切替タブ */}
-                    <div class="grid grid-cols-2 gap-2 p-1.5 bg-base-200 rounded-xl mb-6 max-w-lg">
+                    <div class="grid grid-cols-2 gap-1.5 sm:gap-2 p-1.5 bg-base-200 rounded-xl mb-6 max-w-lg w-full">
                         <button
                             type="button"
                             onClick={() => {
                                 setInputMode("url");
                                 setError("");
                             }}
-                            class={`py-2 px-4 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+                            class={`py-2 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-all truncate text-center ${
                                 inputMode() === "url"
                                     ? "bg-primary text-white shadow-sm"
                                     : "text-base-content/70 hover:bg-base-300/50"

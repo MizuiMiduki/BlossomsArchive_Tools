@@ -69,18 +69,18 @@ export default function Credits() {
     });
 
     return (
-        <div ref={containerRef} class="max-w-2xl mx-auto p-6 space-y-6">
-            <h1 class="text-3xl font-bold">使用ライブラリ</h1>
+        <div ref={containerRef} class="w-full max-w-2xl mx-auto space-y-6 min-w-0">
+            <h1 class="text-2xl sm:text-3xl font-bold">使用ライブラリ</h1>
 
             <div class="space-y-3">
                 {libraries.map((lib) => (
-                    <div class="card bg-base-100 border border-base-300 shadow-sm">
-                        <div class="card-body p-4 flex-row items-center justify-between">
+                    <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0">
+                        <div class="card-body p-3 sm:p-4 flex-row items-center justify-between gap-2">
                             <a
                                 href={lib.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="font-medium text-primary hover:underline"
+                                class="font-medium text-sm sm:text-base text-primary hover:underline truncate"
                             >
                                 {lib.name}
                             </a>
@@ -92,16 +92,16 @@ export default function Credits() {
                 ))}
             </div>
 
-            <h2 class="text-2xl font-bold pt-4">使用アイコン</h2>
+            <h2 class="text-xl sm:text-2xl font-bold pt-4">使用アイコン</h2>
 
             <div class="space-y-3">
-                <div class="card bg-base-100 border border-base-300 shadow-sm">
-                    <div class="card-body p-4 flex-row items-center justify-between">
+                <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0">
+                    <div class="card-body p-3 sm:p-4 flex-row items-center justify-between gap-2">
                         <a
                             href="https://github.com/simple-icons/simple-icons"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="font-medium text-primary hover:underline"
+                            class="font-medium text-sm sm:text-base text-primary hover:underline truncate"
                         >
                             Simple Icons
                         </a>
@@ -110,13 +110,13 @@ export default function Credits() {
                         </span>
                     </div>
                 </div>
-                <div class="card bg-base-100 border border-base-300 shadow-sm">
-                    <div class="card-body p-4 flex-row items-center justify-between">
+                <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0">
+                    <div class="card-body p-3 sm:p-4 flex-row items-center justify-between gap-2">
                         <a
                             href="https://misskey-hub.net/brand-assets/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="font-medium text-primary hover:underline"
+                            class="font-medium text-sm sm:text-base text-primary hover:underline truncate"
                         >
                             Misskey Logo
                         </a>
@@ -125,13 +125,13 @@ export default function Credits() {
                         </span>
                     </div>
                 </div>
-                <div class="card bg-base-100 border border-base-300 shadow-sm">
-                    <div class="card-body p-4 flex-row items-center justify-between">
+                <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0">
+                    <div class="card-body p-3 sm:p-4 flex-row items-center justify-between gap-2">
                         <a
                             href="https://github.com/mastodon/mastodon"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="font-medium text-primary hover:underline"
+                            class="font-medium text-sm sm:text-base text-primary hover:underline truncate"
                         >
                             Mastodon Logo
                         </a>
@@ -143,7 +143,7 @@ export default function Credits() {
             </div>
 
             <div class="pt-4 border-t border-base-200">
-                <a href="/" class="btn btn-outline">
+                <a href="/" class="btn btn-outline btn-sm sm:btn-md">
                     トップへ戻る
                 </a>
             </div>

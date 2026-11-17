@@ -208,10 +208,10 @@ export default function HyperfocalCalculator() {
     });
 
     return (
-        <div ref={containerRef} class="h-full w-full p-4 flex flex-col gap-4 bg-base-300/40 overflow-hidden">
-            <div class="card bg-base-100 shadow-2xl p-6 w-full border border-base-300">
-                <div class="mb-6 border-b-2 border-base-300 pb-4">
-                    <h1 class="text-2xl font-black text-primary flex items-center gap-2">
+        <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col gap-4 min-w-0">
+            <div class="card bg-base-100 shadow-2xl p-3 sm:p-6 w-full border border-base-300 min-w-0">
+                <div class="mb-4 sm:mb-6 border-b-2 border-base-300 pb-3 sm:pb-4">
+                    <h1 class="text-xl sm:text-2xl font-black text-primary flex items-center gap-2">
                         <BudouX text="📐 過焦点距離（パンフォーカス）計算ツール" />
                     </h1>
                     <BudouX
@@ -221,9 +221,9 @@ export default function HyperfocalCalculator() {
                     />
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
                     {/* 左側：入力コントロール */}
-                    <div class="lg:col-span-5 flex flex-col gap-5 bg-base-200/70 p-5 rounded-2xl border border-base-300 overflow-hidden">
+                    <div class="lg:col-span-5 flex flex-col gap-4 sm:gap-5 bg-base-200/70 p-3 sm:p-5 rounded-2xl border border-base-300 min-w-0">
                         {/* 1. センサーサイズ */}
                         <div class="form-control w-full">
                             <label class="label py-1 flex flex-col items-start gap-0.5">
@@ -409,7 +409,7 @@ export default function HyperfocalCalculator() {
                                         <button
                                             type="button"
                                             onClick={() => setFNumber(fVal)}
-                                            class={`btn btn-xs rounded-md font-bold h-7 ${fNumber() === fVal ? "btn-primary text-white" : "btn-outline border-base-400 text-base-content hover:bg-base-300"}`}
+                                            class={`btn btn-xs rounded-md font-bold h-7 min-w-0 px-1 text-[11px] sm:text-xs ${fNumber() === fVal ? "btn-primary text-white" : "btn-outline border-base-400 text-base-content hover:bg-base-300"}`}
                                         >
                                             {fVal}
                                         </button>

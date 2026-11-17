@@ -3751,7 +3751,7 @@ export default function ExifFrame() {
                                                                         tmpl.id,
                                                                     )
                                                                 }
-                                                                class={`flex flex-col items-center p-1.5 rounded-lg border-2 text-center transition-all duration-150 min-h-[58px] ${
+                                                                class={`flex flex-col items-center p-1.5 rounded-lg border-2 text-center transition-all duration-150 min-h-[58px] min-w-0 ${
                                                                     frameStyle() ===
                                                                     tmpl.id
                                                                         ? "border-secondary bg-secondary/10 scale-[0.96] ring-2 ring-secondary/20"

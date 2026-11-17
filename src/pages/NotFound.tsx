@@ -10,7 +10,7 @@ export default function NotFound() {
     });
 
     return (
-        <div ref={containerRef} class="p-10 text-center">
+        <div ref={containerRef} class="p-6 sm:p-10 text-center w-full max-w-lg mx-auto min-w-0">
             <Meta name="robots" content="noindex" />
 
             <h1 class="text-4xl font-bold">404</h1>

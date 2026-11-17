@@ -145,10 +145,10 @@ export default function QrGenerator() {
     ];
 
     return (
-        <div ref={containerRef} class="h-full w-full p-4 md:p-8 flex flex-col items-center bg-base-300/30 overflow-x-hidden">
-            <div class="w-full max-w-7xl flex flex-col gap-8">
+        <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0">
+            <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
                 {/* メインツールカード */}
-                <div class="card bg-base-100 shadow-xl p-6 md:p-10 w-full border border-slate-200">
+                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-slate-200 min-w-0">
                     {/* ヘッダーセクション */}
                     <div class="mb-8 border-b border-slate-200 pb-5">
                         <h1 class="text-2xl md:text-3xl font-black text-slate-800">

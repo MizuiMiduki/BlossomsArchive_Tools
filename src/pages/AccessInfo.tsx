@@ -290,9 +290,9 @@ IPアドレス: ${data.ip}
     };
 
     return (
-        <div ref={containerRef} class="h-full w-full p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
+        <div ref={containerRef} class="w-full max-w-5xl mx-auto flex flex-col gap-4 sm:gap-6 min-w-0">
             <h1 class="sr-only">アクセス環境解析ツール</h1>
-            <div class="card bg-base-100 shadow-xl p-4 sm:p-8 w-full border border-base-300">
+            <div class="card bg-base-100 shadow-xl p-3 sm:p-8 w-full border border-base-300 min-w-0">
                 <Show when={!hasFetched() && !loading()}>
                     <div class="flex flex-col items-center justify-center py-12 sm:py-16 gap-4 text-center">
                         <BudouX

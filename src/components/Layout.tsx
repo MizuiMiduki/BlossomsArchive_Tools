@@ -252,7 +252,7 @@ export default function Layout(props: LayoutProps) {
     );
 
     return (
-        <div class="h-screen max-h-screen bg-base-200 flex overflow-hidden">
+        <div class="h-dvh max-h-dvh bg-base-200 flex overflow-hidden w-full">
             {/* 基本SEOメタタグ */}
             <Title>{getMetadata().title}</Title>
             <Meta name="description" content={getMetadata().description} />
@@ -306,7 +306,7 @@ export default function Layout(props: LayoutProps) {
 
             {/* サイドメニュー本体 */}
             <aside
-                class={`fixed inset-y-0 z-50 bg-base-100 flex flex-col transition-all duration-300 border-r border-base-300 w-64 ${
+                class={`fixed inset-y-0 z-50 bg-base-100 flex flex-col transition-all duration-300 border-r border-base-300 w-64 max-w-[85vw] ${
                     isMenuOpen() ? "left-0" : "-left-64"
                 } ${
                     isPcMenuOpen()
@@ -524,12 +524,12 @@ export default function Layout(props: LayoutProps) {
 
             {/* メインエリア */}
             <div
-                class={`flex-1 flex flex-col min-w-0 h-screen max-h-screen overflow-hidden transition-all duration-300 ${isPcMenuOpen() ? "lg:ml-64" : "lg:ml-0"}`}
+                class={`flex-1 flex flex-col min-w-0 h-dvh max-h-dvh overflow-hidden transition-all duration-300 ${isPcMenuOpen() ? "lg:ml-64" : "lg:ml-0"}`}
             >
-                <header class="h-16 shrink-0 bg-base-100/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-40 flex items-center px-4 lg:px-8 shadow-sm justify-between gap-4">
-                    <div class="flex items-center gap-4">
+                <header class="h-16 shrink-0 bg-base-100/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-40 flex items-center px-3 sm:px-4 lg:px-8 shadow-sm justify-between gap-2 sm:gap-4">
+                    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
                         <button
-                            class={`btn btn-ghost btn-square ${isPcMenuOpen() ? "lg:hidden" : "flex"}`}
+                            class={`btn btn-ghost btn-square btn-sm sm:btn-md shrink-0 ${isPcMenuOpen() ? "lg:hidden" : "flex"}`}
                             aria-label="メニューを開く"
                             onClick={() => {
                                 setIsPcMenuOpen(true);
@@ -552,15 +552,17 @@ export default function Layout(props: LayoutProps) {
                                 ></path>
                             </svg>
                         </button>
-                        <span class="font-bold text-lg">
+                        <span class="font-bold text-base sm:text-lg truncate">
                             {getHeaderTitle()}
                         </span>
                     </div>
-                    <ThemeToggle />
+                    <div class="shrink-0">
+                        <ThemeToggle />
+                    </div>
                 </header>
 
-                <main ref={mainRef} class="flex-1 min-h-0 max-h-[calc(100vh-4rem)] overflow-y-auto [overflow-anchor:none]">
-                    <div class="p-4 lg:p-8">{props.children}</div>
+                <main ref={mainRef} class="flex-1 min-h-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden [overflow-anchor:none]">
+                    <div class="p-3 sm:p-4 lg:p-8 w-full max-w-full min-w-0">{props.children}</div>
                 </main>
             </div>
         </div>

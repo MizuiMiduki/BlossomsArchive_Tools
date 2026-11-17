@@ -130,7 +130,7 @@ export default function TimerStopwatch() {
     });
 
     return (
-        <div ref={containerRef} class="flex flex-col items-center justify-center p-4 sm:p-6 space-y-8 max-w-md mx-auto">
+        <div ref={containerRef} class="flex flex-col items-center justify-center p-1 sm:p-6 space-y-6 sm:space-y-8 max-w-md mx-auto w-full min-w-0">
             <h1 class="sr-only">タイマー・ストップウォッチ</h1>
             {/* ダイアログ */}
             <dialog ref={modalRef} class="modal modal-bottom sm:modal-middle">
@@ -151,7 +151,7 @@ export default function TimerStopwatch() {
             <div class="grid grid-cols-3 w-full max-w-xs sm:max-w-sm p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
                 <button
                     type="button"
-                    class={`py-2 px-1 text-center rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+                    class={`py-2 px-1 text-center rounded-xl text-[11px] sm:text-xs md:text-sm font-bold transition-all truncate ${
                         mode() === "stopwatch"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -162,7 +162,7 @@ export default function TimerStopwatch() {
                 </button>
                 <button
                     type="button"
-                    class={`py-2 px-1 text-center rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+                    class={`py-2 px-1 text-center rounded-xl text-[11px] sm:text-xs md:text-sm font-bold transition-all truncate ${
                         mode() === "timer"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -173,7 +173,7 @@ export default function TimerStopwatch() {
                 </button>
                 <button
                     type="button"
-                    class={`py-2 px-1 text-center rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+                    class={`py-2 px-1 text-center rounded-xl text-[11px] sm:text-xs md:text-sm font-bold transition-all truncate ${
                         mode() === "pomodoro"
                             ? "bg-primary text-white shadow-sm"
                             : "text-base-content/70 hover:text-base-content"
@@ -185,7 +185,7 @@ export default function TimerStopwatch() {
             </div>
 
             {/* 表示部分 */}
-            <div ref={timeDisplayRef} class="text-center">
+            <div ref={timeDisplayRef} class="text-center w-full min-w-0">
                 <Show when={mode() === "pomodoro"}>
                     <div
                         class={`badge ${isBreak() ? "badge-accent" : "badge-primary"} mb-2`}
@@ -193,7 +193,7 @@ export default function TimerStopwatch() {
                         {isBreak() ? "休憩中" : "集中タイム"}
                     </div>
                 </Show>
-                <div class="text-6xl font-mono font-black text-primary tabular-nums">
+                <div class="text-3xl sm:text-5xl md:text-6xl font-mono font-black text-primary tabular-nums tracking-tight">
                     {formatTime(time(), mode() === "stopwatch")}
                 </div>
             </div>
@@ -279,11 +279,11 @@ export default function TimerStopwatch() {
                         <div class="text-sm font-bold opacity-60">
                             プリセット設定
                         </div>
-                        <div class="grid grid-cols-4 gap-2">
+                        <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
                             <For each={[1, 3, 5, 10, 15, 30, 45, 60]}>
                                 {(min) => (
                                     <button
-                                        class="btn btn-sm btn-ghost border-base-300"
+                                        class="btn btn-sm btn-ghost border-base-300 px-1 text-xs sm:text-sm min-w-0"
                                         onClick={(e) => {
                                             animatePop(e.currentTarget, 0.92, 0.15);
                                             setTime(min * 60);

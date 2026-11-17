@@ -260,9 +260,9 @@ export default function VideoCompressor() {
     };
 
     return (
-        <div ref={containerRef} class="max-w-4xl mx-auto space-y-8 p-4">
+        <div ref={containerRef} class="w-full max-w-4xl mx-auto space-y-6 sm:space-y-8 min-w-0">
             {/* タイトルヘッダー */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm p-6 text-center">
+            <div class="card bg-base-100 border border-base-300 shadow-sm p-4 sm:p-6 text-center min-w-0">
                 <h1 class="text-3xl font-extrabold text-primary mb-2 flex items-center justify-center gap-2">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -292,7 +292,7 @@ export default function VideoCompressor() {
             {/* ファイル未選択時のドロップゾーン */}
             <Show when={!selectedFile()}>
                 <div
-                    class={`card border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer bg-base-100 ${
+                    class={`card border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all cursor-pointer bg-base-100 ${
                         isDragging() ? "border-primary bg-primary/5 scale-[1.01]" : "border-base-300 hover:border-primary/50"
                     }`}
                     onDragOver={(e) => {

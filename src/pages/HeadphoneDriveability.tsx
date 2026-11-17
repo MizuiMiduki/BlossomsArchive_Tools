@@ -153,8 +153,8 @@ export default function HeadphoneDriveability() {
     });
 
     return (
-        <div ref={containerRef} class="flex w-full flex-col gap-6 p-4 lg:p-6">
-            <section class="rounded-lg border border-base-300 bg-base-100 p-5 shadow-sm sm:p-8">
+        <div ref={containerRef} class="flex w-full max-w-7xl mx-auto flex-col gap-6 min-w-0">
+            <section class="rounded-lg border border-base-300 bg-base-100 p-3 sm:p-8 shadow-sm min-w-0">
                 <header class="mb-4 border-b border-base-300 pb-3">
                     <p class="text-sm font-bold uppercase tracking-wide text-primary">
                         Audio utility
