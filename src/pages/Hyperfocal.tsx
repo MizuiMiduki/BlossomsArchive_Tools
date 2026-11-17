@@ -1,8 +1,7 @@
 import {
     createSignal,
     createMemo,
-    onMount,
-    onCleanup,
+    onSettled,
     For,
     Show,
 } from "solid-js";
@@ -33,7 +32,7 @@ export default function HyperfocalCalculator() {
     ];
 
     // SEO対策：メタデータの動的挿入
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "過焦点距離（パンフォーカス）計算ツール | 被写界深度シミュレーター";
 
@@ -64,13 +63,13 @@ export default function HyperfocalCalculator() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef, ".card");
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("hyperfocal-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("hyperfocal-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     const activeCoc = createMemo<number>(() => {

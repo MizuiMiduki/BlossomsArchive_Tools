@@ -1,6 +1,5 @@
 // src/App.tsx
-import { Router, Route } from "@solidjs/router";
-import { MetaProvider } from "@solidjs/meta";
+import { createRouter } from "@solidjs/router";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Calculator from "./pages/Calculator";
@@ -23,44 +22,36 @@ import TextConverter from "./pages/TextConverter";
 import CharsetConverter from "./pages/CharsetConverter";
 import NotFound from "./pages/NotFound";
 
+export const Router = createRouter({
+    routes: [
+        { path: "/", component: Home },
+        { path: "/calculator", component: Calculator },
+        { path: "/qr_code", component: QrGenerator },
+        { path: "/password-generator", component: PasswordGenerator },
+        { path: "/lottery", component: Lottery },
+        { path: "/image_conversion", component: ImageConverter },
+        { path: "/video-compressor", component: VideoCompressor },
+        { path: "/charset-converter", component: CharsetConverter },
+        { path: "/access-info", component: AccessInfo },
+        { path: "/ogp-checker", component: OgpChecker },
+        { path: "/seo-checker", component: SeoChecker },
+        { path: "/exif-frame", component: ExifFrameGenerator },
+        { path: "/clock", component: Clock },
+        { path: "/timer", component: TimerStopwatch },
+        { path: "/privacy", component: PrivacyPolicy },
+        { path: "/credits", component: Credits },
+        { path: "/hyperfocal", component: HyperfocalCalculator },
+        { path: "/headphone-driveability", component: HeadphoneDriveability },
+        { path: "/text-converter", component: TextConverter },
+        { path: "*", component: NotFound },
+    ],
+});
+
 function App() {
     return (
-        <MetaProvider>
-            <Router root={Layout}>
-                <Route path="/" component={Home} />
-                <Route path="/calculator" component={Calculator} />
-                <Route path="/qr_code" component={QrGenerator} />
-                <Route
-                    path="/password-generator"
-                    component={PasswordGenerator}
-                />
-                <Route path="/lottery" component={Lottery} />
-                <Route path="/image_conversion" component={ImageConverter} />
-                <Route
-                    path="/video-compressor"
-                    component={VideoCompressor}
-                />
-                <Route
-                    path="/charset-converter"
-                    component={CharsetConverter}
-                />
-                <Route path="/access-info" component={AccessInfo} />
-                <Route path="/ogp-checker" component={OgpChecker} />
-                <Route path="/seo-checker" component={SeoChecker} />
-                <Route path="/exif-frame" component={ExifFrameGenerator} />
-                <Route path="/clock" component={Clock} />
-                <Route path="/timer" component={TimerStopwatch} />
-                <Route path="/privacy" component={PrivacyPolicy} />
-                <Route path="/credits" component={Credits} />
-                <Route path="/hyperfocal" component={HyperfocalCalculator} />
-                <Route
-                    path="/headphone-driveability"
-                    component={HeadphoneDriveability}
-                />
-                <Route path="/text-converter" component={TextConverter} />
-                <Route path="*" component={NotFound} />
-            </Router>
-        </MetaProvider>
+        <Router>
+            {(props) => <Layout>{props.children}</Layout>}
+        </Router>
     );
 }
 

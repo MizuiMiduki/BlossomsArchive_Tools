@@ -1,12 +1,12 @@
 // src/components/ThemeToggle.tsx
-import { createSignal, onMount } from "solid-js";
+import { createSignal, onSettled } from "solid-js";
 import gsap from "gsap";
 
 export default function ThemeToggle() {
     let buttonRef: HTMLButtonElement | undefined;
     const [isDark, setIsDark] = createSignal(false);
 
-    onMount(() => {
+    onSettled(() => {
         // 初回読み込み時にlocalStorageを確認して反映します
         const savedTheme = localStorage.getItem("theme");
         const prefersDark = window.matchMedia(

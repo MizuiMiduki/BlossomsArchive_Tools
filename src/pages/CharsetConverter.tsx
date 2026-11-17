@@ -1,4 +1,4 @@
-import { createSignal, createMemo, onMount, onCleanup, Show, For } from "solid-js";
+import { createSignal, createMemo, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/gsapAnimations";
@@ -79,7 +79,7 @@ export default function CharsetConverter() {
     const [normCopiedKey, setNormCopiedKey] = createSignal<string | null>(null);
 
     // SEOと構造化データの動的注入
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "文字コード総合変換ツール | UTF-8・Shift_JIS・EUC・Unicode・進数・文字化け完全対応";
 
@@ -110,13 +110,13 @@ export default function CharsetConverter() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef, ".card");
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("charset-converter-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("charset-converter-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     // テキスト変換結果

@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, Show, For } from "solid-js";
+import { createSignal, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import {
@@ -29,7 +29,7 @@ export default function Lottery() {
     let drawButtonRef: HTMLButtonElement | undefined;
 
     // SEO対策：メタデータおよび構造化データの動的注入
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "オンライン抽選ツール | リストからランダム選定（CSPRNG準拠）";
 
@@ -60,13 +60,13 @@ export default function Lottery() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef, ".card");
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("lottery-generator-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("lottery-generator-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     const startLottery = () => {

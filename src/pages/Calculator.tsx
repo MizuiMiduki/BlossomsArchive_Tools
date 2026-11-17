@@ -1,4 +1,4 @@
-import { createSignal, For, onMount, onCleanup } from "solid-js";
+import { createSignal, For, onSettled, untrack } from "solid-js";
 import AdSense from "../components/AdSense";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 import gsap from "gsap";
@@ -10,7 +10,7 @@ export default function Calculator() {
     const [history, setHistory] = createSignal<string[]>([]);
 
     // SEO対策：メタデータの動的挿入
-    onMount(() => {
+    onSettled(() => {
         document.title = "シンプル計算機 | 履歴機能付きWeb電卓";
 
         let metaDesc = document.querySelector('meta[name="description"]');
@@ -40,13 +40,13 @@ export default function Calculator() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef);
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("calculator-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("calculator-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     const buttons = [
@@ -160,7 +160,7 @@ export default function Calculator() {
                         {(item, index) => (
                             <li
                                 ref={(el) => {
-                                    if (index() === 0) animateFadeIn(el, { duration: 0.25 });
+                                    if (untrack(index) === 0) animateFadeIn(el, { duration: 0.25 });
                                 }}
                                 onClick={() => loadFromHistory(item)}
                                 class="p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-primary hover:text-white transition-all text-sm font-mono"

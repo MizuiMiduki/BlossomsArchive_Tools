@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
+import { createSignal, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import {
@@ -24,7 +24,7 @@ export default function PasswordGenerator() {
     let generateButtonRef: HTMLButtonElement | undefined;
     let resultsListRef: HTMLDivElement | undefined;
 
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "パスワード生成ツール | 桁数・文字種指定（CSPRNG準拠）";
 
@@ -55,13 +55,13 @@ export default function PasswordGenerator() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef, ".card");
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("password-generator-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("password-generator-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     const generatePassword = () => {

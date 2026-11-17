@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, Show } from "solid-js";
+import { createSignal, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
@@ -11,7 +11,7 @@ export default function ImageConverter() {
     const [isConverting, setIsConverting] = createSignal(false);
 
     // SEO対策：メタデータおよび構造化データの動的注入
-    onMount(() => {
+    onSettled(() => {
         document.title =
             "画像形式変換ツール | WebP・PNG・JPEGの相互変換（ブラウザ完結）";
 
@@ -42,13 +42,13 @@ export default function ImageConverter() {
         document.head.appendChild(script);
 
         if (containerRef) playPageEntrance(containerRef, ".card");
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("image-converter-jsonld");
-        if (script) {
-            script.remove();
-        }
+        return () => {
+            const el = document.getElementById("image-converter-jsonld");
+            if (el) {
+                el.remove();
+            }
+        };
     });
 
     const handleFileChange = (e: Event) => {

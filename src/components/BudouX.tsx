@@ -1,5 +1,6 @@
-import { JSX, createMemo, For, splitProps } from "solid-js";
-import { Dynamic } from "solid-js/web";
+import { createMemo, For, omit } from "solid-js";
+import { Dynamic } from "@solidjs/web";
+import type { JSX } from "@solidjs/web";
 import { parseBudouX } from "../utils/budoux";
 
 export interface BudouXProps extends JSX.HTMLAttributes<HTMLElement> {
@@ -14,17 +15,17 @@ export interface BudouXProps extends JSX.HTMLAttributes<HTMLElement> {
  * `as` プロパティでレンダリングするHTMLタグ（デフォルト: span）を指定可能です。
  */
 export default function BudouX(props: BudouXProps) {
-    const [local, others] = splitProps(props, ["text", "children", "class", "as"]);
+    const others = omit(props, "text", "children", "class", "as");
 
-    const tag = () => local.as || "span";
-    const content = () => local.text ?? (typeof local.children === "string" ? local.children : "");
+    const tag = () => props.as || "span";
+    const content = () => props.text ?? (typeof props.children === "string" ? props.children : "");
     const words = createMemo(() => parseBudouX(content()));
 
     return (
         <Dynamic
             component={tag()}
             {...others}
-            class={`${local.class || ""}`}
+            class={`${props.class || ""}`}
             style={{
                 "word-break": "keep-all",
                 "overflow-wrap": "anywhere",

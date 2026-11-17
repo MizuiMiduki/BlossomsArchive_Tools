@@ -1,4 +1,5 @@
-import { createSignal, createMemo, createEffect, onMount, onCleanup, Show, For, JSX } from "solid-js";
+import { createSignal, createMemo, createEffect, onSettled, Show, For } from "solid-js";
+import type { JSX } from "@solidjs/web";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import {
@@ -223,20 +224,24 @@ export default function TextConverter() {
     });
 
     // 変換実行
-    const runConversion = (text: string, mode: ConversionMode) => {
+    const runConversion = (
+        text: string,
+        mode: ConversionMode,
+        options: {
+            convertLineBreaks: boolean;
+            wrapInParagraphs: boolean;
+            autoLinkUrls: boolean;
+            preserveListBullets: boolean;
+            includeLinks: boolean;
+        }
+    ) => {
         if (!text) {
             setOutputText("");
             setErrorMessage(null);
             return;
         }
 
-        const res = convertText(text, mode, {
-            convertLineBreaks: convertLineBreaks(),
-            wrapInParagraphs: wrapInParagraphs(),
-            autoLinkUrls: autoLinkUrls(),
-            preserveListBullets: preserveListBullets(),
-            includeLinks: includeLinksInPlain(),
-        });
+        const res = convertText(text, mode, options);
 
         if (res.error) {
             setErrorMessage(res.error);
@@ -247,20 +252,24 @@ export default function TextConverter() {
     };
 
     // 入力や設定の変更時に変換を即時実行
-    createEffect(() => {
-        const text = inputText();
-        const mode = selectedMode();
-        // オプション変更も追跡
-        convertLineBreaks();
-        wrapInParagraphs();
-        autoLinkUrls();
-        preserveListBullets();
-        includeLinksInPlain();
+    createEffect(
+        () => ({
+            text: inputText(),
+            mode: selectedMode(),
+            options: {
+                convertLineBreaks: convertLineBreaks(),
+                wrapInParagraphs: wrapInParagraphs(),
+                autoLinkUrls: autoLinkUrls(),
+                preserveListBullets: preserveListBullets(),
+                includeLinks: includeLinksInPlain(),
+            },
+        }),
+        ({ text, mode, options }) => {
+            runConversion(text, mode, options);
+        }
+    );
 
-        runConversion(text, mode);
-    });
-
-    onMount(() => {
+    onSettled(() => {
         document.title = "テキスト・HTML・Markdown変換ツール | 無料の相互変換・エンティティ対応";
 
         let metaDesc = document.querySelector('meta[name="description"]');
@@ -292,11 +301,11 @@ export default function TextConverter() {
         if (containerRef) {
             playPageEntrance(containerRef, ".card");
         }
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("text-converter-jsonld");
-        if (script) script.remove();
+        return () => {
+            const el = document.getElementById("text-converter-jsonld");
+            if (el) el.remove();
+        };
     });
 
     // スワップ（反転）処理

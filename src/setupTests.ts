@@ -1,6 +1,20 @@
 import "@testing-library/jest-dom/vitest";
+import { fireEvent } from "@solidjs/testing-library";
+import { flush } from "solid-js";
 import { vi, afterEach } from "vitest";
 import gsap from "gsap";
+
+// Solid 2.0: microtask-batched な更新をテスト中の fireEvent 後に即時 flush して同期的に DOM を更新
+for (const key of Object.keys(fireEvent)) {
+    const prop = (fireEvent as any)[key];
+    if (typeof prop === "function") {
+        (fireEvent as any)[key] = (...args: any[]) => {
+            const res = prop(...args);
+            flush();
+            return res;
+        };
+    }
+}
 
 // 0. Node 25+ environment fallback for localStorage
 if (

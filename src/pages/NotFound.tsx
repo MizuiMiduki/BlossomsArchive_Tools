@@ -1,11 +1,11 @@
-import { onMount } from "solid-js";
+import { onSettled } from "solid-js";
 import { Meta } from "@solidjs/meta";
 import { playPageEntrance } from "../utils/gsapAnimations";
 
 export default function NotFound() {
     let containerRef: HTMLDivElement | undefined;
 
-    onMount(() => {
+    onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
     });
 

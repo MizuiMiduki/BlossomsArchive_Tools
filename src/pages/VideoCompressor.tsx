@@ -1,4 +1,4 @@
-import { createSignal, createMemo, onMount, onCleanup, Show, For } from "solid-js";
+import { createSignal, createMemo, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/gsapAnimations";
@@ -55,7 +55,7 @@ export default function VideoCompressor() {
     // キャンセル用 AbortController
     let abortController: AbortController | null = null;
 
-    onMount(() => {
+    onSettled(() => {
         document.title = "動画圧縮ツール | ブラウザ完結で容量削減・軽量化（サーバー送信なし）";
 
         let metaDesc = document.querySelector('meta[name="description"]');
@@ -94,22 +94,22 @@ export default function VideoCompressor() {
         if (containerRef) {
             playPageEntrance(containerRef, ".card");
         }
-    });
 
-    onCleanup(() => {
-        const script = document.getElementById("video-compressor-jsonld");
-        if (script) {
-            script.remove();
-        }
-        if (previewUrl()) {
-            URL.revokeObjectURL(previewUrl());
-        }
-        if (compressedUrl()) {
-            URL.revokeObjectURL(compressedUrl());
-        }
-        if (abortController) {
-            abortController.abort();
-        }
+        return () => {
+            const el = document.getElementById("video-compressor-jsonld");
+            if (el) {
+                el.remove();
+            }
+            if (previewUrl()) {
+                URL.revokeObjectURL(previewUrl());
+            }
+            if (compressedUrl()) {
+                URL.revokeObjectURL(compressedUrl());
+            }
+            if (abortController) {
+                abortController.abort();
+            }
+        };
     });
 
     // プリセット変更ハンドラ

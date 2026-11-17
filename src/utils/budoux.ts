@@ -38,20 +38,11 @@ export function parseBudouX(text: string): string[] {
 }
 
 /**
- * Solid.js カスタムディレクティブ
- * 使用法: `<p use:budoux>長いテキスト...</p>`
+ * Solid.js ディレクティブ / ref ハンドラ
+ * 使用法: `<p ref={budoux}>長いテキスト...</p>`
  */
 export function budoux(el: Element) {
     if (el instanceof HTMLElement) {
         applyBudouX(el);
-    }
-}
-
-// Solid.js の JSX 名前空間拡張（use:budoux の型定義）
-declare module "solid-js" {
-    namespace JSX {
-        interface Directives {
-            budoux: boolean | undefined;
-        }
     }
 }

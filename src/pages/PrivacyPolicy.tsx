@@ -1,11 +1,11 @@
 // src/pages/PrivacyPolicy.tsx
-import { onMount } from "solid-js";
+import { onSettled } from "solid-js";
 import { playPageEntrance } from "../utils/gsapAnimations";
 
 export default function PrivacyPolicy() {
     let containerRef: HTMLDivElement | undefined;
 
-    onMount(() => {
+    onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
     });
 
