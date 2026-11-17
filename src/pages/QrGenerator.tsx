@@ -175,6 +175,7 @@ export default function QrGenerator() {
                                     </label>
                                     <textarea
                                         value={text()}
+                                        aria-label="QRコードに埋め込む文字列・URL"
                                         onInput={(e) =>
                                             setText(e.currentTarget.value)
                                         }
@@ -330,7 +331,7 @@ export default function QrGenerator() {
 
                         <div class="space-y-2">
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="アクセス期限や料金についての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q.
                                     生成したQRコードにアクセス期限や料金は発生しますか？
@@ -341,7 +342,7 @@ export default function QrGenerator() {
                             </div>
 
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="印刷・グラフィックデザインに適した形式についての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q.
                                     印刷・グラフィックデザインに適した形式はどれですか？
@@ -354,7 +355,7 @@ export default function QrGenerator() {
                             </div>
 
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="カメラでQRコードが正しく読み取れない場合の対処法についての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q.
                                     カメラでQRコードが正しく読み取れない場合の対処法は？

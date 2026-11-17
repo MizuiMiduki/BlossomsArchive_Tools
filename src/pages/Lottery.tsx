@@ -216,6 +216,7 @@ export default function Lottery() {
                                 </p>
                                 <textarea
                                     value={inputText()}
+                                    aria-label="抽選対象のリスト入力"
                                     onInput={(e) =>
                                         setInputText(e.currentTarget.value)
                                     }
@@ -234,6 +235,7 @@ export default function Lottery() {
                                     </label>
                                     <select
                                         value={drawCount()}
+                                        aria-label="同時選定数"
                                         onChange={(e) =>
                                             setDrawCount(
                                                 Number(e.currentTarget.value),
@@ -253,6 +255,7 @@ export default function Lottery() {
                                     <label class="label cursor-pointer justify-start gap-3 h-11 px-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 w-full transition-colors">
                                         <input
                                              type="checkbox"
+                                             aria-label="当選時にリストから除外"
                                              checked={removeOnDraw()}
                                              onChange={(e) =>
                                                  setRemoveOnDraw(

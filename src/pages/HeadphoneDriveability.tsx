@@ -181,6 +181,7 @@ export default function HeadphoneDriveability() {
                                     min="0.1"
                                     step="0.1"
                                     value={impedance()}
+                                    aria-label="インピーダンス (Ω)"
                                     onInput={(event) =>
                                         setImpedance(event.currentTarget.value)
                                     }
@@ -197,6 +198,7 @@ export default function HeadphoneDriveability() {
                                     max="99.9"
                                     step="0.1"
                                     value={impedanceTolerance()}
+                                    aria-label="公差 (±%)"
                                     onInput={(event) =>
                                         setImpedanceTolerance(
                                             event.currentTarget.value,
@@ -214,6 +216,7 @@ export default function HeadphoneDriveability() {
                                     min="0.1"
                                     step="any"
                                     value={impedanceFrequency()}
+                                    aria-label="測定周波数 (Hz)"
                                     onInput={(event) =>
                                         setImpedanceFrequency(
                                             event.currentTarget.value,
@@ -239,6 +242,7 @@ export default function HeadphoneDriveability() {
                                     type="number"
                                     step="0.1"
                                     value={sensitivity()}
+                                    aria-label="感度"
                                     onInput={(event) =>
                                         setSensitivity(
                                             event.currentTarget.value,
@@ -253,6 +257,7 @@ export default function HeadphoneDriveability() {
                                 </span>
                                 <select
                                     value={sensitivityUnit()}
+                                    aria-label="感度の単位"
                                     onChange={(event) =>
                                         setSensitivityUnit(
                                             event.currentTarget.value,
@@ -273,6 +278,7 @@ export default function HeadphoneDriveability() {
                                     min="0.1"
                                     step="any"
                                     value={sensitivityFrequency()}
+                                    aria-label="感度測定周波数 (Hz)"
                                     onInput={(event) =>
                                         setSensitivityFrequency(
                                             event.currentTarget.value,
@@ -293,6 +299,7 @@ export default function HeadphoneDriveability() {
                                 max="140"
                                 step="1"
                                 value={targetSpl()}
+                                aria-label="目標ピーク音圧 (dB SPL)"
                                 onInput={(event) =>
                                     setTargetSpl(event.currentTarget.value)
                                 }

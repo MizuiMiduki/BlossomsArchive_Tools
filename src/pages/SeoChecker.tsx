@@ -1384,6 +1384,7 @@ export default function SeoChecker() {
                                         <input
                                             type="file"
                                             accept=".html,.htm,text/html"
+                                            aria-label="HTMLファイルを選択"
                                             onChange={handleHtmlFileUpload}
                                             class="hidden"
                                         />

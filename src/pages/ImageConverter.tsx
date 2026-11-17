@@ -153,6 +153,7 @@ export default function ImageConverter() {
                                         <input
                                             type="file"
                                             accept="image/*"
+                                            aria-label="画像ファイルを選択"
                                             onChange={handleFileChange}
                                             class="hidden"
                                         />
@@ -168,6 +169,7 @@ export default function ImageConverter() {
                                     </label>
                                     <select
                                         value={outputFormat()}
+                                        aria-label="変換後の画像形式（フォーマット）"
                                         onChange={(e) =>
                                             setOutputFormat(
                                                 e.currentTarget.value,
@@ -293,7 +295,7 @@ export default function ImageConverter() {
 
                         <div class="space-y-2">
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="WebP形式へ変換するメリットについての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q. WebP形式へ変換するメリットは何ですか？
                                 </div>
@@ -307,7 +309,7 @@ export default function ImageConverter() {
                             </div>
 
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="PNG画像をJPEGへ変換した際の透過箇所についての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q.
                                     PNG画像をJPEGへ変換した際の透過箇所の挙動は？
@@ -318,7 +320,7 @@ export default function ImageConverter() {
                             </div>
 
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="変換元のファイルの最大解像度についての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q.
                                     変換元のファイルの最大解像度やサイズ制限はありますか？

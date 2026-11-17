@@ -3,6 +3,19 @@ import AdSense from "../components/AdSense";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 import gsap from "gsap";
 
+function safeCalculate(expression: string): number {
+    const sanitized = expression.replace(/×/g, "*").replace(/÷/g, "/");
+    if (!/^[\d\s+\-*/.]+$/.test(sanitized)) {
+        throw new Error("Invalid character");
+    }
+    const fn = new Function(`return (${sanitized})`);
+    const res = fn();
+    if (typeof res !== "number" || !isFinite(res)) {
+        throw new Error("Invalid result");
+    }
+    return res;
+}
+
 export default function Calculator() {
     let containerRef: HTMLDivElement | undefined;
     let displayInputRef: HTMLInputElement | undefined;
@@ -87,7 +100,7 @@ export default function Calculator() {
 
     const calculate = () => {
         try {
-            const result = eval(display().replace("×", "*").replace("÷", "/"));
+            const result = safeCalculate(display());
             const entry = `${display()} = ${result}`;
             setHistory((prev) => [entry, ...prev]);
             setDisplay(String(result));
@@ -122,11 +135,13 @@ export default function Calculator() {
 
     return (
         <div ref={containerRef} class="h-full w-full p-4 lg:p-6 flex flex-col lg:flex-row gap-6">
+            <h1 class="sr-only">シンプル計算機</h1>
             <div class="w-full lg:w-3/4 flex flex-col gap-6 max-w-xl mx-auto lg:order-2">
                 <input
                     ref={displayInputRef}
                     type="text"
                     value={display()}
+                    aria-label="計算結果・入力表示"
                     class="input input-bordered w-full text-right text-4xl lg:text-6xl font-mono h-20 lg:h-24 bg-white border-4 border-slate-300 text-slate-900"
                     disabled
                 />
@@ -152,9 +167,9 @@ export default function Calculator() {
             </div>
 
             <div class="w-full lg:w-1/4 h-64 lg:h-auto bg-base-100 p-4 rounded-xl border border-base-200 shadow-sm overflow-y-auto lg:order-1">
-                <h3 class="font-bold mb-4 border-b border-base-200 pb-2">
+                <h2 class="font-bold mb-4 border-b border-base-200 pb-2 text-base">
                     計算履歴
-                </h3>
+                </h2>
                 <ul class="space-y-2">
                     <For each={history()}>
                         {(item, index) => (

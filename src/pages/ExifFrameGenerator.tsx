@@ -2538,6 +2538,7 @@ export default function ExifFrame() {
 
     return (
         <div ref={containerRef} class="exif-tool h-full w-full p-0 sm:p-4 pb-36 sm:pb-36 lg:pb-4 flex flex-col gap-4 bg-base-100">
+            <h1 class="sr-only">EXIFフレーム生成ツール</h1>
             <For each={fontList}>
                 {(f) => (
                     <link
@@ -2627,6 +2628,7 @@ export default function ExifFrame() {
                                         <input
                                             type="file"
                                             accept="image/*"
+                                            aria-label="写真画像ファイルを選択"
                                             onChange={handleFileChange}
                                             class="hidden"
                                         />
@@ -2666,6 +2668,7 @@ export default function ExifFrame() {
                                         </div>
                                         <input
                                             type="checkbox"
+                                            aria-label="自由タイトルの使用切り替え"
                                             checked={useCustomTitle()}
                                             onChange={(e) =>
                                                 handleToggleChange(
@@ -2693,6 +2696,7 @@ export default function ExifFrame() {
                                             </div>
                                             <input
                                                 type="checkbox"
+                                                aria-label="接頭辞（Shot on 等）の表示切り替え"
                                                 checked={showPrefix()}
                                                 onChange={(e) =>
                                                     handleToggleChange(
@@ -2706,6 +2710,7 @@ export default function ExifFrame() {
                                         <Show when={showPrefix()}>
                                             <input
                                                 type="text"
+                                                aria-label="接頭辞テキスト"
                                                 value={prefixText()}
                                                 onInput={(e) =>
                                                     handleTextChange(
@@ -2726,6 +2731,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="text"
+                                                    aria-label="自由タイトル 1行目"
                                                     placeholder="1行目 (例: 作品のタイトル)"
                                                     value={customTitleLine1()}
                                                     onInput={(e) =>
@@ -2743,6 +2749,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="text"
+                                                    aria-label="自由タイトル 2行目"
                                                     placeholder="2行目 (例: 撮影日や場所)"
                                                     value={customTitleLine2()}
                                                     onInput={(e) =>
@@ -2800,6 +2807,7 @@ export default function ExifFrame() {
                                                     </span>
                                                     <input
                                                         type="text"
+                                                        aria-label="任意の区切り文字"
                                                         value={customSeparator()}
                                                         onInput={(e) =>
                                                             handleTextChange(
@@ -2829,6 +2837,7 @@ export default function ExifFrame() {
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
+                                                    aria-label="カメラ機種名の表示切り替え"
                                                     checked={showCamera()}
                                                     onChange={(e) =>
                                                         handleToggleChange(
@@ -2844,6 +2853,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="text"
+                                                    aria-label="カメラ機種名"
                                                     value={cameraModel()}
                                                     onInput={(e) =>
                                                         handleTextChange(
@@ -2858,6 +2868,7 @@ export default function ExifFrame() {
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
+                                                    aria-label="レンズ名の表示切り替え"
                                                     checked={showLens()}
                                                     onChange={(e) =>
                                                         handleToggleChange(
@@ -2873,6 +2884,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="text"
+                                                    aria-label="レンズ名"
                                                     value={lensModel()}
                                                     onInput={(e) =>
                                                         handleTextChange(
@@ -2887,6 +2899,7 @@ export default function ExifFrame() {
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
+                                                    aria-label="焦点距離の表示切り替え"
                                                     checked={showFocal()}
                                                     onChange={(e) =>
                                                         handleToggleChange(
@@ -2902,6 +2915,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="text"
+                                                    aria-label="焦点距離"
                                                     value={focalLength()}
                                                     onInput={(e) =>
                                                         handleTextChange(
@@ -2920,6 +2934,7 @@ export default function ExifFrame() {
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
+                                                    aria-label="F値の表示切り替え"
                                                     checked={showFNumber()}
                                                     onChange={(e) =>
                                                         handleToggleChange(
@@ -2938,6 +2953,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="text"
+                                                    aria-label="F値"
                                                     value={fNumber()}
                                                     onInput={(e) =>
                                                         handleTextChange(
@@ -2953,6 +2969,7 @@ export default function ExifFrame() {
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
+                                                    aria-label="シャッター速度の表示切り替え"
                                                     checked={showSpeed()}
                                                     onChange={(e) =>
                                                         handleToggleChange(
@@ -2968,6 +2985,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="text"
+                                                    aria-label="シャッター速度"
                                                     value={shutterSpeed()}
                                                     onInput={(e) =>
                                                         handleTextChange(
@@ -2983,6 +3001,7 @@ export default function ExifFrame() {
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
+                                                    aria-label="ISO感度の表示切り替え"
                                                     checked={showIso()}
                                                     onChange={(e) =>
                                                         handleToggleChange(
@@ -3001,6 +3020,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="text"
+                                                    aria-label="ISO感度"
                                                     value={isoValue()}
                                                     onInput={(e) =>
                                                         handleTextChange(
@@ -3570,6 +3590,7 @@ export default function ExifFrame() {
                                             使用フォント
                                         </span>
                                         <select
+                                            aria-label="使用フォント"
                                             value={selectedFont()}
                                             onChange={(e) =>
                                                 handleFontChange(
@@ -3596,6 +3617,7 @@ export default function ExifFrame() {
                                         </span>
                                         <input
                                             type="range"
+                                            aria-label="文字の大きさスライダー"
                                             min="50"
                                             max="180"
                                             value={fontSizeScale()}
@@ -3626,6 +3648,7 @@ export default function ExifFrame() {
                                         </div>
                                         <input
                                             type="checkbox"
+                                            aria-label="自由カラー調整モードの切り替え"
                                             checked={isAdvancedMode()}
                                             onChange={(e) =>
                                                 handleToggleChange(
@@ -3647,6 +3670,7 @@ export default function ExifFrame() {
                                                     <div class="flex items-center gap-1">
                                                         <input
                                                             type="color"
+                                                            aria-label="外枠フレームの色"
                                                             value={customFrameColor()}
                                                             onInput={(e) =>
                                                                 handleTextChange(
@@ -3669,6 +3693,7 @@ export default function ExifFrame() {
                                                     <div class="flex items-center gap-1">
                                                         <input
                                                             type="color"
+                                                            aria-label="文字の色"
                                                             value={customTextColor()}
                                                             onInput={(e) =>
                                                                 handleTextChange(
@@ -3692,6 +3717,7 @@ export default function ExifFrame() {
                                                 </span>
                                                 <input
                                                     type="range"
+                                                    aria-label="写真の角丸調整スライダー"
                                                     min="0"
                                                     max="150"
                                                     value={imageBorderRadius()}
@@ -3789,6 +3815,7 @@ export default function ExifFrame() {
                                                     </span>
                                                     <input
                                                         type="checkbox"
+                                                        aria-label="チェキ風の帯比率を連動"
                                                         checked={isChekiMode()}
                                                         onChange={(e) =>
                                                             handleToggleChange(
@@ -3840,6 +3867,7 @@ export default function ExifFrame() {
                                         <input
                                             type="file"
                                             accept="image/png,image/webp,image/gif,image/svg+xml,image/*"
+                                            aria-label="透過PNGや重ねる画像ファイルを選択"
                                             multiple
                                             onChange={handleOverlayFilesChange}
                                             class="hidden"
@@ -3934,6 +3962,7 @@ export default function ExifFrame() {
                                                                 </div>
                                                                 <input
                                                                     type="checkbox"
+                                                                    aria-label="枠外にはみ出して配置する"
                                                                     checked={item.overFrame}
                                                                     onChange={(e) =>
                                                                         updateOverlayItem(item.id, {
@@ -3968,6 +3997,7 @@ export default function ExifFrame() {
                                                                 </div>
                                                                 <input
                                                                     type="range"
+                                                                    aria-label="画像サイズスライダー"
                                                                     min="5"
                                                                     max="250"
                                                                     value={item.scale}
@@ -4003,6 +4033,7 @@ export default function ExifFrame() {
                                                                 </div>
                                                                 <input
                                                                     type="range"
+                                                                    aria-label="回転角度スライダー"
                                                                     min="-180"
                                                                     max="180"
                                                                     value={item.rotation}
@@ -4025,6 +4056,7 @@ export default function ExifFrame() {
                                                                 </div>
                                                                 <input
                                                                     type="range"
+                                                                    aria-label="不透明度スライダー"
                                                                     min="10"
                                                                     max="100"
                                                                     value={item.opacity}
@@ -4065,6 +4097,7 @@ export default function ExifFrame() {
                                         <div class="flex gap-1.5">
                                             <input
                                                 type="text"
+                                                aria-label="著作権クレジット表記テキスト"
                                                 placeholder="例: © 2026 Project / Character Name"
                                                 value={copyrightText()}
                                                 onInput={(e) =>
@@ -4100,6 +4133,7 @@ export default function ExifFrame() {
                                             表記の位置
                                         </span>
                                         <select
+                                            aria-label="クレジット表記の位置"
                                             value={copyrightPosition()}
                                             onChange={(e) =>
                                                 setCopyrightPosition(
@@ -4157,6 +4191,7 @@ export default function ExifFrame() {
                                         </span>
                                         <input
                                             type="text"
+                                            aria-label="出力ファイル名"
                                             placeholder="空欄なら自動生成されます"
                                             value={customExportName()}
                                             onInput={(e) =>
@@ -4208,6 +4243,7 @@ export default function ExifFrame() {
                                             出力サイズ（解像度）:
                                         </span>
                                         <select
+                                            aria-label="出力サイズ（解像度）"
                                             value={String(exportMaxEdge())}
                                             onChange={(e) =>
                                                 setExportMaxEdge(
@@ -4239,6 +4275,7 @@ export default function ExifFrame() {
                                             </div>
                                             <input
                                                 type="checkbox"
+                                                aria-label="元写真のEXIFメタデータを保持して書き出す"
                                                 checked={keepOriginalExif()}
                                                 onChange={(e) =>
                                                     setKeepOriginalExif(

@@ -953,6 +953,7 @@ export default function OgpChecker() {
                                         <input
                                             type="file"
                                             accept=".html,.htm,text/html"
+                                            aria-label="HTMLファイルを選択"
                                             onChange={handleHtmlFileUpload}
                                             class="hidden"
                                         />
@@ -1046,6 +1047,7 @@ export default function OgpChecker() {
                                             <input
                                                 type="file"
                                                 accept="image/*"
+                                                aria-label="ローカル画像ファイルを選択"
                                                 onChange={
                                                     handleLocalImageUpload
                                                 }

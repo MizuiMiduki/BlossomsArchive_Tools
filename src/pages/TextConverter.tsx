@@ -529,6 +529,7 @@ export default function TextConverter() {
                                     ref={fileInputRef}
                                     type="file"
                                     accept=".txt,.html,.htm,.md,.json,.xml"
+                                    aria-label="テキストファイルを選択"
                                     class="hidden"
                                     onChange={handleFileUpload}
                                 />
@@ -550,6 +551,7 @@ export default function TextConverter() {
                                 class="textarea textarea-bordered w-full flex-1 font-mono text-xs sm:text-sm leading-relaxed p-3 h-80 lg:h-96 resize-y focus:outline-primary bg-base-200/30"
                                 placeholder="変換したいテキストまたはHTML/Markdownをここに入力..."
                                 value={inputText()}
+                                aria-label="変換前のテキスト入力"
                                 onInput={(e) => setInputText(e.currentTarget.value)}
                             />
                         </div>
@@ -700,6 +702,7 @@ export default function TextConverter() {
                                     readonly
                                     class="textarea textarea-bordered w-full flex-1 font-mono text-xs sm:text-sm leading-relaxed p-3 h-80 lg:h-96 resize-y bg-base-200/30 text-base-content"
                                     placeholder="変換されたテキストがここに表示されます..."
+                                    aria-label="変換後のテキスト結果"
                                     value={outputText()}
                                 />
                             </Show>
@@ -716,7 +719,7 @@ export default function TextConverter() {
             {/* 詳細設定オプション（アコーディオン） */}
             <div class="card bg-base-100 border border-base-300 shadow-sm">
                 <div class="collapse collapse-arrow">
-                    <input type="checkbox" />
+                    <input type="checkbox" aria-label="詳細設定オプションを開閉" />
                     <div class="collapse-title text-sm font-semibold flex items-center gap-2">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

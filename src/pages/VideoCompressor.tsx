@@ -311,6 +311,7 @@ export default function VideoCompressor() {
                         ref={fileInputRef}
                         type="file"
                         accept="video/*,.mp4,.webm,.mov,.mkv,.avi"
+                        aria-label="動画ファイルを選択"
                         class="hidden"
                         onChange={(e) => handleFiles((e.target as HTMLInputElement).files)}
                     />
@@ -459,6 +460,7 @@ export default function VideoCompressor() {
                                             max="100"
                                             step="5"
                                             value={scalePercent()}
+                                            aria-label="解像度スケーリング"
                                             onInput={(e) => {
                                                 setScalePercent(Number(e.currentTarget.value));
                                                 setSelectedPresetId("custom");
@@ -490,6 +492,7 @@ export default function VideoCompressor() {
                                             max="6000"
                                             step="100"
                                             value={videoBitrateKbps()}
+                                            aria-label="映像ビットレート"
                                             onInput={(e) => {
                                                 setVideoBitrateKbps(Number(e.currentTarget.value));
                                                 setSelectedPresetId("custom");
@@ -515,6 +518,7 @@ export default function VideoCompressor() {
                                         <select
                                             class="select select-bordered select-sm w-full"
                                             value={fps()}
+                                            aria-label="フレームレート (FPS)"
                                             onChange={(e) => {
                                                 setFps(Number(e.currentTarget.value));
                                                 setSelectedPresetId("custom");
@@ -536,6 +540,7 @@ export default function VideoCompressor() {
                                         <select
                                             class="select select-bordered select-sm w-full"
                                             value={includeAudio() ? "include" : "mute"}
+                                            aria-label="音声設定"
                                             onChange={(e) => {
                                                 setIncludeAudio(e.currentTarget.value === "include");
                                                 setSelectedPresetId("custom");
@@ -555,6 +560,7 @@ export default function VideoCompressor() {
                                         <select
                                             class="select select-bordered select-sm w-full"
                                             value={selectedMimeType()}
+                                            aria-label="出力フォーマット"
                                             onChange={(e) => setSelectedMimeType(e.currentTarget.value)}
                                             disabled={isCompressing()}
                                         >
@@ -741,9 +747,9 @@ export default function VideoCompressor() {
                 </div>
 
                 <div class="space-y-3 pt-2 border-t border-base-200">
-                    <h4 class="font-bold text-sm text-base-content">よくある質問 (FAQ)</h4>
+                    <h2 class="font-bold text-sm text-base-content">よくある質問 (FAQ)</h2>
                     <div class="collapse collapse-plus bg-base-200/30 rounded-lg">
-                        <input type="checkbox" />
+                        <input type="checkbox" aria-label="動画圧縮時の画質についての質問を開閉" />
                         <div class="collapse-title text-xs font-semibold">
                             Q. 動画を圧縮すると画質は落ちますか？
                         </div>
@@ -752,7 +758,7 @@ export default function VideoCompressor() {
                         </div>
                     </div>
                     <div class="collapse collapse-plus bg-base-200/30 rounded-lg">
-                        <input type="checkbox" />
+                        <input type="checkbox" aria-label="音声を消す設定についての質問を開閉" />
                         <div class="collapse-title text-xs font-semibold">
                             Q. 音声を消してさらにファイルサイズを減らすことはできますか？
                         </div>

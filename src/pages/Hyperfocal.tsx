@@ -211,9 +211,9 @@ export default function HyperfocalCalculator() {
         <div ref={containerRef} class="h-full w-full p-4 flex flex-col gap-4 bg-base-300/40 overflow-hidden">
             <div class="card bg-base-100 shadow-2xl p-6 w-full border border-base-300">
                 <div class="mb-6 border-b-2 border-base-300 pb-4">
-                    <h2 class="text-2xl font-black text-primary flex items-center gap-2">
+                    <h1 class="text-2xl font-black text-primary flex items-center gap-2">
                         <BudouX text="📐 過焦点距離（パンフォーカス）計算ツール" />
-                    </h2>
+                    </h1>
                     <BudouX
                         as="p"
                         class="text-xs text-base-content font-bold mt-2 leading-relaxed opacity-80"
@@ -241,6 +241,7 @@ export default function HyperfocalCalculator() {
                                 onChange={(e) =>
                                     setSensorType(e.currentTarget.value)
                                 }
+                                aria-label="カメラのセンサーサイズ"
                                 class="select select-bordered select-sm w-full bg-base-100 text-xs font-bold text-base-content border-base-400 focus:border-primary mt-1 h-10"
                             >
                                 <For each={sensors}>
@@ -266,6 +267,7 @@ export default function HyperfocalCalculator() {
                                         min="0.001"
                                         max="0.1"
                                         value={customCoc()}
+                                        aria-label="許容錯乱円の直径 (CoC)"
                                         onInput={(e) =>
                                             setCustomCoc(
                                                 Number(e.currentTarget.value),
@@ -298,6 +300,7 @@ export default function HyperfocalCalculator() {
                                 <button
                                     type="button"
                                     onClick={() => changeFocalLength(-1)}
+                                    aria-label="焦点距離を1mm減らす"
                                     class="btn btn-outline btn-primary btn-sm w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg select-none"
                                 >
                                     −
@@ -308,6 +311,7 @@ export default function HyperfocalCalculator() {
                                     max="200"
                                     step="1"
                                     value={focalLength()}
+                                    aria-label="焦点距離スライダー"
                                     onInput={(e) =>
                                         setFocalLength(
                                             Number(e.currentTarget.value),
@@ -318,6 +322,7 @@ export default function HyperfocalCalculator() {
                                 <button
                                     type="button"
                                     onClick={() => changeFocalLength(1)}
+                                    aria-label="焦点距離を1mm増やす"
                                     class="btn btn-outline btn-primary btn-sm w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg select-none"
                                 >
                                     ＋
@@ -334,6 +339,7 @@ export default function HyperfocalCalculator() {
                                         min="4"
                                         max="600"
                                         value={focalLength()}
+                                        aria-label="レンズの焦点距離 (mm)"
                                         onInput={(e) =>
                                             setFocalLength(
                                                 Number(e.currentTarget.value),
@@ -366,6 +372,7 @@ export default function HyperfocalCalculator() {
                                 <button
                                     type="button"
                                     onClick={() => changeFNumber(-1)}
+                                    aria-label="絞り値を1段階小さくする"
                                     class="btn btn-outline btn-primary btn-sm w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg select-none"
                                 >
                                     −
@@ -376,6 +383,7 @@ export default function HyperfocalCalculator() {
                                     max="32"
                                     step="0.1"
                                     value={fNumber()}
+                                    aria-label="絞り値スライダー"
                                     onInput={(e) =>
                                         setFNumber(
                                             Number(e.currentTarget.value),
@@ -386,6 +394,7 @@ export default function HyperfocalCalculator() {
                                 <button
                                     type="button"
                                     onClick={() => changeFNumber(1)}
+                                    aria-label="絞り値を1段階大きくする"
                                     class="btn btn-outline btn-primary btn-sm w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg select-none"
                                 >
                                     ＋
@@ -422,6 +431,7 @@ export default function HyperfocalCalculator() {
                                         min="0.5"
                                         max="64"
                                         value={fNumber()}
+                                        aria-label="絞り値 (F値)"
                                         onInput={(e) =>
                                             setFNumber(
                                                 Number(e.currentTarget.value),
@@ -451,6 +461,7 @@ export default function HyperfocalCalculator() {
                                 <button
                                     type="button"
                                     onClick={() => changeSubjectDistance(-0.1)}
+                                    aria-label="ピント合わせ位置を近づける"
                                     class="btn btn-outline btn-secondary btn-sm w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg select-none"
                                 >
                                     −
@@ -461,6 +472,7 @@ export default function HyperfocalCalculator() {
                                     max="50"
                                     step="0.5"
                                     value={customSubjectDistance()}
+                                    aria-label="ピント合わせ位置スライダー"
                                     onInput={(e) =>
                                         setCustomSubjectDistance(
                                             Number(e.currentTarget.value),
@@ -471,6 +483,7 @@ export default function HyperfocalCalculator() {
                                 <button
                                     type="button"
                                     onClick={() => changeSubjectDistance(0.1)}
+                                    aria-label="ピント合わせ位置を遠ざける"
                                     class="btn btn-outline btn-secondary btn-sm w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg select-none"
                                 >
                                     ＋
@@ -488,6 +501,7 @@ export default function HyperfocalCalculator() {
                                         min="0.1"
                                         max="1000"
                                         value={customSubjectDistance()}
+                                        aria-label="実際のピント合わせ位置 (m)"
                                         onInput={(e) =>
                                             setCustomSubjectDistance(
                                                 Number(e.currentTarget.value),

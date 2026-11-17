@@ -1,5 +1,5 @@
 // src/components/Layout.tsx
-import { For, Show, createEffect, createSignal } from "solid-js";
+import { For, Show, createEffect, createSignal, onSettled } from "solid-js";
 import type { JSX } from "@solidjs/web";
 import { useLocation } from "@solidjs/router";
 import { Link, Meta, Title } from "@solidjs/meta";
@@ -28,6 +28,7 @@ export default function Layout(props: LayoutProps) {
         localStorage.getItem("isPcMenuOpen") !== "false",
     );
     const [isPcMenuHovered, setIsPcMenuHovered] = createSignal(false);
+    const [shouldLoadThirdParty, setShouldLoadThirdParty] = createSignal(false);
 
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
@@ -39,6 +40,30 @@ export default function Layout(props: LayoutProps) {
     if ("scrollRestoration" in history) {
         history.scrollRestoration = "manual";
     }
+
+    onSettled(() => {
+        const triggerLoad = () => {
+            setShouldLoadThirdParty(true);
+            window.removeEventListener("scroll", triggerLoad);
+            window.removeEventListener("pointerdown", triggerLoad);
+            window.removeEventListener("touchstart", triggerLoad);
+            window.removeEventListener("keydown", triggerLoad);
+        };
+
+        window.addEventListener("scroll", triggerLoad, { passive: true, once: true });
+        window.addEventListener("pointerdown", triggerLoad, { passive: true, once: true });
+        window.addEventListener("touchstart", triggerLoad, { passive: true, once: true });
+        window.addEventListener("keydown", triggerLoad, { passive: true, once: true });
+
+        // 初回ロード直後のパフォーマンススコア向上とユーザー体験の両立のため、アイドル時または数秒後にフォールバック読み込み
+        if (typeof window !== "undefined") {
+            if ("requestIdleCallback" in window) {
+                (window as any).requestIdleCallback(() => triggerLoad(), { timeout: 4000 });
+            } else {
+                setTimeout(triggerLoad, 4000);
+            }
+        }
+    });
 
     createEffect(
         () => isPcMenuOpen(),
@@ -269,8 +294,10 @@ export default function Layout(props: LayoutProps) {
                 content={getMetadata().description}
             />
             <Meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
-            {gaTag}
-            {adsenseTag}
+            <Show when={shouldLoadThirdParty()}>
+                {gaTag}
+                {adsenseTag}
+            </Show>
 
             <div
                 class={`fixed inset-0 bg-black/50 z-20 lg:hidden ${isMenuOpen() ? "block" : "hidden"}`}
@@ -296,7 +323,9 @@ export default function Layout(props: LayoutProps) {
                     <div class="flex items-center gap-3">
                         <img
                             src="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05-32x32.png"
-                            alt="Logo"
+                            alt="BlossomsArchive Tools Logo"
+                            width="32"
+                            height="32"
                             class="w-8 h-8 rounded-full border border-base-300"
                         />
                         <span class="font-bold whitespace-nowrap">
@@ -307,6 +336,7 @@ export default function Layout(props: LayoutProps) {
                     <button
                         type="button"
                         class="hidden lg:flex btn btn-ghost btn-xs btn-square"
+                        aria-label={isPcMenuOpen() ? "サイドメニューを閉じる" : "サイドメニューを開く"}
                         onClick={() => setIsPcMenuOpen(!isPcMenuOpen())}
                     >
                         <svg
@@ -355,13 +385,14 @@ export default function Layout(props: LayoutProps) {
                                         rel="noopener noreferrer"
                                         class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
                                         data-tip="X (Twitter)"
+                                        aria-label="X"
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 24 24"
                                             class="w-5 h-5"
                                             style="fill: #000000"
-                                            aria-label="X"
+                                            aria-hidden="true"
                                         >
                                             <path d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z" />
                                         </svg>
@@ -373,13 +404,14 @@ export default function Layout(props: LayoutProps) {
                                         rel="noopener noreferrer"
                                         class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
                                         data-tip="Threads"
+                                        aria-label="Threads"
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 24 24"
                                             class="w-5 h-5"
                                             style="fill: #000000"
-                                            aria-label="Threads"
+                                            aria-hidden="true"
                                         >
                                             <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098c1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015c-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164c1.43 1.783 3.631 2.698 6.54 2.717c2.623-.02 4.358-.631 5.8-2.045c1.647-1.613 1.618-3.593 1.09-4.798c-.31-.71-.873-1.3-1.634-1.75c-.192 1.352-.622 2.446-1.284 3.272c-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801c-1.063-.689-1.685-1.74-1.752-2.964c-.065-1.19.408-2.285 1.33-3.082c.88-.76 2.119-1.207 3.583-1.291a14 14 0 0 1 3.02.142c-.126-.742-.375-1.332-.75-1.757c-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32l-1.757-1.18c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388q.163.07.321.142c1.49.7 2.58 1.761 3.154 3.07c.797 1.82.871 4.79-1.548 7.158c-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69q-.362 0-.739.021c-1.836.103-2.98.946-2.916 2.143c.067 1.256 1.452 1.839 2.784 1.767c1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 0 0-2.215-.221" />
                                         </svg>
@@ -391,13 +423,14 @@ export default function Layout(props: LayoutProps) {
                                         rel="noopener noreferrer"
                                         class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
                                         data-tip="Misskey"
+                                        aria-label="Misskey"
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 24 24"
                                             class="w-5 h-5"
                                             style="fill: #86B300"
-                                            aria-label="Misskey"
+                                            aria-hidden="true"
                                         >
                                             <path d="M8.91076 16.8915c-1.03957.0038-1.93213-.6294-2.35267-1.366-.22516-.3217-.66989-.4364-.6761 0v2.0148c0 .8094-.29152 1.5097-.87581 2.1002-.56755.573-1.25977.8595-2.0779.8595-.80014 0-1.49298-.2865-2.07727-.8601C.28408 19.05 0 18.3497 0 17.5403V6.45968c0-.62378.17553-1.18863.52599-1.69455.36657-.52284.83426-.88582 1.4018-1.08769a2.84574 2.84574 0 0 1 1.00049-.17742c.90125 0 1.65239.35421 2.25281 1.06262l2.99713 3.51572c.06699.05016.263.43696.73192.43696.47016 0 .6916-.3868.75796-.43758l2.9717-3.5151c.6178-.70841 1.377-1.06262 2.2782-1.06262.3337 0 .6675.05893 1.0012.17742.5669.20187 1.0259.56422 1.377 1.08769.3665.50592.5501 1.07077.5501 1.69455V17.5403c0 .8094-.2915 1.5097-.8758 2.1002-.5675.573-1.2604.8595-2.0779.8595-.8008 0-1.493-.2865-2.0779-.8601-.5669-.5899-.8504-1.2902-.8504-2.0996v-2.0148c-.0496-.5499-.5303-.2032-.7009 0-.4503.8431-1.31369 1.3616-2.35264 1.366ZM21.447 8.60998c-.7009 0-1.3015-.24449-1.8019-.73348-.4838-.50571-.7257-1.11277-.7257-1.82118s.2419-1.30711.7257-1.79611c.5004-.50571 1.101-.75856 1.8019-.75856.7009 0 1.3017.25285 1.8025.75856.5003.489.7505 1.0877.7505 1.79611 0 .70841-.2502 1.31547-.7505 1.82118-.5008.48899-1.1016.73348-1.8025.73348Zm.0248.50655c.7009 0 1.2935.25285 1.7777.75856.5003.50571.7505 1.11301.7505 1.82181v6.2484c0 .7084-.2502 1.3155-.7505 1.8212-.4838.489-1.0764.7335-1.7777.7335-.7005 0-1.3011-.2445-1.8019-.7335-.5003-.5057-.7505-1.1128-.7505-1.8212v-6.2484c0-.7084.2502-1.3157.7505-1.82181.5004-.50571 1.101-.75856 1.8019-.75856Z" />
                                         </svg>
@@ -409,13 +442,14 @@ export default function Layout(props: LayoutProps) {
                                         rel="noopener noreferrer"
                                         class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
                                         data-tip="Bluesky"
+                                        aria-label="Bluesky"
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 24 24"
                                             class="w-5 h-5"
                                             style="fill: #0085ff"
-                                            aria-label="Bluesky"
+                                            aria-hidden="true"
                                         >
                                             <path d="M5.202 2.857C7.954 4.922 10.913 9.11 12 11.358c1.087-2.247 4.046-6.436 6.798-8.501C20.783 1.366 24 .213 24 3.883c0 .732-.42 6.156-.667 7.037-.856 3.061-3.978 3.842-6.755 3.37 4.854.826 6.089 3.562 3.422 6.299-5.065 5.196-7.28-1.304-7.847-2.97-.104-.305-.152-.448-.153-.327 0-.121-.05.022-.153.327-.568 1.666-2.782 8.166-7.847 2.97-2.667-2.737-1.432-5.473 3.422-6.3-2.777.473-5.899-.308-6.755-3.369C.42 10.04 0 4.615 0 3.883c0-3.67 3.217-2.517 5.202-1.026" />
                                         </svg>
@@ -427,13 +461,14 @@ export default function Layout(props: LayoutProps) {
                                         rel="noopener noreferrer"
                                         class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
                                         data-tip="Mastodon"
+                                        aria-label="Mastodon"
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 24 24"
                                             class="w-5 h-5"
                                             style="fill: #6364ff"
-                                            aria-label="Mastodon"
+                                            aria-hidden="true"
                                         >
                                             <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054 19.648 19.648 0 0 0 4.636.536c.562 0 1.124 0 1.69-.016 1.939-.056 3.995-.154 5.906-.45 .047-.007.093-.015.14-.023 2.476-.42 4.83-1.735 5.073-5.753.01-.17.038-1.774.038-1.947 0-.596.183-4.24-.025-6.478zM19.52 13.527h-2.76V7.836c0-1.202-.505-1.813-1.515-1.813-1.117 0-1.676.724-1.676 2.156v3.12h-2.744v-3.12c0-1.432-.56-2.156-1.676-2.156-1.01 0-1.515.611-1.515 1.813v5.691H4.873V7.639c0-1.202.308-2.159.924-2.87.636-.71 1.468-1.074 2.498-1.074 1.19 0 2.091.456 2.689 1.37L12 6.388l1.016-1.323c.598-.914 1.499-1.37 2.689-1.37 1.03 0 1.862.364 2.498 1.074.616.711.924 1.668.924 2.87z" />
                                         </svg>
@@ -444,6 +479,7 @@ export default function Layout(props: LayoutProps) {
                                             type="button"
                                             class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
                                             data-tip="その他の共有"
+                                            aria-label="その他の共有"
                                             onClick={() => {
                                                 navigator
                                                     .share({
@@ -458,6 +494,7 @@ export default function Layout(props: LayoutProps) {
                                                 fill="none"
                                                 viewBox="0 0 24 24"
                                                 class="w-5 h-5 stroke-current"
+                                                aria-hidden="true"
                                             >
                                                 <path
                                                     stroke-linecap="round"
@@ -493,6 +530,7 @@ export default function Layout(props: LayoutProps) {
                     <div class="flex items-center gap-4">
                         <button
                             class={`btn btn-ghost btn-square ${isPcMenuOpen() ? "lg:hidden" : "flex"}`}
+                            aria-label="メニューを開く"
                             onClick={() => {
                                 setIsPcMenuOpen(true);
                                 setIsMenuOpen(!isMenuOpen());

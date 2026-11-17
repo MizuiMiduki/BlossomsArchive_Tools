@@ -430,6 +430,7 @@ export default function CharsetConverter() {
                                     </label>
                                     <select
                                         class="select select-bordered w-full select-sm md:select-md"
+                                        aria-label="変換元文字コード"
                                         value={fromEncoding()}
                                         onChange={(e) =>
                                             setFromEncoding(e.currentTarget.value as InputEncodingOption)
@@ -447,6 +448,7 @@ export default function CharsetConverter() {
                                         type="button"
                                         class="btn btn-outline btn-circle btn-sm"
                                         title="文字コードとテキストを入れ替え"
+                                        aria-label="文字コードとテキストを入れ替え"
                                         onClick={handleSwapEncoding}
                                     >
                                         ⇄
@@ -459,6 +461,7 @@ export default function CharsetConverter() {
                                     </label>
                                     <select
                                         class="select select-bordered select-primary w-full select-sm md:select-md"
+                                        aria-label="変換先文字コード"
                                         value={toEncoding()}
                                         onChange={(e) =>
                                             setToEncoding(e.currentTarget.value as SupportedEncoding)
@@ -541,6 +544,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     class="textarea textarea-bordered w-full flex-1 font-mono text-sm leading-relaxed min-h-[260px]"
                                     placeholder="変換したいテキストをここに入力または貼り付け..."
+                                    aria-label="変換したいテキストの入力"
                                     value={inputText()}
                                     onInput={(e) => setInputText(e.currentTarget.value)}
                                 />
@@ -592,6 +596,7 @@ export default function CharsetConverter() {
                                     readonly
                                     class="textarea textarea-bordered w-full flex-1 font-mono text-sm leading-relaxed min-h-[260px] bg-base-200/50"
                                     placeholder="変換後のテキストがここに表示されます..."
+                                    aria-label="変換後のテキスト結果プレビュー"
                                     value={textConversionResult().text}
                                 />
 
@@ -682,6 +687,7 @@ export default function CharsetConverter() {
                                     <span class="text-xs font-semibold">基準文字コード:</span>
                                     <select
                                         class="select select-bordered select-sm font-mono"
+                                        aria-label="基準文字コード"
                                         value={cfEncoding()}
                                         onChange={(e) =>
                                             setCfEncoding(e.currentTarget.value as SupportedEncoding)
@@ -704,6 +710,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     class="textarea textarea-bordered w-full font-mono text-sm min-h-[90px]"
                                     placeholder="変換したいテキストを入力..."
+                                    aria-label="変換したい入力テキスト"
                                     value={cfInput()}
                                     onInput={(e) => setCfInput(e.currentTarget.value)}
                                 />
@@ -724,6 +731,7 @@ export default function CharsetConverter() {
                                     <div class="flex flex-wrap items-center gap-1.5">
                                         <select
                                             class="select select-bordered select-xs"
+                                            aria-label="16進数バイト列の表記フォーマット"
                                             value={cfHexFormat()}
                                             onChange={(e) =>
                                                 setCfHexFormat(e.currentTarget.value as any)
@@ -763,6 +771,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     readonly
                                     class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
+                                    aria-label="16進数バイト列 (HEX) 出力"
                                     value={cfOutputs().hex}
                                 />
                             </div>
@@ -803,6 +812,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     readonly
                                     class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
+                                    aria-label="10進数バイト列 (DEC) 出力"
                                     value={cfOutputs().dec}
                                 />
                             </div>
@@ -843,6 +853,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     readonly
                                     class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
+                                    aria-label="2進数ビット列 (BIN) 出力"
                                     value={cfOutputs().bin}
                                 />
                             </div>
@@ -856,6 +867,7 @@ export default function CharsetConverter() {
                                     <div class="flex flex-wrap items-center gap-1.5">
                                         <select
                                             class="select select-bordered select-xs"
+                                            aria-label="Unicode表記フォーマット"
                                             value={cfUnicodeFormat()}
                                             onChange={(e) =>
                                                 setCfUnicodeFormat(e.currentTarget.value as any)
@@ -893,6 +905,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     readonly
                                     class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
+                                    aria-label="Unicode表記出力"
                                     value={cfOutputs().unicodeEscape}
                                 />
                             </div>
@@ -906,6 +919,7 @@ export default function CharsetConverter() {
                                     <div class="flex flex-wrap items-center gap-1.5">
                                         <select
                                             class="select select-bordered select-xs"
+                                            aria-label="HTML数値文字参照フォーマット"
                                             value={cfHtmlFormat()}
                                             onChange={(e) =>
                                                 setCfHtmlFormat(e.currentTarget.value as any)
@@ -942,6 +956,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     readonly
                                     class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
+                                    aria-label="HTML数値文字参照 (NCR) 出力"
                                     value={cfOutputs().htmlEntity}
                                 />
                             </div>
@@ -986,6 +1001,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     readonly
                                     class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
+                                    aria-label="Base64 出力"
                                     value={cfOutputs().base64}
                                 />
                             </div>
@@ -1030,6 +1046,7 @@ export default function CharsetConverter() {
                                 <textarea
                                     readonly
                                     class="textarea textarea-bordered w-full font-mono text-xs h-16 bg-base-200/50"
+                                    aria-label="URLパーセントエンコード出力"
                                     value={cfOutputs().urlEncoded}
                                 />
                             </div>
@@ -1191,6 +1208,7 @@ export default function CharsetConverter() {
                             </label>
                             <textarea
                                 class="textarea textarea-bordered w-full font-mono text-sm min-h-[90px]"
+                                aria-label="Unicode正規化する入力テキスト"
                                 value={normalizeInput()}
                                 onInput={(e) => setNormalizeInput(e.currentTarget.value)}
                             />
@@ -1329,6 +1347,7 @@ export default function CharsetConverter() {
                             <textarea
                                 class="textarea textarea-bordered w-full font-mono text-sm min-h-[120px]"
                                 placeholder="文字化けした文字列をここに貼り付けてください..."
+                                aria-label="文字化けしたテキスト"
                                 value={mojibakeInput()}
                                 onInput={(e) => setMojibakeInput(e.currentTarget.value)}
                             />

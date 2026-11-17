@@ -1,26 +1,28 @@
 // src/App.tsx
+import { lazy } from "solid-js";
 import { createRouter } from "@solidjs/router";
 import Layout from "./components/Layout";
-import Home from "./pages/Home";
-import Calculator from "./pages/Calculator";
-import QrGenerator from "./pages/QrGenerator";
-import PasswordGenerator from "./pages/PasswordGenerator";
-import Lottery from "./pages/Lottery";
-import ImageConverter from "./pages/ImageConverter";
-import VideoCompressor from "./pages/VideoCompressor";
-import AccessInfo from "./pages/AccessInfo";
-import OgpChecker from "./pages/OgpChecker";
-import SeoChecker from "./pages/SeoChecker";
-import ExifFrameGenerator from "./pages/ExifFrameGenerator";
-import Clock from "./pages/Clock";
-import TimerStopwatch from "./pages/TimerStopwatch";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Credits from "./pages/Credits";
-import HyperfocalCalculator from "./pages/Hyperfocal";
-import HeadphoneDriveability from "./pages/HeadphoneDriveability";
-import TextConverter from "./pages/TextConverter";
-import CharsetConverter from "./pages/CharsetConverter";
-import NotFound from "./pages/NotFound";
+
+const Home = lazy(() => import("./pages/Home"));
+const Calculator = lazy(() => import("./pages/Calculator"));
+const QrGenerator = lazy(() => import("./pages/QrGenerator"));
+const PasswordGenerator = lazy(() => import("./pages/PasswordGenerator"));
+const Lottery = lazy(() => import("./pages/Lottery"));
+const ImageConverter = lazy(() => import("./pages/ImageConverter"));
+const VideoCompressor = lazy(() => import("./pages/VideoCompressor"));
+const CharsetConverter = lazy(() => import("./pages/CharsetConverter"));
+const AccessInfo = lazy(() => import("./pages/AccessInfo"));
+const OgpChecker = lazy(() => import("./pages/OgpChecker"));
+const SeoChecker = lazy(() => import("./pages/SeoChecker"));
+const ExifFrameGenerator = lazy(() => import("./pages/ExifFrameGenerator"));
+const Clock = lazy(() => import("./pages/Clock"));
+const TimerStopwatch = lazy(() => import("./pages/TimerStopwatch"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Credits = lazy(() => import("./pages/Credits"));
+const HyperfocalCalculator = lazy(() => import("./pages/Hyperfocal"));
+const HeadphoneDriveability = lazy(() => import("./pages/HeadphoneDriveability"));
+const TextConverter = lazy(() => import("./pages/TextConverter"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 export const Router = createRouter({
     routes: [

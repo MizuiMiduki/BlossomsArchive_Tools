@@ -153,6 +153,7 @@ export default function Clock() {
 
     return (
         <div ref={containerRef} class="flex flex-col items-center justify-center min-h-[400px] p-6">
+            <h1 class="sr-only">リアルタイム時計</h1>
             {/* 切り替えボタン */}
             <div class="inline-flex p-1 bg-base-200 rounded-2xl mb-12 shadow-inner border border-base-300">
                 <button

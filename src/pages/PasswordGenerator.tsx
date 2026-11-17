@@ -168,6 +168,7 @@ export default function PasswordGenerator() {
                                             min="4"
                                             max="100"
                                             value={length()}
+                                            aria-label="パスワードの文字数（桁数）スライダー"
                                             onInput={(e) =>
                                                 setLength(
                                                     Number(
@@ -182,6 +183,7 @@ export default function PasswordGenerator() {
                                             min="4"
                                             max="100"
                                             value={length()}
+                                            aria-label="パスワードの文字数（桁数）"
                                             onInput={(e) =>
                                                 setLength(
                                                     Math.max(
@@ -281,6 +283,7 @@ export default function PasswordGenerator() {
                                     </label>
                                     <select
                                         value={count()}
+                                        aria-label="生成する個数"
                                         onChange={(e) =>
                                             setCount(
                                                 Number(e.currentTarget.value),
@@ -365,6 +368,7 @@ export default function PasswordGenerator() {
                                                         type="text"
                                                         value={item}
                                                         readonly
+                                                        aria-label={`生成されたパスワード ${index() + 1}`}
                                                         class="input input-sm flex-1 font-mono bg-transparent border-none text-slate-900 tracking-wide focus:outline-none text-sm h-8"
                                                     />
                                                     <Show
@@ -447,7 +451,7 @@ export default function PasswordGenerator() {
 
                         <div class="space-y-2">
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="桁数と文字種の関係性についての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q.
                                     強度を定義するパラメータ（桁数と文字種）の関係性は？
@@ -462,7 +466,7 @@ export default function PasswordGenerator() {
                             </div>
 
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="クライアントサイドでの処理状況の確認方法についての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q.
                                     クライアントサイドでの処理状況を確認する方法は？
@@ -475,7 +479,7 @@ export default function PasswordGenerator() {
                             </div>
 
                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                <input type="checkbox" class="peer" />
+                                <input type="checkbox" aria-label="生成されたランダム文字列の取り扱いについての質問を開閉" class="peer" />
                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                     Q.
                                     生成されたランダム文字列の適切な取り扱い方法は？

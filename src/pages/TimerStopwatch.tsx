@@ -131,12 +131,13 @@ export default function TimerStopwatch() {
 
     return (
         <div ref={containerRef} class="flex flex-col items-center justify-center p-4 sm:p-6 space-y-8 max-w-md mx-auto">
+            <h1 class="sr-only">タイマー・ストップウォッチ</h1>
             {/* ダイアログ */}
             <dialog ref={modalRef} class="modal modal-bottom sm:modal-middle">
                 <div class="modal-box">
-                    <h3 class="font-bold text-xl text-primary">
+                    <h2 class="font-bold text-xl text-primary">
                         時間です！
-                    </h3>
+                    </h2>
                     <p class="py-4 text-base-content/70">お疲れさまでした！</p>
                     <div class="modal-action">
                         <form method="dialog">
@@ -240,6 +241,7 @@ export default function TimerStopwatch() {
                                 }
                                 class="input input-bordered w-full"
                                 placeholder="時"
+                                aria-label="時間（時）"
                             />
                             <input
                                 type="number"
@@ -250,6 +252,7 @@ export default function TimerStopwatch() {
                                 }
                                 class="input input-bordered w-full"
                                 placeholder="分"
+                                aria-label="時間（分）"
                             />
                             <input
                                 type="number"
@@ -260,6 +263,7 @@ export default function TimerStopwatch() {
                                 }
                                 class="input input-bordered w-full"
                                 placeholder="秒"
+                                aria-label="時間（秒）"
                             />
                             <button
                                 class="btn btn-primary"
@@ -306,6 +310,7 @@ export default function TimerStopwatch() {
                                     type="number"
                                     min="1"
                                     class="input input-bordered w-full"
+                                    aria-label="集中時間（分）"
                                     value={focusMin()}
                                     onInput={(e) =>
                                         setFocusMin(
@@ -325,6 +330,7 @@ export default function TimerStopwatch() {
                                     type="number"
                                     min="1"
                                     class="input input-bordered w-full"
+                                    aria-label="休憩時間（分）"
                                     value={breakMin()}
                                     onInput={(e) =>
                                         setBreakMin(

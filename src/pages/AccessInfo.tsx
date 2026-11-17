@@ -250,6 +250,7 @@ IPアドレス: ${data.ip}
                     <button
                         disabled={options?.disabled || isValEmpty}
                         onClick={() => copyRow(val, copyKey)}
+                        aria-label={`${label}をコピー`}
                         class={`btn btn-xs h-7 px-2.5 rounded-lg text-white font-medium md:hidden transition-colors ${
                             isCopied() ? "btn-success" : "btn-neutral"
                         }`}
@@ -276,6 +277,7 @@ IPアドレス: ${data.ip}
                     <button
                         disabled={options?.disabled || isValEmpty}
                         onClick={() => copyRow(val, copyKey)}
+                        aria-label={`${label}をコピー`}
                         class={`btn btn-xs h-7 px-3 rounded-lg text-white font-medium transition-colors ${
                             isCopied() ? "btn-success" : "btn-neutral"
                         }`}
@@ -289,6 +291,7 @@ IPアドレス: ${data.ip}
 
     return (
         <div ref={containerRef} class="h-full w-full p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
+            <h1 class="sr-only">アクセス環境解析ツール</h1>
             <div class="card bg-base-100 shadow-xl p-4 sm:p-8 w-full border border-base-300">
                 <Show when={!hasFetched() && !loading()}>
                     <div class="flex flex-col items-center justify-center py-12 sm:py-16 gap-4 text-center">
@@ -340,9 +343,9 @@ IPアドレス: ${data.ip}
                     <div ref={(el) => animateFadeIn(el)} class="w-full flex flex-col gap-6 sm:gap-8">
                         {/* 接続環境・位置情報 */}
                         <div>
-                            <h3 class="text-lg sm:text-xl font-bold mb-3 text-primary flex items-center gap-2">
+                            <h2 class="text-lg sm:text-xl font-bold mb-3 text-primary flex items-center gap-2">
                                 <span>🌐</span> 接続環境・位置情報
-                            </h3>
+                            </h2>
                             <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
                                 {renderRow("IPアドレス", info()?.ip, "ip", {
                                     isMono: true,
@@ -374,9 +377,9 @@ IPアドレス: ${data.ip}
 
                         {/* 端末・ブラウザ環境 */}
                         <div>
-                            <h3 class="text-lg sm:text-xl font-bold mb-3 text-secondary flex items-center gap-2">
+                            <h2 class="text-lg sm:text-xl font-bold mb-3 text-secondary flex items-center gap-2">
                                 <span>💻</span> 端末・ブラウザ環境
-                            </h3>
+                            </h2>
                             <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
                                 {renderRow("物理解像度", physicScreenSize(), "physic", {
                                     isMono: true,
