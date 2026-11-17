@@ -146,7 +146,7 @@ export default function ImageConverter() {
                                                 ? selectedFile()?.name
                                                 : "ドラッグ＆ドロップ、またはファイルを選択"}
                                         </span>
-                                        <span class="text-[9px] text-slate-400 font-medium">
+                                        <span class="text-[9px] text-slate-600 font-medium">
                                             ※任意の主要な画像形式（png, jpeg,
                                             webp, gif等）に対応しています
                                         </span>
@@ -212,7 +212,7 @@ export default function ImageConverter() {
                             <Show
                                 when={convertedUrl()}
                                 fallback={
-                                    <div class="text-center p-8 space-y-2 text-slate-400">
+                                    <div class="text-center p-8 space-y-2 text-slate-500">
                                         <span class="text-5xl block mb-2">
                                             🖼️
                                         </span>

@@ -30,101 +30,59 @@ function mountAd(
     slot: string,
     format: string,
 ): () => void {
-    container.innerHTML = "";
-
-    const ins = document.createElement("ins");
-    ins.className = "adsbygoogle-stealth";
-    ins.style.display = "block";
-    // Google の幅チェックを通すため <ins> 自体にも幅を指定する
-    ins.style.width = "100%";
-    ins.style.minWidth = "250px";
-    ins.dataset.adClient = CLIENT_ID;
-    ins.dataset.adSlot = slot;
-    ins.dataset.adFormat = format;
-    ins.dataset.fullWidthResponsive = "true";
-    container.appendChild(ins);
-
     let timerId: number | undefined;
-    let userScrolled = false;
+    let isMounted = false;
 
-    const markUserScrolled = () => {
-        userScrolled = true;
-    };
+    const startMount = () => {
+        if (isMounted) return;
+        isMounted = true;
+        cleanupTriggers();
 
-    window.addEventListener("wheel", markUserScrolled, { passive: true });
-    window.addEventListener("touchmove", markUserScrolled, { passive: true });
-    window.addEventListener("pointerdown", markUserScrolled, { passive: true });
-    window.addEventListener("keydown", markUserScrolled, { passive: true });
+        container.innerHTML = "";
+        const ins = document.createElement("ins");
+        ins.className = "adsbygoogle-stealth";
+        ins.style.display = "block";
+        ins.style.width = "100%";
+        ins.style.minWidth = "250px";
+        ins.dataset.adClient = CLIENT_ID;
+        ins.dataset.adSlot = slot;
+        ins.dataset.adFormat = format;
+        ins.dataset.fullWidthResponsive = "true";
+        container.appendChild(ins);
 
-    const keepTopIfNotScrolled = () => {
-        if (userScrolled || window.location.hash) return;
-        const mainEl = document.querySelector("main");
-        if (mainEl) {
-            mainEl.scrollTop = 0;
-            mainEl.scrollTo?.({
-                top: 0,
-                left: 0,
-                behavior: "instant" as ScrollBehavior,
-            });
-        }
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    };
-
-    let mutationObserver: MutationObserver | undefined;
-    let resizeObserver: ResizeObserver | undefined;
-
-    const tryPush = () => {
-        if (container.offsetWidth === 0) {
-            timerId = window.setTimeout(tryPush, RETRY_INTERVAL_MS);
-            return;
-        }
-        const mainEl = document.querySelector("main");
-        const wasAtTop =
-            !userScrolled &&
-            (mainEl ? mainEl.scrollTop <= 1 : true) &&
-            window.scrollY <= 1;
-
-        if (wasAtTop) {
-            if (typeof MutationObserver !== "undefined") {
-                mutationObserver = new MutationObserver(keepTopIfNotScrolled);
-                mutationObserver.observe(container, {
-                    childList: true,
-                    subtree: true,
-                    attributes: true,
-                });
+        const tryPush = () => {
+            if (container.offsetWidth === 0) {
+                timerId = window.setTimeout(tryPush, RETRY_INTERVAL_MS);
+                return;
             }
-            if (typeof ResizeObserver !== "undefined") {
-                resizeObserver = new ResizeObserver(keepTopIfNotScrolled);
-                resizeObserver.observe(container);
-                resizeObserver.observe(ins);
+            try {
+                ins.className = "adsbygoogle";
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+            } catch (e) {
+                console.error("AdSense push error:", e);
             }
-        }
+        };
 
-        try {
-            ins.className = "adsbygoogle";
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch (e) {
-            console.error("AdSense push error:", e);
-        }
-
-        if (wasAtTop) {
-            keepTopIfNotScrolled();
-            requestAnimationFrame(keepTopIfNotScrolled);
-        }
+        timerId = window.setTimeout(tryPush, RETRY_INTERVAL_MS);
     };
 
-    timerId = window.setTimeout(tryPush, RETRY_INTERVAL_MS);
+    const cleanupTriggers = () => {
+        window.removeEventListener("scroll", startMount);
+        window.removeEventListener("pointerdown", startMount);
+        window.removeEventListener("touchstart", startMount);
+        window.removeEventListener("keydown", startMount);
+        window.removeEventListener("wheel", startMount);
+    };
+
+    window.addEventListener("scroll", startMount, { passive: true, once: true });
+    window.addEventListener("pointerdown", startMount, { passive: true, once: true });
+    window.addEventListener("touchstart", startMount, { passive: true, once: true });
+    window.addEventListener("keydown", startMount, { passive: true, once: true });
+    window.addEventListener("wheel", startMount, { passive: true, once: true });
 
     return () => {
+        cleanupTriggers();
         window.clearTimeout(timerId);
-        mutationObserver?.disconnect();
-        resizeObserver?.disconnect();
-        window.removeEventListener("wheel", markUserScrolled);
-        window.removeEventListener("touchmove", markUserScrolled);
-        window.removeEventListener("pointerdown", markUserScrolled);
-        window.removeEventListener("keydown", markUserScrolled);
     };
 }
 

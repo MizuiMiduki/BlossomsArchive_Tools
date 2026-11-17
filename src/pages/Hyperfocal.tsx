@@ -521,7 +521,7 @@ export default function HyperfocalCalculator() {
                     <div class="lg:col-span-7 flex flex-col gap-5 justify-between overflow-hidden">
                         {/* 動的ビジュアルイメージ図 */}
                         <div class="bg-base-200 p-5 rounded-2xl border border-base-300 flex flex-col gap-3 shadow-xs overflow-hidden">
-                            <h3 class="text-xs font-black text-base-content/80 tracking-wider uppercase border-b border-base-300 pb-2 flex justify-between items-center gap-2 flex-wrap leading-normal">
+                            <h2 class="text-xs font-black text-base-content/80 tracking-wider uppercase border-b border-base-300 pb-2 flex justify-between items-center gap-2 flex-wrap leading-normal">
                                 <span class="break-words flex-1 min-w-[120px]">
                                     🗺️
                                     被写界深度（ピントが合う範囲）のイメージ図
@@ -529,7 +529,7 @@ export default function HyperfocalCalculator() {
                                 <span class="badge badge-neutral font-mono font-bold text-[10px] whitespace-nowrap">
                                     許容ボケ幅: {activeCoc().toFixed(3)} mm
                                 </span>
-                            </h3>
+                            </h2>
 
                             <div class="bg-base-100 p-3 rounded-lg border border-base-300/60 text-[11px] leading-normal space-y-1">
                                 <p class="text-base-content font-bold" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
@@ -630,9 +630,9 @@ export default function HyperfocalCalculator() {
 
                         {/* 計算結果カードセクション */}
                         <div class="bg-base-200 p-6 rounded-2xl border-2 border-base-300 flex flex-col gap-5 shadow-inner overflow-hidden">
-                            <h3 class="text-xs font-black text-base-content/80 tracking-wider uppercase border-b-2 border-base-300 pb-2">
+                            <h2 class="text-xs font-black text-base-content/80 tracking-wider uppercase border-b-2 border-base-300 pb-2">
                                 📊 計算結果
-                            </h3>
+                            </h2>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* 過焦点距離 */}
@@ -726,9 +726,9 @@ export default function HyperfocalCalculator() {
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-8 pt-6 border-t border-base-300">
                     <div class="card bg-base-200/50 p-6 rounded-2xl border border-base-300">
-                        <h3 class="text-sm font-bold text-base-content border-b border-base-300 pb-2 mb-4">
+                        <h2 class="text-sm font-bold text-base-content border-b border-base-300 pb-2 mb-4">
                             📘 光学理論に基づく計算式
-                        </h3>
+                        </h2>
                         <div class="space-y-6 text-xs text-base-content/85 leading-relaxed">
                             <p>
                                 幾何光学において、過焦点距離{" "}
@@ -782,23 +782,23 @@ export default function HyperfocalCalculator() {
                     </div>
 
                     <div class="card bg-base-200/50 p-6 rounded-2xl border border-base-300">
-                        <h3 class="text-sm font-bold text-base-content border-b border-base-300 pb-2 mb-4">
+                        <h2 class="text-sm font-bold text-base-content border-b border-base-300 pb-2 mb-4">
                             ❓ よくある光学の質問 (FAQ)
-                        </h3>
+                        </h2>
                         <div class="space-y-3 text-xs leading-relaxed text-base-content/80">
                             <div>
-                                <h4 class="font-bold text-base-content mb-1">
+                                <h3 class="font-bold text-base-content mb-1">
                                     Q. 許容錯乱円（CoC）とは何ですか？
-                                </h4>
+                                </h3>
                                 <p>
                                     センサー上の1点に集まるべき光が、わずかにピンボケすることで作る「ボケの円」のことです。人間の目で「ピントが合っている」と認識できる限界の大きさを指します。
                                 </p>
                             </div>
                             <div class="border-t border-base-300 pt-2">
-                                <h4 class="font-bold text-base-content mb-1">
+                                <h3 class="font-bold text-base-content mb-1">
                                     Q.
                                     小絞りボケ（回折現象）は計算に含まれますか？
-                                </h4>
+                                </h3>
                                 <p>
                                     本ツールは幾何光学をベースに算出しているため、F値を絞り込みすぎた時の光の回折（画質低下）は考慮していません。実写の際はF8〜F11あたりが最もバランスがよくお勧めです。
                                 </p>

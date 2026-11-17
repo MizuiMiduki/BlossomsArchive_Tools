@@ -211,7 +211,7 @@ export default function Lottery() {
                                         抽選対象のリスト入力
                                     </span>
                                 </label>
-                                <p class="text-[10px] text-slate-400 font-semibold mb-2">
+                                <p class="text-[10px] text-slate-600 font-semibold mb-2">
                                     ※1行につき1つの項目（名前、番号など）を入力してください。
                                 </p>
                                 <textarea
@@ -367,7 +367,7 @@ export default function Lottery() {
                                          <For each={history()}>
                                              {(hist) => (
                                                  <div class="flex items-start gap-3 p-3 bg-white border border-slate-200 rounded-xl text-xs shadow-xs">
-                                                     <span class="font-mono font-semibold text-slate-400 shrink-0 mt-0.5">
+                                                     <span class="font-mono font-semibold text-slate-600 shrink-0 mt-0.5">
                                                          [{hist.time}]
                                                      </span>
                                                      <div class="flex flex-wrap gap-1.5 flex-1">
@@ -452,7 +452,11 @@ export default function Lottery() {
 
                          <div class="space-y-2">
                              <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                 <input type="checkbox" class="peer" />
+                                 <input
+                                     type="checkbox"
+                                     class="peer"
+                                     aria-label="FAQ: Math.randomとCrypto APIの乱数はどう違いますか？"
+                                 />
                                  <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                      Q. Math.randomとCrypto
                                      APIの乱数はどう違いますか？
@@ -466,7 +470,11 @@ export default function Lottery() {
                              </div>
 
                              <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                 <input type="checkbox" class="peer" />
+                                 <input
+                                     type="checkbox"
+                                     class="peer"
+                                     aria-label="FAQ: 大量データの抽選時のパフォーマンスや上限は？"
+                                 />
                                  <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                      Q.
                                      大量データの抽選時のパフォーマンスや上限は？
@@ -477,7 +485,11 @@ export default function Lottery() {
                              </div>
 
                              <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
-                                 <input type="checkbox" class="peer" />
+                                 <input
+                                     type="checkbox"
+                                     class="peer"
+                                     aria-label="FAQ: 当選済みデータの除外アルゴリズムについて"
+                                 />
                                  <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
                                      Q. 当選済みデータの除外アルゴリズムについて
                                  </div>

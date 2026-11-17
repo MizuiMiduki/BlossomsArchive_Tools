@@ -48,21 +48,14 @@ export default function Layout(props: LayoutProps) {
             window.removeEventListener("pointerdown", triggerLoad);
             window.removeEventListener("touchstart", triggerLoad);
             window.removeEventListener("keydown", triggerLoad);
+            window.removeEventListener("click", triggerLoad);
         };
 
         window.addEventListener("scroll", triggerLoad, { passive: true, once: true });
         window.addEventListener("pointerdown", triggerLoad, { passive: true, once: true });
         window.addEventListener("touchstart", triggerLoad, { passive: true, once: true });
         window.addEventListener("keydown", triggerLoad, { passive: true, once: true });
-
-        // 初回ロード直後のパフォーマンススコア向上とユーザー体験の両立のため、アイドル時または数秒後にフォールバック読み込み
-        if (typeof window !== "undefined") {
-            if ("requestIdleCallback" in window) {
-                (window as any).requestIdleCallback(() => triggerLoad(), { timeout: 4000 });
-            } else {
-                setTimeout(triggerLoad, 4000);
-            }
-        }
+        window.addEventListener("click", triggerLoad, { passive: true, once: true });
     });
 
     createEffect(
@@ -233,7 +226,7 @@ export default function Layout(props: LayoutProps) {
                 });
             }
 
-            // 全ページ共通 JSON-LD 構造化データの動的更新
+            // 全ページ共通 JSON-LD 構造化データと canonical の動的更新
             if (typeof document !== "undefined") {
                 const jsonLd = getPageJsonLd(pathname);
                 let script = document.getElementById(
@@ -246,6 +239,14 @@ export default function Layout(props: LayoutProps) {
                     document.head.appendChild(script);
                 }
                 script.textContent = JSON.stringify(jsonLd);
+
+                let canonical = document.querySelector('link[rel="canonical"]');
+                if (!canonical) {
+                    canonical = document.createElement("link");
+                    canonical.setAttribute("rel", "canonical");
+                    document.head.appendChild(canonical);
+                }
+                canonical.setAttribute("href", getMetadata().url);
             }
         }
     );
@@ -255,7 +256,6 @@ export default function Layout(props: LayoutProps) {
             {/* 基本SEOメタタグ */}
             <Title>{getMetadata().title}</Title>
             <Meta name="description" content={getMetadata().description} />
-            <Link rel="canonical" href={getMetadata().url} />
             <Meta
                 name="robots"
                 content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"

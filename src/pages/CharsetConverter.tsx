@@ -327,8 +327,8 @@ export default function CharsetConverter() {
                 <p class="text-base-content/70 max-w-2xl mx-auto text-sm md:text-base">
                     <BudouX text="UTF-8、Shift_JIS、EUC-JP、JIS、UTF-16/32、Latin-1の文字コード・改行コード相互変換、16進数(HEX)・進数・Unicode表記・HTML数値文字参照・Base64・URLエンコード・Unicode正規化・文字化け復元まで完全対応。" />
                 </p>
-                <div class="flex items-center justify-center gap-2 text-xs text-success">
-                    <span class="inline-block w-2 h-2 rounded-full bg-success"></span>
+                <div class="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-600"></span>
                     <span>ブラウザ完全ローカル処理（外部通信なしで機密情報も安全・高速変換）</span>
                 </div>
             </div>
@@ -339,50 +339,43 @@ export default function CharsetConverter() {
                     <div class="tabs tabs-boxed bg-base-200 p-1 flex-nowrap shadow-sm">
                         <button
                             type="button"
-                            aria-label="テキスト文字コード変換"
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "text"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : ""
+                                    : "text-base-content/80 font-medium hover:text-base-content"
                             }`}
                             onClick={() => setActiveTab("text")}
                         >
-                            <span class="md:hidden">文字コード変換</span>
-                            <span class="hidden md:inline">テキスト文字コード変換</span>
+                            テキスト文字コード変換
                         </button>
                         <button
                             type="button"
-                            aria-label="進数・コード表記変換"
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "code-formats"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : ""
+                                    : "text-base-content/80 font-medium hover:text-base-content"
                             }`}
                             onClick={() => setActiveTab("code-formats")}
                         >
-                            <span class="md:hidden">進数・コード表記</span>
-                            <span class="hidden md:inline">進数・コード表記変換</span>
+                            進数・コード表記変換
                         </button>
                         <button
                             type="button"
-                            aria-label="1文字コード解析"
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "inspector"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : ""
+                                    : "text-base-content/80 font-medium hover:text-base-content"
                             }`}
                             onClick={() => setActiveTab("inspector")}
                         >
-                            <span class="md:hidden">1文字解析</span>
-                            <span class="hidden md:inline">1文字コード解析</span>
+                            1文字コード解析
                         </button>
                         <button
                             type="button"
-                            aria-label="ファイル変換"
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "file"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : ""
+                                    : "text-base-content/80 font-medium hover:text-base-content"
                             }`}
                             onClick={() => setActiveTab("file")}
                         >
@@ -390,24 +383,21 @@ export default function CharsetConverter() {
                         </button>
                         <button
                             type="button"
-                            aria-label="Unicode正規化 (NFC/NFD)"
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "normalize"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : ""
+                                    : "text-base-content/80 font-medium hover:text-base-content"
                             }`}
                             onClick={() => setActiveTab("normalize")}
                         >
-                            <span class="md:hidden">Unicode正規化</span>
-                            <span class="hidden md:inline">Unicode正規化 (NFC/NFD)</span>
+                            Unicode正規化 (NFC/NFD)
                         </button>
                         <button
                             type="button"
-                            aria-label="文字化け修復"
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "mojibake"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : ""
+                                    : "text-base-content/80 font-medium hover:text-base-content"
                             }`}
                             onClick={() => setActiveTab("mojibake")}
                         >

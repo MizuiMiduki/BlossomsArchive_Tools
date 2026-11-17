@@ -317,7 +317,7 @@ export default function PasswordGenerator() {
                             <Show
                                 when={results().length > 0}
                                 fallback={
-                                    <div class="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-2 text-slate-400">
+                                    <div class="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-2 text-slate-500">
                                         <span class="text-5xl block mb-2">
                                             📊
                                         </span>

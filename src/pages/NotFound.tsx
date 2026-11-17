@@ -15,7 +15,7 @@ export default function NotFound() {
 
             <h1 class="text-4xl font-bold">404</h1>
             <p class="mt-4">お探しのページは見つかりませんでした。</p>
-            <a href="/" class="text-blue-500 underline mt-4 block">
+            <a href="/" class="text-primary font-bold hover:underline mt-4 inline-block">
                 ホームに戻る
             </a>
         </div>

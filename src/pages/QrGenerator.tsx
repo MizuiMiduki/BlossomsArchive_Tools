@@ -209,7 +209,7 @@ export default function QrGenerator() {
                                                     <span class="font-black text-sm">
                                                         {opt.label}
                                                     </span>
-                                                    <span class="text-[10px] text-slate-400 font-semibold mt-0.5">
+                                                    <span class="text-[10px] text-slate-600 font-semibold mt-0.5">
                                                         {opt.desc}
                                                     </span>
                                                 </button>
@@ -237,7 +237,7 @@ export default function QrGenerator() {
                             <Show
                                 when={qrData()}
                                 fallback={
-                                    <div class="text-center p-8 space-y-2 text-slate-400">
+                                    <div class="text-center p-8 space-y-2 text-slate-500">
                                         <span class="text-5xl block mb-2">
                                             📊
                                         </span>

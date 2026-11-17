@@ -2662,7 +2662,7 @@ export default function ExifFrame() {
                                             <span class="text-xs font-bold text-base-content">
                                                 ✍️ 自由なタイトルモードにする
                                             </span>
-                                            <span class="text-[10px] text-base-content/50 font-medium">
+                                            <span class="text-[10px] text-base-content/75 font-medium">
                                                 カメラ情報の代わりに好きな文字を刻印
                                             </span>
                                         </div>
@@ -2690,7 +2690,7 @@ export default function ExifFrame() {
                                                 <span class="font-bold text-base-content text-[11px]">
                                                     🏷️ 接頭辞の設定
                                                 </span>
-                                                <span class="text-[10px] text-base-content/50 font-medium">
+                                                <span class="text-[10px] text-base-content/75 font-medium">
                                                     テキストの先頭に文字を添えます
                                                 </span>
                                             </div>
@@ -2769,7 +2769,7 @@ export default function ExifFrame() {
                                                 <span class="font-bold text-base-content text-[11px] flex items-center gap-1">
                                                     ⚡ 区切り文字
                                                 </span>
-                                                <span class="text-[10px] text-base-content/50 font-medium">
+                                                <span class="text-[10px] text-base-content/75 font-medium">
                                                     Exifパラメータ間の区切り記号
                                                 </span>
                                             </div>
@@ -2829,7 +2829,7 @@ export default function ExifFrame() {
                                             <span class="text-xs font-bold text-base-content uppercase tracking-wider">
                                                 📷 表示するExif情報
                                             </span>
-                                            <span class="text-[10px] text-base-content/50 font-medium">
+                                            <span class="text-[10px] text-base-content/75 font-medium">
                                                 チェックで表示 / 値は直接修正可
                                             </span>
                                         </div>
@@ -3049,7 +3049,7 @@ export default function ExifFrame() {
                                         <span class="font-bold text-base-content/80 text-[11px] flex items-center gap-1">
                                             📍 文字の配置設定
                                         </span>
-                                        <span class="text-[10px] text-base-content/50 font-medium">
+                                        <span class="text-[10px] text-base-content/75 font-medium">
                                             選択して変更
                                         </span>
                                     </div>
@@ -3681,7 +3681,7 @@ export default function ExifFrame() {
                                                             }
                                                             class="w-9 h-9 rounded cursor-pointer border border-base-300 bg-transparent"
                                                         />
-                                                        <span class="text-[10px] font-mono font-bold text-base-content/50">
+                                                        <span class="text-[10px] font-mono font-bold text-base-content/75">
                                                             {customFrameColor()}
                                                         </span>
                                                     </div>
@@ -3704,7 +3704,7 @@ export default function ExifFrame() {
                                                             }
                                                             class="w-9 h-9 rounded pointer border border-base-300 bg-transparent"
                                                         />
-                                                        <span class="text-[10px] font-mono font-bold text-base-content/50">
+                                                        <span class="text-[10px] font-mono font-bold text-base-content/75">
                                                             {customTextColor()}
                                                         </span>
                                                     </div>
@@ -3857,7 +3857,7 @@ export default function ExifFrame() {
                                         <span class="text-xs font-bold text-base-content uppercase tracking-wider">
                                             🪄 重ねる画像の追加・管理
                                         </span>
-                                        <span class="text-[10px] text-base-content/50 font-medium">
+                                        <span class="text-[10px] text-base-content/75 font-medium">
                                             複数選択可（PNG / WebP 等）
                                         </span>
                                     </div>
@@ -3877,7 +3877,7 @@ export default function ExifFrame() {
                                     <Show
                                         when={overlayImages().length > 0}
                                         fallback={
-                                            <div class="text-[11px] text-base-content/50 bg-base-100/70 border border-dashed border-base-300 rounded-lg p-3 text-center">
+                                            <div class="text-[11px] text-base-content/75 bg-base-100/70 border border-dashed border-base-300 rounded-lg p-3 text-center">
                                                 まだ重ねる画像が追加されていません。上のボタンから透過PNGなどを選択してください。
                                             </div>
                                         }
@@ -3916,7 +3916,7 @@ export default function ExifFrame() {
                                                                         </span>
                                                                     </Show>
                                                                 </div>
-                                                                <div class="text-[10px] text-base-content/50">
+                                                                <div class="text-[10px] text-base-content/75">
                                                                     X:{item.x}% / Y:{item.y}% / サイズ:{item.scale}%
                                                                 </div>
                                                             </div>
@@ -4085,7 +4085,7 @@ export default function ExifFrame() {
                                         <span class="text-xs font-bold text-base-content uppercase tracking-wider">
                                             © 著作権・クレジット表記
                                         </span>
-                                        <span class="text-[10px] text-base-content/50 font-medium">
+                                        <span class="text-[10px] text-base-content/75 font-medium">
                                             版権画像利用時の権利表記など
                                         </span>
                                     </div>
@@ -4123,7 +4123,7 @@ export default function ExifFrame() {
                                                 ©
                                             </button>
                                         </div>
-                                        <span class="text-[10px] text-base-content/50">
+                                        <span class="text-[10px] text-base-content/75">
                                             ※入力するとフレームの空きスペース（または指定位置）に自動で小さく刻印されます。
                                         </span>
                                     </div>
@@ -4269,7 +4269,7 @@ export default function ExifFrame() {
                                                 <span class="text-[11px] font-bold text-base-content/80">
                                                     元のExifデータを引き継ぐ
                                                 </span>
-                                                <span class="text-[10px] text-base-content/50 font-medium">
+                                                <span class="text-[10px] text-base-content/75 font-medium">
                                                     ※JPEG保存時のみ有効
                                                 </span>
                                             </div>
@@ -4333,7 +4333,7 @@ export default function ExifFrame() {
                         <Show
                             when={hasImage()}
                             fallback={
-                                <div class="text-base-content/50 p-4 text-center font-medium text-xs sm:text-sm">
+                                <div class="text-base-content/75 p-4 text-center font-medium text-xs sm:text-sm">
                                     📸
                                     写真を読み込むと、比率を維持したプレビューが表示されます！
                                 </div>

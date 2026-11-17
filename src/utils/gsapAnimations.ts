@@ -23,10 +23,9 @@ export function playPageEntrance(
         if (targets.length > 0) {
             tl.from(targets, {
                 opacity: 0,
-                y: 20,
-                duration: 0.45,
-                stagger: 0.06,
-                clearProps: "transform,opacity",
+                duration: 0.35,
+                stagger: 0.04,
+                clearProps: "opacity",
             });
             return tl;
         }
@@ -34,9 +33,8 @@ export function playPageEntrance(
 
     tl.from(container, {
         opacity: 0,
-        y: 16,
-        duration: 0.4,
-        clearProps: "transform,opacity",
+        duration: 0.3,
+        clearProps: "opacity",
     });
 
     return tl;
