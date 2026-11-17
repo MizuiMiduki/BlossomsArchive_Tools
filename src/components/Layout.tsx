@@ -270,6 +270,7 @@ export default function Layout(props: LayoutProps) {
             </Show>
             <Link rel="icon" href={SITE_LOGO} />
             <Link rel="apple-touch-icon" href={SITE_LOGO} />
+            <Link rel="alternate" type="text/plain" href="https://tools.blossomsarchive.com/llms.txt" />
 
             {/* OGP (Open Graph Protocol) タグ */}
             <Meta property="og:type" content="website" />

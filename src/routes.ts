@@ -261,6 +261,14 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
             about: {
                 "@id": `${PUBLISHER_URL}#organization`,
             },
+            hasPart: routes
+                .filter((r) => r.path !== "/" && !r.hidden)
+                .map((r) => ({
+                    "@type": "WebApplication",
+                    name: r.title,
+                    url: `${SITE_URL}${r.path}`,
+                    description: r.description,
+                })),
         });
 
         return {
@@ -290,7 +298,7 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
                 },
             });
 
-            // 各Webアプリケーションツール
+            // 各Webアプリケーションツール (AI/GEO・検索エンジン向け完全仕様)
             graph.push({
                 "@type": "WebApplication",
                 "@id": `${currentUrl}#webapp`,
@@ -302,6 +310,13 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
                 operatingSystem: "All",
                 browserRequirements: "Requires JavaScript. Requires HTML5.",
                 inLanguage: "ja",
+                isAccessibleForFree: true,
+                softwareVersion: "1.0.0",
+                featureList: route.description,
+                keywords: route.keywords ? route.keywords.join(", ") : undefined,
+                author: {
+                    "@id": `${PUBLISHER_URL}#organization`,
+                },
                 offers: {
                     "@type": "Offer",
                     price: "0",

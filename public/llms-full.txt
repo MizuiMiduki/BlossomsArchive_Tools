@@ -1,0 +1,137 @@
+# BlossomsArchive Tools - 完全ドキュメント (llms-full.txt)
+
+BlossomsArchive Tools (https://tools.blossomsarchive.com/) は、Web制作者・開発者・フォトグラファー・オーディオ愛好家・一般ユーザー向けの無料・クライアント完結型Webツール群です。
+
+## 共通ポリシー
+1. **プライバシー**: すべての演算・画像描画・テキスト解析・暗号生成はユーザーのブラウザ内（クライアントサイド）でのみ実行されます。サーバーへの中継・保存・外部API送信は一切行われません。
+2. **高速性・軽量性**: GSAP等の重量ライブラリを完全撤廃し、Web標準のWeb Animations API、Canvas API、Web Crypto APIを採用。Google Lighthouse Mobile/Desktopともに全項目100点満点を維持。
+3. **レスポンシブ性**: 320pxの極小画面から4Kワイドディスプレイまで完全対応（dvh対応、オーバーフロー遮断）。
+
+---
+
+## ツール別詳細仕様
+
+### 1. 電卓ツール (/calculator/)
+- URL: https://tools.blossomsarchive.com/calculator/
+- 機能: 加減乗除、小数点演算、連続計算、履歴一覧の保存と再利用。
+- キーボード操作: テンキーおよびEnter/Escapeキーによる入力に対応。
+- 処理方式: 浮動小数点精度の補正処理を含むJavaScript内部演算。
+
+### 2. QRコード生成 (/qr_code/)
+- URL: https://tools.blossomsarchive.com/qr_code/
+- 機能: 任意の文字列・URLからQRコード（JIS X 0510 / ISO/IEC 18004）を生成。
+- 出力形式:
+  - PNG形式 (ラスター画像、高解像度出力)
+  - SVG形式 (ベクター画像、拡大・印刷しても画質劣化なし)
+- オプション: 誤り訂正レベル（L: 7%, M: 15%, Q: 25%, H: 30%）、表示拡大プレビュー。
+
+### 3. パスワード生成 (/password-generator/)
+- URL: https://tools.blossomsarchive.com/password-generator/
+- 機能: 強固なランダム文字列の自動生成。
+- エントロピー源: `window.crypto.getRandomValues()` (CSPRNG: 暗号学的に安全な擬似乱数生成器)。
+- 設定項目:
+  - 文字数 (4〜100文字)
+  - 文字種選択 (英大文字 A-Z, 英小文字 a-z, 数字 0-9, 記号 !@#$%^&*等)
+  - 同時生成個数 (1〜100個)
+- 出力: 個別コピー機能、全件一括クリップボードコピー機能。
+
+### 4. 抽選・ランダム選定ツール (/lottery/)
+- URL: https://tools.blossomsarchive.com/lottery/
+- 機能: 改行区切りのリストからランダムに項目を抽出。
+- 抽出アルゴリズム: Fisher-Yates (Knuth) シャッフルアルゴリズム + Web Crypto API。
+- オプション: 重複当選の有無（重複なし抽出 / 重複許可抽出）、同時当選者数の指定、結果履歴の保持。
+
+### 5. 画像形式変換 (/image_conversion/)
+- URL: https://tools.blossomsarchive.com/image_conversion/
+- 機能: 画像ファイルのフォーマット変換および品質調整。
+- 入力形式: PNG, JPEG, WebP, GIF, BMP, SVG 等の主要画像。
+- 出力形式: WebP, JPEG, PNG。
+- 処理方式: HTML5 Canvas API (`HTMLCanvasElement.toBlob()`) を用いたブラウザ完全ローカル変換。
+
+### 6. 動画圧縮 (/video-compressor/)
+- URL: https://tools.blossomsarchive.com/video-compressor/
+- 機能: 動画ファイルの解像度スケールダウン、ビットレート調整、音声品質最適化。
+- 入力形式: MP4, WebM, MOV 等。
+- 処理方式: ブラウザ内動画デコードおよび再エンコード。
+
+### 7. 文字コード総合変換ツール (/charset-converter/)
+- URL: https://tools.blossomsarchive.com/charset-converter/
+- 対応エンコーディング: UTF-8, Shift_JIS (CP932), EUC-JP, ISO-2022-JP (JIS), UTF-16BE/LE, UTF-32BE/LE, Latin-1 (ISO-8859-1)。
+- コード表現形式: 16進数(HEX), 2進数, 8進数, 10進数, Unicodeエスケープ(\\uXXXX / \\U00XXXXXX), HTML数値文字参照 (10進数 &#DDDD; / 16進数 &#xHHHH;), Base64, パーセントエンコーディング (URLエンコード)。
+- 補助機能: 改行コード変換 (LF / CRLF / CR), Unicode正規化 (NFC, NFD, NFKC, NFKD), 文字化け修復シミュレーション。
+
+### 8. アクセス環境情報確認 (/access-info/)
+- URL: https://tools.blossomsarchive.com/access-info/
+- 取得項目:
+  - 接続IPアドレス、逆引きホスト名、国、地域、都市、ISP
+  - ユーザーエージェント (OS, ブラウザ, レンダリングエンジン)
+  - 画面論理解像度 (CSS px)、物理解像度 (デバイスピクセル)、Device Pixel Ratio (DPR)
+  - ネットワーク接続タイプ (Wi-Fi, 4G, 5G, Ethernet, 不明)
+  - バッテリー残量・充電状態 (Battery Status API対応環境)
+
+### 9. OGP確認・SNSシェアプレビュー (/ogp-checker/)
+- URL: https://tools.blossomsarchive.com/ogp-checker/
+- 解析タグ: `og:title`, `og:description`, `og:image`, `og:url`, `og:type`, `og:site_name`, `twitter:card` (summary / summary_large_image), `twitter:title`, `twitter:description`, `twitter:image`。
+- プレビュー対象プラットフォーム: X (旧Twitter), Facebook, LINE, Discord。
+- 入力方式: WebページURL (CORSプロキシ経由取得) または HTMLソースコード直接入力 / ファイル読み込み。
+
+### 10. メタタグ(SEO)確認ツール (/seo-checker/)
+- URL: https://tools.blossomsarchive.com/seo-checker/
+- 解析タグ: `<title>`, `<meta name="description">`, `<link rel="canonical">`, `<meta name="robots">`, `<meta name="viewport">`, JSON-LD構造化データ (`@type`, `@context`)。
+- プレビュー: Google検索結果スニペット（PCデスクトップ表示およびスマートフォン表示）。
+- 診断項目: 文字数カウント（タイトル適正長30〜60文字、説明文適正長80〜120文字）、canonical整合性チェック、インデックス可否チェック。
+
+### 11. EXIF写真フレーム生成 (/exif-frame/)
+- URL: https://tools.blossomsarchive.com/exif-frame/
+- 機能: 写真画像からEXIFメタデータ（Exif 2.32準拠）を抽出し、撮影パラメータを刻印した写真枠を合成。
+- 抽出パラメータ: カメラメーカー/モデル名, レンズモデル, 焦点距離 (35mm換算含む), F値 (絞り), シャッタースピード, ISO感度, 撮影日時, 露出補正。
+- カスタマイズ:
+  - 額縁スタイル (モダン白枠, クラシック二重枠, ポラロイド風, フィルムスプール風, ミニマルカード等)
+  - フォント (Noto Sans JP, Noto Serif JP, Playfair Display, Caveat, Kiwi Maru, Inter, JetBrains Mono, Amatic SC)
+  - メーカーロゴ・カスタム透かし
+- 出力: 高解像度JPEG / WebP保存。
+
+### 12. リアルタイム時計 (/clock/)
+- URL: https://tools.blossomsarchive.com/clock/
+- 表示モード:
+  - デジタル時計: 秒単位・ミリ秒単位表示、フォント追従
+  - アナログ時計: SVGベクター描画による長針・短針・秒針のスムーズ運針
+- フルスクリーン対応 (Fキー / フルスクリーンボタン)。
+
+### 13. タイマー・ストップウォッチ (/timer/)
+- URL: https://tools.blossomsarchive.com/timer/
+- 機能:
+  - ストップウォッチ: 1/100秒精度、ラップタイム計測
+  - タイマー: プリセット（1分, 3分, 5分, 10分等）および任意秒数カウントダウン、アラーム通知
+  - ポモドーロタイマー: 25分集中セッション＋5分休憩インターバル管理
+
+### 14. 過焦点距離・被写界深度計算機 (/hyperfocal/)
+- URL: https://tools.blossomsarchive.com/hyperfocal/
+- 計算式:
+  - 許容錯乱円径 $c = d / 1442$ またはセンサー規格標準値（フルサイズ: 0.030mm, APS-C: 0.020mm, M4/3: 0.015mm等）
+  - 過焦点距離 $H = \frac{f^2}{N \cdot c} + f$ （$f$: 焦点距離mm, $N$: F値）
+  - パンフォーカス手前限界 $D_{near\_hyper} = \frac{H}{2}$
+  - 任意被写体距離 $s$ における手前限界: $D_{near} = \frac{s(H - f)}{H + s - 2f}$
+  - 奥限界: $D_{far} = \frac{s(H - f)}{H - s}$ （$s \ge H$ のとき無限遠 $\infty$）
+
+### 15. イヤホン・ヘッドホン鳴らしやすさ計算機 (/headphone-driveability/)
+- URL: https://tools.blossomsarchive.com/headphone-driveability/
+- 計算式:
+  - 目標音圧 $L_{target}$ (標準 110dB SPL, ピーク対応 115dB, 120dB)
+  - 音圧感度変換:
+    - $S_{mW}$ (dB/mW) の場合: 必要電力 $P_{mW} = 10^{\frac{L_{target} - S_{mW}}{10}}$
+    - $S_{Vrms}$ (dB/Vrms) の場合: 必要電圧 $V_{rms} = 10^{\frac{L_{target} - S_{Vrms}}{20}}$
+  - オームの法則連立: $V_{rms} = \sqrt{\frac{P_{mW}}{1000} \cdot R}$, $I_{rms} = \frac{V_{rms}}{R} \cdot 1000$ (mA)
+- 評価指標: スマートフォン直挿し可能, ポータブルDAC/アンプ推奨, 専用据置ヘッドホンアンプ必須の3段階判定。
+
+### 16. テキスト・マークアップ変換 (/text-converter/)
+- URL: https://tools.blossomsarchive.com/text-converter/
+- 変換モード:
+  - HTML → Markdown
+  - Markdown → HTML
+  - HTML → プレーンテキスト (タグ除去・インラインリンク保持選択可能)
+  - プレーンテキスト → HTML (段落ラップ `<p>`, 改行 `<br>`)
+  - Markdown → プレーンテキスト
+  - プレーンテキスト → Markdown
+  - 特殊文字エスケープ (`&` `<` `>` `"` `'`) / アンエスケープ
+  - URLエンコード / URLデコード
