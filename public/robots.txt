@@ -34,6 +34,6 @@ Allow: /
 User-agent: FacebookBot
 Allow: /
 
-# Sitemaps & LLM context
+# Sitemaps & LLM documentation
 Sitemap: https://tools.blossomsarchive.com/sitemap.xml
-LLMs-Txt: https://tools.blossomsarchive.com/llms.txt
+# LLMs.txt: https://tools.blossomsarchive.com/llms.txt
