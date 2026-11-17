@@ -46,11 +46,6 @@
     RewriteEngine On
     RewriteBase /
 
-    # 常時HTTPSリダイレクト (リバースプロキシ対応)
-    RewriteCond %{HTTP:X-Forwarded-Proto} !https
-    RewriteCond %{HTTPS} off
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-
     # 旧URLをpagesのない正規URLへ恒久リダイレクト
     RewriteRule ^pages/(.*)$ /$1 [R=301,L]
 
