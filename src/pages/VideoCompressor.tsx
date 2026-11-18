@@ -56,34 +56,6 @@ export default function VideoCompressor() {
     let abortController: AbortController | null = null;
 
     onSettled(() => {
-        document.title = "動画圧縮ツール | ブラウザ完結で容量削減・軽量化（サーバー送信なし）";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "ブラウザ上で安全に動画ファイルを圧縮・軽量化できる無料Webツール。MP4やWebM動画の解像度、ビットレート、フレームレートを調整して容量を大幅削減。サーバーに動画を一切アップロードせず、お使いの端末内で完全ローカル処理するためプライバシーも安心です。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "video-compressor-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "動画圧縮・軽量化ツール",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5 Canvas and MediaRecorder API.",
-            description:
-                "サーバーへアップロードすることなくブラウザ上で完結する、高機能で安全な動画圧縮・サイズ軽量化ツール。",
-        });
-        document.head.appendChild(script);
-
         // コーデック検出
         const codecs = getSupportedVideoCodecs();
         setSupportedCodecs(codecs);
@@ -96,10 +68,6 @@ export default function VideoCompressor() {
         }
 
         return () => {
-            const el = document.getElementById("video-compressor-jsonld");
-            if (el) {
-                el.remove();
-            }
             if (previewUrl()) {
                 URL.revokeObjectURL(previewUrl());
             }
