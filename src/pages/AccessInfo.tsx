@@ -1,7 +1,7 @@
 import { createSignal, Show, onSettled } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { delayedCall, playPageEntrance, animateFadeIn, animatePop } from "../utils/gsapAnimations";
+import { delayedCall, playPageEntrance, animatePop } from "../utils/gsapAnimations";
 
 interface IpData {
     ip: string;
@@ -340,7 +340,7 @@ IPアドレス: ${data.ip}
                 </Show>
 
                 <Show when={info() && !loading()}>
-                    <div ref={(el) => animateFadeIn(el)} class="w-full flex flex-col gap-6 sm:gap-8">
+                    <div class="w-full flex flex-col gap-6 sm:gap-8">
                         {/* 接続環境・位置情報 */}
                         <div>
                             <h2 class="text-lg sm:text-xl font-bold mb-3 text-primary flex items-center gap-2">
