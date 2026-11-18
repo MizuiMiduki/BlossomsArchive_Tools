@@ -1,5 +1,4 @@
 import { createSignal, onSettled, Show, For } from "solid-js";
-import QRCode from "qrcode";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
@@ -20,44 +19,8 @@ export default function QrGenerator() {
     let containerRef: HTMLDivElement | undefined;
     let generateButtonRef: HTMLButtonElement | undefined;
 
-    // SEO対策：メタデータおよび構造化データの動的注入
     onSettled(() => {
-        document.title = "QRコード作成・生成ツール｜商用利用可・高画質SVG対応";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "完全無料・登録不要・商用利用可能なQRコード作成ツールです。入力した文字列やURLから瞬時にQRコードを自動生成。PNG、JPEG、WebPに加え、印刷・デザインに最適な高画質のSVG形式での無料ダウンロードに対応しています。安心のブラウザ完結（オフライン）処理。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "qr-generator-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "高画質QRコード生成・作成ツール（無料・商用利用可）",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "ブラウザ上で安全に動作する登録不要のQRコード作成ツール。チラシや名刺の印刷にも適した高解像度のSVG・PNG・JPEG・WebP形式でのダウンロード機能を提供します。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef, ".card");
-
-        return () => {
-            const el = document.getElementById("qr-generator-jsonld");
-            if (el) {
-                el.remove();
-            }
-        };
     });
 
     const getMimeType = (format: string) => {
@@ -75,6 +38,7 @@ export default function QrGenerator() {
         if (!text()) return;
         if (generateButtonRef) animatePop(generateButtonRef);
         try {
+            const { default: QRCode } = await import("qrcode");
             const data = await QRCode.toDataURL(text(), {
                 width: 600,
                 type: getMimeType(fileFormat()),
@@ -110,6 +74,7 @@ export default function QrGenerator() {
 
         if (fileFormat() === "svg") {
             try {
+                const { default: QRCode } = await import("qrcode");
                 const svgString = await QRCode.toString(text(), {
                     type: "svg",
                     width: 600,
@@ -122,6 +87,7 @@ export default function QrGenerator() {
             }
         } else {
             try {
+                const { default: QRCode } = await import("qrcode");
                 const data = await QRCode.toDataURL(text(), {
                     width: 600,
                     type: getMimeType(fileFormat()),
@@ -313,7 +279,7 @@ export default function QrGenerator() {
                         <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
                             ※データの取り扱い方針に関する詳細は、当サイトの
                             <a
-                                href="/privacy-policy"
+                                href="/privacy"
                                 class="text-slate-800 font-bold underline ml-1 hover:text-slate-950"
                             >
                                 プライバシーポリシー
