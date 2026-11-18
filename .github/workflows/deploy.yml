@@ -19,6 +19,7 @@ on:
 
 permissions:
     contents: read
+    issues: write
 
 jobs:
     deploy:
@@ -80,6 +81,13 @@ jobs:
                   VITE_ADSENSE_DEFAULT_SLOT: ${{ secrets.VITE_ADSENSE_DEFAULT_SLOT }}
               run: pnpm run build
 
+            - name: Install Lighthouse CLI
+              run: npm install -g lighthouse
+
+            - name: Audit Build Quality with Lighthouse
+              id: lighthouse
+              run: node scripts/audit-lighthouse.mjs
+
             - name: Deploy via FTP
               uses: SamKirkland/FTP-Deploy-Action@v4.4.0
               with:
@@ -89,3 +97,12 @@ jobs:
                   local-dir: "./dist/"
                   server-dir: "${{ secrets.FTP_TARGET_DIR }}"
                   dangerous-clean-slate: ${{ github.event_name == 'workflow_dispatch' && inputs['サーバーを全削除して再デプロイ'] || false }}
+
+            - name: Create Issue on PageSpeed Regression
+              if: always() && steps.lighthouse.outputs.has_issues == 'true'
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh issue create \
+                    --title "[PageSpeed Alert] Lighthouse スコア退行を検出しました ($(date +'%Y-%m-%d %H:%M'))" \
+                    --body-file dist/lighthouse-issue.md
