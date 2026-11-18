@@ -23,38 +23,7 @@ export default function HeadphoneDriveability() {
     const [targetSpl, setTargetSpl] = createSignal("110");
 
     onSettled(() => {
-        document.title = "イヤホン・ヘッドホンの鳴らしやすさ";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "インピーダンスと音圧感度から、目標音圧に必要な電圧・電流・電力と鳴らしやすさの目安を計算します。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "headphone-driveability-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "イヤホン・ヘッドホンの鳴らしやすさ",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            description:
-                "インピーダンスと音圧感度から必要な電圧・電流・電力を計算するツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef);
-
-        return () => {
-            document.getElementById("headphone-driveability-jsonld")?.remove();
-        };
     });
 
     const result = createMemo(() => {
