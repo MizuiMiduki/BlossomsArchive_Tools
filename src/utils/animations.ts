@@ -7,46 +7,16 @@
 const isTest = typeof import.meta !== "undefined" && import.meta.env?.MODE === "test";
 
 /**
- * ページルート要素にフェードインのエントランスアニメーションを適用する。
- * @param container ページのルートHTMLElement
- * @param staggerTargets スタッガー対象のセレクタ（省略時はコンテナ自体をアニメーション）
+ * ページルート要素のエントランスアニメーション。
+ * Core Web Vitals (LCP / Speed Index) 最大化のため、初回描画時の透明化 (opacity: 0) は行わず即座に表示します。
+ * @param _container ページのルートHTMLElement
+ * @param _staggerTargets スタッガー対象のセレクタ
  */
 export function playPageEntrance(
-    container: HTMLElement,
-    staggerTargets?: string,
+    _container: HTMLElement,
+    _staggerTargets?: string,
 ): void {
-    if (isTest || !container) return;
-
-    if (staggerTargets) {
-        const targets = container.querySelectorAll<HTMLElement>(staggerTargets);
-        if (targets.length > 0) {
-            targets.forEach((target, i) => {
-                if (typeof target.animate === "function") {
-                    target.animate(
-                        [{ opacity: 0 }, { opacity: 1 }],
-                        {
-                            duration: 300,
-                            delay: i * 35,
-                            easing: "ease-out",
-                            fill: "both",
-                        },
-                    );
-                }
-            });
-            return;
-        }
-    }
-
-    if (typeof container.animate === "function") {
-        container.animate(
-            [{ opacity: 0 }, { opacity: 1 }],
-            {
-                duration: 250,
-                easing: "ease-out",
-                fill: "both",
-            },
-        );
-    }
+    // 初回描画の LCP・Speed Index 遅延を防ぐため即時表示とする
 }
 
 /**

@@ -13,8 +13,43 @@ import {
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const distDirectory = path.resolve(scriptDirectory, "../dist");
+const assetsDirectory = path.join(distDirectory, "assets");
 const templatePath = path.join(distDirectory, "index.html");
 const template = fs.readFileSync(templatePath, "utf8");
+
+const assetFiles = fs.existsSync(assetsDirectory)
+    ? fs.readdirSync(assetsDirectory)
+    : [];
+
+const ROUTE_CHUNK_PREFIX: Record<string, string> = {
+    "/": "Home",
+    "/calculator": "Calculator",
+    "/qr_code": "QrGenerator",
+    "/password-generator": "PasswordGenerator",
+    "/lottery": "Lottery",
+    "/image_conversion": "ImageConverter",
+    "/video-compressor": "VideoCompressor",
+    "/charset-converter": "CharsetConverter",
+    "/access-info": "AccessInfo",
+    "/ogp-checker": "OgpChecker",
+    "/seo-checker": "SeoChecker",
+    "/exif-frame": "ExifFrameGenerator",
+    "/clock": "Clock",
+    "/timer": "TimerStopwatch",
+    "/privacy": "PrivacyPolicy",
+    "/credits": "Credits",
+    "/hyperfocal": "Hyperfocal",
+    "/headphone-driveability": "HeadphoneDriveability",
+    "/text-converter": "TextConverter",
+};
+
+function findRouteChunk(routePath: string): string | undefined {
+    const prefix = ROUTE_CHUNK_PREFIX[routePath];
+    if (!prefix) return undefined;
+    return assetFiles.find(
+        (file) => file.startsWith(`${prefix}-`) && file.endsWith(".js"),
+    );
+}
 
 function escapeAttribute(value: string): string {
     return value.replace(/[&<>"']/g, (character) => {
@@ -38,6 +73,8 @@ const cleanTemplate = template
     .replace(/<meta\b[^>]*name=["']keywords["'][^>]*>\s*/gi, "")
     .replace(/<meta\b[^>]*name=["']author["'][^>]*>\s*/gi, "")
     .replace(/<link\b[^>]*rel=["']canonical["'][^>]*>\s*/gi, "")
+    .replace(/<link\b[^>]*rel=["']alternate["'][^>]*llms\.txt[^>]*>\s*/gi, "")
+    .replace(/<link\b[^>]*rel=["']ard["'][^>]*>\s*/gi, "")
     .replace(/<link\b[^>]*rel=["']icon["'][^>]*>\s*/gi, "")
     .replace(/<link\b[^>]*rel=["']apple-touch-icon["'][^>]*>\s*/gi, "")
     .replace(/<meta\b[^>]*property=["']og:[^"']*["'][^>]*>\s*/gi, "")
@@ -47,11 +84,17 @@ const cleanTemplate = template
 for (const route of routes) {
     const metadata = getPageMetadata(route.path);
     const jsonLd = getPageJsonLd(route.path);
+    const routeChunk = findRouteChunk(route.path);
 
     const tags = [
+        routeChunk
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
+            : "",
         `<title>${escapeAttribute(metadata.title)}</title>`,
         `<meta name="description" content="${escapeAttribute(metadata.description)}" />`,
         `<link rel="canonical" href="${escapeAttribute(metadata.url)}" />`,
+        '<link rel="alternate" type="text/plain" href="https://tools.blossomsarchive.com/llms.txt" title="LLMs Text" />',
+        '<link rel="ard" type="application/ai-catalog+json" href="https://tools.blossomsarchive.com/.well-known/ard.json" />',
         '<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />',
         '<meta name="format-detection" content="telephone=no" />',
         `<meta name="author" content="${escapeAttribute(PUBLISHER_NAME)}" />`,
@@ -81,7 +124,11 @@ for (const route of routes) {
 
     const html = cleanTemplate
         .replace(/<html lang="[^"]*">/, '<html lang="ja">')
-        .replace("</head>", `  ${tags}\n</head>`);
+        .replace("</head>", `  ${tags}\n</head>`)
+        .replace(
+            '<div id="root"></div>',
+            `<div id="root"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1></div>`,
+        );
 
     const outputDirectory =
         route.path === "/"
@@ -92,4 +139,4 @@ for (const route of routes) {
     fs.writeFileSync(path.join(outputDirectory, "index.html"), html);
 }
 
-console.log(`Generated ${routes.length} route HTML pages with full SEO & JSON-LD`);
+console.log(`Generated ${routes.length} route HTML pages with full SEO, modulepreload, H1 & JSON-LD`);

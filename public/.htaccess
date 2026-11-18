@@ -10,6 +10,7 @@
 
     # HTMLは常に最新を取得させる
     ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType application/json "access plus 0 seconds"
 
     # 静的アセット（JS, CSS, 画像, フォント）は長期キャッシュ
     ExpiresByType text/css "access plus 1 year"
@@ -30,8 +31,8 @@
     Header set X-Frame-Options "SAMEORIGIN"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 
-    # HTMLファイルはキャッシュ検証を強制
-    <FilesMatch "\.(html|htm)$">
+    # HTML・JSON・テキスト系マニフェストはキャッシュ検証を強制
+    <FilesMatch "\.(html|htm|json|txt|xml)$">
         Header set Cache-Control "no-cache, must-revalidate"
     </FilesMatch>
 
@@ -41,6 +42,11 @@
     </FilesMatch>
 </IfModule>
 
+# 末尾スラッシュなしディレクトリへのアクセス時にmod_dirがHTTPへ301リダイレクトするのを防止
+<IfModule mod_dir.c>
+    DirectorySlash Off
+</IfModule>
+
 # SPAのルーティング対応：存在しないファイル・ディレクトリへのアクセスをindex.htmlにリダイレクト
 <IfModule mod_rewrite.c>
     RewriteEngine On
@@ -48,6 +54,17 @@
 
     # 旧URLをpagesのない正規URLへ恒久リダイレクト
     RewriteRule ^pages/(.*)$ /$1 [R=301,L]
+
+    # ARD (Agentic Resource Discovery) マニフェストの確実な配信
+    RewriteRule ^\.well-known/ard\.json$ ard.json [L]
+
+    # ルートアクセスはindex.htmlを直接配信
+    RewriteRule ^$ index.html [L]
+
+    # 存在するディレクトリ（末尾スラッシュ有無問わず）に index.html がある場合は301リダイレクトせず内部リライトで即座に返す
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_FILENAME}/index.html -f
+    RewriteRule ^(.+?)/?$ $1/index.html [L]
 
     # 実際に存在するファイルへのリクエストはそのまま通す
     RewriteCond %{REQUEST_FILENAME} !-f

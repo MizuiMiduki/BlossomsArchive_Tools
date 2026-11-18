@@ -1,0 +1,430 @@
+{
+  "entries": [
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:catalog",
+      "displayName": "BlossomsArchive Tools | 無料Webツール集",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/llms-full.txt",
+      "description": "電卓、QRコード生成、パスワード生成、抽選、画像形式変換、動画圧縮、文字コード変換、アクセス情報確認、OGP・SEO確認、EXIFフレーム生成、時計、タイマー、過焦点距離計算、ヘッドホン駆動難易度計算、テキスト変換の完全ブラウザ完結型Webツール一覧と仕様書です。",
+      "capabilities": [
+        "ClientSideWebTools",
+        "PrivacyPreservingProcessing",
+        "DeveloperAndDesignUtilities"
+      ],
+      "tags": [
+        "Webツール",
+        "無料ツール",
+        "オンラインツール",
+        "開発者ツール",
+        "ブラウザ完結"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "ブラウザ上で完結する無料のWeb便利ツール一覧を教えて",
+        "サーバーにデータを送信せず安全に使えるオンライン開発・画像ツールはありますか",
+        "BlossomsArchive Toolsで使える全ツールの機能とURLを確認したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:calculator",
+      "displayName": "電卓ツール | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/calculator",
+      "description": "計算履歴を確認・再利用しながら使えるシンプルで高機能な無料Web電卓。浮動小数点誤差の自動補正や連続計算に対応しています。",
+      "capabilities": [
+        "Calculator",
+        "ArithmeticEvaluation",
+        "CalculationHistory"
+      ],
+      "tags": [
+        "電卓",
+        "計算機",
+        "計算履歴",
+        "Web電卓"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "計算履歴が残る無料のWeb電卓を使いたい",
+        "過去の計算結果を再利用できるオンライン計算機を探している",
+        "ブラウザですぐに四則演算ができるシンプルな電卓ツール"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:qr_code",
+      "displayName": "QRコード生成 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/qr_code",
+      "description": "URLやテキストから高精細なQRコードをブラウザ上で即座に生成。PNG・JPEG・WebP・ベクターSVG形式での無料ダウンロードに対応。",
+      "capabilities": [
+        "QrCodeGeneration",
+        "SvgVectorExport",
+        "RasterImageExport"
+      ],
+      "tags": [
+        "QRコード生成",
+        "QRコード作成",
+        "SVG",
+        "PNG"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "URLからSVG形式の高画質QRコードを無料で作成したい",
+        "サーバー送信なしで安全にQRコードを生成できるツールは？",
+        "PNGやWebPでダウンロードできるQRコードメーカー"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:password-generator",
+      "displayName": "パスワード生成 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/password-generator",
+      "description": "文字種と桁数を指定し、Web Crypto API（CSPRNG）で暗号学的に安全な強固なランダムパスワードを一括生成できる無料ツール。",
+      "capabilities": [
+        "CsprngPasswordGeneration",
+        "BulkGeneration",
+        "CustomizableCharset"
+      ],
+      "tags": [
+        "パスワード生成",
+        "CSPRNG",
+        "ランダムパスワード",
+        "セキュリティ"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "安全なランダムパスワードを一括で複数生成したい",
+        "大文字小文字数字記号の長さを指定できるパスワード作成ツール",
+        "ブラウザ完結で暗号学的に安全なパスワードを生成したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:lottery",
+      "displayName": "抽選ツール | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/lottery",
+      "description": "リストからWeb Crypto APIを用いて公正にランダム抽選・選定。重複なし抽出や複数人同時選出、結果履歴の保持に対応。",
+      "capabilities": [
+        "RandomSelection",
+        "CsprngShuffle",
+        "DuplicateExclusion"
+      ],
+      "tags": [
+        "抽選ツール",
+        "ランダム抽選",
+        "くじ引き",
+        "公平抽選"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "名前リストから重複なしで複数人をランダム抽選したい",
+        "公平で偏りのないオンラインくじ引きツールを探している",
+        "抽選履歴を確認・コピーできる無料のランダム選定ツール"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:image_conversion",
+      "displayName": "画像形式変換 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/image_conversion",
+      "description": "PNG、JPEG、WebPなどの画像フォーマットをブラウザ内のCanvas APIで安全かつ高速に相互変換できる無料ツール。",
+      "capabilities": [
+        "ImageFormatConversion",
+        "WebpEncoding",
+        "ClientSideCanvasProcessing"
+      ],
+      "tags": [
+        "画像変換",
+        "WebP変換",
+        "PNG変換",
+        "JPEG変換"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "PNGやJPEG画像をアップロードなしでWebPに変換したい",
+        "ブラウザ内だけで完結する安全な画像形式変換ツール",
+        "WebP画像をPNGやJPGに一発で変換できる無料ツール"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:video-compressor",
+      "displayName": "動画圧縮 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/video-compressor",
+      "description": "動画ファイルの解像度やビットレート、FPSをブラウザ上で調整し、サーバー送信なしで完全安全に圧縮・軽量化できる無料ツール。",
+      "capabilities": [
+        "VideoCompression",
+        "ResolutionScaling",
+        "BitrateAdjustment"
+      ],
+      "tags": [
+        "動画圧縮",
+        "動画軽量化",
+        "WebM",
+        "MP4圧縮"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "動画ファイルをサーバーに送らずブラウザ上で圧縮・軽量化したい",
+        "解像度やビットレートを指定して動画サイズを小さくしたい",
+        "音声あり・なしを選べる無料のオンライン動画圧縮ツール"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:charset-converter",
+      "displayName": "文字コード変換 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/charset-converter",
+      "description": "UTF-8、Shift_JIS、EUC-JP、JIS、UTF-16/32の相互変換、進数・Unicode表記変換、Unicode正規化、文字化け修復まで対応。",
+      "capabilities": [
+        "CharsetConversion",
+        "MojibakeRepair",
+        "UnicodeNormalization"
+      ],
+      "tags": [
+        "文字コード変換",
+        "Shift_JIS",
+        "UTF-8",
+        "文字化け修復"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "Shift_JISとUTF-8の文字コードを相互変換したい",
+        "文字化けした日本語テキストを自動解析して復元したい",
+        "文字のUTF-8 16進数HEXやUnicodeコードポイントを調べたい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:access-info",
+      "displayName": "アクセス情報確認 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/access-info",
+      "description": "現在の接続IPアドレス、プロバイダ情報、ブラウザUser-Agent、画面論理解像度・物理解像度、回線種別等を一括確認できるツール。",
+      "capabilities": [
+        "IpAddressLookup",
+        "UserAgentInspection",
+        "ViewportDiagnostics"
+      ],
+      "tags": [
+        "IPアドレス確認",
+        "アクセス情報",
+        "ユーザーエージェント",
+        "画面解像度"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "自分の現在のグローバルIPアドレスとプロバイダを確認したい",
+        "使用中ブラウザのUser-Agentや画面の物理解像度を調べたい",
+        "端末やネットワーク接続情報を一覧で確認してコピーしたい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:ogp-checker",
+      "displayName": "OGP確認 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/ogp-checker",
+      "description": "URLやHTMLからOGPタグ・Twitterカードを解析し、X・Facebook・LINE・Discordでのシェア表示をリアルタイムにプレビュー確認できます。",
+      "capabilities": [
+        "OgpTagAnalysis",
+        "SocialCardPreview",
+        "HtmlMetaParsing"
+      ],
+      "tags": [
+        "OGP確認",
+        "Twitterカード",
+        "SNSプレビュー",
+        "Open Graph"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "WebページのOGP設定とSNSでのシェアカード表示を確認したい",
+        "公開前のHTMLソースからXやLINEのOGPプレビューをチェックしたい",
+        "og:imageやtwitter:cardのメタタグ不足を診断したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:seo-checker",
+      "displayName": "メタタグ(SEO)確認 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/seo-checker",
+      "description": "URLやHTMLからtitle・description・canonical・robots・JSON-LD等を解析し、Google検索結果のPC・スマホ表示とスコアを診断できます。",
+      "capabilities": [
+        "SeoMetaAnalysis",
+        "GoogleSerpPreview",
+        "JsonLdValidation"
+      ],
+      "tags": [
+        "SEO確認",
+        "メタタグ確認",
+        "Google検索プレビュー",
+        "JSON-LD"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "WebページのSEOメタタグとJSON-LD構造化データを一括診断したい",
+        "Google検索結果でのタイトル・説明文の見え方をPCとスマホで確認したい",
+        "HTMLソースを貼り付けてSEO健全度スコアを計測したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:exif-frame",
+      "displayName": "EXIFフレーム生成 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/exif-frame",
+      "description": "写真からカメラ機種、レンズ、焦点距離、F値、シャッタースピード、ISO感度のEXIF情報を抽出し美しいフレーム画像を生成できます。",
+      "capabilities": [
+        "ExifMetadataExtraction",
+        "PhotoFrameCompositing",
+        "HighResolutionExport"
+      ],
+      "tags": [
+        "EXIFフレーム",
+        "写真フレーム",
+        "カメラ情報",
+        "撮影データ"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "写真にカメラ名・レンズ・F値・ISO入りの白枠フレームを付けたい",
+        "EXIF情報を自動読み取りしてSNS投稿用の額縁画像を作りたい",
+        "ポラロイド風やフィルム風のEXIF付きフレーム画像を生成したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:clock",
+      "displayName": "時計 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/clock",
+      "description": "現在時刻を高精度にデジタル表示とSVGアナログ時計で確認できる、シンプルで視認性に優れたフルスクリーン対応の無料Web時計ツールです。",
+      "capabilities": [
+        "DigitalClock",
+        "AnalogSvgClock",
+        "RealtimeTimeDisplay"
+      ],
+      "tags": [
+        "時計",
+        "デジタル時計",
+        "アナログ時計",
+        "現在時刻"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "ブラウザで秒単位の現在時刻を大きく表示するデジタル時計",
+        "デジタル表示とアナログ時計を切り替えられるWeb時計を使いたい",
+        "ダークモード対応の見やすいリアルタイムWeb時計"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:timer",
+      "displayName": "タイマー・ストップウォッチ | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/timer",
+      "description": "カウントダウンタイマー、1/100秒ストップウォッチ、25分集中＋5分休憩のポモドーロタイマーを備えた無料Webタイマーツール。",
+      "capabilities": [
+        "CountdownTimer",
+        "Stopwatch",
+        "PomodoroTimer"
+      ],
+      "tags": [
+        "タイマー",
+        "ストップウォッチ",
+        "ポモドーロ",
+        "カウントダウン"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "ブラウザで使えるポモドーロタイマーとカウントダウンタイマー",
+        "1/100秒単位で計測できるシンプルなWebストップウォッチ",
+        "プリセットボタンで素早くセットできるオンラインタイマー"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:hyperfocal",
+      "displayName": "過焦点距離計算 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/hyperfocal",
+      "description": "センサーサイズ、焦点距離、F値からパンフォーカス撮影に最適な過焦点距離と被写界深度の前方・後方限界を精密に計算します。",
+      "capabilities": [
+        "HyperfocalCalculation",
+        "DepthOfFieldSimulation",
+        "SensorPresets"
+      ],
+      "tags": [
+        "過焦点距離",
+        "パンフォーカス",
+        "被写界深度",
+        "カメラ計算"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "フルサイズやAPS-Cでの過焦点距離とパンフォーカス範囲を計算したい",
+        "焦点距離とF値から被写界深度の手前と奥のピント限界を調べたい",
+        "許容錯乱円をカスタマイズできる被写界深度シミュレーター"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:headphone-driveability",
+      "displayName": "イヤホン・ヘッドホン鳴らしやすさ | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/headphone-driveability",
+      "description": "インピーダンスと音圧感度（dB/mW・dB/Vrms）から目標音圧に必要な電圧・電流・電力を計算し、アンプ駆動難易度を判定します。",
+      "capabilities": [
+        "ImpedanceSensitivityAnalysis",
+        "AmplifierLoadCalculation",
+        "DriveabilityScoring"
+      ],
+      "tags": [
+        "ヘッドホン",
+        "イヤホン",
+        "インピーダンス",
+        "鳴らしやすさ"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "ヘッドホンのインピーダンスと感度から必要なアンプ出力を計算したい",
+        "このイヤホンはスマホ直挿しで十分な音量が取れるか判定したい",
+        "dB/mWとdB/Vrmsから目標SPLに必要なVrmsとmWを算出したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:text-converter",
+      "displayName": "テキスト・マークアップ変換 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/text-converter",
+      "description": "HTML・Markdown・プレーンテキストの相互変換、HTMLエンティティエスケープ、URLエンコード・デコードを行える無料Webツール。",
+      "capabilities": [
+        "HtmlMarkdownConversion",
+        "PlainTextExtraction",
+        "EntityAndUrlEncoding"
+      ],
+      "tags": [
+        "テキスト変換",
+        "Markdown変換",
+        "HTML変換",
+        "URLエンコード"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-18T00:00:00Z",
+      "representativeQueries": [
+        "HTMLをMarkdownに、またはMarkdownをHTMLに相互変換したい",
+        "HTMLタグを除去してプレーンテキストだけを抽出したい",
+        "HTML特殊文字エスケープやURLエンコードをブラウザ上で変換したい"
+      ]
+    }
+  ]
+}

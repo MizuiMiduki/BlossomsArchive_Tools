@@ -39,7 +39,7 @@ export const routes: Route[] = [
         path: "/calculator",
         title: "電卓ツール",
         description:
-            "計算履歴を確認しながら使える、シンプルで高機能な無料Web電卓です。",
+            "計算履歴を自動保存・クリック再利用しながら使えるシンプルで高機能な無料Web電卓です。四則演算や小数計算、連続計算、丸め誤差の自動補正にも対応し、ブラウザ完結で安全に動作します。",
         applicationCategory: "UtilityApplication",
         keywords: ["電卓", "計算機", "計算履歴", "無料電卓", "Web電卓"],
     },
@@ -47,7 +47,7 @@ export const routes: Route[] = [
         path: "/qr_code",
         title: "QRコード生成",
         description:
-            "URLや任意のテキストから高精細なQRコードをブラウザ上で即座に作成・ダウンロードできる無料ツールです。",
+            "URLや任意のテキストから高精細なQRコードをブラウザ上で即座に作成・ダウンロードできる無料ツールです。PNG・JPEG・WebPのほか印刷に最適なベクターSVG出力にも対応しています。",
         applicationCategory: "UtilityApplication",
         keywords: ["QRコード作成", "QRコード生成", "無料QR", "QRコードダウンロード"],
     },
@@ -55,7 +55,7 @@ export const routes: Route[] = [
         path: "/password-generator",
         title: "パスワード生成",
         description:
-            "文字種や桁数を指定し、暗号学的に安全性の高い強固なパスワードを即座に生成できる無料ツールです。",
+            "文字種（大文字・小文字・数字・記号）や桁数を自由に指定し、Web Crypto API（CSPRNG）を用いて暗号学的に安全性の高い強固なパスワードを一括生成できる無料Webツールです。",
         applicationCategory: "UtilityApplication",
         keywords: ["パスワード生成", "パスワード作成", "ランダムパスワード", "セキュリティ"],
     },
@@ -63,7 +63,7 @@ export const routes: Route[] = [
         path: "/lottery",
         title: "抽選ツール",
         description:
-            "名前や項目リストからランダムに公正に抽選・選定できる無料オンラインツールです。重複なし抽選や複数人同時選出にも対応。",
+            "名前や項目リストから暗号学的疑似乱数（CSPRNG）を用いて公正・ランダムに抽選・選定できる無料ツールです。重複なし抽選や複数人同時選出、実行履歴の記録・コピーにも対応しています。",
         applicationCategory: "UtilityApplication",
         keywords: ["抽選ツール", "ランダム抽選", "くじ引き", "ルーレット", "公正抽選"],
     },
@@ -71,7 +71,7 @@ export const routes: Route[] = [
         path: "/image_conversion",
         title: "画像形式変換",
         description:
-            "PNG、JPEG、WebPなどの画像フォーマットをブラウザ内で安全かつ高速に相互変換できる無料ツールです。",
+            "PNG・JPEG・WebPなどの画像フォーマットをサーバーへアップロードせずブラウザ内のCanvas APIで安全かつ高速に相互変換できる無料ツールです。透過画像の白背景補完にも対応します。",
         applicationCategory: "DesignApplication",
         keywords: ["画像変換", "WebP変換", "PNG変換", "JPEG変換", "フォーマット変換"],
     },
@@ -79,7 +79,7 @@ export const routes: Route[] = [
         path: "/video-compressor",
         title: "動画圧縮",
         description:
-            "動画ファイルの解像度やビットレートをブラウザ上で調整し、サーバーにアップロードせず完全安全に圧縮・軽量化できる無料ツールです。",
+            "動画ファイルの解像度やビットレート、フレームレートをブラウザ上で調整し、サーバーへアップロードせず完全ローカル処理で安全に圧縮・軽量化できる無料Webツールです。音声有無も設定可能です。",
         applicationCategory: "MultimediaApplication",
         keywords: ["動画圧縮", "動画軽量化", "MP4圧縮", "ブラウザ動画圧縮", "ファイル軽量化"],
     },
@@ -87,7 +87,7 @@ export const routes: Route[] = [
         path: "/charset-converter",
         title: "文字コード変換",
         description:
-            "UTF-8、Shift_JIS、EUC-JP、JIS等の文字コードや改行コードを相互変換。文字化け修復やファイル一括変換も完全ブラウザ内で安全に行えます。",
+            "UTF-8・Shift_JIS・EUC-JP・JIS等の文字コードや改行コードを相互変換。16進数HEXやUnicode表記、Base64変換、Unicode正規化、文字化け修復もブラウザ内で安全に行えます。",
         applicationCategory: "DeveloperApplication",
         keywords: ["文字コード変換", "Shift_JIS", "UTF-8", "EUC-JP", "文字化け修復"],
     },
@@ -95,7 +95,7 @@ export const routes: Route[] = [
         path: "/access-info",
         title: "アクセス情報確認",
         description:
-            "現在の接続IPアドレス、ホスト名、ブラウザ（User-Agent）、画面解像度、OSなどのアクセス環境情報を一括確認できます。",
+            "現在のグローバルIPアドレス、プロバイダ(ISP)、ブラウザ(User-Agent)、論理解像度・物理解像度、回線種別、バッテリー残量などのアクセス環境情報を一括確認・コピーできる無料ツールです。",
         applicationCategory: "DeveloperApplication",
         keywords: ["IPアドレス確認", "アクセス情報", "ユーザーエージェント", "環境確認"],
     },
@@ -119,7 +119,7 @@ export const routes: Route[] = [
         path: "/exif-frame",
         title: "EXIFフレーム生成",
         description:
-            "写真に撮影日時、カメラ機種、レンズ、シャッタースピード、F値、ISO感度などのEXIF情報を美しくレイアウトしたフレームを追加できます。",
+            "写真に撮影日時、カメラ機種、レンズ名、焦点距離、F値、シャッタースピード、ISO感度などのEXIF情報を美しくレイアウトしたフレーム画像をブラウザ完結で生成・保存できる無料ツールです。",
         applicationCategory: "DesignApplication",
         keywords: ["EXIFフレーム", "カメラ情報", "写真フレーム", "撮影データ", "フィルム風枠"],
     },
@@ -127,7 +127,7 @@ export const routes: Route[] = [
         path: "/clock",
         title: "時計",
         description:
-            "現在時刻を高精度にデジタル表示とアナログ時計で確認できるフルスクリーン対応のWeb時計ツールです。",
+            "現在時刻を高精度なデジタル表示と滑らかなSVGアナログ時計でリアルタイムに確認できる無料Web時計ツールです。PCやスマホの見やすい画面表示とダークモード切り替えにも対応しています。",
         applicationCategory: "UtilityApplication",
         keywords: ["時計", "デジタル時計", "アナログ時計", "現在時刻", "全画面時計"],
     },
@@ -135,7 +135,7 @@ export const routes: Route[] = [
         path: "/timer",
         title: "タイマー・ストップウォッチ",
         description:
-            "カウントダウンタイマーとラップタイム計測対応のストップウォッチを使えるシンプルで使い勝手の良い無料Webツールです。",
+            "カウントダウンタイマー、1/100秒単位のラップタイム計測対応ストップウォッチ、25分集中＋5分休憩のポモドーロタイマーをひとつにまとめたシンプルで使いやすい無料Webツールです。",
         applicationCategory: "UtilityApplication",
         keywords: ["タイマー", "ストップウォッチ", "カウントダウン", "ラップタイム", "Webタイマー"],
     },
@@ -143,15 +143,15 @@ export const routes: Route[] = [
         path: "/hyperfocal",
         title: "過焦点距離計算",
         description:
-            "カメラのセンサーサイズ、焦点距離、絞り値（F値）からパンフォーカス撮影に役立つ過焦点距離や被写界深度を精密に計算します。",
+            "カメラのセンサーサイズ、レンズ焦点距離、絞り値（F値）からパンフォーカス撮影に最適な過焦点距離と被写界深度（前方・後方ピント限界）を精密にシミュレーション計算できる無料ツールです。",
         applicationCategory: "UtilityApplication",
         keywords: ["過焦点距離", "パンフォーカス", "被写界深度", "カメラ計算", "DOF計算"],
     },
     {
         path: "/headphone-driveability",
-        title: "イヤホン・ヘッドホンの鳴らしやすさ",
+        title: "イヤホン・ヘッドホン鳴らしやすさ",
         description:
-            "イヤホンやヘッドホンのインピーダンスと音圧感度から、必要な電圧・電流・出力を計算し、アンプや再生機器のドライブ適性を判定します。",
+            "イヤホンやヘッドホンのインピーダンスと音圧感度から、目標音圧に必要な出力電圧・電流・電力を計算し、スマホ直挿しやポタアン・据置アンプの駆動適性を判定できる無料ツールです。",
         applicationCategory: "UtilityApplication",
         keywords: ["ヘッドホン鳴らしやすさ", "インピーダンス", "音圧感度", "アンプ出力", "ポタアン"],
     },
@@ -159,21 +159,21 @@ export const routes: Route[] = [
         path: "/text-converter",
         title: "テキスト・マークアップ変換",
         description:
-            "MarkdownからHTML、HTMLからプレーンテキスト、全角半角変換、大文字小文字変換など、テキストとマークアップの多彩な変換を行える無料ツールです。",
+            "MarkdownからHTML、HTMLからMarkdown・プレーンテキスト抽出、HTML特殊文字エスケープ・アンエスケープ、URLエンコード・デコードをブラウザ内で安全に相互変換できる無料ツールです。",
         applicationCategory: "DeveloperApplication",
         keywords: ["テキスト変換", "Markdown HTML変換", "HTMLプレーンテキスト変換", "全角半角変換"],
     },
     {
         path: "/privacy",
         title: "プライバシーポリシー",
-        description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーのプライバシー保護に関する方針を掲載しています。",
+        description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",
         hidden: true,
     },
     {
         path: "/credits",
         title: "使用ライブラリ",
         description:
-            "BlossomsArchive Toolsで使用しているオープンソースライブラリとライセンス情報の一覧です。",
+            "BlossomsArchive Toolsの開発・動作に使用しているオープンソースライブラリ（Solid.js・Tailwind CSS・DaisyUI等）とアイコンのライセンス情報一覧です。",
         hidden: true,
     },
 ];
@@ -255,6 +255,14 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
             name: SITE_TITLE,
             description: SITE_DESCRIPTION,
             inLanguage: "ja",
+            primaryImageOfPage: {
+                "@type": "ImageObject",
+                url: DEFAULT_OG_IMAGE,
+            },
+            speakable: {
+                "@type": "SpeakableSpecification",
+                cssSelector: ["h1", "header p"],
+            },
             isPartOf: {
                 "@id": `${SITE_URL}/#website`,
             },
@@ -287,6 +295,14 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
                 name: `${route.title} | ${SITE_TITLE}`,
                 description: route.description,
                 inLanguage: "ja",
+                primaryImageOfPage: {
+                    "@type": "ImageObject",
+                    url: DEFAULT_OG_IMAGE,
+                },
+                speakable: {
+                    "@type": "SpeakableSpecification",
+                    cssSelector: ["h1", "p"],
+                },
                 isPartOf: {
                     "@id": `${SITE_URL}/#website`,
                 },
@@ -335,6 +351,14 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
                 url: currentUrl,
                 description: route.description,
                 inLanguage: "ja",
+                primaryImageOfPage: {
+                    "@type": "ImageObject",
+                    url: DEFAULT_OG_IMAGE,
+                },
+                speakable: {
+                    "@type": "SpeakableSpecification",
+                    cssSelector: ["h1", "p"],
+                },
                 isPartOf: {
                     "@id": `${SITE_URL}/#website`,
                 },

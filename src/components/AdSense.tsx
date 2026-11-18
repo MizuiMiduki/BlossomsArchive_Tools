@@ -67,18 +67,18 @@ function mountAd(
     };
 
     const cleanupTriggers = () => {
-        window.removeEventListener("scroll", startMount);
         window.removeEventListener("pointerdown", startMount);
         window.removeEventListener("touchstart", startMount);
         window.removeEventListener("keydown", startMount);
         window.removeEventListener("wheel", startMount);
+        window.removeEventListener("click", startMount);
     };
 
-    window.addEventListener("scroll", startMount, { passive: true, once: true });
     window.addEventListener("pointerdown", startMount, { passive: true, once: true });
     window.addEventListener("touchstart", startMount, { passive: true, once: true });
     window.addEventListener("keydown", startMount, { passive: true, once: true });
     window.addEventListener("wheel", startMount, { passive: true, once: true });
+    window.addEventListener("click", startMount, { passive: true, once: true });
 
     return () => {
         cleanupTriggers();

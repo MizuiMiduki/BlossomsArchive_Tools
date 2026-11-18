@@ -44,17 +44,17 @@ export default function Layout(props: LayoutProps) {
     onSettled(() => {
         const triggerLoad = () => {
             setShouldLoadThirdParty(true);
-            window.removeEventListener("scroll", triggerLoad);
             window.removeEventListener("pointerdown", triggerLoad);
             window.removeEventListener("touchstart", triggerLoad);
             window.removeEventListener("keydown", triggerLoad);
+            window.removeEventListener("wheel", triggerLoad);
             window.removeEventListener("click", triggerLoad);
         };
 
-        window.addEventListener("scroll", triggerLoad, { passive: true, once: true });
         window.addEventListener("pointerdown", triggerLoad, { passive: true, once: true });
         window.addEventListener("touchstart", triggerLoad, { passive: true, once: true });
         window.addEventListener("keydown", triggerLoad, { passive: true, once: true });
+        window.addEventListener("wheel", triggerLoad, { passive: true, once: true });
         window.addEventListener("click", triggerLoad, { passive: true, once: true });
     });
 
@@ -271,6 +271,7 @@ export default function Layout(props: LayoutProps) {
             <Link rel="icon" href={SITE_LOGO} />
             <Link rel="apple-touch-icon" href={SITE_LOGO} />
             <Link rel="alternate" type="text/plain" href="https://tools.blossomsarchive.com/llms.txt" />
+            <Link rel="ard" type="application/ai-catalog+json" href="https://tools.blossomsarchive.com/.well-known/ard.json" />
 
             {/* OGP (Open Graph Protocol) タグ */}
             <Meta property="og:type" content="website" />
