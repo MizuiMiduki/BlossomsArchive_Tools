@@ -34,45 +34,8 @@ export default function AccessInfo() {
 
     let containerRef: HTMLDivElement | undefined;
 
-    // SEO対策：メタデータの動的挿入
     onSettled(() => {
-        document.title =
-            "アクセス環境解析ツール | IP・端末・回線情報チェッカー";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "現在のIPアドレス、位置情報、ブラウザのユーザーエージェント、回線速度、画面解像度などをリアルタイムで解析・確認できるWebツールです。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "access-info-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "アクセス環境解析ツール",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "IPアドレスや端末の各種環境情報をまとめて取得・表示する解析ツールです。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef);
-
-        return () => {
-            const el = document.getElementById("access-info-jsonld");
-            if (el) {
-                el.remove();
-            }
-        };
     });
 
     const fetchAccessInfo = async () => {
