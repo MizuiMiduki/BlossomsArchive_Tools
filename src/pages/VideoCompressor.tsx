@@ -239,9 +239,9 @@ export default function VideoCompressor() {
                     <BudouX text="動画の解像度やビットレートをブラウザ上で最適化し、ファイルサイズを削減します。サーバーにアップロードせず端末内で安全に完結します。" />
                 </p>
                 <div class="flex flex-wrap justify-center gap-2 mt-3">
-                    <span class="badge badge-outline badge-primary text-xs font-semibold">完全ブラウザ完結</span>
-                    <span class="badge badge-outline badge-secondary text-xs font-semibold">サーバー送信ゼロで安心</span>
-                    <span class="badge badge-outline badge-accent text-xs font-semibold">解像度・音声を自由調整</span>
+                    <span class="badge badge-outline text-xs font-semibold">完全ブラウザ完結</span>
+                    <span class="badge badge-outline text-xs font-semibold">サーバー送信ゼロで安心</span>
+                    <span class="badge badge-outline text-xs font-semibold">解像度・音声を自由調整</span>
                 </div>
             </div>
 

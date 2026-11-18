@@ -657,7 +657,7 @@ export default function HyperfocalCalculator() {
                                         仮に {customSubjectDistance()}m
                                         の被写体にピントを合わせた場合
                                     </span>
-                                    <span class="badge badge-outline badge-secondary badge-xs font-black text-[9px] px-2 whitespace-nowrap">
+                                    <span class="badge badge-neutral badge-xs font-black text-[9px] px-2 whitespace-nowrap">
                                         被写界深度（ピントが合う奥行き）
                                     </span>
                                 </div>
