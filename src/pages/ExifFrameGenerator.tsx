@@ -5,7 +5,6 @@ import {
     createEffect,
     onSettled,
 } from "solid-js";
-import exifr from "exifr";
 import piexif from "piexifjs";
 import AdSense from "../components/AdSense";
 import { delayedCall, playPageEntrance, animateFadeIn } from "../utils/gsapAnimations";
@@ -589,45 +588,8 @@ export default function ExifFrame() {
         updateOverlayItem(targetId, { scale: nextScale });
     };
 
-    // SEO対策：メタデータの動的挿入
     onSettled(() => {
-        document.title =
-            "Exif情報付きフレーム作成ツール | 写真編集ユーティリティ";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "アップロードした写真に、撮影時のExif情報（絞り、シャッタースピード、焦点距離など）をフレームとして合成・生成できるWebツールです。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "exif-frame-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "Exifフレーム作成ツール",
-            operatingSystem: "All",
-            applicationCategory: "PhotographyApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "写真にExif情報を書き込み、スタイリッシュなフレーム付き画像を生成するツールです。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef);
-
-        return () => {
-            const el = document.getElementById("exif-frame-jsonld");
-            if (el) {
-                el.remove();
-            }
-        };
     });
 
     const fontList = [
@@ -2298,6 +2260,7 @@ export default function ExifFrame() {
 
         try {
             const arrayBuffer = await file.arrayBuffer();
+            const { default: exifr } = await import("exifr");
             const exif = await exifr.parse(arrayBuffer);
 
             setCameraModel(
