@@ -1,13 +1,7 @@
 import { createSignal, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import {
-    delayedCall,
-    playPageEntrance,
-    animateFadeIn,
-    animateStaggerIn,
-    animatePop,
-} from "../utils/gsapAnimations";
+import { delayedCall, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function PasswordGenerator() {
     const [length, setLength] = createSignal(16);
@@ -21,8 +15,6 @@ export default function PasswordGenerator() {
     const [allCopied, setAllCopied] = createSignal(false);
 
     let containerRef: HTMLDivElement | undefined;
-    let generateButtonRef: HTMLButtonElement | undefined;
-    let resultsListRef: HTMLDivElement | undefined;
 
     onSettled(() => {
         document.title =
@@ -65,8 +57,6 @@ export default function PasswordGenerator() {
     });
 
     const generatePassword = () => {
-        if (generateButtonRef) animatePop(generateButtonRef);
-
         const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
         const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const numberChars = "0123456789";
@@ -99,13 +89,6 @@ export default function PasswordGenerator() {
         setResults(newPasswords);
         setCopiedIndex(null);
         setAllCopied(false);
-
-        // 生成された各行をGSAPでアニメーション描画
-        setTimeout(() => {
-            if (resultsListRef) {
-                animateStaggerIn(resultsListRef, ".password-item");
-            }
-        }, 10);
     };
 
     const copyToClipboard = async (text: string, index: number) => {
@@ -303,7 +286,6 @@ export default function PasswordGenerator() {
                             {/* 生成ボタン */}
                             <div class="mt-4">
                                 <button
-                                    ref={generateButtonRef}
                                     onClick={generatePassword}
                                     class="btn bg-slate-800 hover:bg-slate-900 border-none text-white w-full text-lg h-16 font-black transition-all shadow-md"
                                 >
@@ -330,7 +312,6 @@ export default function PasswordGenerator() {
                                 }
                             >
                                 <div
-                                    ref={(el) => animateFadeIn(el)}
                                     class="flex flex-col h-full gap-4"
                                 >
                                     <div class="flex justify-between items-center pb-2 border-b border-slate-200">
@@ -358,7 +339,6 @@ export default function PasswordGenerator() {
 
                                     {/* 結果リストコンテナ */}
                                     <div
-                                        ref={resultsListRef}
                                         class="flex-1 flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1"
                                     >
                                         <For each={results()}>
