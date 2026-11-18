@@ -140,9 +140,13 @@ export default function TimerStopwatch() {
                     </h2>
                     <p class="py-4 text-base-content/70">お疲れさまでした！</p>
                     <div class="modal-action">
-                        <form method="dialog">
-                            <button class="btn btn-primary">閉じる</button>
-                        </form>
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            onClick={() => modalRef?.close()}
+                        >
+                            閉じる
+                        </button>
                     </div>
                 </div>
             </dialog>
