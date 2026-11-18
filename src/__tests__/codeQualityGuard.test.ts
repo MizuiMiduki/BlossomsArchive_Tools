@@ -122,4 +122,27 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
 
         expect(violations).toEqual([]);
     });
+
+    it("PageSpeed/A11y退行防止: AdSense/Layoutの遅延読込にscrollトリガーが無く、PrivacyPolicyの本文内リンクにunderlineが付与されていること", () => {
+        const adSenseSrc = fs.readFileSync(
+            path.join(ROOT_DIR, "src", "components", "AdSense.tsx"),
+            "utf8",
+        );
+        const layoutSrc = fs.readFileSync(
+            path.join(ROOT_DIR, "src", "components", "Layout.tsx"),
+            "utf8",
+        );
+        const privacySrc = fs.readFileSync(
+            path.join(ROOT_DIR, "src", "pages", "PrivacyPolicy.tsx"),
+            "utf8",
+        );
+
+        // AdSense のマウントトリガーに scroll が混入していないこと
+        expect(adSenseSrc).not.toMatch(/addEventListener\(\s*["']scroll["']/);
+        // Layout で createScriptLoader の無条件読み込みが再導入されていないこと
+        expect(layoutSrc).not.toContain("createScriptLoader");
+        // PrivacyPolicy の外部リンクに常時下線クラスがあること（link-in-text-block 対策）
+        expect(privacySrc).toContain("underline");
+        expect(privacySrc).not.toContain('class="text-primary hover:underline"');
+    });
 });

@@ -118,4 +118,85 @@ describe("Layout Component", () => {
         expect(screen.getByRole("link", { name: "Bluesky" })).toBeInTheDocument();
         expect(screen.getByRole("link", { name: "Mastodon" })).toBeInTheDocument();
     });
+
+    it("GA4・AdSense の外部スクリプトが初期描画やscrollでは読み込まれず、ユーザー操作時のみ1回だけ遅延注入されること", async () => {
+        vi.stubEnv("VITE_GA_MEASUREMENT_ID", "G-TEST123456");
+        vi.stubEnv("VITE_ADSENSE_CLIENT_ID", "ca-pub-9999999999999999");
+        vi.resetModules();
+
+        // 既存スクリプト掃除
+        document
+            .querySelectorAll('script[src*="googletagmanager"], script[src*="adsbygoogle"]')
+            .forEach((el) => el.remove());
+
+        const { default: FreshLayout } = await import("../components/Layout");
+        const { createRouter: createFreshRouter, memoryHistory: freshHistory } =
+            await import("@solidjs/router");
+
+        const DeferredRouter = createFreshRouter({
+            history: freshHistory(),
+            routes: [{ path: "/", component: () => <div>遅延読込テスト</div> }],
+        });
+
+        const { unmount } = render(() => (
+            <DeferredRouter>
+                {(props) => <FreshLayout>{props.children}</FreshLayout>}
+            </DeferredRouter>
+        ));
+
+        await Promise.resolve();
+
+        // 初期状態では GA4 / AdSense スクリプトは注入されない
+        expect(document.querySelector('script[src*="googletagmanager"]')).toBeNull();
+        expect(document.querySelector('script[src*="adsbygoogle"]')).toBeNull();
+
+        // scroll イベントでは発火しないこと（LCP/TBT保護）
+        fireEvent.scroll(window);
+        expect(document.querySelector('script[src*="googletagmanager"]')).toBeNull();
+        expect(document.querySelector('script[src*="adsbygoogle"]')).toBeNull();
+
+        // ユーザー操作（pointerdown）で1回だけ注入されること
+        fireEvent.pointerDown(window);
+        expect(
+            document.querySelectorAll('script[src*="googletagmanager"]').length,
+        ).toBe(1);
+        expect(
+            document.querySelectorAll('script[src*="adsbygoogle"]').length,
+        ).toBe(1);
+
+        // 2回目の操作で重複注入されないこと
+        fireEvent.click(window);
+        expect(
+            document.querySelectorAll('script[src*="googletagmanager"]').length,
+        ).toBe(1);
+
+        unmount();
+        vi.unstubAllEnvs();
+    });
+
+    it("PCサイドバーの開閉ボタン操作が localStorage に永続化されること", async () => {
+        localStorage.clear();
+        const SidebarRouter = createRouter({
+            history: memoryHistory(),
+            routes: [{ path: "/", component: () => <div>サイドバーテスト</div> }],
+        });
+
+        render(() => (
+            <SidebarRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </SidebarRouter>
+        ));
+
+        const closeBtn = screen.getByRole("button", {
+            name: "サイドメニューを閉じる",
+        });
+        fireEvent.click(closeBtn);
+        await Promise.resolve();
+        expect(localStorage.getItem("isPcMenuOpen")).toBe("false");
+
+        const openBtn = screen.getByRole("button", { name: "メニューを開く" });
+        fireEvent.click(openBtn);
+        await Promise.resolve();
+        expect(localStorage.getItem("isPcMenuOpen")).toBe("true");
+    });
 });

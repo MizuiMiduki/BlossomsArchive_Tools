@@ -112,11 +112,9 @@ export default function VideoCompressor() {
 
         try {
             setSelectedFile(file);
-            const currentFile = selectedFile();
-            if (!currentFile) return;
-            const meta = await extractVideoMetadata(currentFile);
+            const meta = await extractVideoMetadata(file);
             setMetadata(meta);
-            setPreviewUrl(createSafeObjectUrl(currentFile));
+            setPreviewUrl(createSafeObjectUrl(file));
         } catch (err) {
             setSelectedFile(null);
             setErrorMessage(err instanceof Error ? err.message : "動画の読み込みに失敗しました。");

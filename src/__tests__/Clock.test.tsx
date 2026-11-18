@@ -1,5 +1,5 @@
 import { render, fireEvent, screen } from "@solidjs/testing-library";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import Clock from "../pages/Clock";
 
 describe("Clock", () => {
@@ -39,5 +39,22 @@ describe("Clock", () => {
         fireEvent.click(screen.getByRole("button", { name: "デジタル" }));
         expect(container.querySelector("svg")).not.toBeInTheDocument();
         expect(container.querySelector(".font-mono.tracking-tighter")).toBeInTheDocument();
+    });
+
+    it("時間の経過に合わせてデジタル表示の秒がリアルタイムに更新されること", async () => {
+        vi.useFakeTimers({
+            toFake: ["setInterval", "clearInterval", "Date"],
+        });
+        vi.setSystemTime(new Date("2026-11-19T12:34:56"));
+
+        const { container, unmount } = render(() => <Clock />);
+        const digitalDisplay = container.querySelector(".font-mono.tracking-tighter");
+        expect(digitalDisplay?.textContent).toContain("12:34:56");
+
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(digitalDisplay?.textContent).toContain("12:34:58");
+
+        unmount();
+        vi.useRealTimers();
     });
 });
