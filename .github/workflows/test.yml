@@ -1,9 +1,6 @@
 name: Run Tests
 
 on:
-    push:
-        branches:
-            - main
     pull_request:
     workflow_dispatch:
         inputs:
@@ -57,11 +54,15 @@ jobs:
               if: github.event_name == 'workflow_dispatch' && inputs['今回のみ待機時間チェックを省略']
               run: pnpm install --frozen-lockfile --config.minimum-release-age=0
 
-            - name: Run Type Check
-              run: pnpm run type-check
-
-            - name: Run Unit Tests
-              run: pnpm test
+            - name: Run Type Check & Tests (Parallel)
+              shell: bash
+              run: |
+                  pnpm run type-check &
+                  PID_TYPE=$!
+                  pnpm test &
+                  PID_TEST=$!
+                  wait $PID_TYPE
+                  wait $PID_TEST
 
             - name: Verify Production Build & Route Pages
               run: pnpm run build

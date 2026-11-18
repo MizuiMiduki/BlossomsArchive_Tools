@@ -21,35 +21,17 @@ permissions:
     contents: read
     issues: write
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
-    deploy:
+    # ─── 1. 品質ゲート (型検査 & 全テストをバックグラウンド並行実行) ───
+    quality-gate:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout repository
               uses: actions/checkout@v5
-
-            # FTP_SERVER(ドメイン)をシークレット登録していても、接続エラー時などに
-            # 名前解決後のIPアドレスがログへ出力されるため、解決結果をマスクする
-            - name: Mask FTP Server IP Addresses
-              env:
-                  FTP_SERVER: ${{ secrets.FTP_SERVER }}
-              run: |
-                  # ftp:// 等のスキームやポート表記が付いていても、ホスト名のみを取り出す
-                  HOST="${FTP_SERVER#*://}"
-                  HOST="${HOST%%/*}"
-                  HOST="${HOST%%:*}"
-                  if [ -z "$HOST" ]; then
-                    echo "::warning::FTP_SERVER が空のため IP マスクをスキップしました"
-                    exit 0
-                  fi
-                  # IPv4 / IPv6 を含め、解決されるすべてのアドレスを登録する
-                  for ADDR in $(getent ahosts "$HOST" | awk '{print $1}' | sort -u); do
-                    echo "::add-mask::$ADDR"
-                  done
-                  # 直接IPが指定されている場合もマスクする
-                  if echo "$HOST" | grep -Eq '^[0-9.]+$|^[0-9a-fA-F:]+$'; then
-                    echo "::add-mask::$HOST"
-                  fi
 
             - name: Setup Node.js
               uses: actions/setup-node@v5
@@ -60,19 +42,61 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v5
 
+            - name: Get pnpm store directory
+              shell: bash
+              run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - name: Setup pnpm cache
+              uses: actions/cache@v5
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
             - name: Install dependencies
-              if: github.event_name != 'workflow_dispatch' || !inputs['今回のみ待機時間チェックを省略']
               run: pnpm install --frozen-lockfile
 
-            - name: Install dependencies (temporary policy bypass)
-              if: github.event_name == 'workflow_dispatch' && inputs['今回のみ待機時間チェックを省略']
-              run: pnpm install --frozen-lockfile --config.minimum-release-age=0
+            - name: Run Type Check & Test Suite (Parallel)
+              shell: bash
+              run: |
+                  pnpm run type-check &
+                  PID_TYPE=$!
+                  pnpm test &
+                  PID_TEST=$!
+                  wait $PID_TYPE
+                  wait $PID_TEST
 
-            - name: Run Type Check
-              run: pnpm run type-check
+    # ─── 2. 本番ビルド (quality-gate と並行に即時開始) ───
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
 
-            - name: Run Quality & Test Suite
-              run: pnpm test
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version: "24"
+                  package-manager-cache: false
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v5
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - name: Setup pnpm cache
+              uses: actions/cache@v5
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
             - name: Build
               env:
@@ -81,12 +105,39 @@ jobs:
                   VITE_ADSENSE_DEFAULT_SLOT: ${{ secrets.VITE_ADSENSE_DEFAULT_SLOT }}
               run: pnpm run build
 
-            - name: Install Lighthouse CLI
-              run: npm install -g lighthouse
+            - name: Upload Build Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: dist-artifacts
+                  path: dist/
+                  retention-days: 1
 
-            - name: Audit Build Quality with Lighthouse
-              id: lighthouse
-              run: node scripts/audit-lighthouse.mjs
+    # ─── 3. FTP デプロイ (品質ゲート & ビルド完了で即座に開始) ───
+    deploy-ftp:
+        needs: [quality-gate, build]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Mask FTP Server IP Addresses
+              env:
+                  FTP_SERVER: ${{ secrets.FTP_SERVER }}
+              run: |
+                  HOST="${FTP_SERVER#*://}"
+                  HOST="${HOST%%/*}"
+                  HOST="${HOST%%:*}"
+                  if [ -n "$HOST" ]; then
+                    for ADDR in $(getent ahosts "$HOST" 2>/dev/null | awk '{print $1}' | sort -u); do
+                      echo "::add-mask::$ADDR"
+                    done
+                    if echo "$HOST" | grep -Eq '^[0-9.]+$|^[0-9a-fA-F:]+$'; then
+                      echo "::add-mask::$HOST"
+                    fi
+                  fi
+
+            - name: Download Build Artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: dist-artifacts
+                  path: dist/
 
             - name: Deploy via FTP
               uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -98,8 +149,66 @@ jobs:
                   server-dir: "${{ secrets.FTP_TARGET_DIR }}"
                   dangerous-clean-slate: ${{ github.event_name == 'workflow_dispatch' && inputs['サーバーを全削除して再デプロイ'] || false }}
 
+    # ─── 4. Lighthouse 自動監査 & Issue 起票 (ビルド完了でデプロイと並行して即時実行) ───
+    lighthouse-audit:
+        needs: [build]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version: "24"
+                  package-manager-cache: false
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v5
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - name: Setup pnpm cache
+              uses: actions/cache@v5
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Download Build Artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: dist-artifacts
+                  path: dist/
+
+            - name: Setup Lighthouse CLI Cache
+              uses: actions/cache@v5
+              id: lh-cache
+              with:
+                  path: /home/runner/.npm-global
+                  key: ${{ runner.os }}-lighthouse-cli-v13
+
+            - name: Install Lighthouse CLI
+              if: steps.lh-cache.outputs.cache-hit != 'true'
+              run: |
+                  mkdir -p /home/runner/.npm-global
+                  npm config set prefix /home/runner/.npm-global
+                  npm install -g lighthouse
+
+            - name: Run 2-Worker Lighthouse Audit
+              id: lighthouse
+              env:
+                  PATH: /home/runner/.npm-global/bin:${{ env.PATH }}
+              run: node scripts/audit-lighthouse.mjs
+
             - name: Create Issue on PageSpeed Regression
-              if: always() && steps.lighthouse.outputs.has_issues == 'true'
+              if: steps.lighthouse.outputs.has_issues == 'true'
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |

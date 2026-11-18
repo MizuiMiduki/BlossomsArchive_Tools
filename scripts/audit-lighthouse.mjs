@@ -115,15 +115,27 @@ async function main() {
         console.log(`Auditing ${routes.length} routes...`);
 
         const regressions = [];
-        let totalAudits = 0;
-
+        const tasks = [];
         for (const route of routes) {
-            const url = `http://127.0.0.1:4173${route}`;
-            for (const preset of ["mobile", "desktop"]) {
-                totalAudits++;
-                process.stdout.write(`Auditing [${preset.toUpperCase()}] ${route} ... `);
+            tasks.push({ route, preset: "mobile" });
+            tasks.push({ route, preset: "desktop" });
+        }
+
+        const totalAudits = tasks.length;
+        console.log(`Starting ${totalAudits} audits with concurrency 2...`);
+
+        // 2ワーカーで並行処理
+        let completed = 0;
+        async function worker() {
+            while (tasks.length > 0) {
+                const task = tasks.shift();
+                if (!task) break;
+                const { route, preset } = task;
+                const url = `http://127.0.0.1:4173${route}`;
+
                 try {
                     const report = await auditUrl(lhBin, url, preset);
+                    completed++;
                     const cats = report.categories || {};
                     const scores = {
                         performance: Math.round((cats.performance?.score ?? 0) * 100),
@@ -139,10 +151,10 @@ async function main() {
                         scores.seo === 100;
 
                     if (isAll100) {
-                        console.log("✅ 100/100");
+                        console.log(`[${completed}/${totalAudits}] [${preset.toUpperCase()}] ${route} ✅ 100/100`);
                     } else {
                         console.log(
-                            `⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
+                            `[${completed}/${totalAudits}] [${preset.toUpperCase()}] ${route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                         );
 
                         // 減点された具体的な監査項目を抽出
@@ -167,7 +179,8 @@ async function main() {
                         });
                     }
                 } catch (err) {
-                    console.log(`❌ Audit error: ${err.message}`);
+                    completed++;
+                    console.log(`[${completed}/${totalAudits}] [${preset.toUpperCase()}] ${route} ❌ Audit error: ${err.message}`);
                     regressions.push({
                         route,
                         preset,
@@ -177,6 +190,8 @@ async function main() {
                 }
             }
         }
+
+        await Promise.all([worker(), worker()]);
 
         console.log("\n=================================");
         console.log(`Audit finished: ${totalAudits} audits executed.`);
