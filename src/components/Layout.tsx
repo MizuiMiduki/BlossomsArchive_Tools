@@ -3,7 +3,6 @@ import { For, Show, createEffect, createSignal, onSettled } from "solid-js";
 import type { JSX } from "@solidjs/web";
 import { useLocation } from "@solidjs/router";
 import { Link, Meta, Title } from "@solidjs/meta";
-import { createScriptLoader } from "@solid-primitives/script-loader";
 import {
     getPageMetadata,
     getPageJsonLd,
@@ -28,7 +27,6 @@ export default function Layout(props: LayoutProps) {
         localStorage.getItem("isPcMenuOpen") !== "false",
     );
     const [isPcMenuHovered, setIsPcMenuHovered] = createSignal(false);
-    const [shouldLoadThirdParty, setShouldLoadThirdParty] = createSignal(false);
 
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
@@ -42,13 +40,43 @@ export default function Layout(props: LayoutProps) {
     }
 
     onSettled(() => {
+        let thirdPartyLoaded = false;
         const triggerLoad = () => {
-            setShouldLoadThirdParty(true);
+            if (thirdPartyLoaded) return;
+            thirdPartyLoaded = true;
             window.removeEventListener("pointerdown", triggerLoad);
             window.removeEventListener("touchstart", triggerLoad);
             window.removeEventListener("keydown", triggerLoad);
             window.removeEventListener("wheel", triggerLoad);
             window.removeEventListener("click", triggerLoad);
+
+            if (gaId && typeof document !== "undefined") {
+                const gaScript = document.createElement("script");
+                gaScript.async = true;
+                gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+                gaScript.onload = () => {
+                    (window as any).dataLayer = (window as any).dataLayer || [];
+                    function gtag(..._args: any[]) {
+                        (window as any).dataLayer.push(arguments);
+                    }
+                    (window as any).gtag = gtag;
+                    gtag("js", new Date());
+                    gtag("config", gaId, {
+                        page_path: location.pathname,
+                        page_title: getMetadata().title,
+                    });
+                };
+                document.head.appendChild(gaScript);
+            }
+
+            if (adsenseId && typeof document !== "undefined") {
+                const adsScript = document.createElement("script");
+                adsScript.async = true;
+                adsScript.src =
+                    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+                adsScript.crossOrigin = "anonymous";
+                document.head.appendChild(adsScript);
+            }
         };
 
         window.addEventListener("pointerdown", triggerLoad, { passive: true, once: true });
@@ -56,6 +84,14 @@ export default function Layout(props: LayoutProps) {
         window.addEventListener("keydown", triggerLoad, { passive: true, once: true });
         window.addEventListener("wheel", triggerLoad, { passive: true, once: true });
         window.addEventListener("click", triggerLoad, { passive: true, once: true });
+
+        return () => {
+            window.removeEventListener("pointerdown", triggerLoad);
+            window.removeEventListener("touchstart", triggerLoad);
+            window.removeEventListener("keydown", triggerLoad);
+            window.removeEventListener("wheel", triggerLoad);
+            window.removeEventListener("click", triggerLoad);
+        };
     });
 
     createEffect(
@@ -73,27 +109,6 @@ export default function Layout(props: LayoutProps) {
     const handleMouseLeave = () => {
         hoverTween = delayedCall(0.2, () => setIsPcMenuHovered(false));
     };
-
-    const gaTag = gaId
-        ? createScriptLoader({
-              src: `https://www.googletagmanager.com/gtag/js?id=${gaId}`,
-              async onLoad() {
-                  (window as any).dataLayer = (window as any).dataLayer || [];
-                  function gtag(..._args: any[]) {
-                      (window as any).dataLayer.push(arguments);
-                  }
-                  (window as any).gtag = gtag;
-                  gtag("js", new Date());
-                  gtag("config", gaId, { send_page_view: false });
-              },
-          })
-        : null;
-    const adsenseTag = adsenseId
-        ? createScriptLoader({
-              src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
-              crossorigin: "anonymous",
-          })
-        : null;
 
     const currentPath = () => normalizePath(location.pathname);
 
@@ -149,20 +164,10 @@ export default function Layout(props: LayoutProps) {
 
             const handleNonUserScroll = () => {
                 if (userScrolled) return;
-                if ((mainRef && mainRef.scrollTop > 0) || window.scrollY > 0) {
-                    resetScroll();
-                }
+                resetScroll();
             };
 
-            let mutationObserver: MutationObserver | undefined;
-            let resizeObserver: ResizeObserver | undefined;
-            const timers: number[] = [];
-
             const cleanupScrollLock = () => {
-                mutationObserver?.disconnect();
-                resizeObserver?.disconnect();
-                timers.forEach((id) => window.clearTimeout(id));
-                timers.length = 0;
                 mainRef?.removeEventListener("scroll", handleNonUserScroll);
                 window.removeEventListener("scroll", handleNonUserScroll);
                 window.removeEventListener("wheel", markUserScrolled);
@@ -178,39 +183,7 @@ export default function Layout(props: LayoutProps) {
             mainRef?.addEventListener("scroll", handleNonUserScroll, { passive: true });
             window.addEventListener("scroll", handleNonUserScroll, { passive: true });
 
-            if (mainRef && typeof MutationObserver !== "undefined") {
-                mutationObserver = new MutationObserver(() => {
-                    resetScroll();
-                });
-                mutationObserver.observe(mainRef, {
-                    childList: true,
-                    subtree: true,
-                    attributes: true,
-                    attributeFilter: ["style", "class", "data-adsbygoogle-status"],
-                });
-            }
-
-            if (mainRef && typeof ResizeObserver !== "undefined") {
-                resizeObserver = new ResizeObserver(() => {
-                    resetScroll();
-                });
-                resizeObserver.observe(mainRef);
-                if (mainRef.firstElementChild) {
-                    resizeObserver.observe(mainRef.firstElementChild);
-                }
-            }
-
-            // 新ページの描画・レイアウト確定や遅延広告（AdSense）の差し込みで
-            // 位置が下に戻されることがあるため、ユーザー操作があるまで0を維持する
             resetScroll();
-            requestAnimationFrame(() => {
-                resetScroll();
-                requestAnimationFrame(resetScroll);
-            });
-            for (const delay of [100, 250, 500, 1000]) {
-                timers.push(window.setTimeout(resetScroll, delay));
-            }
-            timers.push(window.setTimeout(cleanupScrollLock, 2000));
 
             return cleanupScrollLock;
         }
@@ -296,10 +269,6 @@ export default function Layout(props: LayoutProps) {
                 content={getMetadata().description}
             />
             <Meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
-            <Show when={shouldLoadThirdParty()}>
-                {gaTag}
-                {adsenseTag}
-            </Show>
 
             <div
                 class={`fixed inset-0 bg-black/50 z-20 lg:hidden ${isMenuOpen() ? "block" : "hidden"}`}

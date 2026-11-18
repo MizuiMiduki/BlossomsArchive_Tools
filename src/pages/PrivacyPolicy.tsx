@@ -49,7 +49,7 @@ export default function PrivacyPolicy() {
                         href="https://policies.google.com/technologies/partner-sites"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="text-primary hover:underline"
+                        class="text-primary underline font-semibold hover:opacity-80"
                     >
                         ポリシーと規約
                     </a>
@@ -74,7 +74,7 @@ export default function PrivacyPolicy() {
                     ウェブサイト:{" "}
                     <a
                         href="https://blossomsarchive.com"
-                        class="text-primary hover:underline"
+                        class="text-primary underline font-semibold hover:opacity-80"
                     >
                         https://blossomsarchive.com
                     </a>

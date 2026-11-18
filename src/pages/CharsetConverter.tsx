@@ -599,7 +599,7 @@ export default function CharsetConverter() {
                                 <div class="flex items-center justify-between">
                                     <h3 class="text-sm font-bold flex items-center gap-2">
                                         <span>バイナリ16進ダンプ（Hex Dump）</span>
-                                        <span class="text-xs text-base-content/50 font-normal">
+                                        <span class="text-xs text-base-content/75 font-normal">
                                             （先頭最大512バイト）
                                         </span>
                                     </h3>
@@ -1311,7 +1311,7 @@ export default function CharsetConverter() {
                             <Show
                                 when={mojibakeCandidates().length > 0}
                                 fallback={
-                                    <div class="p-6 text-center text-sm text-base-content/50 bg-base-200/40 rounded-lg">
+                                    <div class="p-6 text-center text-sm text-base-content/75 bg-base-200/40 rounded-lg">
                                         {mojibakeInput()
                                             ? "該当する典型的な文字化けパターンは見つかりませんでした。テキスト文字コード変換タブでエンコーディングを手動指定してお試しください。"
                                             : "文字化けしたテキストを入力すると、ここに復元候補が表示されます。"}

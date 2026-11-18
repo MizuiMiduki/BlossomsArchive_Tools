@@ -1113,7 +1113,7 @@ export default function OgpChecker() {
                                                                 !imageError()
                                                             }
                                                             fallback={
-                                                                <span class="text-xs text-base-content/40 font-bold text-center px-2">
+                                                                <span class="text-xs text-base-content/75 font-bold text-center px-2">
                                                                     No Image
                                                                 </span>
                                                             }
@@ -1157,7 +1157,7 @@ export default function OgpChecker() {
                                                             !imageError()
                                                         }
                                                         fallback={
-                                                            <div class="flex flex-col items-center gap-1 text-base-content/40">
+                                                            <div class="flex flex-col items-center gap-1 text-base-content/75">
                                                                 <span class="text-3xl">
                                                                     🖼️
                                                                 </span>
@@ -1217,7 +1217,7 @@ export default function OgpChecker() {
                                                         !imageError()
                                                     }
                                                     fallback={
-                                                        <div class="flex flex-col items-center gap-1 text-base-content/40">
+                                                        <div class="flex flex-col items-center gap-1 text-base-content/75">
                                                             <span class="text-3xl">
                                                                 🖼️
                                                             </span>

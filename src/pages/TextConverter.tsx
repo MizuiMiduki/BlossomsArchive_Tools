@@ -524,7 +524,7 @@ export default function TextConverter() {
                         </div>
 
                         {/* 入力側ステータスバー */}
-                        <div class="mt-2 text-right text-xs text-base-content/50">
+                        <div class="mt-2 text-right text-xs text-base-content/75">
                             容量: {(inputStats().bytes / 1024).toFixed(2)} KB
                         </div>
                     </div>
@@ -676,7 +676,7 @@ export default function TextConverter() {
                         </div>
 
                         {/* 出力側ステータスバー */}
-                        <div class="mt-2 text-right text-xs text-base-content/50">
+                        <div class="mt-2 text-right text-xs text-base-content/75">
                             容量: {(outputStats().bytes / 1024).toFixed(2)} KB
                         </div>
                     </div>

@@ -596,7 +596,7 @@ export default function HyperfocalCalculator() {
                                 </div>
 
                                 {/* 下部スケール */}
-                                <div class="w-full flex justify-between text-[9px] font-mono opacity-50 px-8 mt-auto pt-3">
+                                <div class="w-full flex justify-between text-[9px] font-mono font-bold text-base-content/80 px-8 mt-auto pt-3">
                                     <span>0m</span>
                                     <span>
                                         {(visualScale() * 0.5).toFixed(1)}m

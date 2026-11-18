@@ -436,7 +436,7 @@ export default function VideoCompressor() {
                                             disabled={isCompressing()}
                                             class="range range-xs range-primary w-full"
                                         />
-                                        <div class="flex justify-between text-[10px] text-base-content/50 mt-1">
+                                        <div class="flex justify-between text-[10px] text-base-content/75 mt-1">
                                             <span>25%（超小型）</span>
                                             <span>50%</span>
                                             <span>75%</span>
@@ -468,7 +468,7 @@ export default function VideoCompressor() {
                                             disabled={isCompressing()}
                                             class="range range-xs range-primary w-full"
                                         />
-                                        <div class="flex justify-between text-[10px] text-base-content/50 mt-1">
+                                        <div class="flex justify-between text-[10px] text-base-content/75 mt-1">
                                             <span>300 kbps (高圧縮)</span>
                                             <span>1.5 Mbps</span>
                                             <span>3.5 Mbps</span>
@@ -701,13 +701,13 @@ export default function VideoCompressor() {
                         </p>
                     </div>
                     <div class="bg-base-200/40 p-4 rounded-xl border border-base-200">
-                        <div class="font-bold text-sm text-secondary mb-1">⚡ 柔軟なカスタマイズ</div>
+                        <div class="font-bold text-sm text-pink-700 dark:text-pink-300 mb-1">⚡ 柔軟なカスタマイズ</div>
                         <p class="text-xs text-base-content/70 leading-relaxed">
                             バランス重視、SNS向けの超高圧縮、画質重視のプリセットに加え、ビットレートや解像度、フレームレート、音声ミュートを自由に指定可能です。
                         </p>
                     </div>
                     <div class="bg-base-200/40 p-4 rounded-xl border border-base-200">
-                        <div class="font-bold text-sm text-accent mb-1">📱 スマホ・PC両対応</div>
+                        <div class="font-bold text-sm text-teal-800 dark:text-teal-300 mb-1">📱 スマホ・PC両対応</div>
                         <p class="text-xs text-base-content/70 leading-relaxed">
                             HTML5 CanvasおよびMediaRecorder APIに対応した最新のブラウザ（Chrome, Edge, Safari, Firefoxなど）でそのまま動作します。
                         </p>

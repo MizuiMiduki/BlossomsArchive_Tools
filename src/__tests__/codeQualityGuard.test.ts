@@ -80,6 +80,9 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         const solidLegacyLifecyclePattern = new RegExp(
             "\\b(?:onMount|onCleanup)\\b",
         );
+        const lowContrastClassPattern = new RegExp(
+            "text-base-content\\/(?:[1-5]0)\\b",
+        );
 
         for (const filePath of srcFiles) {
             const rel = path.relative(ROOT_DIR, filePath);
@@ -96,6 +99,11 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
             if (solidLegacyLifecyclePattern.test(content)) {
                 violations.push(
                     `${rel}: Legacy Solid 1.x onMount/onCleanup found; use Solid 2.0 onSettled`,
+                );
+            }
+            if (lowContrastClassPattern.test(content)) {
+                violations.push(
+                    `${rel}: Low-contrast class text-base-content/10..50 found; use >= /60 or /75 for WCAG AA 4.5:1 contrast`,
                 );
             }
 
