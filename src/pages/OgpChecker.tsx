@@ -410,39 +410,9 @@ export default function OgpChecker() {
     const [localPreviewImage, setLocalPreviewImage] = createSignal("");
 
     onSettled(() => {
-        document.title =
-            "OGP確認・SNSシェアプレビューツール | X(Twitter)・LINE・Facebook対応";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "URLまたはHTMLソースからOGP（Open Graph Protocol）タグやTwitter Cardの設定状況をブラウザ上で解析・診断。X（旧Twitter）、Facebook、LINE、Discord等でシェアされた際のカード表示をプレビュー確認できる無料Webツールです。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "ogp-checker-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "OGP確認・SNSシェアプレビューツール",
-            operatingSystem: "All",
-            applicationCategory: "DeveloperApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "WebページのOGPタグおよびTwitter Cardメタデータをブラウザ上で解析し、SNSシェア時のカード表示をシミュレーションする確認ツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef, ".card");
 
         return () => {
-            document.getElementById("ogp-checker-jsonld")?.remove();
             if (localPreviewImage()) {
                 URL.revokeObjectURL(localPreviewImage());
             }
@@ -905,6 +875,11 @@ export default function OgpChecker() {
                     {/* URL入力フォーム */}
                     <Show when={inputMode() === "url"}>
                         <form
+                            {...({
+                                toolname: "analyze_ogp_url",
+                                tooldescription:
+                                    "指定したURLのWebページからOGPタグとTwitterカードを解析してSNSシェアプレビューを表示します",
+                            } as Record<string, string>)}
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 handleAnalyzeUrl();
@@ -913,6 +888,8 @@ export default function OgpChecker() {
                         >
                             <input
                                 type="text"
+                                name="url"
+                                title="確認するページのURL"
                                 value={urlInput()}
                                 onInput={(e) =>
                                     setUrlInput(e.currentTarget.value)
