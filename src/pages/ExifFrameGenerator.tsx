@@ -725,35 +725,47 @@ export default function ExifFrame() {
             id: "none",
             name: "標準テキスト（プレートなし）",
             bg: "bg-base-200 text-base-content border-base-300",
-            innerHtml: "Text Only",
+            render: () => <span>Text Only</span>,
         },
         {
             id: "box",
             name: "モダン座布団ボックス",
             bg: "bg-base-300/60 text-base-content border-base-300 rounded-md",
-            innerHtml:
-                "<span class='bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded text-[11px]'>Label Box</span>",
+            render: () => (
+                <span class="bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded text-[11px]">
+                    Label Box
+                </span>
+            ),
         },
         {
             id: "line",
             name: "クラシック上下境界線",
             bg: "bg-base-100 text-base-content border-base-300",
-            innerHtml:
-                "<span class='border-y border-current px-1 py-0.5 text-[11px]'>Line Text</span>",
+            render: () => (
+                <span class="border-y border-current px-1 py-0.5 text-[11px]">
+                    Line Text
+                </span>
+            ),
         },
         {
             id: "metal-gold",
             name: "真鍮ヘアラインゴールド",
             bg: "bg-gradient-to-b from-amber-200 via-yellow-400 to-amber-600 text-amber-950 font-bold border-amber-700 shadow-[2px_2px_0px_#151515]",
-            innerHtml:
-                "<span class='text-[10px] relative px-2 py-0.5 border border-white/30 block text-center'>凹 GOLD</span>",
+            render: () => (
+                <span class="text-[10px] relative px-2 py-0.5 border border-white/30 block text-center">
+                    凹 GOLD
+                </span>
+            ),
         },
         {
             id: "metal-silver",
             name: "アルミブラッシュドシルバー",
             bg: "bg-gradient-to-b from-white via-slate-300 to-slate-400 text-slate-900 font-bold border-slate-500 shadow-[2px_2px_0px_#151515]",
-            innerHtml:
-                "<span class='text-[10px] relative px-2 py-0.5 border border-white/40 block text-center'>凹 SILVER</span>",
+            render: () => (
+                <span class="text-[10px] relative px-2 py-0.5 border border-white/40 block text-center">
+                    凹 SILVER
+                </span>
+            ),
         },
     ];
 
@@ -3804,10 +3816,9 @@ export default function ExifFrame() {
                                                                 </span>
                                                                 <div
                                                                     class={`w-full py-1 px-1 flex items-center justify-center border text-[10px] select-none ${plate.bg}`}
-                                                                    innerHTML={
-                                                                        plate.innerHtml
-                                                                    }
-                                                                />
+                                                                >
+                                                                    {plate.render()}
+                                                                </div>
                                                             </button>
                                                         )}
                                                     </For>

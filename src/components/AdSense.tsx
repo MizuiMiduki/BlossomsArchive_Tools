@@ -38,7 +38,7 @@ function mountAd(
         isMounted = true;
         cleanupTriggers();
 
-        container.innerHTML = "";
+        container.textContent = "";
         const ins = document.createElement("ins");
         ins.className = "adsbygoogle-stealth";
         ins.style.display = "block";

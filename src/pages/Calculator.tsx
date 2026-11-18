@@ -3,16 +3,99 @@ import AdSense from "../components/AdSense";
 import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 function safeCalculate(expression: string): number {
-    const sanitized = expression.replace(/×/g, "*").replace(/÷/g, "/");
-    if (!/^[\d\s+\-*/.]+$/.test(sanitized)) {
+    const sanitized = expression
+        .replace(/×/g, "*")
+        .replace(/÷/g, "/")
+        .replace(/\s+/g, "");
+
+    if (!sanitized) throw new Error("Empty expression");
+    if (!/^[\d+\-*/.()]+$/.test(sanitized)) {
         throw new Error("Invalid character");
     }
-    const fn = new Function(`return (${sanitized})`);
-    const res = fn();
-    if (typeof res !== "number" || !isFinite(res)) {
-        throw new Error("Invalid result");
+
+    let pos = 0;
+
+    function peek(): string {
+        return sanitized[pos] || "";
     }
-    return res;
+
+    function parseNumber(): number {
+        const start = pos;
+        if (peek() === "+" || peek() === "-") {
+            pos++;
+        }
+        let hasDigits = false;
+        while (pos < sanitized.length && /[\d]/.test(sanitized[pos])) {
+            pos++;
+            hasDigits = true;
+        }
+        if (pos < sanitized.length && sanitized[pos] === ".") {
+            pos++;
+            while (pos < sanitized.length && /[\d]/.test(sanitized[pos])) {
+                pos++;
+                hasDigits = true;
+            }
+        }
+        if (!hasDigits) {
+            throw new Error("Expected number");
+        }
+        const numStr = sanitized.slice(start, pos);
+        const val = parseFloat(numStr);
+        if (isNaN(val)) throw new Error("Invalid number");
+        return val;
+    }
+
+    function parseFactor(): number {
+        if (peek() === "(") {
+            pos++;
+            const val = parseExpression();
+            if (peek() !== ")") throw new Error("Expected )");
+            pos++;
+            return val;
+        }
+        return parseNumber();
+    }
+
+    function parseTerm(): number {
+        let val = parseFactor();
+        while (pos < sanitized.length && (peek() === "*" || peek() === "/")) {
+            const op = peek();
+            pos++;
+            const next = parseFactor();
+            if (op === "*") {
+                val = val * next;
+            } else {
+                if (next === 0) throw new Error("Division by zero");
+                val = val / next;
+            }
+        }
+        return val;
+    }
+
+    function parseExpression(): number {
+        let val = parseTerm();
+        while (pos < sanitized.length && (peek() === "+" || peek() === "-")) {
+            const op = peek();
+            pos++;
+            const next = parseTerm();
+            if (op === "+") {
+                val = val + next;
+            } else {
+                val = val - next;
+            }
+        }
+        return val;
+    }
+
+    const result = parseExpression();
+    if (pos < sanitized.length) {
+        throw new Error("Unexpected characters at end");
+    }
+    if (!isFinite(result)) {
+        throw new Error("Result is not finite");
+    }
+    // 浮動小数点計算の丸め誤差を補正
+    return Math.round(result * 1e12) / 1e12;
 }
 
 export default function Calculator() {

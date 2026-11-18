@@ -43,9 +43,12 @@ jobs:
             - name: Determine changed files
               id: changed-files
               if: github.event_name == 'pull_request'
+              env:
+                  BASE_REF: ${{ github.base_ref }}
               run: |
-                  FILES=$(git diff --name-only origin/${{ github.base_ref }}... | grep -E '\.(js|html|css|json)$' | tr '\n' ' ' || true)
-                  echo "FILES=$FILES" >> $GITHUB_ENV
+                  git fetch origin "$BASE_REF" --depth=1 || true
+                  FILES=$(git diff --name-only "origin/$BASE_REF..." | grep -E '\.(js|html|css|json)$' | tr '\n' ' ' || true)
+                  echo "FILES=$FILES" >> "$GITHUB_ENV"
 
             - name: Format code
               if: github.event_name == 'pull_request' && env.FILES != ''
