@@ -78,45 +78,8 @@ export default function CharsetConverter() {
     const [normalizeInput, setNormalizeInput] = createSignal("");
     const [normCopiedKey, setNormCopiedKey] = createSignal<string | null>(null);
 
-    // SEOと構造化データの動的注入
     onSettled(() => {
-        document.title =
-            "文字コード総合変換ツール | UTF-8・Shift_JIS・EUC・Unicode・進数・文字化け完全対応";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "ブラウザ上で動作する高機能な文字コード総合変換ツール。UTF-8、Shift_JIS (CP932)、EUC-JP、JIS、UTF-16/32の相互変換、改行コード変換、ファイル一括変換のほか、16進数(HEX)・10進数・2進数・Unicodeエスケープ・HTML数値文字参照・Base64・URLエンコード・Unicode正規化・文字化け自動復元まで完全網羅。サーバー送信なしで安全に処理されます。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "charset-converter-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "文字コード総合変換ツール",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "文字コード、進数表記、エスケープシーケンス、数値文字参照、Unicode正規化、文字化け復元を一括で行える総合Webツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef, ".card");
-
-        return () => {
-            const el = document.getElementById("charset-converter-jsonld");
-            if (el) {
-                el.remove();
-            }
-        };
     });
 
     // テキスト変換結果
