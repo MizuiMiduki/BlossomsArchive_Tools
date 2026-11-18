@@ -895,40 +895,7 @@ export default function SeoChecker() {
     const [allCopied, setAllCopied] = createSignal(false);
 
     onSettled(() => {
-        document.title =
-            "メタタグ(SEO)確認ツール | Google検索結果プレビュー＆診断";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "WebページのURLまたはHTMLソースから、title・description・canonical・robots・JSON-LD構造化データ・H1などのSEO重要メタタグを解析。Google検索結果スニペット表示のプレビューとSEO健全度スコア診断ができる無料Webツールです。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "seo-checker-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "メタタグ(SEO)確認ツール",
-            operatingSystem: "All",
-            applicationCategory: "DeveloperApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "WebページのSEOメタタグおよび構造化データを解析し、Google検索結果でのスニペット表示シミュレーションと設定診断を行うWebツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef, ".card");
-
-        return () => {
-            document.getElementById("seo-checker-jsonld")?.remove();
-        };
     });
 
     const fetchWithTimeout = async (
@@ -1336,6 +1303,11 @@ export default function SeoChecker() {
                     {/* URL入力フォーム */}
                     <Show when={inputMode() === "url"}>
                         <form
+                            {...({
+                                toolname: "analyze_seo_url",
+                                tooldescription:
+                                    "指定したURLのWebページからSEOメタタグとJSON-LD構造化データを解析・診断します",
+                            } as Record<string, string>)}
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 handleAnalyzeUrl();
@@ -1344,6 +1316,8 @@ export default function SeoChecker() {
                         >
                             <input
                                 type="text"
+                                name="url"
+                                title="確認するページのURL"
                                 value={urlInput()}
                                 onInput={(e) =>
                                     setUrlInput(e.currentTarget.value)
