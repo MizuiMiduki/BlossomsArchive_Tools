@@ -2,6 +2,7 @@ import { render, fireEvent } from "@solidjs/testing-library";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createRouter, memoryHistory } from "@solidjs/router";
 import type { Component } from "solid-js";
+import Layout from "../components/Layout";
 import Home from "../pages/Home";
 import Calculator from "../pages/Calculator";
 import QrGenerator from "../pages/QrGenerator";
@@ -334,4 +335,86 @@ describe("Monkey & Chaos Fuzz Testing Suite (All 19 Routes + 404)", () => {
             unmount();
         },
     );
+
+    it("Full-App Cross-Route Chaos Monkey Test: Layout + 全19ルート間で150回のランダム画面遷移・テーマ切替・要素操作を連続実行してもクラッシュしないこと", () => {
+        const rand = createSeededRandom(0x99887766);
+
+        const AppChaosRouter = createRouter({
+            history: memoryHistory(),
+            routes: [
+                ...MONKEY_TARGETS.map((t) => ({
+                    path: t.path,
+                    component: t.component,
+                })),
+                { path: "*404", component: NotFound },
+            ],
+        });
+
+        const { container, unmount } = render(() => (
+            <AppChaosRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </AppChaosRouter>
+        ));
+
+        for (let step = 0; step < 150; step++) {
+            const internalLinks = Array.from(
+                container.querySelectorAll<HTMLAnchorElement>('a[href^="/"]'),
+            );
+            const buttons = Array.from(
+                container.querySelectorAll<HTMLButtonElement>(
+                    "button:not([disabled])",
+                ),
+            );
+            const inputs = Array.from(
+                container.querySelectorAll<HTMLInputElement>(
+                    'input:not([disabled]):not([type="file"])',
+                ),
+            );
+            const textareas = Array.from(
+                container.querySelectorAll<HTMLTextAreaElement>(
+                    "textarea:not([disabled])",
+                ),
+            );
+
+            const roll = rand();
+            if (roll < 0.25 && internalLinks.length > 0) {
+                const link =
+                    internalLinks[Math.floor(rand() * internalLinks.length)];
+                fireEvent.click(link);
+            } else if (roll < 0.65 && buttons.length > 0) {
+                const btn = buttons[Math.floor(rand() * buttons.length)];
+                fireEvent.click(btn);
+            } else if (roll < 0.85 && inputs.length > 0) {
+                const input = inputs[Math.floor(rand() * inputs.length)];
+                const type = (input.type || "text").toLowerCase();
+                if (type === "checkbox" || type === "radio") {
+                    fireEvent.click(input);
+                } else if (type === "number" || type === "range") {
+                    const val =
+                        FUZZ_NUMBERS[
+                            Math.floor(rand() * FUZZ_NUMBERS.length)
+                        ];
+                    fireEvent.input(input, { target: { value: val } });
+                } else {
+                    const val =
+                        FUZZ_STRINGS[
+                            Math.floor(rand() * FUZZ_STRINGS.length)
+                        ];
+                    fireEvent.input(input, { target: { value: val } });
+                }
+            } else if (textareas.length > 0) {
+                const ta =
+                    textareas[Math.floor(rand() * textareas.length)];
+                const val =
+                    FUZZ_STRINGS[Math.floor(rand() * FUZZ_STRINGS.length)];
+                fireEvent.input(ta, { target: { value: val } });
+            }
+
+            expect(container.querySelector("header")).not.toBeNull();
+            expect(container.querySelector("main")).not.toBeNull();
+            expect(container.innerHTML.trim().length).toBeGreaterThan(0);
+        }
+
+        unmount();
+    });
 });
