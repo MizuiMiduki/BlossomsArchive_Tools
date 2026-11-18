@@ -9,7 +9,6 @@ import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { getPageMetadata, routes } from "../routes";
 import {
-    animateFadeIn,
     animatePop,
     delayedCall,
     playPageEntrance,
@@ -1032,7 +1031,6 @@ export default function OgpChecker() {
                     {/* 解析結果エリア */}
                     <Show when={ogpData() && !loading()}>
                         <div
-                            ref={(el) => animateFadeIn(el)}
                             class="mt-8 flex flex-col gap-8 border-t border-base-300 pt-8"
                         >
                             {/* 1. SNSカード表示プレビュー */}
