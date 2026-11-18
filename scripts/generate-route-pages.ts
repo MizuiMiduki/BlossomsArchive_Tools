@@ -64,22 +64,50 @@ function escapeAttribute(value: string): string {
     });
 }
 
-// 既存の動的メタタグやスクリプトをテンプレートから除去してクリーンにする
-const cleanTemplate = template
-    .replace(/<title>.*?<\/title>\s*/gi, "")
-    .replace(/<meta\b[^>]*name=["']description["'][^>]*>\s*/gi, "")
-    .replace(/<meta\b[^>]*name=["']robots["'][^>]*>\s*/gi, "")
-    .replace(/<meta\b[^>]*name=["']format-detection["'][^>]*>\s*/gi, "")
-    .replace(/<meta\b[^>]*name=["']keywords["'][^>]*>\s*/gi, "")
-    .replace(/<meta\b[^>]*name=["']author["'][^>]*>\s*/gi, "")
-    .replace(/<link\b[^>]*rel=["']canonical["'][^>]*>\s*/gi, "")
-    .replace(/<link\b[^>]*rel=["']alternate["'][^>]*llms\.txt[^>]*>\s*/gi, "")
-    .replace(/<link\b[^>]*rel=["']ard["'][^>]*>\s*/gi, "")
-    .replace(/<link\b[^>]*rel=["']icon["'][^>]*>\s*/gi, "")
-    .replace(/<link\b[^>]*rel=["']apple-touch-icon["'][^>]*>\s*/gi, "")
-    .replace(/<meta\b[^>]*property=["']og:[^"']*["'][^>]*>\s*/gi, "")
-    .replace(/<meta\b[^>]*name=["']twitter:[^"']*["'][^>]*>\s*/gi, "")
-    .replace(/<script\b[^>]*id=["']ba-tools-global-jsonld["'][^>]*>[\s\S]*?<\/script>\s*/gi, "");
+const SEO_START_MARKER = "<!-- BA_TOOLS_SEO_START -->";
+const SEO_END_MARKER = "<!-- BA_TOOLS_SEO_END -->";
+
+/**
+ * テンプレート内の開始〜終了マーカー間（マーカー自身を含む）を正規表現を使わず置換する
+ */
+function replaceBetweenMarkers(
+    source: string,
+    startMarker: string,
+    endMarker: string,
+    replacement: string,
+): string {
+    const startIndex = source.indexOf(startMarker);
+    const endIndex = source.indexOf(endMarker);
+    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        throw new Error(
+            `Required template markers not found: ${startMarker} ... ${endMarker}`,
+        );
+    }
+    return (
+        source.slice(0, startIndex) +
+        replacement +
+        source.slice(endIndex + endMarker.length)
+    );
+}
+
+/**
+ * 固定文字列の最初の出現位置を正規表現を使わず置換する
+ */
+function replaceExact(
+    source: string,
+    target: string,
+    replacement: string,
+): string {
+    const index = source.indexOf(target);
+    if (index === -1) {
+        throw new Error(`Required template target not found: ${target}`);
+    }
+    return (
+        source.slice(0, index) +
+        replacement +
+        source.slice(index + target.length)
+    );
+}
 
 for (const route of routes) {
     const metadata = getPageMetadata(route.path);
@@ -122,13 +150,17 @@ for (const route of routes) {
         .filter(Boolean)
         .join("\n  ");
 
-    const html = cleanTemplate
-        .replace(/<html lang="[^"]*">/, '<html lang="ja">')
-        .replace("</head>", `  ${tags}\n</head>`)
-        .replace(
-            '<div id="root"></div>',
-            `<div id="root"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1></div>`,
-        );
+    const withSeo = replaceBetweenMarkers(
+        template,
+        SEO_START_MARKER,
+        SEO_END_MARKER,
+        tags,
+    );
+    const html = replaceExact(
+        withSeo,
+        '<div id="root"></div>',
+        `<div id="root"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1></div>`,
+    );
 
     const outputDirectory =
         route.path === "/"

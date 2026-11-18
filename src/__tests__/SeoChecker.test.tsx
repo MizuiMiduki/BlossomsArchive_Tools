@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { render, fireEvent, screen } from "@solidjs/testing-library";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import SeoChecker, {
@@ -7,6 +9,7 @@ import SeoChecker, {
     calculateSeoScore,
     normalizeInputUrl,
     resolveUrl,
+    stripHtmlTagsToPlainText,
 } from "../pages/SeoChecker";
 
 describe("SeoChecker helper functions", () => {
@@ -144,6 +147,78 @@ describe("SeoChecker helper functions", () => {
         expect(parsed?.metaDescription).toContain("Microlink SEO Description");
         expect(parsed?.canonicalUrl).toBe("https://example.com/seo-article");
         expect(parsed?.faviconUrl).toBe("https://example.com/favicon.png");
+    });
+
+    it("stripHtmlTagsToPlainText と parseSeoFromHtml が入れ子タグや不正な山括弧を含めて完全に除去すること", () => {
+        expect(
+            stripHtmlTagsToPlainText("<span>見出し</span> <strong>テキスト</strong>"),
+        ).toBe("見出し テキスト");
+
+        const nestedPayload = "<<script>script>alert(1)</script>安全な見出し";
+        const sanitized = stripHtmlTagsToPlainText(nestedPayload);
+        expect(sanitized).not.toContain("<");
+        expect(sanitized).not.toContain(">");
+        expect(sanitized.toLowerCase()).not.toContain("<script");
+        expect(sanitized).toContain("安全な見出し");
+
+        const html = `
+            <!doctype html>
+            <html>
+            <head><title>テスト</title></head>
+            <body>
+                <h1><span>メイン</span>見出し<<script>script>x</script></h1>
+            </body>
+            </html>
+        `;
+        const parsed = parseSeoFromHtml(html);
+        expect(parsed.h1List.length).toBe(1);
+        expect(parsed.h1List[0]).not.toContain("<");
+        expect(parsed.h1List[0]).not.toContain(">");
+        expect(parsed.h1List[0]).toContain("メイン見出し");
+    });
+
+    it("再発防止: src/ と scripts/ 内に不完全なマルチ文字HTMLタグ除去の正規表現 .replace() が存在しないこと", () => {
+        const rootDir = path.resolve(process.cwd());
+        const targetDirs = [
+            path.join(rootDir, "src"),
+            path.join(rootDir, "scripts"),
+        ];
+        const collectSourceFiles = (dir: string): string[] => {
+            if (!fs.existsSync(dir)) return [];
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            const files: string[] = [];
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    files.push(...collectSourceFiles(fullPath));
+                } else if (/\.(ts|tsx)$/.test(entry.name)) {
+                    files.push(fullPath);
+                }
+            }
+            return files;
+        };
+
+        // CodeQL js/incomplete-multi-character-sanitization を誘発する `<...` 始まり等の正規表現置換を検出（複数行対応）
+        const forbiddenRegexReplace = new RegExp(
+            "\\.(?:replace|replaceAll)\\s*\\(\\s*(?:\\/(?:<|<!--|\\\\\\.\\\\\\.\\/)|new\\s+RegExp\\s*\\(\\s*[\"'`]<)",
+            "g",
+        );
+
+        const sourceFiles = targetDirs.flatMap(collectSourceFiles);
+        expect(sourceFiles.length).toBeGreaterThan(0);
+
+        const violations: string[] = [];
+        for (const filePath of sourceFiles) {
+            const content = fs.readFileSync(filePath, "utf8");
+            for (const match of content.matchAll(forbiddenRegexReplace)) {
+                const matchIndex = match.index ?? 0;
+                const lineNumber = content.slice(0, matchIndex).split("\n").length;
+                const rel = path.relative(rootDir, filePath);
+                violations.push(`${rel}:${lineNumber}: ${match[0].replace(/\s+/g, " ")}`);
+            }
+        }
+
+        expect(violations).toEqual([]);
     });
 });
 

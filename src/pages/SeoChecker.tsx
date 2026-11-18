@@ -136,6 +136,30 @@ function decodeHtmlEntities(text: string): string {
         .replace(/&amp;/gi, "&");
 }
 
+/**
+ * HTML文字列からタグ構造および残存する山括弧（<, >）を文字単位走査で完全に除去しプレーンテキスト化する
+ * （正規表現による単一パス置換を行わないため Incomplete multi-character sanitization を根本防止）
+ */
+export function stripHtmlTagsToPlainText(input: string): string {
+    let out = "";
+    let inTag = false;
+    for (let i = 0; i < input.length; i++) {
+        const ch = input[i];
+        if (ch === "<") {
+            inTag = true;
+            continue;
+        }
+        if (ch === ">") {
+            inTag = false;
+            continue;
+        }
+        if (!inTag) {
+            out += ch;
+        }
+    }
+    return out;
+}
+
 function extractTagAttributes(tagString: string): Record<string, string> {
     const attrs: Record<string, string> = {};
     const attrRegex =
@@ -313,8 +337,8 @@ export function parseSeoFromHtml(html: string, sourceUrl = ""): SeoData {
     const h1Regex = /<h1\b[^>]*>([\s\S]*?)<\/h1>/gi;
     let h1Match: RegExpExecArray | null;
     while ((h1Match = h1Regex.exec(html)) !== null) {
-        // タグ内部のHTMLタグを除去してプレーンテキスト化
-        const plainText = h1Match[1].replace(/<[^>]+>/g, "").trim();
+        // タグ内部のHTMLタグを文字単位走査で除去してプレーンテキスト化
+        const plainText = stripHtmlTagsToPlainText(h1Match[1]).trim();
         if (plainText) {
             const decoded = decodeHtmlEntities(plainText);
             h1List.push(decoded);
