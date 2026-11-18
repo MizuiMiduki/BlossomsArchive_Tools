@@ -39,7 +39,7 @@ export default function Home() {
                                     <a
                                         href={route.path}
                                         class="btn btn-primary btn-sm px-4 sm:px-6"
-                                        aria-label={`${route.title} を開く`}
+                                        aria-label={`${route.title} を使ってみる`}
                                     >
                                         使ってみる →
                                     </a>
