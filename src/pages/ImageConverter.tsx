@@ -1,7 +1,7 @@
 import { createSignal, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function ImageConverter() {
     let containerRef: HTMLDivElement | undefined;
@@ -224,7 +224,7 @@ export default function ImageConverter() {
                                     </div>
                                 }
                             >
-                                <div ref={(el) => animateFadeIn(el)} class="flex flex-col h-full gap-4">
+                                <div class="flex flex-col h-full gap-4">
                                     <div class="flex justify-between items-center pb-2 border-b border-slate-200">
                                         <span class="font-bold text-xs text-slate-600 tracking-wider">
                                             変換完了（フォーマット:{" "}
