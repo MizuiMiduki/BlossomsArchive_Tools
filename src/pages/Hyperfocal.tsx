@@ -31,45 +31,8 @@ export default function HyperfocalCalculator() {
         { id: "custom", name: "カスタム（自分で入力する）", coc: 0.03 },
     ];
 
-    // SEO対策：メタデータの動的挿入
     onSettled(() => {
-        document.title =
-            "過焦点距離（パンフォーカス）計算ツール | 被写界深度シミュレーター";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "カメラのセンサーサイズ、レンズの焦点距離、F値から過焦点距離と被写界深度（DoF）を計算するシミュレーター。パンフォーカス写真の撮影に必要なピント位置を手軽に割り出せます。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "hyperfocal-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "過焦点距離・被写界深度計算ツール",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "簡単操作で被写界深度とパンフォーカス距離を算出・可視化するWebツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef, ".card");
-
-        return () => {
-            const el = document.getElementById("hyperfocal-jsonld");
-            if (el) {
-                el.remove();
-            }
-        };
     });
 
     const activeCoc = createMemo<number>(() => {
