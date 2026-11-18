@@ -1,13 +1,7 @@
 import { createSignal, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import {
-    delayedCall,
-    playPageEntrance,
-    animateFadeIn,
-    animateStaggerIn,
-    animatePop,
-} from "../utils/gsapAnimations";
+import { delayedCall, playPageEntrance, animatePop } from "../utils/gsapAnimations";
 
 interface HistoryItem {
     id: number;
@@ -25,7 +19,6 @@ export default function Lottery() {
     const [history, setHistory] = createSignal<HistoryItem[]>([]);
 
     let containerRef: HTMLDivElement | undefined;
-    let resultsContainerRef: HTMLDivElement | undefined;
     let drawButtonRef: HTMLButtonElement | undefined;
 
     // SEO対策：メタデータおよび構造化データの動的注入
@@ -102,13 +95,6 @@ export default function Lottery() {
         setResults(selectedResults);
         setCopied(false);
         setShared(false);
-
-        // GSAP で選定アイテムをアニメーション描画
-        setTimeout(() => {
-            if (resultsContainerRef) {
-                animateStaggerIn(resultsContainerRef, ".lottery-item");
-            }
-        }, 10);
 
         const now = new Date();
         const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
@@ -293,10 +279,6 @@ export default function Lottery() {
                          <div class="lg:col-span-7 flex flex-col gap-5 justify-between">
                              <Show when={results().length > 0}>
                                  <div
-                                     ref={(el) => {
-                                         resultsContainerRef = el;
-                                         animateFadeIn(el);
-                                     }}
                                      class="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col gap-4 shadow-sm"
                                  >
                                      <div class="flex justify-between items-center border-b border-slate-200 pb-2.5">
@@ -349,7 +331,6 @@ export default function Lottery() {
                              {/* 履歴セクション */}
                              <Show when={history().length > 0}>
                                  <div
-                                     ref={(el) => animateFadeIn(el)}
                                      class="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 flex flex-col gap-3"
                                  >
                                      <div class="flex justify-between items-center border-b border-slate-200 pb-2">
