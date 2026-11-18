@@ -1,5 +1,5 @@
 import { createSignal, Switch, Match, For, Show, createEffect, onSettled } from "solid-js";
-import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 export default function TimerStopwatch() {
     // 状態管理
@@ -225,7 +225,6 @@ export default function TimerStopwatch() {
             <Switch>
                 <Match when={mode() === "timer"}>
                     <div
-                        ref={(el) => animateFadeIn(el, { duration: 0.3 })}
                         class="w-full space-y-4 pt-4 border-t border-base-200"
                     >
                         <div class="text-sm font-bold opacity-60">
@@ -298,7 +297,6 @@ export default function TimerStopwatch() {
                 </Match>
                 <Match when={mode() === "pomodoro"}>
                     <div
-                        ref={(el) => animateFadeIn(el, { duration: 0.3 })}
                         class="w-full space-y-4 pt-4 border-t border-base-200"
                     >
                         <div class="grid grid-cols-2 gap-4">
