@@ -27,36 +27,7 @@ export default function Clock() {
         setHourAngle((now.getHours() % 12) * 30 + now.getMinutes() * 0.5);
     };
 
-    // SEO対策：メタデータの動的挿入
     onSettled(() => {
-        document.title = "リアルタイム時計 | デジタル＆アナログ時計表示";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "ブラウザ上で現在時刻をリアルタイムに表示するWeb時計ツールです。デジタル表示とアナログ表示を切り替えて楽しめます。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "clock-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "リアルタイム時計",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "現在時刻をデジタルまたはアナログ形式で表示するシンプルなWeb時計です。",
-        });
-        document.head.appendChild(script);
-
         // 時計のタイマー処理 (毎秒更新)
         let lastSec = -1;
         const tick = () => {
@@ -85,10 +56,6 @@ export default function Clock() {
 
         return () => {
             window.clearInterval(intervalId);
-            const script = document.getElementById("clock-jsonld");
-            if (script) {
-                script.remove();
-            }
         };
     });
 
