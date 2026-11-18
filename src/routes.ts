@@ -15,10 +15,11 @@ export const SITE_URL = "https://tools.blossomsarchive.com";
 export const SITE_TITLE = "BlossomsArchive Tools";
 export const SITE_DESCRIPTION =
     "BlossomsArchive Toolsは、電卓やQRコード生成、画像変換、動画圧縮、文字コード変換、OGP・SEOメタタグ確認など、日常やWeb制作・開発に役立つ高品質なWebツールを完全無料で提供しています。";
+export const SITE_FAVICON = "https://tools.blossomsarchive.com/icon-32.png";
 export const SITE_LOGO =
-    "https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05-192x192.png";
+    "https://tools.blossomsarchive.com/icon-192.png";
 export const DEFAULT_OG_IMAGE =
-    "https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05-192x192.png";
+    "https://tools.blossomsarchive.com/icon-192.png";
 export const PUBLISHER_NAME = "BlossomsArchive";
 export const PUBLISHER_URL = "https://blossomsarchive.com";
 

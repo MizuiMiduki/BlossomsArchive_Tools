@@ -144,5 +144,21 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         // PrivacyPolicy の外部リンクに常時下線クラスがあること（link-in-text-block 対策）
         expect(privacySrc).toContain("underline");
         expect(privacySrc).not.toContain('class="text-primary hover:underline"');
+
+        // レンダーブロッキングCSSの防止と同一オリジンアイコン配信
+        const generatePagesSrc = fs.readFileSync(
+            path.join(ROOT_DIR, "scripts", "generate-route-pages.ts"),
+            "utf8",
+        );
+        expect(generatePagesSrc).toContain("media='all'");
+        expect(generatePagesSrc).toContain("preload");
+
+        const routesSrc = fs.readFileSync(
+            path.join(ROOT_DIR, "src", "routes.ts"),
+            "utf8",
+        );
+        expect(routesSrc).not.toContain("blossomsarchive.com/wp-content");
+        expect(fs.existsSync(path.join(ROOT_DIR, "public", "icon-32.png"))).toBe(true);
+        expect(fs.existsSync(path.join(ROOT_DIR, "public", "icon-192.png"))).toBe(true);
     });
 });

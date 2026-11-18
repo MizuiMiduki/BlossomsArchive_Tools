@@ -59,6 +59,13 @@ describe("Static Build Output & Sitemap Integrity Tests", () => {
             expect(html).toContain('rel="ard"');
             expect(html).toContain('rel="modulepreload"');
             expect(html).toContain('<h1 class="sr-only">');
+
+            // PageSpeed最適化: クリティカルCSSと非同期CSSローディング、同一オリジンアイコン
+            expect(html).toContain('id="ba-tools-critical-css"');
+            expect(html).toContain('rel="preload"');
+            expect(html).toContain('media="print" onload="this.media=\'all\'"');
+            expect(html).toContain('icon-32.png');
+            expect(html).toContain('icon-192.png');
         }
     });
 

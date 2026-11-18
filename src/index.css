@@ -1,5 +1,7 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  include: alert, badge, button, card, checkbox, collapse, input, label, loading, modal, progress, radio, range, select, tab, table, textarea, toggle, tooltip;
+}
 
 /* 画面サイズ全対応: 不意な横スクロール・横揺れの完全防止とビューポート高さの安定化 */
 html,

@@ -57,6 +57,10 @@ pnpm run type-check && pnpm test && pnpm run build
    - 各ページに必ず `<h1>` を1つ以上配置し、見出し階層（`h1` → `h2` → `h3`）をスキップしないでください。
    - すべての `<button>`, `<input>`, `<select>`, `<textarea>` にアクセシブルな名前（テキスト、`aria-label`、または関連付けられた `<label>`）を付与し、表示テキストと `aria-label` が矛盾しないようにしてください（`label-content-name-mismatch` 防止）。
    - `<form>` 要素には WebMCP 用の `toolname` / `tooldescription` 属性を設定し、`<dialog>` 内で送信ボタンを持たない `<form method="dialog">` は使わず `<button type="button" onClick={() => modalRef?.close()}>` を使用してください。
+4. **CSSレンダーブロッキング防止 & 同一オリジンアセット配信**:
+   - 生成される全ルートHTMLで、メインCSSはクリティカルCSSインライン埋め込み＋非同期ロード（`media="print" onload="this.media='all'"`）を維持し、同期 `<link rel="stylesheet">` によるレンダリングブロックを防止してください。
+   - ファビコン、apple-touch-icon、ロゴ画像は外部WordPressドメインではなく、必ず `public/` 内の同一オリジンアセット（`/icon-32.png`, `/icon-192.png`）から配信し、追加のDNSルックアップ・TLS接続オーバーヘッドを排除してください。
+   - DaisyUI は `src/index.css` の `@plugin "daisyui"` で実際に使用するコンポーネントのみを `include` に指定し、未使用CSS（Unused CSS）によるバンドル肥大化を防止してください。
 
 ---
 

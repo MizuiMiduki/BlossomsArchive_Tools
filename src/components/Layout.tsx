@@ -9,6 +9,7 @@ import {
     normalizePath,
     routes,
     DEFAULT_OG_IMAGE,
+    SITE_FAVICON,
     SITE_LOGO,
     SITE_TITLE,
     PUBLISHER_NAME,
@@ -241,7 +242,7 @@ export default function Layout(props: LayoutProps) {
                     content={getKeywordsText()}
                 />
             </Show>
-            <Link rel="icon" href={SITE_LOGO} />
+            <Link rel="icon" href={SITE_FAVICON} />
             <Link rel="apple-touch-icon" href={SITE_LOGO} />
             <Link rel="alternate" type="text/plain" href="https://tools.blossomsarchive.com/llms.txt" />
             <Link rel="ard" type="application/ai-catalog+json" href="https://tools.blossomsarchive.com/.well-known/ard.json" />
@@ -293,7 +294,7 @@ export default function Layout(props: LayoutProps) {
                 <div class="flex items-center justify-between px-6 pt-6 pb-4 shrink-0 gap-2">
                     <div class="flex items-center gap-3">
                         <img
-                            src="https://blossomsarchive.com/wp-content/uploads/2021/10/cropped-d42dee79c2a98cc8da98f9d600398a05-32x32.png"
+                            src="/icon-32.png"
                             alt="BlossomsArchive Tools Logo"
                             width="32"
                             height="32"

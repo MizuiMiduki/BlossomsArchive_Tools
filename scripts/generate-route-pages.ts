@@ -6,6 +6,7 @@ import {
     getPageJsonLd,
     routes,
     DEFAULT_OG_IMAGE,
+    SITE_FAVICON,
     SITE_LOGO,
     SITE_TITLE,
     PUBLISHER_NAME,
@@ -20,6 +21,29 @@ const template = fs.readFileSync(templatePath, "utf8");
 const assetFiles = fs.existsSync(assetsDirectory)
     ? fs.readdirSync(assetsDirectory)
     : [];
+
+const mainCssFile = assetFiles.find(
+    (file) => file.startsWith("index-") && file.endsWith(".css"),
+);
+
+let baseTemplate = template;
+if (mainCssFile) {
+    const originalLinkVariants = [
+        `<link rel="stylesheet" crossorigin href="/assets/${mainCssFile}">`,
+        `<link rel="stylesheet" href="/assets/${mainCssFile}">`,
+    ];
+    const asyncCssMarkup = `<link rel="preload" href="/assets/${mainCssFile}" as="style" />\n  <link rel="stylesheet" href="/assets/${mainCssFile}" media="print" onload="this.media='all'" />\n  <noscript><link rel="stylesheet" href="/assets/${mainCssFile}"></noscript>`;
+    for (const variant of originalLinkVariants) {
+        if (baseTemplate.includes(variant)) {
+            const index = baseTemplate.indexOf(variant);
+            baseTemplate =
+                baseTemplate.slice(0, index) +
+                asyncCssMarkup +
+                baseTemplate.slice(index + variant.length);
+            break;
+        }
+    }
+}
 
 const ROUTE_CHUNK_PREFIX: Record<string, string> = {
     "/": "Home",
@@ -129,7 +153,7 @@ for (const route of routes) {
         metadata.keywords && metadata.keywords.length > 0
             ? `<meta name="keywords" content="${escapeAttribute(metadata.keywords.join(", "))}" />`
             : "",
-        `<link rel="icon" href="${escapeAttribute(SITE_LOGO)}" />`,
+        `<link rel="icon" href="${escapeAttribute(SITE_FAVICON)}" />`,
         `<link rel="apple-touch-icon" href="${escapeAttribute(SITE_LOGO)}" />`,
         '<meta property="og:type" content="website" />',
         `<meta property="og:site_name" content="${escapeAttribute(SITE_TITLE)}" />`,
@@ -151,7 +175,7 @@ for (const route of routes) {
         .join("\n  ");
 
     const withSeo = replaceBetweenMarkers(
-        template,
+        baseTemplate,
         SEO_START_MARKER,
         SEO_END_MARKER,
         tags,
