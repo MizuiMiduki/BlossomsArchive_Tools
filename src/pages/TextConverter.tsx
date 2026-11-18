@@ -270,42 +270,9 @@ export default function TextConverter() {
     );
 
     onSettled(() => {
-        document.title = "テキスト・HTML・Markdown変換ツール | 無料の相互変換・エンティティ対応";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "HTMLからMarkdown、MarkdownからHTML、プレーンテキスト抽出、HTML特殊文字エスケープ・デコード、URLエンコードに対応した高機能テキスト変換ツール。ブラウザ上で安全かつ高速に変換できます。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "text-converter-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "テキスト・HTML・Markdown変換ツール",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "HTML、Markdown、プレーンテキストの相互変換およびHTMLエンティティやURLエンコードをローカルブラウザ内で完結して実行する無料Webツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) {
             playPageEntrance(containerRef, ".card");
         }
-
-        return () => {
-            const el = document.getElementById("text-converter-jsonld");
-            if (el) el.remove();
-        };
     });
 
     // スワップ（反転）処理
