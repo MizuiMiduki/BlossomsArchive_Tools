@@ -21,45 +21,8 @@ export default function Lottery() {
     let containerRef: HTMLDivElement | undefined;
     let drawButtonRef: HTMLButtonElement | undefined;
 
-    // SEO対策：メタデータおよび構造化データの動的注入
     onSettled(() => {
-        document.title =
-            "オンライン抽選ツール | リストからランダム選定（CSPRNG準拠）";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "ブラウザ上で動作する抽選・選定ツール。改行区切りで入力したリストから、暗号学的疑似乱数（CSPRNG）を利用してランダムに項目を抽出します。複数個の同時選定、当選した項目の重複排除設定、履歴保存などの機能をフロントエンドのみで実行可能です。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "lottery-generator-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "オンライン抽選・ランダム選定ツール",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                " window.crypto.getRandomValues を使用した、リストからの高精度ランダム選定ツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef, ".card");
-
-        return () => {
-            const el = document.getElementById("lottery-generator-jsonld");
-            if (el) {
-                el.remove();
-            }
-        };
     });
 
     const startLottery = () => {
@@ -414,7 +377,7 @@ export default function Lottery() {
                          <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
                              ※データ保護方針等の規定については、当サイトの
                              <a
-                                 href="/privacy-policy"
+                                 href="/privacy"
                                  class="text-slate-800 font-bold underline ml-1 hover:text-slate-950"
                              >
                                  プライバシーポリシー
