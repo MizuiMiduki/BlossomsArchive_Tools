@@ -1,7 +1,7 @@
 // src/pages/Clock.tsx
 import { createSignal, onSettled, Switch, Match, For, createEffect } from "solid-js";
 import AdSense from "../components/AdSense";
-import { animateFadeIn, playPageEntrance } from "../utils/animations";
+import { playPageEntrance } from "../utils/animations";
 
 export default function Clock() {
     const [time, setTime] = createSignal(new Date());
@@ -142,7 +142,6 @@ export default function Clock() {
             <Switch>
                 <Match when={mode() === "digital"}>
                     <div
-                        ref={(el) => animateFadeIn(el, { duration: 0.3 })}
                         class="text-4xl sm:text-6xl md:text-8xl font-mono font-black text-primary tracking-tighter text-center select-none"
                     >
                         {time().toLocaleTimeString([], {
@@ -155,7 +154,6 @@ export default function Clock() {
 
                 <Match when={mode() === "analog"}>
                     <div
-                        ref={(el) => animateFadeIn(el, { duration: 0.4 })}
                         class="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 max-w-[80vw] max-h-[80vw]"
                     >
                         <svg
