@@ -17,43 +17,7 @@ export default function PasswordGenerator() {
     let containerRef: HTMLDivElement | undefined;
 
     onSettled(() => {
-        document.title =
-            "パスワード生成ツール | 桁数・文字種指定（CSPRNG準拠）";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "ブラウザ上で動作するランダムパスワード生成ツール。暗号学的疑似乱数発生器（CSPRNG）を使用し、任意の桁数（4～100桁）および文字種（英大文字・小文字、数字、記号）の組み合わせを指定して、複数のパスワードを一括生成できます。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "password-generator-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "パスワード生成ツール",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5.",
-            description:
-                "CSPRNG（window.crypto.getRandomValues）に準拠した、ローカル完結型のパスワード生成・作成ツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef, ".card");
-
-        return () => {
-            const el = document.getElementById("password-generator-jsonld");
-            if (el) {
-                el.remove();
-            }
-        };
     });
 
     const generatePassword = () => {
@@ -414,7 +378,7 @@ export default function PasswordGenerator() {
                         <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
                             ※データ取り扱い等の基本方針は、当サイトの
                             <a
-                                href="/privacy-policy"
+                                href="/privacy"
                                 class="text-slate-800 font-bold underline ml-1 hover:text-slate-950"
                             >
                                 プライバシーポリシー
