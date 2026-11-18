@@ -1,6 +1,6 @@
 import { createSignal, For, onSettled, untrack } from "solid-js";
 import AdSense from "../components/AdSense";
-import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 function safeCalculate(expression: string): number {
     const sanitized = expression
@@ -253,11 +253,8 @@ export default function Calculator() {
                 </h2>
                 <ul class="space-y-2">
                     <For each={history()}>
-                        {(item, index) => (
+                        {(item) => (
                             <li
-                                ref={(el) => {
-                                    if (untrack(index) === 0) animateFadeIn(el, { duration: 0.25 });
-                                }}
                                 onClick={() => loadFromHistory(item)}
                                 class="p-2 sm:p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-primary hover:text-white transition-all text-xs sm:text-sm font-mono break-all"
                             >
