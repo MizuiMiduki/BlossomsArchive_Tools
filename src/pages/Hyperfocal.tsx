@@ -7,7 +7,7 @@ import {
 } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { animateFadeIn, playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/gsapAnimations";
 
 export default function HyperfocalCalculator() {
     const [sensorType, setSensorType] = createSignal("apsc-sony");
@@ -254,7 +254,7 @@ export default function HyperfocalCalculator() {
 
                         {/* カスタムCoC設定 */}
                         <Show when={sensorType() === "custom"}>
-                            <div ref={(el) => animateFadeIn(el)} class="form-control w-full bg-base-100 p-3 rounded-xl border border-base-300 text-xs overflow-hidden">
+                            <div class="form-control w-full bg-base-100 p-3 rounded-xl border border-base-300 text-xs overflow-hidden">
                                 <label class="label py-1 flex flex-col items-start gap-0.5">
                                     <span class="label-text font-black text-xs text-purple-900 dark:text-purple-200">
                                         ⚙️ 許容錯乱円の直径 (CoC)
