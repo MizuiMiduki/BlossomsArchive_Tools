@@ -59,17 +59,21 @@ export function animateFadeIn(
 ): void {
     if (isTest || !el) return;
     if (typeof el.animate === "function") {
-        el.animate(
-            [
-                { opacity: 0, transform: `translateY(${options?.y ?? 10}px)` },
-                { opacity: 1, transform: "translateY(0)" },
-            ],
-            {
-                duration: (options?.duration ?? 0.3) * 1000,
-                easing: "ease-out",
-                fill: "both",
-            },
-        );
+        try {
+            el.animate(
+                [
+                    { opacity: 0, transform: `translateY(${options?.y ?? 10}px)` },
+                    { opacity: 1, transform: "translateY(0)" },
+                ],
+                {
+                    duration: (options?.duration ?? 0.3) * 1000,
+                    easing: "ease-out",
+                    fill: "none",
+                },
+            );
+        } catch {
+            // fail-safe: WAAPI unavailable or failed
+        }
     }
 }
 
@@ -81,23 +85,27 @@ export function animateStaggerIn(
     childSelector: string,
 ): void {
     if (isTest || !container) return;
-    const targets = container.querySelectorAll<HTMLElement>(childSelector);
-    targets.forEach((target, i) => {
-        if (typeof target.animate === "function") {
-            target.animate(
-                [
-                    { opacity: 0, transform: "translateY(10px) scale(0.97)" },
-                    { opacity: 1, transform: "translateY(0) scale(1)" },
-                ],
-                {
-                    duration: 300,
-                    delay: i * 35,
-                    easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-                    fill: "both",
-                },
-            );
-        }
-    });
+    try {
+        const targets = container.querySelectorAll<HTMLElement>(childSelector);
+        targets.forEach((target, i) => {
+            if (typeof target.animate === "function") {
+                target.animate(
+                    [
+                        { opacity: 0, transform: "translateY(10px) scale(0.97)" },
+                        { opacity: 1, transform: "translateY(0) scale(1)" },
+                    ],
+                    {
+                        duration: 300,
+                        delay: i * 35,
+                        easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+                        fill: "none",
+                    },
+                );
+            }
+        });
+    } catch {
+        // fail-safe
+    }
 }
 
 /**
