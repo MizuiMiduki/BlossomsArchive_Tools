@@ -10,45 +10,8 @@ export default function ImageConverter() {
     const [convertedUrl, setConvertedUrl] = createSignal("");
     const [isConverting, setIsConverting] = createSignal(false);
 
-    // SEO対策：メタデータおよび構造化データの動的注入
     onSettled(() => {
-        document.title =
-            "画像形式変換ツール | WebP・PNG・JPEGの相互変換（ブラウザ完結）";
-
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-            metaDesc = document.createElement("meta");
-            metaDesc.setAttribute("name", "description");
-            document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute(
-            "content",
-            "ブラウザ上で動作する登録不要の画像拡張子変換ツール。PNG、JPEG、WebP、GIFなどの画像ファイルを、Canvas APIを応用して指定のフォーマットへ相互変換します。クラウドへファイルをアップロードせずローカルで処理を行うため、機密画像やプライベートな写真も安心して処理できます。",
-        );
-
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "image-converter-jsonld";
-        script.text = JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "画像形式変換・拡張子変換ツール",
-            operatingSystem: "All",
-            applicationCategory: "UtilityApplication",
-            browserRequirements: "Requires JavaScript. Requires HTML5 Canvas.",
-            description:
-                "PNG, JPEG, WebP 形式に相互対応した、クライアントサイド完結型の画像ファイル拡張子変換ツール。",
-        });
-        document.head.appendChild(script);
-
         if (containerRef) playPageEntrance(containerRef, ".card");
-
-        return () => {
-            const el = document.getElementById("image-converter-jsonld");
-            if (el) {
-                el.remove();
-            }
-        };
     });
 
     const handleFileChange = (e: Event) => {
@@ -278,7 +241,7 @@ export default function ImageConverter() {
                         <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
                             ※セキュリティおよび個人情報の取扱いについては、当サイトの
                             <a
-                                href="/privacy-policy"
+                                href="/privacy"
                                 class="text-slate-800 font-bold underline ml-1 hover:text-slate-950"
                             >
                                 プライバシーポリシー
