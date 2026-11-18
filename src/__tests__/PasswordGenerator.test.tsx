@@ -61,4 +61,32 @@ describe("PasswordGenerator", () => {
 
         expect(navigator.clipboard.writeText).toHaveBeenCalled();
     });
+
+    it("文字数の上下限クランプ（4〜100）・生成個数変更・一括コピーが正常に機能すること", async () => {
+        const { container } = render(() => <PasswordGenerator />);
+
+        const lenInput = screen.getByLabelText("パスワードの文字数（桁数）") as HTMLInputElement;
+        fireEvent.input(lenInput, { target: { value: "1" } });
+        expect(lenInput.value).toBe("4");
+
+        fireEvent.input(lenInput, { target: { value: "999" } });
+        expect(lenInput.value).toBe("100");
+
+        fireEvent.input(lenInput, { target: { value: "NaN" } });
+        expect(container.textContent).not.toContain("NaN");
+
+        fireEvent.input(lenInput, { target: { value: "24" } });
+
+        const countSelect = screen.getByLabelText("生成する個数") as HTMLSelectElement;
+        fireEvent.change(countSelect, { target: { value: "10" } });
+
+        fireEvent.click(screen.getByRole("button", { name: "パスワードを自動生成" }));
+
+        const copyBtns = await screen.findAllByRole("button", { name: "コピー" });
+        expect(copyBtns.length).toBe(10);
+
+        const bulkCopyBtn = screen.getByRole("button", { name: /すべてコピー/ });
+        fireEvent.click(bulkCopyBtn);
+        expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    });
 });

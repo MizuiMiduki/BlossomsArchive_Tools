@@ -44,15 +44,16 @@ export default function TimerStopwatch() {
     );
 
     const formatTime = (val: number, isStopwatch: boolean) => {
+        const safeVal = Number.isFinite(val) ? Math.max(0, Math.floor(val)) : 0;
         if (isStopwatch) {
-            const mins = Math.floor(val / 6000);
-            const secs = Math.floor((val % 6000) / 100);
-            const ms = val % 100;
+            const mins = Math.floor(safeVal / 6000);
+            const secs = Math.floor((safeVal % 6000) / 100);
+            const ms = safeVal % 100;
             return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}.${String(ms).padStart(2, "0")}`;
         } else {
-            const hours = Math.floor(val / 3600);
-            const mins = Math.floor((val % 3600) / 60);
-            const secs = val % 60;
+            const hours = Math.floor(safeVal / 3600);
+            const mins = Math.floor((safeVal % 3600) / 60);
+            const secs = safeVal % 60;
             return hours > 0
                 ? `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
                 : `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
@@ -82,8 +83,9 @@ export default function TimerStopwatch() {
                     setTime((t) => t - 1);
                 } else {
                     if (mode() === "pomodoro" && autoRepeat()) {
-                        setIsBreak(!isBreak());
-                        setTime((!isBreak() ? breakMin() : focusMin()) * 60);
+                        const nextIsBreak = !isBreak();
+                        setIsBreak(nextIsBreak);
+                        setTime((nextIsBreak ? breakMin() : focusMin()) * 60);
                     } else {
                         stop();
                         modalRef?.showModal();
@@ -239,9 +241,10 @@ export default function TimerStopwatch() {
                                 type="number"
                                 min="0"
                                 value={h()}
-                                onInput={(e) =>
-                                    setH(Number(e.currentTarget.value))
-                                }
+                                onInput={(e) => {
+                                    const v = Number(e.currentTarget.value);
+                                    setH(Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0);
+                                }}
                                 class="input input-bordered w-full"
                                 placeholder="時"
                                 aria-label="時間（時）"
@@ -250,9 +253,10 @@ export default function TimerStopwatch() {
                                 type="number"
                                 min="0"
                                 value={m()}
-                                onInput={(e) =>
-                                    setM(Number(e.currentTarget.value))
-                                }
+                                onInput={(e) => {
+                                    const v = Number(e.currentTarget.value);
+                                    setM(Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0);
+                                }}
                                 class="input input-bordered w-full"
                                 placeholder="分"
                                 aria-label="時間（分）"
@@ -261,9 +265,10 @@ export default function TimerStopwatch() {
                                 type="number"
                                 min="0"
                                 value={s()}
-                                onInput={(e) =>
-                                    setS(Number(e.currentTarget.value))
-                                }
+                                onInput={(e) => {
+                                    const v = Number(e.currentTarget.value);
+                                    setS(Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0);
+                                }}
                                 class="input input-bordered w-full"
                                 placeholder="秒"
                                 aria-label="時間（秒）"
@@ -314,14 +319,14 @@ export default function TimerStopwatch() {
                                     class="input input-bordered w-full"
                                     aria-label="集中時間（分）"
                                     value={focusMin()}
-                                    onInput={(e) =>
+                                    onInput={(e) => {
+                                        const v = Number(e.currentTarget.value);
                                         setFocusMin(
-                                            Math.max(
-                                                1,
-                                                Number(e.currentTarget.value),
-                                            ),
-                                        )
-                                    }
+                                            Number.isFinite(v)
+                                                ? Math.max(1, Math.floor(v))
+                                                : 25,
+                                        );
+                                    }}
                                 />
                             </div>
                             <div>
@@ -334,14 +339,14 @@ export default function TimerStopwatch() {
                                     class="input input-bordered w-full"
                                     aria-label="休憩時間（分）"
                                     value={breakMin()}
-                                    onInput={(e) =>
+                                    onInput={(e) => {
+                                        const v = Number(e.currentTarget.value);
                                         setBreakMin(
-                                            Math.max(
-                                                1,
-                                                Number(e.currentTarget.value),
-                                            ),
-                                        )
-                                    }
+                                            Number.isFinite(v)
+                                                ? Math.max(1, Math.floor(v))
+                                                : 5,
+                                        );
+                                    }}
                                 />
                             </div>
                         </div>

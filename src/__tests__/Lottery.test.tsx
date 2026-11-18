@@ -74,4 +74,30 @@ describe("Lottery", () => {
         const remainingItems = textarea.value.trim().split("\n");
         expect(remainingItems.length).toBe(1);
     });
+
+    it("複数同時選定・結果コピー・シェア・履歴クリアが正常に動作すること", () => {
+        render(() => <Lottery />);
+        const textarea = screen.getByPlaceholderText(/項目 A/) as HTMLTextAreaElement;
+
+        fireEvent.input(textarea, {
+            target: { value: "候補1\n候補2\n候補3\n候補4\n候補5" },
+        });
+
+        const countSelect = screen.getByLabelText("同時選定数") as HTMLSelectElement;
+        fireEvent.change(countSelect, { target: { value: "3" } });
+
+        fireEvent.click(screen.getByRole("button", { name: "抽選を実行" }));
+
+        // 結果コピーと共有ボタン
+        const copyBtn = screen.getByRole("button", { name: /クリップボードにコピー/ });
+        fireEvent.click(copyBtn);
+        expect(navigator.clipboard.writeText).toHaveBeenCalled();
+
+        const shareBtn = screen.getByRole("button", { name: /共有 \/ 出力/ });
+        fireEvent.click(shareBtn);
+
+        // 履歴クリア
+        const clearHistoryBtn = screen.getByRole("button", { name: /ログを消去/ });
+        fireEvent.click(clearHistoryBtn);
+    });
 });

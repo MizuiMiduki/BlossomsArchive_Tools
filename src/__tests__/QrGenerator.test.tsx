@@ -57,4 +57,34 @@ describe("QrGenerator", () => {
         fireEvent.click(screen.getByText("SVG"));
         expect(screen.getByRole("button", { name: "保存 (SVG)" })).toBeInTheDocument();
     });
+
+    it("「表示拡大」と「縮小」のトグル、およびPNG・SVGでの保存処理がエラーなく実行できること", async () => {
+        globalThis.URL.createObjectURL = vi
+            .fn()
+            .mockReturnValue("blob:http://localhost/mock-svg");
+
+        render(() => <QrGenerator />);
+        const textarea = screen.getByPlaceholderText(/https:\/\/example\.com/);
+        fireEvent.input(textarea, {
+            target: { value: "https://tools.blossomsarchive.com/qr_code" },
+        });
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "QRコードを作成する" }),
+        );
+        await screen.findByAltText("QRコード プレビュー");
+
+        const zoomBtn = screen.getByRole("button", { name: "表示拡大" });
+        fireEvent.click(zoomBtn);
+        expect(screen.getByAltText("QRコード 拡大表示")).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+        // PNG保存クリック
+        vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+        fireEvent.click(screen.getByRole("button", { name: "保存 (PNG)" }));
+
+        // SVGに切り替えて保存クリック
+        fireEvent.click(screen.getByText("SVG"));
+        fireEvent.click(screen.getByRole("button", { name: "保存 (SVG)" }));
+    });
 });

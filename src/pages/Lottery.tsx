@@ -38,7 +38,10 @@ export default function Lottery() {
             return;
         }
 
-        const currentDrawCount = drawCount();
+        const rawDrawCount = drawCount();
+        const currentDrawCount = Number.isFinite(rawDrawCount)
+            ? Math.max(1, Math.floor(rawDrawCount))
+            : 1;
         const selectedResults: string[] = [];
         const loops = Math.min(currentDrawCount, items.length);
 
@@ -185,11 +188,12 @@ export default function Lottery() {
                                     <select
                                         value={drawCount()}
                                         aria-label="同時選定数"
-                                        onChange={(e) =>
-                                            setDrawCount(
-                                                Number(e.currentTarget.value),
-                                            )
-                                        }
+                                        onChange={(e) => {
+                                            const v = Number(e.currentTarget.value);
+                                            if (Number.isFinite(v) && v >= 1) {
+                                                setDrawCount(Math.floor(v));
+                                            }
+                                        }}
                                         class="select select-bordered select-sm h-11 text-xs font-bold bg-white border-2 border-slate-300 text-slate-900 w-full focus:border-slate-500"
                                     >
                                         <option value="1">1 個</option>

@@ -38,13 +38,19 @@ export default function PasswordGenerator() {
         }
 
         const newPasswords: string[] = [];
+        const safeCount = Number.isFinite(count())
+            ? Math.max(1, Math.min(50, Math.floor(count())))
+            : 5;
+        const safeLength = Number.isFinite(length())
+            ? Math.max(4, Math.min(100, Math.floor(length())))
+            : 16;
 
-        for (let c = 0; c < count(); c++) {
+        for (let c = 0; c < safeCount; c++) {
             let password = "";
-            const randomValues = new Uint32Array(length());
+            const randomValues = new Uint32Array(safeLength);
             window.crypto.getRandomValues(randomValues);
 
-            for (let i = 0; i < length(); i++) {
+            for (let i = 0; i < safeLength; i++) {
                 password += charPool[randomValues[i] % charPool.length];
             }
             newPasswords.push(password);
@@ -116,13 +122,22 @@ export default function PasswordGenerator() {
                                             max="100"
                                             value={length()}
                                             aria-label="パスワードの文字数（桁数）スライダー"
-                                            onInput={(e) =>
-                                                setLength(
-                                                    Number(
-                                                        e.currentTarget.value,
-                                                    ),
-                                                )
-                                            }
+                                            onInput={(e) => {
+                                                const v = Number(
+                                                    e.currentTarget.value,
+                                                );
+                                                if (Number.isFinite(v)) {
+                                                    setLength(
+                                                        Math.max(
+                                                            4,
+                                                            Math.min(
+                                                                100,
+                                                                Math.floor(v),
+                                                            ),
+                                                        ),
+                                                    );
+                                                }
+                                            }}
                                             class="range range-xs range-primary flex-1 accent-slate-800"
                                         />
                                         <input
@@ -131,20 +146,22 @@ export default function PasswordGenerator() {
                                             max="100"
                                             value={length()}
                                             aria-label="パスワードの文字数（桁数）"
-                                            onInput={(e) =>
-                                                setLength(
-                                                    Math.max(
-                                                        4,
-                                                        Math.min(
-                                                            100,
-                                                            Number(
-                                                                e.currentTarget
-                                                                    .value,
+                                            onInput={(e) => {
+                                                const v = Number(
+                                                    e.currentTarget.value,
+                                                );
+                                                if (Number.isFinite(v)) {
+                                                    setLength(
+                                                        Math.max(
+                                                            4,
+                                                            Math.min(
+                                                                100,
+                                                                Math.floor(v),
                                                             ),
                                                         ),
-                                                    ),
-                                                )
-                                            }
+                                                    );
+                                                }
+                                            }}
                                             class="input input-bordered w-20 h-10 text-center text-sm font-bold bg-white border-2 border-slate-300 text-slate-900"
                                         />
                                     </div>
@@ -231,11 +248,22 @@ export default function PasswordGenerator() {
                                     <select
                                         value={count()}
                                         aria-label="生成する個数"
-                                        onChange={(e) =>
-                                            setCount(
-                                                Number(e.currentTarget.value),
-                                            )
-                                        }
+                                        onChange={(e) => {
+                                            const v = Number(
+                                                e.currentTarget.value,
+                                            );
+                                            if (Number.isFinite(v)) {
+                                                setCount(
+                                                    Math.max(
+                                                        1,
+                                                        Math.min(
+                                                            50,
+                                                            Math.floor(v),
+                                                        ),
+                                                    ),
+                                                );
+                                            }
+                                        }}
                                         class="select select-bordered h-12 text-sm font-bold bg-white border-2 border-slate-300 text-slate-900 w-full focus:border-slate-500"
                                     >
                                         <option value="1">1 個</option>

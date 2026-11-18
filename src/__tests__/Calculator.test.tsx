@@ -71,4 +71,53 @@ describe("Calculator", () => {
         fireEvent.click(historyItem);
         expect(display.value).toBe("4×5");
     });
+
+    it("引き算・割り算・小数計算の丸め誤差補正（0.1 + 0.2 = 0.3）が正しく計算されること", () => {
+        render(() => <Calculator />);
+        const display = screen.getByRole("textbox") as HTMLInputElement;
+
+        // 0.1 + 0.2 = 0.3
+        fireEvent.click(screen.getByRole("button", { name: "0" }));
+        fireEvent.click(screen.getByRole("button", { name: "." }));
+        fireEvent.click(screen.getByRole("button", { name: "1" }));
+        fireEvent.click(screen.getByRole("button", { name: "+" }));
+        fireEvent.click(screen.getByRole("button", { name: "0" }));
+        fireEvent.click(screen.getByRole("button", { name: "." }));
+        fireEvent.click(screen.getByRole("button", { name: "2" }));
+        fireEvent.click(screen.getByRole("button", { name: "=" }));
+        expect(display.value).toBe("0.3");
+
+        // 引き算と割り算: (9 - 3) -> 6 ÷ 2 = 3
+        fireEvent.click(screen.getByRole("button", { name: "クリア" }));
+        fireEvent.click(screen.getByRole("button", { name: "9" }));
+        fireEvent.click(screen.getByRole("button", { name: "-" }));
+        fireEvent.click(screen.getByRole("button", { name: "3" }));
+        fireEvent.click(screen.getByRole("button", { name: "=" }));
+        expect(display.value).toBe("6");
+
+        fireEvent.click(screen.getByRole("button", { name: "÷" }));
+        fireEvent.click(screen.getByRole("button", { name: "2" }));
+        fireEvent.click(screen.getByRole("button", { name: "=" }));
+        expect(display.value).toBe("3");
+    });
+
+    it("ゼロ除算や不正な構文に対して Error を表示しクラッシュしないこと", () => {
+        render(() => <Calculator />);
+        const display = screen.getByRole("textbox") as HTMLInputElement;
+
+        // 8 ÷ 0 = Error
+        fireEvent.click(screen.getByRole("button", { name: "8" }));
+        fireEvent.click(screen.getByRole("button", { name: "÷" }));
+        fireEvent.click(screen.getByRole("button", { name: "0" }));
+        fireEvent.click(screen.getByRole("button", { name: "=" }));
+        expect(display.value).toBe("Error");
+
+        // クリアして不正な連続演算子 5 × ÷ = Error
+        fireEvent.click(screen.getByRole("button", { name: "クリア" }));
+        fireEvent.click(screen.getByRole("button", { name: "5" }));
+        fireEvent.click(screen.getByRole("button", { name: "×" }));
+        fireEvent.click(screen.getByRole("button", { name: "÷" }));
+        fireEvent.click(screen.getByRole("button", { name: "=" }));
+        expect(display.value).toBe("Error");
+    });
 });

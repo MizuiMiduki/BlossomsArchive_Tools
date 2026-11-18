@@ -508,6 +508,14 @@ export function markdownToHtml(md: string, options: MarkdownToHtmlOptions = {}):
         }
     };
 
+    function sanitizeMarkdownUrl(rawUrl: string): string {
+        const trimmed = rawUrl.trim();
+        if (/^(?:javascript|vbscript|data:text\/html)/i.test(trimmed)) {
+            return "#";
+        }
+        return trimmed;
+    }
+
     function parseInline(text: string): string {
         let res = escapeHtml(text);
 
@@ -515,12 +523,17 @@ export function markdownToHtml(md: string, options: MarkdownToHtmlOptions = {}):
         res = res.replace(/`([^`]+)`/g, "<code>$1</code>");
 
         // 画像: ![alt](url)
-        res = res.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+        res = res.replace(
+            /!\[([^\]]*)\]\(([^)]+)\)/g,
+            (_, alt: string, url: string) =>
+                `<img src="${sanitizeMarkdownUrl(url)}" alt="${alt}" />`,
+        );
 
         // リンク: [text](url)
         res = res.replace(
             /\[([^\]]+)\]\(([^)]+)\)/g,
-            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+            (_, label: string, url: string) =>
+                `<a href="${sanitizeMarkdownUrl(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`,
         );
 
         // 太字: **bold** or __bold__
@@ -709,7 +722,7 @@ export function htmlToPlainText(html: string, options: HtmlToPlainTextOptions = 
         return childText;
     }
 
-    let result = walk(root);
+    let result = walk(root).replace(/[<>]/g, "");
     // 連続する空行を最大2行に圧縮し、余分なスペースを整える
     result = result
         .split("\n")

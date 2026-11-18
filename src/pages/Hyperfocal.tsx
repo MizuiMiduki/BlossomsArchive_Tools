@@ -37,7 +37,8 @@ export default function HyperfocalCalculator() {
 
     const activeCoc = createMemo<number>(() => {
         if (sensorType() === "custom") {
-            return customCoc();
+            const c = customCoc();
+            return Number.isFinite(c) && c > 0 ? c : 0.02;
         }
         const selected = sensors.find((s) => s.id === sensorType());
         return selected ? selected.coc : 0.03;
@@ -52,7 +53,14 @@ export default function HyperfocalCalculator() {
         const n = fNumber();
         const c = activeCoc();
 
-        if (f <= 0 || n <= 0 || c <= 0) {
+        if (
+            !Number.isFinite(f) ||
+            !Number.isFinite(n) ||
+            !Number.isFinite(c) ||
+            f <= 0 ||
+            n <= 0 ||
+            c <= 0
+        ) {
             return { distanceMm: 0, distanceM: 0, nearLimitM: 0 };
         }
 
@@ -72,7 +80,7 @@ export default function HyperfocalCalculator() {
         const s = customSubjectDistance() as number;
         const f = (focalLength() / 1000) as number;
 
-        if (s <= 0 || h <= 0) {
+        if (!Number.isFinite(s) || !Number.isFinite(h) || s <= 0 || h <= 0) {
             return {
                 nearLimitM: 0,
                 farLimitM: "無限遠",
@@ -231,11 +239,12 @@ export default function HyperfocalCalculator() {
                                         max="0.1"
                                         value={customCoc()}
                                         aria-label="許容錯乱円の直径 (CoC)"
-                                        onInput={(e) =>
-                                            setCustomCoc(
-                                                Number(e.currentTarget.value),
-                                            )
-                                        }
+                                        onInput={(e) => {
+                                            const v = Number(e.currentTarget.value);
+                                            if (Number.isFinite(v) && v > 0) {
+                                                setCustomCoc(Math.min(1, v));
+                                            }
+                                        }}
                                         class="input input-bordered input-sm w-full bg-base-100 font-mono text-xs font-bold text-base-content border-base-400 focus:border-secondary"
                                     />
                                     <span class="text-xs font-black text-base-content">
@@ -275,11 +284,12 @@ export default function HyperfocalCalculator() {
                                     step="1"
                                     value={focalLength()}
                                     aria-label="焦点距離スライダー"
-                                    onInput={(e) =>
-                                        setFocalLength(
-                                            Number(e.currentTarget.value),
-                                        )
-                                    }
+                                    onInput={(e) => {
+                                        const v = Number(e.currentTarget.value);
+                                        if (Number.isFinite(v) && v > 0) {
+                                            setFocalLength(Math.min(600, v));
+                                        }
+                                    }}
                                     class="range range-primary range-xs flex-1 mx-1"
                                 />
                                 <button
@@ -303,11 +313,12 @@ export default function HyperfocalCalculator() {
                                         max="600"
                                         value={focalLength()}
                                         aria-label="レンズの焦点距離 (mm)"
-                                        onInput={(e) =>
-                                            setFocalLength(
-                                                Number(e.currentTarget.value),
-                                            )
-                                        }
+                                        onInput={(e) => {
+                                            const v = Number(e.currentTarget.value);
+                                            if (Number.isFinite(v) && v > 0) {
+                                                setFocalLength(Math.min(600, v));
+                                            }
+                                        }}
                                         class="input input-bordered input-sm w-24 bg-base-100 font-bold text-xs text-base-content border-base-400 focus:border-primary text-center"
                                     />
                                     <span class="text-xs font-black text-base-content">
@@ -347,11 +358,12 @@ export default function HyperfocalCalculator() {
                                     step="0.1"
                                     value={fNumber()}
                                     aria-label="絞り値スライダー"
-                                    onInput={(e) =>
-                                        setFNumber(
-                                            Number(e.currentTarget.value),
-                                        )
-                                    }
+                                    onInput={(e) => {
+                                        const v = Number(e.currentTarget.value);
+                                        if (Number.isFinite(v) && v > 0) {
+                                            setFNumber(Math.min(64, v));
+                                        }
+                                    }}
                                     class="range range-primary range-xs flex-1 mx-1"
                                 />
                                 <button
@@ -395,11 +407,12 @@ export default function HyperfocalCalculator() {
                                         max="64"
                                         value={fNumber()}
                                         aria-label="絞り値 (F値)"
-                                        onInput={(e) =>
-                                            setFNumber(
-                                                Number(e.currentTarget.value),
-                                            )
-                                        }
+                                        onInput={(e) => {
+                                            const v = Number(e.currentTarget.value);
+                                            if (Number.isFinite(v) && v > 0) {
+                                                setFNumber(Math.min(64, v));
+                                            }
+                                        }}
                                         class="input input-bordered input-sm w-24 bg-base-100 font-bold text-xs text-base-content border-base-400 focus:border-primary text-center"
                                     />
                                 </div>
@@ -436,11 +449,12 @@ export default function HyperfocalCalculator() {
                                     step="0.5"
                                     value={customSubjectDistance()}
                                     aria-label="ピント合わせ位置スライダー"
-                                    onInput={(e) =>
-                                        setCustomSubjectDistance(
-                                            Number(e.currentTarget.value),
-                                        )
-                                    }
+                                    onInput={(e) => {
+                                        const v = Number(e.currentTarget.value);
+                                        if (Number.isFinite(v) && v > 0) {
+                                            setCustomSubjectDistance(Math.min(1000, v));
+                                        }
+                                    }}
                                     class="range range-secondary range-xs flex-1 mx-1"
                                 />
                                 <button
@@ -465,11 +479,12 @@ export default function HyperfocalCalculator() {
                                         max="1000"
                                         value={customSubjectDistance()}
                                         aria-label="実際のピント合わせ位置 (m)"
-                                        onInput={(e) =>
-                                            setCustomSubjectDistance(
-                                                Number(e.currentTarget.value),
-                                            )
-                                        }
+                                        onInput={(e) => {
+                                            const v = Number(e.currentTarget.value);
+                                            if (Number.isFinite(v) && v > 0) {
+                                                setCustomSubjectDistance(Math.min(1000, v));
+                                            }
+                                        }}
                                         class="input input-bordered input-sm w-24 bg-base-100 font-bold text-xs text-base-content border-base-400 focus:border-secondary text-center"
                                     />
                                     <span class="text-xs font-black text-base-content font-mono">

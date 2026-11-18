@@ -40,4 +40,61 @@ describe("ImageConverter", () => {
         fireEvent.change(formatSelect, { target: { value: "image/webp" } });
         expect(formatSelect.value).toBe("image/webp");
     });
+
+    it("JPEG変換を実行するとCanvas経由でBlob URLが生成され保存リンクが表示されること", async () => {
+        const mockCtx = {
+            fillStyle: "",
+            fillRect: vi.fn(),
+            drawImage: vi.fn(),
+        };
+        vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+            mockCtx as unknown as CanvasRenderingContext2D,
+        );
+        vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
+            (cb) => {
+                cb(new Blob(["mock-jpeg"], { type: "image/jpeg" }));
+            },
+        );
+
+        const OrigImage = globalThis.Image;
+        class MockImage {
+            width = 120;
+            height = 80;
+            onload: (() => void) | null = null;
+            set src(_val: string) {
+                setTimeout(() => this.onload?.(), 0);
+            }
+        }
+        globalThis.Image = MockImage as unknown as typeof Image;
+
+        try {
+            const { container } = render(() => <ImageConverter />);
+            const fileInput = container.querySelector(
+                'input[type="file"]',
+            ) as HTMLInputElement;
+            const dummyFile = new File(["png-bytes"], "photo.png", {
+                type: "image/png",
+            });
+            fireEvent.change(fileInput, { target: { files: [dummyFile] } });
+
+            const formatSelect = screen.getByRole(
+                "combobox",
+            ) as HTMLSelectElement;
+            fireEvent.change(formatSelect, { target: { value: "image/jpeg" } });
+
+            const convertBtn = screen.getByRole("button", {
+                name: "指定の形式に変換する",
+            });
+            fireEvent.click(convertBtn);
+
+            const downloadLink = await screen.findByRole("link", {
+                name: /画像をダウンロード/,
+            });
+            expect(downloadLink).toBeInTheDocument();
+            expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 120, 80);
+            expect(mockCtx.drawImage).toHaveBeenCalled();
+        } finally {
+            globalThis.Image = OrigImage;
+        }
+    });
 });
