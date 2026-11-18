@@ -2,7 +2,7 @@ import { createSignal, onSettled, Show, For } from "solid-js";
 import QRCode from "qrcode";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { animateFadeIn, animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 // ボタンオプション用の型を定義して TypeScript に型を教えます
 interface FormatOption {
@@ -250,7 +250,6 @@ export default function QrGenerator() {
                                 }
                             >
                                 <div
-                                    ref={(el) => animateFadeIn(el, { ease: "back.out(1.4)" })}
                                     class="flex flex-col items-center gap-5 w-full"
                                 >
                                     <div class="relative group bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
@@ -379,7 +378,6 @@ export default function QrGenerator() {
                     onClick={() => setIsLarge(false)}
                 >
                     <div
-                        ref={(el) => animateFadeIn(el, { duration: 0.25, ease: "back.out(1.5)" })}
                         class="relative max-w-full max-h-full bg-white p-5 rounded-2xl shadow-2xl flex flex-col items-center border border-slate-200"
                     >
                         <img
