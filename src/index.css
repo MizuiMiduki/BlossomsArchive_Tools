@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  include: alert, badge, button, card, checkbox, collapse, input, progress, radio, range, select, textarea, toggle;
+  include: alert, badge, button, card, checkbox, input, progress, radio, range, select, textarea, toggle;
 }
 
 /* フォームラベル (DaisyUIのlabelがcurrentColor 60%に減衰させてWCAG AAコントラスト違反を起こすのを防ぎ、高コントラストを維持) */
@@ -15,6 +15,69 @@
 }
 .label-text {
     color: var(--color-base-content);
+}
+
+/* アコーディオン・折りたたみ (DaisyUIの32.9KB collapse.cssを省き、軽量Grid定義) */
+.collapse {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 0fr;
+    transition: grid-template-rows 0.2s ease-out;
+    overflow: hidden;
+}
+.collapse:has(> input[type="checkbox"]:checked),
+.collapse.collapse-open {
+    grid-template-rows: auto 1fr;
+}
+.collapse > input[type="checkbox"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    z-index: 10;
+    cursor: pointer;
+    margin: 0;
+}
+.collapse-title {
+    grid-row-start: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 0.75rem 1rem;
+    user-select: none;
+}
+.collapse-arrow > .collapse-title::after {
+    content: "";
+    position: absolute;
+    right: 1.25rem;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease-out;
+}
+.collapse-plus > .collapse-title::after {
+    content: "+";
+    position: absolute;
+    right: 1.25rem;
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: transform 0.2s ease-out;
+}
+.collapse:has(> input[type="checkbox"]:checked) > .collapse-title::after {
+    transform: rotate(225deg);
+}
+.collapse-plus:has(> input[type="checkbox"]:checked) > .collapse-title::after {
+    content: "−";
+    transform: none;
+}
+.collapse-content {
+    grid-row-start: 2;
+    overflow: hidden;
+    min-height: 0;
+    padding-inline: 1rem;
 }
 
 /* モーダル (<dialog>) 軽量定義 (TimerStopwatchのみで使用・DaisyUIの21.5KB modal.cssを省略) */

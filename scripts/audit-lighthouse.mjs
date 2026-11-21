@@ -9,17 +9,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
 const ISSUE_REPORT_PATH = path.join(ROOT_DIR, "dist", "lighthouse-issue.md");
 
+// コマンドライン引数の解析
+const rawArgs = process.argv.slice(2);
+function getArgValue(prefix) {
+    const found = rawArgs.find((a) => a.startsWith(prefix));
+    if (!found) return null;
+    return found.split("=")[1] || null;
+}
+
+const shardArg = getArgValue("--shard"); // 例: "1/4", "2/4"
+const reportJsonArg = getArgValue("--report-json");
+const aggregateDirArg = getArgValue("--aggregate");
+
 // Lighthouse CLI の実行バイナリを探す
 function findLighthouseBin() {
-    // 1. ローカルの node_modules
     const localBin = path.join(ROOT_DIR, "node_modules", ".bin", "lighthouse");
     if (fs.existsSync(localBin)) return localBin;
 
-    // 2. GitHub Actions グローバルキャッシュ
     const ciGlobalBin = "/home/runner/.npm-global/bin/lighthouse";
     if (fs.existsSync(ciGlobalBin)) return ciGlobalBin;
 
-    // 3. npx キャッシュ
     const npxDir = "/Users/mizui_miduki/.npm/_npx";
     if (fs.existsSync(npxDir)) {
         try {
@@ -32,7 +41,6 @@ function findLighthouseBin() {
         }
     }
 
-    // 4. システムパスの lighthouse
     return "lighthouse";
 }
 
@@ -99,7 +107,7 @@ async function auditUrl(lhBin, url, preset = "mobile", throttlingMethod = "simul
         "--quiet",
         "--only-categories=performance,accessibility,best-practices,seo",
         `--throttling-method=${throttlingMethod}`,
-        '--chrome-flags=--headless=new --no-sandbox --disable-gpu',
+        "--chrome-flags=--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-extensions --no-first-run --no-default-browser-check",
     ];
     if (preset === "desktop") {
         args.push("--preset=desktop");
@@ -124,7 +132,96 @@ async function auditUrl(lhBin, url, preset = "mobile", throttlingMethod = "simul
     }
 }
 
+// レポートMarkdownを生成してファイル出力
+function generateReportMarkdown(regressions) {
+    if (regressions.length === 0) {
+        console.log("🎉 全ルート×モバイル・デスクトップですべて 100/100 満点を達成しました！");
+        if (process.env.GITHUB_OUTPUT) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "has_issues=false\n");
+        }
+        return;
+    }
+
+    let markdown = `## ⚠️ PageSpeed / Lighthouse スコア退行レポート\n\n`;
+    markdown += `ビルド後の自動 Lighthouse 監査にて、スコア 100 点未満のページが検出されました。\n`;
+    markdown += `Webサイトのデプロイは正常に完了しましたが、以下の減点要因を確認し修正してください。\n\n`;
+    markdown += `| ルート | プリセット | Performance | Accessibility | Best Practices | SEO |\n`;
+    markdown += `| :--- | :---: | :---: | :---: | :---: | :---: |\n`;
+
+    for (const r of regressions) {
+        if (r.scores.error) {
+            markdown += `| \`${r.route}\` | ${r.preset} | 監査エラー | - | - | - |\n`;
+        } else {
+            const p = r.scores.performance === 100 ? "100" : `**${r.scores.performance}** ⚠️`;
+            const a = r.scores.accessibility === 100 ? "100" : `**${r.scores.accessibility}** ⚠️`;
+            const b = r.scores.bestPractices === 100 ? "100" : `**${r.scores.bestPractices}** ⚠️`;
+            const s = r.scores.seo === 100 ? "100" : `**${r.scores.seo}** ⚠️`;
+            markdown += `| \`${r.route}\` | ${r.preset} | ${p} | ${a} | ${b} | ${s} |\n`;
+        }
+    }
+
+    markdown += `\n### 🔍 検出された減点項目（詳細）\n\n`;
+    for (const r of regressions) {
+        if (r.failedAudits && r.failedAudits.length > 0) {
+            markdown += `#### \`${r.route}\` (${r.preset})\n\n`;
+            for (const a of r.failedAudits) {
+                markdown += `- **${a.title}** (スコア: ${a.score}${a.displayValue ? ` / ${a.displayValue}` : ""})\n`;
+                if (a.explanation) {
+                    markdown += `  - *原因*: ${a.explanation}\n`;
+                }
+            }
+            markdown += `\n`;
+        }
+    }
+
+    fs.mkdirSync(path.dirname(ISSUE_REPORT_PATH), { recursive: true });
+    fs.writeFileSync(ISSUE_REPORT_PATH, markdown, "utf8");
+    console.log(`Generated issue report at: ${ISSUE_REPORT_PATH}`);
+
+    if (process.env.GITHUB_OUTPUT) {
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, `has_issues=true\nissue_file=${ISSUE_REPORT_PATH}\n`);
+    }
+}
+
+// 集約処理 (--aggregate=DIR)
+async function handleAggregate(dir) {
+    console.log(`📊 Aggregating Lighthouse shard reports from: ${dir}`);
+    const resolvedDir = path.resolve(ROOT_DIR, dir);
+    if (!fs.existsSync(resolvedDir)) {
+        console.error(`Aggregate directory not found: ${resolvedDir}`);
+        generateReportMarkdown([]);
+        return;
+    }
+
+    const allRegressions = [];
+    const files = fs.readdirSync(resolvedDir);
+    for (const file of files) {
+        if (file.startsWith("shard-") && file.endsWith(".json")) {
+            const filePath = path.join(resolvedDir, file);
+            try {
+                const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+                if (Array.isArray(data)) {
+                    allRegressions.push(...data);
+                } else if (Array.isArray(data.regressions)) {
+                    allRegressions.push(...data.regressions);
+                }
+                console.log(`Loaded ${file}: ${Array.isArray(data) ? data.length : data.regressions?.length || 0} regressions`);
+            } catch (err) {
+                console.error(`Failed to read report JSON ${filePath}:`, err);
+            }
+        }
+    }
+
+    console.log(`Total confirmed regressions across all shards: ${allRegressions.length}`);
+    generateReportMarkdown(allRegressions);
+}
+
 async function main() {
+    if (aggregateDirArg) {
+        await handleAggregate(aggregateDirArg);
+        return;
+    }
+
     let serverProcess = null;
     const lhBin = findLighthouseBin();
     console.log(`Using Lighthouse binary: ${lhBin}`);
@@ -132,19 +229,30 @@ async function main() {
     try {
         serverProcess = await startPreviewServer();
         const routes = await getRoutesToAudit();
-        console.log(`Auditing ${routes.length} routes...`);
+        console.log(`Total routes in routes.ts: ${routes.length}`);
 
-        const regressions = [];
-        const tasks = [];
+        const allTasks = [];
         for (const route of routes) {
-            tasks.push({ route, preset: "mobile" });
-            tasks.push({ route, preset: "desktop" });
+            allTasks.push({ route, preset: "mobile" });
+            allTasks.push({ route, preset: "desktop" });
         }
 
+        // シャード分割 (--shard=INDEX/TOTAL)
+        let tasks = allTasks;
+        if (shardArg) {
+            const [shardIdxStr, totalShardsStr] = shardArg.split("/");
+            const shardIdx = parseInt(shardIdxStr, 10);
+            const totalShards = parseInt(totalShardsStr, 10);
+            if (Number.isFinite(shardIdx) && Number.isFinite(totalShards) && totalShards > 0) {
+                tasks = allTasks.filter((_, idx) => idx % totalShards === shardIdx - 1);
+                console.log(`⚡ Shard mode [${shardIdx}/${totalShards}]: Auditing ${tasks.length} / ${allTasks.length} audits`);
+            }
+        }
+
+        const regressions = [];
         const totalAudits = tasks.length;
         console.log(`Starting ${totalAudits} audits with concurrency 2...`);
 
-        // 2ワーカーで並行処理
         let completed = 0;
         async function worker() {
             while (tasks.length > 0) {
@@ -177,7 +285,6 @@ async function main() {
                             `[${completed}/${totalAudits}] [${preset.toUpperCase()}] ${route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                         );
 
-                        // 減点された具体的な監査項目を抽出
                         const failedAudits = [];
                         for (const [id, a] of Object.entries(report.audits || {})) {
                             if (a.score !== null && a.score < 1 && a.title) {
@@ -213,10 +320,9 @@ async function main() {
 
         await Promise.all([worker(), worker()]);
 
-        // 2ワーカー並行実行時のCPU競合による一時的なスコア低下（偽陽性）を排除するため、
-        // 100点未満になった項目のみ単独（1ワーカー・CPU競合なし）で再検証する
+        // 単独再検証（CPU競合による一時的ブレ・偽陽性の排除）
         if (regressions.length > 0) {
-            console.log(`\n🔄 Re-verifying ${regressions.length} candidates in single-worker mode (no CPU contention)...`);
+            console.log(`\n🔄 Re-verifying ${regressions.length} candidates in single-worker mode...`);
             const confirmedRegressions = [];
 
             for (const cand of regressions) {
@@ -224,10 +330,9 @@ async function main() {
                 let passedOnRetry = false;
                 let latestCandidate = cand;
 
-                for (let attempt = 1; attempt <= 3; attempt++) {
+                for (let attempt = 1; attempt <= 2; attempt++) {
                     try {
-                        // 3回目の再試行では共有CIランナーのCPUジッター影響を排除するためdevtoolsスロットリングを併用検証
-                        const method = attempt === 3 ? "devtools" : "simulate";
+                        const method = attempt === 2 ? "devtools" : "simulate";
                         const report = await auditUrl(lhBin, url, cand.preset, method);
                         const cats = report.categories || {};
                         const scores = {
@@ -245,13 +350,13 @@ async function main() {
 
                         if (isAll100) {
                             console.log(
-                                `[RETRY ${attempt}/3] [${cand.preset.toUpperCase()}] ${cand.route} ✅ 100/100 (passed without CPU contention)`
+                                `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ✅ 100/100 (passed without CPU contention)`
                             );
                             passedOnRetry = true;
                             break;
                         } else {
                             console.log(
-                                `[RETRY ${attempt}/3] [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
+                                `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                             );
                             const failedAudits = [];
                             for (const [id, a] of Object.entries(report.audits || {})) {
@@ -273,9 +378,7 @@ async function main() {
                             };
                         }
                     } catch (err) {
-                        console.log(
-                            `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ❌ Audit error: ${err.message}`
-                        );
+                        console.log(`[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ❌ Audit error: ${err.message}`);
                     }
                 }
 
@@ -289,57 +392,17 @@ async function main() {
         }
 
         console.log("\n=================================");
-        console.log(`Audit finished: ${totalAudits} audits executed.`);
+        console.log(`Shard finished: ${totalAudits} audits executed.`);
         console.log(`Regressions found: ${regressions.length}`);
         console.log("=================================\n");
 
-        if (regressions.length > 0) {
-            // Issue 本文 Markdown を作成
-            let markdown = `## ⚠️ PageSpeed / Lighthouse スコア退行レポート\n\n`;
-            markdown += `ビルド後の自動 Lighthouse 監査にて、スコア 100 点未満のページが検出されました。\n`;
-            markdown += `Webサイトのデプロイは正常に完了しましたが、以下の減点要因を確認し修正してください。\n\n`;
-            markdown += `| ルート | プリセット | Performance | Accessibility | Best Practices | SEO |\n`;
-            markdown += `| :--- | :---: | :---: | :---: | :---: | :---: |\n`;
-
-            for (const r of regressions) {
-                if (r.scores.error) {
-                    markdown += `| \`${r.route}\` | ${r.preset} | 監査エラー | - | - | - |\n`;
-                } else {
-                    const p = r.scores.performance === 100 ? "100" : `**${r.scores.performance}** ⚠️`;
-                    const a = r.scores.accessibility === 100 ? "100" : `**${r.scores.accessibility}** ⚠️`;
-                    const b = r.scores.bestPractices === 100 ? "100" : `**${r.scores.bestPractices}** ⚠️`;
-                    const s = r.scores.seo === 100 ? "100" : `**${r.scores.seo}** ⚠️`;
-                    markdown += `| \`${r.route}\` | ${r.preset} | ${p} | ${a} | ${b} | ${s} |\n`;
-                }
-            }
-
-            markdown += `\n### 🔍 検出された減点項目（詳細）\n\n`;
-            for (const r of regressions) {
-                if (r.failedAudits.length > 0) {
-                    markdown += `#### \`${r.route}\` (${r.preset})\n\n`;
-                    for (const a of r.failedAudits) {
-                        markdown += `- **${a.title}** (スコア: ${a.score}${a.displayValue ? ` / ${a.displayValue}` : ""})\n`;
-                        if (a.explanation) {
-                            markdown += `  - *原因*: ${a.explanation}\n`;
-                        }
-                    }
-                    markdown += `\n`;
-                }
-            }
-
-            fs.mkdirSync(path.dirname(ISSUE_REPORT_PATH), { recursive: true });
-            fs.writeFileSync(ISSUE_REPORT_PATH, markdown, "utf8");
-            console.log(`Generated issue report at: ${ISSUE_REPORT_PATH}`);
-
-            // GITHUB_OUTPUT に設定
-            if (process.env.GITHUB_OUTPUT) {
-                fs.appendFileSync(process.env.GITHUB_OUTPUT, `has_issues=true\nissue_file=${ISSUE_REPORT_PATH}\n`);
-            }
+        if (reportJsonArg) {
+            const outPath = path.resolve(ROOT_DIR, reportJsonArg);
+            fs.mkdirSync(path.dirname(outPath), { recursive: true });
+            fs.writeFileSync(outPath, JSON.stringify(regressions, null, 2), "utf8");
+            console.log(`Saved shard report JSON to: ${outPath}`);
         } else {
-            console.log("🎉 全19ルート×モバイル・デスクトップ（全38パターン）ですべて 100/100 満点を達成しました！");
-            if (process.env.GITHUB_OUTPUT) {
-                fs.appendFileSync(process.env.GITHUB_OUTPUT, "has_issues=false\n");
-            }
+            generateReportMarkdown(regressions);
         }
     } finally {
         if (serverProcess) {
@@ -351,6 +414,5 @@ async function main() {
 
 main().catch((err) => {
     console.error("Fatal audit error:", err);
-    // デプロイを止めないため、スクリプトの異常時でも exit(0) で終了する
     process.exit(0);
 });

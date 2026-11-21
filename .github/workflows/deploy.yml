@@ -149,10 +149,14 @@ jobs:
                   server-dir: "${{ secrets.FTP_TARGET_DIR }}"
                   dangerous-clean-slate: ${{ github.event_name == 'workflow_dispatch' && inputs['サーバーを全削除して再デプロイ'] || false }}
 
-    # ─── 4. Lighthouse 自動監査 & Issue 起票 (ビルド完了でデプロイと並行して即時実行) ───
+    # ─── 4. Lighthouse 並列分散監査 (4シャード×2ワーカーで最大2〜3分に高速化) ───
     lighthouse-audit:
         needs: [build]
         runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                shard: [1, 2, 3, 4]
+            fail-fast: false
         steps:
             - name: Checkout repository
               uses: actions/checkout@v5
@@ -201,14 +205,48 @@ jobs:
                   npm config set prefix /home/runner/.npm-global
                   npm install -g lighthouse
 
-            - name: Run 2-Worker Lighthouse Audit
-              id: lighthouse
+            - name: Run Sharded Lighthouse Audit
               run: |
                   export PATH="/home/runner/.npm-global/bin:$PATH"
-                  node scripts/audit-lighthouse.mjs
+                  node scripts/audit-lighthouse.mjs --shard=${{ matrix.shard }}/4 --report-json=dist-reports/shard-${{ matrix.shard }}.json
+
+            - name: Upload Shard Report
+              uses: actions/upload-artifact@v7
+              with:
+                  name: lh-shard-${{ matrix.shard }}
+                  path: dist-reports/shard-${{ matrix.shard }}.json
+                  retention-days: 1
+
+    # ─── 5. Lighthouse 監査結果集約 & Issue 自動管理 ───
+    lighthouse-report:
+        needs: [lighthouse-audit]
+        runs-on: ubuntu-latest
+        permissions:
+            issues: write
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version: "24"
+                  package-manager-cache: false
+
+            - name: Download All Shard Reports
+              uses: actions/download-artifact@v8
+              with:
+                  pattern: lh-shard-*
+                  path: dist-shards/
+                  merge-multiple: true
+
+            - name: Aggregate Reports
+              id: aggregate
+              run: |
+                  node scripts/audit-lighthouse.mjs --aggregate=dist-shards
 
             - name: Create Issue on PageSpeed Regression
-              if: steps.lighthouse.outputs.has_issues == 'true'
+              if: steps.aggregate.outputs.has_issues == 'true'
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
@@ -221,7 +259,7 @@ jobs:
                   done
 
             - name: Close Resolved PageSpeed Issues
-              if: steps.lighthouse.outputs.has_issues == 'false'
+              if: steps.aggregate.outputs.has_issues == 'false'
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
