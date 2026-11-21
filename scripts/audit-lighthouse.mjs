@@ -15,7 +15,11 @@ function findLighthouseBin() {
     const localBin = path.join(ROOT_DIR, "node_modules", ".bin", "lighthouse");
     if (fs.existsSync(localBin)) return localBin;
 
-    // 2. npx キャッシュ
+    // 2. GitHub Actions グローバルキャッシュ
+    const ciGlobalBin = "/home/runner/.npm-global/bin/lighthouse";
+    if (fs.existsSync(ciGlobalBin)) return ciGlobalBin;
+
+    // 3. npx キャッシュ
     const npxDir = "/Users/mizui_miduki/.npm/_npx";
     if (fs.existsSync(npxDir)) {
         try {
@@ -28,7 +32,7 @@ function findLighthouseBin() {
         }
     }
 
-    // 3. システムパスの lighthouse
+    // 4. システムパスの lighthouse
     return "lighthouse";
 }
 
@@ -42,8 +46,15 @@ async function getRoutesToAudit() {
 
 async function startPreviewServer() {
     console.log("🚀 Starting vite preview server on port 4173...");
+    const viteJs = path.join(ROOT_DIR, "node_modules", "vite", "bin", "vite.js");
     const viteBin = path.join(ROOT_DIR, "node_modules", ".bin", "vite");
-    const serverProcess = spawn(viteBin, ["preview", "--port", "4173", "--host", "127.0.0.1"], {
+    const useDirectNode = fs.existsSync(viteJs);
+    const cmd = useDirectNode ? process.execPath : viteBin;
+    const args = useDirectNode
+        ? [viteJs, "preview", "--port", "4173", "--host", "127.0.0.1"]
+        : ["preview", "--port", "4173", "--host", "127.0.0.1"];
+
+    const serverProcess = spawn(cmd, args, {
         cwd: ROOT_DIR,
         stdio: ["ignore", "pipe", "pipe"],
     });
@@ -53,6 +64,11 @@ async function startPreviewServer() {
             serverProcess.kill();
             reject(new Error("Vite preview server startup timed out"));
         }, 15000);
+
+        serverProcess.on("error", (err) => {
+            clearTimeout(timeout);
+            reject(err);
+        });
 
         serverProcess.stdout.on("data", (data) => {
             if (data.toString().includes("4173")) {
@@ -66,6 +82,8 @@ async function startPreviewServer() {
             if (msg.includes("4173")) {
                 clearTimeout(timeout);
                 resolve(null);
+            } else {
+                console.error("[vite preview stderr]", msg.trim());
             }
         });
     });

@@ -203,9 +203,9 @@ jobs:
 
             - name: Run 2-Worker Lighthouse Audit
               id: lighthouse
-              env:
-                  PATH: /home/runner/.npm-global/bin:${{ env.PATH }}
-              run: node scripts/audit-lighthouse.mjs
+              run: |
+                  export PATH="/home/runner/.npm-global/bin:$PATH"
+                  node scripts/audit-lighthouse.mjs
 
             - name: Create Issue on PageSpeed Regression
               if: steps.lighthouse.outputs.has_issues == 'true'
