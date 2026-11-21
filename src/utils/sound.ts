@@ -191,36 +191,41 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
 
 /**
  * 機械式アナログ時計の重厚な秒針音（カチッ / コチッ）をWeb Audio APIで合成・再生します。
- * 低域レゾナンス（共鳴ボディ）と高域メカニカルアタック（エスケープメント爪音）を組み合わせ、
- * 奇数秒と偶数秒でピッチを微調整（Tick-Tock）して重厚感と自然なリズムを表現します。
+ * スマートフォンの内蔵スピーカーでもしっかり再生可能な中低域（210Hz〜260Hz）の筐体共鳴と、
+ * エスケープメント爪の硬質なメカニカルアタック（3.2kHz）を組み合わせ、
+ * 豊かなディケイ余韻（約100ms）と音圧ブーストによって、通常の端末音量（40〜50%）でも
+ * 部屋に心地よく響き渡る重厚なTick-Tock（カチッカチッ）を再現します。
  *
  * @param isTock trueの場合は偶数秒の低めの音（Tock）、falseの場合は奇数秒の音（Tick）
  * @param volume 音量 (0.0 - 1.0)
  */
-export function playClockTickSound(isTock = false, volume = 0.8): void {
+export function playClockTickSound(isTock = false, volume = 1.0): void {
     if (typeof window === "undefined") return;
 
     const ctx = initAudio();
     if (!ctx) return;
 
-    const rawVolume = typeof volume === "number" ? volume : 0.8;
+    const rawVolume = typeof volume === "number" ? volume : 1.0;
     const finalVolume = Number.isFinite(rawVolume)
         ? Math.max(0, Math.min(1, rawVolume))
-        : 0.8;
+        : 1.0;
 
     if (finalVolume <= 0) return;
 
     const currentTime = ctx.currentTime;
 
-    // 音量をしっかり存在感あるレベルにするため、マスターゲインを2.0倍にブースト
+    // 音圧と音量を大幅強化（通常端末音量でもしっかり響くよう3.6倍ゲイン）
     const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(finalVolume * 2.0, currentTime);
+    masterGain.gain.setValueAtTime(finalVolume * 3.6, currentTime);
 
     if (typeof ctx.createDynamicsCompressor === "function") {
         try {
             const comp = ctx.createDynamicsCompressor();
-            comp.threshold.setValueAtTime(-10, currentTime);
-            comp.ratio.setValueAtTime(8, currentTime);
+            comp.threshold.setValueAtTime(-6, currentTime);
+            comp.knee.setValueAtTime(4, currentTime);
+            comp.ratio.setValueAtTime(10, currentTime);
+            comp.attack.setValueAtTime(0.001, currentTime);
+            comp.release.setValueAtTime(0.12, currentTime);
             masterGain.connect(comp);
             comp.connect(ctx.destination);
         } catch {
@@ -230,9 +235,9 @@ export function playClockTickSound(isTock = false, volume = 0.8): void {
         masterGain.connect(ctx.destination);
     }
 
-    // 1. 低域ボディ（重みのある「コッ」という共鳴打撃音）
-    // Tick: 180Hz -> 60Hz, Tock: 140Hz -> 50Hz
-    const baseFreq = isTock ? 140 : 180;
+    // 1. 低域〜中低域ボディ（スマホでも消滅しない重みのある210Hz〜260Hz打撃共鳴）
+    // Tick: 260Hz -> 130Hz, Tock: 210Hz -> 110Hz
+    const baseFreq = isTock ? 210 : 260;
     const bodyOsc = ctx.createOscillator();
     const bodyGain = ctx.createGain();
 
@@ -240,47 +245,70 @@ export function playClockTickSound(isTock = false, volume = 0.8): void {
     bodyOsc.frequency.setValueAtTime(baseFreq, currentTime);
     if (typeof bodyOsc.frequency.exponentialRampToValueAtTime === "function") {
         bodyOsc.frequency.exponentialRampToValueAtTime(
-            baseFreq * 0.4,
-            currentTime + 0.045,
+            baseFreq * 0.5,
+            currentTime + 0.09,
         );
     }
 
-    bodyGain.gain.setValueAtTime(1.1, currentTime);
+    bodyGain.gain.setValueAtTime(1.4, currentTime);
     if (typeof bodyGain.gain.exponentialRampToValueAtTime === "function") {
-        bodyGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.045);
+        bodyGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.095);
     } else {
-        bodyGain.gain.setValueAtTime(0, currentTime + 0.045);
+        bodyGain.gain.setValueAtTime(0, currentTime + 0.095);
     }
 
     bodyOsc.connect(bodyGain);
     bodyGain.connect(masterGain);
 
     bodyOsc.start(currentTime);
-    bodyOsc.stop(currentTime + 0.05);
+    bodyOsc.stop(currentTime + 0.1);
 
-    // 2. 高域アタック（「カチッ」とした金属・歯車の噛み合い音）
+    // 2. ウッド・ノック成分（木製・真鍮ケースの「コッ」という中域の厚みとパンチ）
+    const woodOsc = ctx.createOscillator();
+    const woodGain = ctx.createGain();
+
+    woodOsc.type = "triangle";
+    woodOsc.frequency.setValueAtTime(isTock ? 420 : 500, currentTime);
+    if (typeof woodOsc.frequency.exponentialRampToValueAtTime === "function") {
+        woodOsc.frequency.exponentialRampToValueAtTime(180, currentTime + 0.05);
+    }
+
+    woodGain.gain.setValueAtTime(1.0, currentTime);
+    if (typeof woodGain.gain.exponentialRampToValueAtTime === "function") {
+        woodGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.05);
+    } else {
+        woodGain.gain.setValueAtTime(0, currentTime + 0.05);
+    }
+
+    woodOsc.connect(woodGain);
+    woodGain.connect(masterGain);
+
+    woodOsc.start(currentTime);
+    woodOsc.stop(currentTime + 0.055);
+
+    // 3. 高域メカニカルアタック（脱進機アンクル爪の「カチッ」とした硬い金属接触音）
     const clickOsc = ctx.createOscillator();
     const clickGain = ctx.createGain();
 
-    clickOsc.type = "triangle";
-    clickOsc.frequency.setValueAtTime(isTock ? 1400 : 1800, currentTime);
+    clickOsc.type = "square";
+    clickOsc.frequency.setValueAtTime(isTock ? 2600 : 3200, currentTime);
     if (typeof clickOsc.frequency.exponentialRampToValueAtTime === "function") {
         clickOsc.frequency.exponentialRampToValueAtTime(
-            350,
-            currentTime + 0.015,
+            600,
+            currentTime + 0.025,
         );
     }
 
-    clickGain.gain.setValueAtTime(0.7, currentTime);
+    clickGain.gain.setValueAtTime(0.9, currentTime);
     if (typeof clickGain.gain.exponentialRampToValueAtTime === "function") {
-        clickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
+        clickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.025);
     } else {
-        clickGain.gain.setValueAtTime(0, currentTime + 0.015);
+        clickGain.gain.setValueAtTime(0, currentTime + 0.025);
     }
 
     clickOsc.connect(clickGain);
     clickGain.connect(masterGain);
 
     clickOsc.start(currentTime);
-    clickOsc.stop(currentTime + 0.02);
+    clickOsc.stop(currentTime + 0.03);
 }

@@ -8,7 +8,7 @@ export default function Clock() {
     const [time, setTime] = createSignal(new Date());
     const [mode, setMode] = createSignal<"digital" | "analog">("digital");
     const [soundEnabled, setSoundEnabled] = createSignal(false);
-    const [soundVolume, setSoundVolume] = createSignal(80);
+    const [soundVolume, setSoundVolume] = createSignal(100);
     let containerRef: HTMLDivElement | undefined;
 
     // 初期角度の計算
@@ -104,8 +104,8 @@ export default function Clock() {
         setSoundEnabled(next);
         if (next) {
             initAudio();
-            const currentVol = soundVolume() > 0 ? soundVolume() : 80;
-            if (soundVolume() <= 0) setSoundVolume(80);
+            const currentVol = soundVolume() > 0 ? soundVolume() : 100;
+            if (soundVolume() <= 0) setSoundVolume(100);
             playClockTickSound(time().getSeconds() % 2 === 0, currentVol / 100);
         }
         try {
