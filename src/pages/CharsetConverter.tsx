@@ -323,7 +323,7 @@ export default function CharsetConverter() {
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "text"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "text-base-content/80 font-medium hover:text-base-content"
+                                    : "!text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("text")}
                         >
@@ -334,7 +334,7 @@ export default function CharsetConverter() {
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "code-formats"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "text-base-content/80 font-medium hover:text-base-content"
+                                    : "!text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("code-formats")}
                         >
@@ -345,7 +345,7 @@ export default function CharsetConverter() {
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "inspector"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "text-base-content/80 font-medium hover:text-base-content"
+                                    : "!text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("inspector")}
                         >
@@ -356,7 +356,7 @@ export default function CharsetConverter() {
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "file"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "text-base-content/80 font-medium hover:text-base-content"
+                                    : "!text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("file")}
                         >
@@ -367,7 +367,7 @@ export default function CharsetConverter() {
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "normalize"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "text-base-content/80 font-medium hover:text-base-content"
+                                    : "!text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("normalize")}
                         >
@@ -378,7 +378,7 @@ export default function CharsetConverter() {
                             class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "mojibake"
                                     ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "text-base-content/80 font-medium hover:text-base-content"
+                                    : "!text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("mojibake")}
                         >
@@ -504,7 +504,7 @@ export default function CharsetConverter() {
                                     <h2 class="card-title text-base font-bold">入力テキスト</h2>
                                     <button
                                         type="button"
-                                        class="btn btn-ghost btn-xs text-error"
+                                        class="btn btn-ghost btn-xs text-red-700 dark:text-red-400 font-bold"
                                         onClick={() => setInputText("")}
                                         disabled={!inputText()}
                                     >
@@ -520,7 +520,7 @@ export default function CharsetConverter() {
                                     onInput={(e) => setInputText(e.currentTarget.value)}
                                 />
 
-                                <div class="flex justify-between items-center text-xs text-base-content/60">
+                                <div class="flex justify-between items-center text-xs text-base-content/80">
                                     <span>文字数: {Array.from(inputText()).length} 文字</span>
                                     <span>
                                         行数: {inputText() ? inputText().split(/\r\n|\r|\n/).length : 0} 行
@@ -571,7 +571,7 @@ export default function CharsetConverter() {
                                     value={textConversionResult().text}
                                 />
 
-                                <div class="flex justify-between items-center text-xs text-base-content/60">
+                                <div class="flex justify-between items-center text-xs text-base-content/80">
                                     <span>出力文字数: {textConversionResult().charCount} 文字</span>
                                     <span class="font-semibold text-primary">
                                         出力サイズ: {textConversionResult().byteCount} バイト
@@ -685,7 +685,7 @@ export default function CharsetConverter() {
                                     value={cfInput()}
                                     onInput={(e) => setCfInput(e.currentTarget.value)}
                                 />
-                                <div class="text-xs text-base-content/60 mt-1">
+                                <div class="text-xs text-base-content/80 mt-1">
                                     バイト数 ({cfEncoding()}): {cfOutputs().byteLength} bytes
                                 </div>
                             </div>
@@ -1117,7 +1117,7 @@ export default function CharsetConverter() {
                                 <div class="font-bold text-base">
                                     ここにファイルをドラッグ＆ドロップ
                                 </div>
-                                <div class="text-xs text-base-content/60">
+                                <div class="text-xs text-base-content/80">
                                     またはクリックしてファイルを選択（.txt, .csv, .log 等）
                                 </div>
                             </div>
@@ -1128,7 +1128,7 @@ export default function CharsetConverter() {
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <div>
                                         <div class="font-bold text-sm">{selectedFile()?.name}</div>
-                                        <div class="text-xs text-base-content/60">
+                                        <div class="text-xs text-base-content/80">
                                             サイズ: {((selectedFile()?.size ?? 0) / 1024).toFixed(2)} KB |
                                             推定文字コード:{" "}
                                             <span class="badge badge-sm badge-info font-mono">
@@ -1191,7 +1191,7 @@ export default function CharsetConverter() {
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <span class="font-bold text-sm text-primary">NFC (標準合成形式)</span>
-                                        <p class="text-xs text-base-content/60">
+                                        <p class="text-xs text-base-content/80">
                                             濁点を結合（Web・Linux・Windows標準）
                                         </p>
                                     </div>
@@ -1218,7 +1218,7 @@ export default function CharsetConverter() {
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <span class="font-bold text-sm text-primary">NFD (分解形式)</span>
-                                        <p class="text-xs text-base-content/60">
+                                        <p class="text-xs text-base-content/80">
                                             文字と濁点を分離（macOS HFS+ファイル名等）
                                         </p>
                                     </div>
@@ -1245,7 +1245,7 @@ export default function CharsetConverter() {
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <span class="font-bold text-sm text-primary">NFKC (互換合成形式)</span>
-                                        <p class="text-xs text-base-content/60">
+                                        <p class="text-xs text-base-content/80">
                                             半角カナを全角に、全角英数を半角に統一
                                         </p>
                                     </div>
@@ -1272,7 +1272,7 @@ export default function CharsetConverter() {
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <span class="font-bold text-sm text-primary">NFKD (互換分解形式)</span>
-                                        <p class="text-xs text-base-content/60">
+                                        <p class="text-xs text-base-content/80">
                                             互換文字を展開し分解
                                         </p>
                                     </div>
@@ -1345,7 +1345,7 @@ export default function CharsetConverter() {
                                                         <span class="font-bold text-sm text-primary">
                                                             {candidate.label}
                                                         </span>
-                                                        <p class="text-xs text-base-content/60">
+                                                        <p class="text-xs text-base-content/80">
                                                             {candidate.description}
                                                         </p>
                                                     </div>

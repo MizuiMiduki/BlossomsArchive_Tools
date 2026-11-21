@@ -104,7 +104,8 @@ async function auditUrl(lhBin, url, preset = "mobile") {
         args.push("--preset=desktop");
     }
 
-    const tmpOutput = path.join(ROOT_DIR, `lh-temp-${preset}-${Date.now()}.json`);
+    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const tmpOutput = path.join(ROOT_DIR, `lh-temp-${preset}-${uniqueSuffix}.json`);
     args.push(`--output-path=${tmpOutput}`);
 
     try {
@@ -210,6 +211,79 @@ async function main() {
         }
 
         await Promise.all([worker(), worker()]);
+
+        // 2ワーカー並行実行時のCPU競合による一時的なスコア低下（偽陽性）を排除するため、
+        // 100点未満になった項目のみ単独（1ワーカー・CPU競合なし）で再検証する
+        if (regressions.length > 0) {
+            console.log(`\n🔄 Re-verifying ${regressions.length} candidates in single-worker mode (no CPU contention)...`);
+            const confirmedRegressions = [];
+
+            for (const cand of regressions) {
+                const url = `http://127.0.0.1:4173${cand.route}`;
+                let passedOnRetry = false;
+                let latestCandidate = cand;
+
+                for (let attempt = 1; attempt <= 2; attempt++) {
+                    try {
+                        const report = await auditUrl(lhBin, url, cand.preset);
+                        const cats = report.categories || {};
+                        const scores = {
+                            performance: Math.round((cats.performance?.score ?? 0) * 100),
+                            accessibility: Math.round((cats.accessibility?.score ?? 0) * 100),
+                            bestPractices: Math.round((cats["best-practices"]?.score ?? 0) * 100),
+                            seo: Math.round((cats.seo?.score ?? 0) * 100),
+                        };
+
+                        const isAll100 =
+                            scores.performance === 100 &&
+                            scores.accessibility === 100 &&
+                            scores.bestPractices === 100 &&
+                            scores.seo === 100;
+
+                        if (isAll100) {
+                            console.log(
+                                `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ✅ 100/100 (passed without CPU contention)`
+                            );
+                            passedOnRetry = true;
+                            break;
+                        } else {
+                            console.log(
+                                `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
+                            );
+                            const failedAudits = [];
+                            for (const [id, a] of Object.entries(report.audits || {})) {
+                                if (a.score !== null && a.score < 1 && a.title) {
+                                    failedAudits.push({
+                                        id,
+                                        title: a.title,
+                                        score: a.score,
+                                        displayValue: a.displayValue || "",
+                                        explanation: a.explanation || "",
+                                    });
+                                }
+                            }
+                            latestCandidate = {
+                                route: cand.route,
+                                preset: cand.preset,
+                                scores,
+                                failedAudits,
+                            };
+                        }
+                    } catch (err) {
+                        console.log(
+                            `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ❌ Audit error: ${err.message}`
+                        );
+                    }
+                }
+
+                if (!passedOnRetry) {
+                    confirmedRegressions.push(latestCandidate);
+                }
+            }
+
+            regressions.length = 0;
+            regressions.push(...confirmedRegressions);
+        }
 
         console.log("\n=================================");
         console.log(`Audit finished: ${totalAudits} audits executed.`);

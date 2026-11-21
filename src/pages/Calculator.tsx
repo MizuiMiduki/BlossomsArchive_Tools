@@ -177,9 +177,9 @@ export default function Calculator() {
 
     const getButtonClass = (btn: string) => {
         if (["÷", "×", "-", "+"].includes(btn))
-            return "btn-info text-white font-bold border-2 border-info-content";
+            return "bg-sky-700 hover:bg-sky-800 text-white font-bold border-2 border-sky-900";
         if (btn === "=")
-            return "btn-primary text-white font-bold border-2 border-primary-content";
+            return "bg-indigo-700 hover:bg-indigo-800 text-white font-bold border-2 border-indigo-900";
         return "bg-white text-slate-900 border-2 border-slate-300 hover:bg-slate-100 font-medium";
     };
 
@@ -209,7 +209,7 @@ export default function Calculator() {
                     </For>
                     <button
                         onClick={(e) => clear(e.currentTarget)}
-                        class="btn btn-error btn-lg text-lg sm:text-xl lg:text-2xl text-white col-span-4 h-12 sm:h-14 lg:h-16 min-h-0"
+                        class="btn bg-red-700 hover:bg-red-800 border-red-900 btn-lg text-lg sm:text-xl lg:text-2xl text-white col-span-4 h-12 sm:h-14 lg:h-16 min-h-0"
                     >
                         クリア
                     </button>
