@@ -297,27 +297,7 @@ body > .google-auto-placed,
     display: none !important;
 }
 
-/* 画面最上部に現れるGoogleアンカー広告（下矢印vタブ付きの最上部バナー）によるヘッダー押し下げの防止 */
-ins.adsbygoogle[data-anchor-status][data-ad-anchor-placement="top"],
-ins.adsbygoogle[data-anchor-status][data-anchor-top="true"],
-ins.adsbygoogle[data-ad-anchor-placement="top"],
-ins.adsbygoogle[data-anchor-top="true"],
-.adsbygoogle-noablate[style*="top: 0"],
-.adsbygoogle-noablate[style*="top:0"],
-.adsbygoogle-noablate[style*="top: 0px"],
-.grippy-host,
-div[id^="google_ads_iframe"][style*="top: 0"],
-div[id^="google_ads_iframe"][style*="top:0"],
-div[id^="aswift_"][style*="top: 0"],
-div[id^="aswift_"][style*="top:0"],
-iframe[id^="aswift_"][style*="top: 0"],
-iframe[id^="aswift_"][style*="top:0"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    max-height: 0 !important;
-    pointer-events: none !important;
-}
+
 
 /* Exifフレーム: スマホでの入力時にiOSが自動ズームしないよう16px以上にする */
 @media (max-width: 1023.98px) {

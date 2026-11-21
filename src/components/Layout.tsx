@@ -75,11 +75,10 @@ export default function Layout(props: LayoutProps) {
                 adsScript.async = true;
                 adsScript.src =
                     `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
-                adsScript.setAttribute("data-overlays", "bottom");
                 adsScript.crossOrigin = "anonymous";
                 document.head.appendChild(adsScript);
 
-                // Google AdSenseが自動広告・トップアンカー広告でbody/htmlに余白を注入して押し下げるのを防止
+                // Google AdSenseが自動広告・トップアンカー広告でbody/htmlに余白を注入してメインコンテンツを押し下げるのを防止（オーバーレイ化）
                 if (typeof MutationObserver !== "undefined") {
                     const preventPushdown = () => {
                         if (document.body.style.paddingTop) document.body.style.paddingTop = "0px";
