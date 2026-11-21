@@ -510,7 +510,12 @@ export function markdownToHtml(md: string, options: MarkdownToHtmlOptions = {}):
 
     function sanitizeMarkdownUrl(rawUrl: string): string {
         const trimmed = rawUrl.trim();
-        if (/^(?:javascript|vbscript|data:text\/html)/i.test(trimmed)) {
+        const normalized = trimmed.toLowerCase();
+        if (
+            normalized.startsWith("javascript:") ||
+            normalized.startsWith("data:") ||
+            normalized.startsWith("vbscript:")
+        ) {
             return "#";
         }
         return trimmed;

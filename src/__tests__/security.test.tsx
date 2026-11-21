@@ -64,8 +64,11 @@ describe("Security Tests (XSS, Sanitization, Code Injection, CSPRNG & Headers)",
             for (const attr of Array.from(el.attributes)) {
                 expect(attr.name.toLowerCase().startsWith("on")).toBe(false);
                 if (attr.name === "href" || attr.name === "src") {
+                    const val = attr.value.trim().toLowerCase();
                     expect(
-                        attr.value.trim().toLowerCase().startsWith("javascript:"),
+                        val.startsWith("javascript:") ||
+                            val.startsWith("data:") ||
+                            val.startsWith("vbscript:"),
                     ).toBe(false);
                 }
             }
