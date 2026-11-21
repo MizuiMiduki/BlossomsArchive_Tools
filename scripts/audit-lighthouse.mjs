@@ -323,6 +323,8 @@ async function main() {
         // 単独再検証（CPU競合による一時的ブレ・偽陽性の排除）
         if (regressions.length > 0) {
             console.log(`\n🔄 Re-verifying ${regressions.length} candidates in single-worker mode...`);
+            // CPUとポートの安定化のため少し待機
+            await new Promise((r) => setTimeout(r, 1000));
             const confirmedRegressions = [];
 
             for (const cand of regressions) {
@@ -332,8 +334,7 @@ async function main() {
 
                 for (let attempt = 1; attempt <= 2; attempt++) {
                     try {
-                        const method = attempt === 2 ? "devtools" : "simulate";
-                        const report = await auditUrl(lhBin, url, cand.preset, method);
+                        const report = await auditUrl(lhBin, url, cand.preset);
                         const cats = report.categories || {};
                         const scores = {
                             performance: Math.round((cats.performance?.score ?? 0) * 100),
