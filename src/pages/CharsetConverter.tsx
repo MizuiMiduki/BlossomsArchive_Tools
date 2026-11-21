@@ -151,14 +151,10 @@ export default function CharsetConverter() {
     const ensureConverterLoaded = () => {
         if (!cachedConverterMod) {
             loadConverterMod().then((mod) => setConverterMod(() => mod));
-        } else if (!converterMod()) {
+        } else {
             setConverterMod(() => cachedConverterMod);
         }
     };
-
-    if (isTestEnv) {
-        ensureConverterLoaded();
-    }
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
