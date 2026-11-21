@@ -77,6 +77,19 @@ export default function Layout(props: LayoutProps) {
                     "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
                 adsScript.crossOrigin = "anonymous";
                 document.head.appendChild(adsScript);
+
+                // Google AdSenseが自動広告・トップアンカー広告でbody/htmlに余白を注入して押し下げるのを防止
+                if (typeof MutationObserver !== "undefined") {
+                    const preventPushdown = () => {
+                        if (document.body.style.paddingTop) document.body.style.paddingTop = "0px";
+                        if (document.body.style.marginTop) document.body.style.marginTop = "0px";
+                        if (document.documentElement.style.paddingTop) document.documentElement.style.paddingTop = "0px";
+                        if (document.documentElement.style.marginTop) document.documentElement.style.marginTop = "0px";
+                    };
+                    const observer = new MutationObserver(preventPushdown);
+                    observer.observe(document.body, { attributes: true, attributeFilter: ["style"] });
+                    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+                }
             }
         };
 

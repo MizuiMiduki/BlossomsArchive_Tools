@@ -270,6 +270,8 @@ body {
     -webkit-text-size-adjust: 100%;
     word-break: break-word;
     overflow-wrap: break-word;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
 #root {
@@ -284,11 +286,29 @@ main {
     overflow-anchor: auto;
 }
 
-/* AdSense自動広告によるメインコンテンツ押し下げ・レイアウトシフト(CLS)の完全防止 */
+/* AdSense自動広告・トップアンカー広告によるメインコンテンツ押し下げ・レイアウトシフト(CLS)の完全防止 */
 main > .google-auto-placed:first-child,
 main > div > .google-auto-placed:first-child,
-header + .google-auto-placed {
+header + .google-auto-placed,
+header ~ .google-auto-placed:first-of-type,
+header > .google-auto-placed,
+body > .google-auto-placed,
+#root > .google-auto-placed {
     display: none !important;
+}
+
+/* 画面最上部に現れるGoogleアンカー広告（下矢印vタブ付きの最上部バナー）によるヘッダー押し下げの防止 */
+ins.adsbygoogle[data-anchor-status="displayed"][data-ad-anchor-placement="top"],
+ins.adsbygoogle[data-anchor-status="displayed"][data-anchor-top="true"],
+.adsbygoogle-noablate[style*="top: 0"],
+.adsbygoogle-noablate[style*="top:0"],
+div[id^="google_ads_iframe"][style*="top: 0"],
+div[id^="google_ads_iframe"][style*="top:0"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    pointer-events: none !important;
 }
 
 /* Exifフレーム: スマホでの入力時にiOSが自動ズームしないよう16px以上にする */

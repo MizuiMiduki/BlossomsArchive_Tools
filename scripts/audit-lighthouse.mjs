@@ -322,12 +322,15 @@ async function main() {
 
         // 単独再検証（CPU競合による一時的ブレ・偽陽性の排除）
         if (regressions.length > 0) {
-            console.log(`\n🔄 Re-verifying ${regressions.length} candidates in single-worker mode...`);
+            const totalCandidates = regressions.length;
+            console.log(`\n🔄 Re-verifying ${totalCandidates} candidates in single-worker mode...`);
             // CPUとポートの安定化のため少し待機
             await new Promise((r) => setTimeout(r, 1000));
             const confirmedRegressions = [];
 
+            let candIndex = 0;
             for (const cand of regressions) {
+                candIndex++;
                 const url = `http://127.0.0.1:4173${cand.route}`;
                 let passedOnRetry = false;
                 let latestCandidate = cand;
@@ -349,15 +352,17 @@ async function main() {
                             scores.bestPractices === 100 &&
                             scores.seo === 100;
 
+                        const progressTag = `[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/2)]`;
+
                         if (isAll100) {
                             console.log(
-                                `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ✅ 100/100 (passed without CPU contention)`
+                                `${progressTag} [${cand.preset.toUpperCase()}] ${cand.route} ✅ 100/100 (単独検証で満点合格)`
                             );
                             passedOnRetry = true;
                             break;
                         } else {
                             console.log(
-                                `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
+                                `${progressTag} [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                             );
                             const failedAudits = [];
                             for (const [id, a] of Object.entries(report.audits || {})) {
@@ -379,7 +384,7 @@ async function main() {
                             };
                         }
                     } catch (err) {
-                        console.log(`[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ❌ Audit error: ${err.message}`);
+                        console.log(`[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/2)] [${cand.preset.toUpperCase()}] ${cand.route} ❌ Audit error: ${err.message}`);
                     }
                 }
 
