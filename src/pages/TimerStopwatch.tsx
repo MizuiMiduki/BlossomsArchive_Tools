@@ -1,5 +1,6 @@
 import { createSignal, Switch, Match, For, Show, createEffect, onSettled } from "solid-js";
 import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { initAudio, closeAudio, playNotificationSound } from "../utils/sound";
 
 export default function TimerStopwatch() {
     // 状態管理
@@ -17,6 +18,11 @@ export default function TimerStopwatch() {
     const [breakMin, setBreakMin] = createSignal(5);
     const [isBreak, setIsBreak] = createSignal(false);
     const [autoRepeat, setAutoRepeat] = createSignal(true);
+
+    // サウンド設定用の状態 (タイマー・ポモドーロ用)
+    const [soundEnabled, setSoundEnabled] = createSignal(true);
+    const [soundVolume, setSoundVolume] = createSignal(80);
+    const [soundType, setSoundType] = createSignal<"alarm" | "chime">("alarm");
 
     // H:M:S入力用の状態
     const [h, setH] = createSignal(0);
@@ -72,6 +78,12 @@ export default function TimerStopwatch() {
     const start = (targetEl?: HTMLElement) => {
         if (targetEl) animatePop(targetEl, 0.92, 0.15);
         if (isRunning()) return;
+
+        // タイマー/ポモドーロ開始時にオーディオを初期化（ブラウザのAutoplay Policy対応）
+        if (mode() !== "stopwatch" && soundEnabled()) {
+            initAudio();
+        }
+
         setIsRunning(true);
         const intervalMs = mode() === "stopwatch" ? 10 : 1000;
 
@@ -86,8 +98,24 @@ export default function TimerStopwatch() {
                         const nextIsBreak = !isBreak();
                         setIsBreak(nextIsBreak);
                         setTime((nextIsBreak ? breakMin() : focusMin()) * 60);
+
+                        if (soundEnabled()) {
+                            playNotificationSound({
+                                soundType: soundType(),
+                                volume: soundVolume() / 100,
+                                pitchModifier: nextIsBreak ? 1.15 : 0.9,
+                            });
+                        }
                     } else {
                         stop();
+
+                        if (soundEnabled()) {
+                            playNotificationSound({
+                                soundType: soundType(),
+                                volume: soundVolume() / 100,
+                            });
+                        }
+
                         modalRef?.showModal();
                         const modalBox = modalRef?.querySelector<HTMLElement>(".modal-box");
                         if (modalBox && typeof modalBox.animate === "function") {
@@ -128,6 +156,7 @@ export default function TimerStopwatch() {
                 window.clearInterval(timerId);
                 timerId = undefined;
             }
+            closeAudio();
         };
     });
 
@@ -364,6 +393,92 @@ export default function TimerStopwatch() {
                     </div>
                 </Match>
             </Switch>
+
+            {/* サウンド設定 (タイマー・ポモドーロ用) */}
+            <Show when={mode() === "timer" || mode() === "pomodoro"}>
+                <div class="w-full space-y-4 pt-4 border-t border-base-200">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm font-bold opacity-80">
+                            通知音設定
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <span class="text-xs opacity-70">
+                                {soundEnabled() ? "ON" : "OFF"}
+                            </span>
+                            <input
+                                type="checkbox"
+                                class="toggle toggle-primary toggle-sm"
+                                checked={soundEnabled()}
+                                onChange={(e) => setSoundEnabled(e.target.checked)}
+                                aria-label="通知音を有効にする"
+                            />
+                        </label>
+                    </div>
+
+                    <Show when={soundEnabled()}>
+                        <div class="bg-base-200/50 rounded-xl p-3 sm:p-4 space-y-3 border border-base-300/50">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <label class="text-xs font-semibold opacity-70" for="sound-type-select">
+                                    音の種類
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <select
+                                        id="sound-type-select"
+                                        class="select select-bordered select-sm w-full sm:w-auto"
+                                        value={soundType()}
+                                        onChange={(e) => setSoundType(e.currentTarget.value as "alarm" | "chime")}
+                                        aria-label="音の種類"
+                                    >
+                                        <option value="alarm">電子アラーム (ピピピッ)</option>
+                                        <option value="chime">チャイム (ポーン)</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline btn-primary shrink-0"
+                                        onClick={(e) => {
+                                            animatePop(e.currentTarget, 0.92, 0.15);
+                                            playNotificationSound({
+                                                soundType: soundType(),
+                                                volume: soundVolume() / 100,
+                                            });
+                                        }}
+                                        aria-label="試聴"
+                                    >
+                                        試聴
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-center text-xs opacity-70">
+                                    <label for="sound-volume-range" class="font-semibold">
+                                        音量
+                                    </label>
+                                    <span class="font-mono tabular-nums">{soundVolume()}%</span>
+                                </div>
+                                <input
+                                    id="sound-volume-range"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                    value={soundVolume()}
+                                    onInput={(e) => {
+                                        const v = Number(e.currentTarget.value);
+                                        setSoundVolume(
+                                            Number.isFinite(v)
+                                                ? Math.max(0, Math.min(100, Math.floor(v)))
+                                                : 80,
+                                        );
+                                    }}
+                                    class="range range-primary range-sm w-full"
+                                    aria-label="音量"
+                                />
+                            </div>
+                        </div>
+                    </Show>
+                </div>
+            </Show>
         </div>
     );
 }

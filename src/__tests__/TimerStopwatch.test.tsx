@@ -112,4 +112,47 @@ describe("TimerStopwatch", () => {
 
         vi.useRealTimers();
     });
+
+    it("ストップウォッチモードでは通知音設定が表示されず、タイマーやポモドーロで表示されること", () => {
+        render(() => <TimerStopwatch />);
+        expect(screen.queryByText("通知音設定")).not.toBeInTheDocument();
+
+        // タイマーモードに切り替え
+        fireEvent.click(screen.getByText("タイマー"));
+        expect(screen.getByText("通知音設定")).toBeInTheDocument();
+        expect(screen.getByLabelText("通知音を有効にする")).toBeChecked();
+        expect(screen.getByLabelText("音量")).toBeInTheDocument();
+        expect(screen.getByLabelText("音の種類")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "試聴" })).toBeInTheDocument();
+
+        // ポモドーロモードに切り替え
+        fireEvent.click(screen.getByText("ポモドーロ"));
+        expect(screen.getByText("通知音設定")).toBeInTheDocument();
+    });
+
+    it("通知音のON/OFF切り替えや音量・音色変更、試聴が動作すること", () => {
+        render(() => <TimerStopwatch />);
+        fireEvent.click(screen.getByText("タイマー"));
+
+        const toggle = screen.getByLabelText("通知音を有効にする");
+        expect(toggle).toBeChecked();
+
+        // 音量変更
+        const volumeInput = screen.getByLabelText("音量");
+        fireEvent.input(volumeInput, { target: { value: "50" } });
+        expect(screen.getByText("50%")).toBeInTheDocument();
+
+        // 音色変更
+        const soundSelect = screen.getByLabelText("音の種類");
+        fireEvent.change(soundSelect, { target: { value: "chime" } });
+
+        // 試聴ボタン
+        const previewBtn = screen.getByRole("button", { name: "試聴" });
+        expect(() => fireEvent.click(previewBtn)).not.toThrow();
+
+        // OFFに切り替えると詳細設定が非表示になること
+        fireEvent.click(toggle);
+        expect(screen.queryByLabelText("音量")).not.toBeInTheDocument();
+        expect(screen.getByText("OFF")).toBeInTheDocument();
+    });
 });
