@@ -26,6 +26,16 @@ const mainCssFile = assetFiles.find(
     (file) => file.startsWith("index-") && file.endsWith(".css"),
 );
 
+const mainJsFile = assetFiles.find(
+    (file) => file.startsWith("index-") && file.endsWith(".js"),
+);
+const runtimeJsFile = assetFiles.find(
+    (file) => file.startsWith("rolldown-runtime-") && file.endsWith(".js"),
+);
+const budouxJsFile = assetFiles.find(
+    (file) => file.startsWith("BudouX-") && file.endsWith(".js"),
+);
+
 let baseTemplate = template;
 if (mainCssFile) {
     const originalLinkVariants = [
@@ -139,6 +149,15 @@ for (const route of routes) {
     const routeChunk = findRouteChunk(route.path);
 
     const tags = [
+        mainJsFile
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(mainJsFile)}" />`
+            : "",
+        runtimeJsFile
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
+            : "",
+        budouxJsFile
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(budouxJsFile)}" />`
+            : "",
         routeChunk
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
             : "",

@@ -168,13 +168,17 @@ export default function Layout(props: LayoutProps) {
 
             const resetScroll = () => {
                 if (userScrolled) return;
-                if (mainRef) {
+                if (mainRef && mainRef.scrollTop !== 0) {
                     mainRef.scrollTop = 0;
                     mainRef.scrollTo?.({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
                 }
                 window.scrollTo(0, 0);
-                document.documentElement.scrollTop = 0;
-                document.body.scrollTop = 0;
+                if (document.documentElement.scrollTop !== 0) {
+                    document.documentElement.scrollTop = 0;
+                }
+                if (document.body.scrollTop !== 0) {
+                    document.body.scrollTop = 0;
+                }
             };
 
             const handleNonUserScroll = () => {
