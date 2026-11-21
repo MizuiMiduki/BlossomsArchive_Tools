@@ -1009,7 +1009,7 @@ export default function SeoChecker() {
         // 1. 同一オリジンの場合は直接 fetch
         if (isSameOrigin(targetUrl)) {
             try {
-                const directRes = await fetchWithTimeout(targetUrl, 4000);
+                const directRes = await fetchWithTimeout(targetUrl, 5000);
                 if (directRes.ok) {
                     const text = await directRes.text();
                     if (text && text.includes("<")) {
@@ -1025,23 +1025,69 @@ export default function SeoChecker() {
             }
         }
 
-        // 2. クロスオリジンの場合: まず AllOrigins プロキシで生のHTML取得を試行
+        const isTestEnv =
+            typeof import.meta !== "undefined" &&
+            import.meta.env?.MODE === "test";
+
+        // 2. クロスオリジンの場合: AllOrigins プロキシ (/raw および /get) で生のHTML取得を試行
         try {
             const allOriginsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-            const res = await fetchWithTimeout(allOriginsUrl, 6000);
-            if (res.ok) {
+            const res = await fetchWithTimeout(allOriginsUrl, 10000);
+            if (res.ok && typeof res.text === "function") {
                 const text = await res.text();
-                if (text && (text.includes("<html") || text.includes("<head") || text.includes("<title"))) {
+                if (
+                    text &&
+                    (text.includes("<html") ||
+                        text.includes("<head") ||
+                        text.includes("<title") ||
+                        text.includes("<meta"))
+                ) {
                     return parseSeoFromHtml(text, targetUrl);
                 }
             }
         } catch {
-            // 次のフォールバックへ
+            // /get へフォールバック
         }
 
-        // 3. Microlink API フォールバック
+        try {
+            const allOriginsGetUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+            const res = await fetchWithTimeout(allOriginsGetUrl, 10000);
+            if (res.ok && typeof res.json === "function") {
+                const json = await res.json();
+                const text =
+                    typeof json?.contents === "string" ? json.contents : "";
+                if (
+                    text &&
+                    (text.includes("<html") ||
+                        text.includes("<head") ||
+                        text.includes("<title") ||
+                        text.includes("<meta"))
+                ) {
+                    return parseSeoFromHtml(text, targetUrl);
+                }
+            }
+        } catch {
+            // Microlink フォールバックへ
+        }
+
+        // 3. Microlink API フォールバック (コールドキャッシュ対策で14秒確保 + 初回失敗時の自動リトライ)
         const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
-        const res = await fetchWithTimeout(microlinkUrl, 8000).catch(() => {
+        try {
+            const firstRes = await fetchWithTimeout(microlinkUrl, 14000);
+            if (firstRes.ok) {
+                const firstJson = await firstRes.json();
+                const firstParsed = parseSeoFromMicrolink(firstJson, targetUrl);
+                if (firstParsed) return firstParsed;
+            }
+        } catch {
+            // 初回失敗時は自動リトライへ
+        }
+
+        if (!isTestEnv) {
+            await new Promise((r) => setTimeout(r, 400));
+        }
+
+        const res = await fetchWithTimeout(microlinkUrl, 14000).catch(() => {
             throw new Error(
                 "ページの取得に失敗しました。対象サイトにアクセス制限がある場合は、「HTML直接入力 / ファイル読込」タブをご利用ください。",
             );

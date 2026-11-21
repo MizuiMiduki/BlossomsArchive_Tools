@@ -522,7 +522,7 @@ export default function OgpChecker() {
         // 1. 同一オリジンの場合のみ直接 fetch を試行（不要なCORSエラーのコンソール出力を防止）
         if (isSameOrigin(targetUrl)) {
             try {
-                const directRes = await fetchWithTimeout(targetUrl, 4000);
+                const directRes = await fetchWithTimeout(targetUrl, 5000);
                 if (directRes.ok) {
                     const text = await directRes.text();
                     if (text && text.includes("<")) {
@@ -538,9 +538,96 @@ export default function OgpChecker() {
             }
         }
 
-        // 2. クロスオリジンの場合はCORSエラー・429レート制限エラーを防ぐためMicrolink APIを利用
-        const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
-        const res = await fetchWithTimeout(microlinkUrl, 8000).catch(() => {
+        const isTestEnv =
+            typeof import.meta !== "undefined" &&
+            import.meta.env?.MODE === "test";
+
+        // Microlink API 呼び出しヘルパー
+        const tryMicrolink = async (timeoutMs: number): Promise<OgpData | null> => {
+            const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
+            const res = await fetchWithTimeout(microlinkUrl, timeoutMs);
+            if (!res.ok) return null;
+            const json = await res.json();
+            return parseOgpFromMicrolink(json, targetUrl);
+        };
+
+        // AllOrigins 生HTML取得ヘルパー（/raw と /get の2系統）
+        const tryAllOriginsHtml = async (): Promise<OgpData | null> => {
+            try {
+                const rawUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                const res = await fetchWithTimeout(rawUrl, 10000);
+                if (res.ok && typeof res.text === "function") {
+                    const text = await res.text();
+                    if (
+                        text &&
+                        (text.includes("<meta") ||
+                            text.includes("<title") ||
+                            text.includes("<head"))
+                    ) {
+                        const parsed = parseOgpFromHtml(text, targetUrl);
+                        if (
+                            parsed.ogTitle ||
+                            parsed.pageTitle ||
+                            parsed.ogDescription ||
+                            parsed.ogImage
+                        ) {
+                            return parsed;
+                        }
+                    }
+                }
+            } catch {
+                // /get へフォールバック
+            }
+
+            try {
+                const getUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                const res = await fetchWithTimeout(getUrl, 10000);
+                if (res.ok && typeof res.json === "function") {
+                    const json = await res.json();
+                    const text =
+                        typeof json?.contents === "string" ? json.contents : "";
+                    if (
+                        text &&
+                        (text.includes("<meta") ||
+                            text.includes("<title") ||
+                            text.includes("<head"))
+                    ) {
+                        const parsed = parseOgpFromHtml(text, targetUrl);
+                        if (
+                            parsed.ogTitle ||
+                            parsed.pageTitle ||
+                            parsed.ogDescription ||
+                            parsed.ogImage
+                        ) {
+                            return parsed;
+                        }
+                    }
+                }
+            } catch {
+                // ignore
+            }
+            return null;
+        };
+
+        // 2. 初回 Microlink API 試行（コールドキャッシュでのタイムアウトを防ぐため14秒確保）
+        try {
+            const firstAttempt = await tryMicrolink(14000);
+            if (firstAttempt) return firstAttempt;
+        } catch {
+            // 初回失敗時は後続のフォールバックおよび自動リトライへ
+        }
+
+        // 3. AllOrigins 経由での生HTML直接解析へフォールバック
+        const htmlAttempt = await tryAllOriginsHtml();
+        if (htmlAttempt) return htmlAttempt;
+
+        // 4. 初回リクエストによってプロキシ側のキャッシュ生成が完了しているケースが多いため、自動リトライを実行
+        if (!isTestEnv) {
+            await new Promise((r) => setTimeout(r, 400));
+        }
+
+        const retryMicrolinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
+        const res = await fetchWithTimeout(retryMicrolinkUrl, 14000).catch(() => {
             throw new Error(
                 "ページの取得に失敗しました。対象サイトへのアクセス制限がある場合は、「HTML直接入力 / ファイル読込」タブをご利用ください。",
             );
