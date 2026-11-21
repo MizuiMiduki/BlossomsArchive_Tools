@@ -60,10 +60,10 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
     const ctx = initAudio();
     if (!ctx) return;
 
-    const rawVolume = typeof options.volume === "number" ? options.volume : 0.8;
+    const rawVolume = typeof options.volume === "number" ? options.volume : 1.0;
     const volume = Number.isFinite(rawVolume)
         ? Math.max(0, Math.min(1, rawVolume))
-        : 0.8;
+        : 1.0;
 
     if (volume <= 0) return;
 
@@ -81,14 +81,21 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
     masterGain.connect(ctx.destination);
 
     if (soundType === "alarm") {
-        // 電子アラーム音: 「ピピピッ、ピピピッ」 (短音のパルスを2セット)
+        // 電子アラーム音: 「ピピピッ、ピピピッ、ピピピッ」 (明瞭で聞き取りやすい高音圧パルス3セット)
+        const baseFreq = 1046.5 * pitch; // C6 (デジタルアラームで最も通りやすい帯域)
         const beeps = [
-            { start: 0.0, end: 0.08, freq: 880 * pitch },
-            { start: 0.12, end: 0.2, freq: 880 * pitch },
-            { start: 0.24, end: 0.32, freq: 880 * pitch },
-            { start: 0.44, end: 0.52, freq: 880 * pitch },
-            { start: 0.56, end: 0.64, freq: 880 * pitch },
-            { start: 0.68, end: 0.76, freq: 880 * pitch },
+            // 1セット目
+            { start: 0.0, end: 0.09, freq: baseFreq },
+            { start: 0.13, end: 0.22, freq: baseFreq },
+            { start: 0.26, end: 0.35, freq: baseFreq },
+            // 2セット目
+            { start: 0.55, end: 0.64, freq: baseFreq },
+            { start: 0.68, end: 0.77, freq: baseFreq },
+            { start: 0.81, end: 0.9, freq: baseFreq },
+            // 3セット目
+            { start: 1.1, end: 1.19, freq: baseFreq },
+            { start: 1.23, end: 1.32, freq: baseFreq },
+            { start: 1.36, end: 1.48, freq: baseFreq },
         ];
 
         beeps.forEach(({ start, end, freq }) => {
@@ -98,10 +105,10 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
             osc.type = "square";
             osc.frequency.setValueAtTime(freq, currentTime + start);
 
-            // クリックノイズ防止のための微小フェードイン・アウト
+            // クリックノイズ防止のための微小フェードイン・アウト（高ゲイン 0.9 でしっかり大きく鳴らす）
             gain.gain.setValueAtTime(0, currentTime + start);
-            gain.gain.linearRampToValueAtTime(0.2, currentTime + start + 0.01);
-            gain.gain.setValueAtTime(0.2, currentTime + end - 0.01);
+            gain.gain.linearRampToValueAtTime(0.9, currentTime + start + 0.008);
+            gain.gain.setValueAtTime(0.9, currentTime + end - 0.008);
             gain.gain.linearRampToValueAtTime(0, currentTime + end);
 
             osc.connect(gain);
@@ -111,24 +118,25 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
             osc.stop(currentTime + end);
         });
     } else {
-        // チャイム音: 「ポーン」 (サイン波による澄んだ鐘・チャイムのような減衰音)
+        // チャイム音: 「ポーン」 (倍音を含んだ明るく大きなチャイム減衰音)
         const notes = [
-            { start: 0.0, duration: 1.0, freq: 523.25 * pitch }, // C5
-            { start: 0.15, duration: 1.2, freq: 659.25 * pitch }, // E5
-            { start: 0.3, duration: 1.5, freq: 783.99 * pitch }, // G5
+            { start: 0.0, duration: 1.1, freq: 523.25 * pitch, peak: 0.7 }, // C5
+            { start: 0.15, duration: 1.3, freq: 659.25 * pitch, peak: 0.7 }, // E5
+            { start: 0.3, duration: 1.6, freq: 783.99 * pitch, peak: 0.75 }, // G5
+            { start: 0.45, duration: 1.8, freq: 1046.5 * pitch, peak: 0.8 }, // C6
         ];
 
-        notes.forEach(({ start, duration, freq }) => {
+        notes.forEach(({ start, duration, freq, peak }) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
-            osc.type = "sine";
+            osc.type = "triangle";
             osc.frequency.setValueAtTime(freq, currentTime + start);
 
             gain.gain.setValueAtTime(0, currentTime + start);
-            gain.gain.linearRampToValueAtTime(0.25, currentTime + start + 0.02);
+            gain.gain.linearRampToValueAtTime(peak, currentTime + start + 0.015);
             gain.gain.exponentialRampToValueAtTime(
-                0.0001,
+                0.001,
                 currentTime + start + duration,
             );
 

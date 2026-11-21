@@ -21,7 +21,7 @@ export default function TimerStopwatch() {
 
     // サウンド設定用の状態 (タイマー・ポモドーロ用)
     const [soundEnabled, setSoundEnabled] = createSignal(true);
-    const [soundVolume, setSoundVolume] = createSignal(80);
+    const [soundVolume, setSoundVolume] = createSignal(100);
     const [soundType, setSoundType] = createSignal<"alarm" | "chime">("alarm");
 
     // H:M:S入力用の状態
@@ -468,7 +468,7 @@ export default function TimerStopwatch() {
                                         setSoundVolume(
                                             Number.isFinite(v)
                                                 ? Math.max(0, Math.min(100, Math.floor(v)))
-                                                : 80,
+                                                : 100,
                                         );
                                     }}
                                     class="range range-primary range-sm w-full"
