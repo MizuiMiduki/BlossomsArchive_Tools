@@ -9,6 +9,28 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
 const ISSUE_REPORT_PATH = path.join(ROOT_DIR, "dist", "lighthouse-issue.md");
 
+const ROUTE_SOURCE_MAP = {
+    "/": "src/pages/Home.tsx",
+    "/calculator": "src/pages/Calculator.tsx",
+    "/qr_code": "src/pages/QrGenerator.tsx",
+    "/image_converter": "src/pages/ImageConverter.tsx",
+    "/video_compressor": "src/pages/VideoCompressor.tsx",
+    "/access_info": "src/pages/AccessInfo.tsx",
+    "/timer": "src/pages/TimerStopwatch.tsx",
+    "/text_converter": "src/pages/TextConverter.tsx",
+    "/clock": "src/pages/Clock.tsx",
+    "/charset": "src/pages/CharsetConverter.tsx",
+    "/lottery": "src/pages/Lottery.tsx",
+    "/password": "src/pages/PasswordGenerator.tsx",
+    "/exif": "src/pages/ExifFrameGenerator.tsx",
+    "/ogp_checker": "src/pages/OgpChecker.tsx",
+    "/seo_checker": "src/pages/SeoChecker.tsx",
+    "/hyperfocal": "src/pages/Hyperfocal.tsx",
+    "/headphone_driveability": "src/pages/HeadphoneDriveability.tsx",
+    "/privacy": "src/pages/PrivacyPolicy.tsx",
+    "/credits": "src/pages/Credits.tsx",
+};
+
 // コマンドライン引数の解析
 const rawArgs = process.argv.slice(2);
 function getArgValue(prefix) {
@@ -132,7 +154,45 @@ async function auditUrl(lhBin, url, preset = "mobile", throttlingMethod = "simul
     }
 }
 
-// レポートMarkdownを生成してファイル出力
+// 減点項目の詳細を抽出（要素セレクタ・スニペット・メトリクス等）
+function extractFailedAudits(report) {
+    const failedAudits = [];
+    for (const [id, a] of Object.entries(report.audits || {})) {
+        if (a.score !== null && a.score < 1 && a.title) {
+            const detailsItems = [];
+            if (a.details?.items && Array.isArray(a.details.items)) {
+                for (const item of a.details.items.slice(0, 5)) {
+                    const detail = {};
+                    if (item.node) {
+                        detail.selector = item.node.selector || "";
+                        detail.snippet = item.node.snippet || "";
+                        detail.nodeLabel = item.node.nodeLabel || "";
+                        detail.explanation = item.node.explanation || "";
+                    }
+                    if (item.url) detail.url = item.url;
+                    if (item.wastedMs) detail.wastedMs = Math.round(item.wastedMs);
+                    if (item.wastedBytes) detail.wastedBytes = Math.round(item.wastedBytes);
+                    if (item.description) detail.description = item.description;
+                    if (Object.keys(detail).length > 0) {
+                        detailsItems.push(detail);
+                    }
+                }
+            }
+            failedAudits.push({
+                id,
+                title: a.title,
+                score: Math.round((a.score || 0) * 100),
+                displayValue: a.displayValue || "",
+                explanation: a.explanation || "",
+                description: a.description || "",
+                detailsItems,
+            });
+        }
+    }
+    return failedAudits;
+}
+
+// レポートMarkdownを生成してファイル出力（AIエージェントおよび開発者が即座に修正箇所を特定できる形式）
 function generateReportMarkdown(regressions) {
     if (regressions.length === 0) {
         console.log("🎉 全ルート×モバイル・デスクトップですべて 100/100 満点を達成しました！");
@@ -143,36 +203,85 @@ function generateReportMarkdown(regressions) {
     }
 
     let markdown = `## ⚠️ PageSpeed / Lighthouse スコア退行レポート\n\n`;
-    markdown += `ビルド後の自動 Lighthouse 監査にて、スコア 100 点未満のページが検出されました。\n`;
-    markdown += `Webサイトのデプロイは正常に完了しましたが、以下の減点要因を確認し修正してください。\n\n`;
-    markdown += `| ルート | プリセット | Performance | Accessibility | Best Practices | SEO |\n`;
-    markdown += `| :--- | :---: | :---: | :---: | :---: | :---: |\n`;
+    markdown += `ビルド後の自動 Lighthouse 監査にて、100点満点未満の減点が検出されました。\n`;
+    markdown += `以下の検出サマリーと要素特定詳細を確認し、対象ソースコードを修正してください。\n\n`;
+
+    markdown += `### 📊 検出サマリー一覧\n\n`;
+    markdown += `| ルート | プリセット | 対象ソースファイル | Performance | Accessibility | Best Practices | SEO |\n`;
+    markdown += `| :--- | :---: | :--- | :---: | :---: | :---: | :---: |\n`;
 
     for (const r of regressions) {
+        const sourceFile = ROUTE_SOURCE_MAP[r.route] ? `\`${ROUTE_SOURCE_MAP[r.route]}\`` : "-";
         if (r.scores.error) {
-            markdown += `| \`${r.route}\` | ${r.preset} | 監査エラー | - | - | - |\n`;
+            markdown += `| \`${r.route}\` | ${r.preset} | ${sourceFile} | 監査エラー | - | - | - |\n`;
         } else {
             const p = r.scores.performance === 100 ? "100" : `**${r.scores.performance}** ⚠️`;
             const a = r.scores.accessibility === 100 ? "100" : `**${r.scores.accessibility}** ⚠️`;
             const b = r.scores.bestPractices === 100 ? "100" : `**${r.scores.bestPractices}** ⚠️`;
             const s = r.scores.seo === 100 ? "100" : `**${r.scores.seo}** ⚠️`;
-            markdown += `| \`${r.route}\` | ${r.preset} | ${p} | ${a} | ${b} | ${s} |\n`;
+            markdown += `| \`${r.route}\` | ${r.preset} | ${sourceFile} | ${p} | ${a} | ${b} | ${s} |\n`;
         }
     }
 
-    markdown += `\n### 🔍 検出された減点項目（詳細）\n\n`;
+    markdown += `\n---\n\n`;
+    markdown += `### 🔍 減点要因の特定・詳細ログ\n\n`;
+
     for (const r of regressions) {
         if (r.failedAudits && r.failedAudits.length > 0) {
-            markdown += `#### \`${r.route}\` (${r.preset})\n\n`;
+            const sourceFile = ROUTE_SOURCE_MAP[r.route] || "該当コンポーネント";
+            markdown += `#### 📄 \`${r.route}\` (${r.preset}) — 対象: \`${sourceFile}\`\n\n`;
             for (const a of r.failedAudits) {
-                markdown += `- **${a.title}** (スコア: ${a.score}${a.displayValue ? ` / ${a.displayValue}` : ""})\n`;
+                markdown += `##### ❌ ${a.title} (スコア: ${a.score}点${a.displayValue ? ` / 計測値: ${a.displayValue}` : ""})\n\n`;
+                if (a.description) {
+                    markdown += `> ${a.description}\n\n`;
+                }
                 if (a.explanation) {
-                    markdown += `  - *原因*: ${a.explanation}\n`;
+                    markdown += `* **原因詳細**: ${a.explanation}\n\n`;
+                }
+
+                if (a.detailsItems && a.detailsItems.length > 0) {
+                    markdown += `**該当要素・詳細リスト:**\n\n`;
+                    for (const item of a.detailsItems) {
+                        if (item.snippet) {
+                            markdown += `- **HTMLスニペット**:\n\`\`\`html\n${item.snippet}\n\`\`\`\n`;
+                        }
+                        if (item.selector) {
+                            markdown += `  - **CSSセレクタ**: \`${item.selector}\`\n`;
+                        }
+                        if (item.nodeLabel) {
+                            markdown += `  - **要素ラベル**: ${item.nodeLabel}\n`;
+                        }
+                        if (item.explanation) {
+                            markdown += `  - **減点理由**: ${item.explanation}\n`;
+                        }
+                        if (item.url) {
+                            markdown += `  - **対象URL/リソース**: \`${item.url}\`\n`;
+                        }
+                        if (item.wastedMs) {
+                            markdown += `  - **遅延影響時間**: ${item.wastedMs} ms\n`;
+                        }
+                        if (item.wastedBytes) {
+                            markdown += `  - **削減可能容量**: ${(item.wastedBytes / 1024).toFixed(1)} KB\n`;
+                        }
+                    }
+                    markdown += `\n`;
                 }
             }
-            markdown += `\n`;
         }
     }
+
+    markdown += `---\n\n`;
+    markdown += `### 🤖 AI Agent Action Guide（Gemini / エージェント向け修正手順）\n\n`;
+    markdown += `1. **対象ファイルの特定**:\n`;
+    markdown += `   - 上記の表および詳細セクションに記載された対象ファイル（例: \`src/pages/...tsx\` や \`src/components/...tsx\`）を開いてください。\n`;
+    markdown += `2. **原因要素の修正**:\n`;
+    markdown += `   - 記載されている **HTMLスニペット** や **CSSセレクタ** を検索し、該当要素を特定します。\n`;
+    markdown += `   - プロジェクト規約（\`AGENTS.md\`）に基づき、ハードコードされた文字色・背景色（\`text-slate-*\`, \`bg-slate-*\` 等）を DaisyUI セマンティッククラス（\`text-base-content\`, \`bg-base-*\`, \`border-base-*\` 等）へ置換するか、コントラスト比（4.5:1以上）、見出し階層、ARIAラベル、WebMCP属性等を修正してください。\n`;
+    markdown += `3. **コミット前必須検証**:\n`;
+    markdown += `   - 修正完了後、コミット前に必ず以下の統合検証コマンドを実行し、全テスト合格とビルド成功を確認してください:\n`;
+    markdown += `     \`\`\`bash\n     pnpm run type-check && pnpm test && pnpm run build\n     \`\`\`\n`;
+    markdown += `4. **プッシュと自動Issue解決**:\n`;
+    markdown += `   - \`main\` ブランチへプッシュすると、GitHub Actions の Lighthouse CI（6シャード並列）が自動実行され、全38パターンで 100/100 満点に回復した時点で**このIssueは自動的にクローズ**されます。\n`;
 
     fs.mkdirSync(path.dirname(ISSUE_REPORT_PATH), { recursive: true });
     fs.writeFileSync(ISSUE_REPORT_PATH, markdown, "utf8");
@@ -285,18 +394,7 @@ async function main() {
                             `[${completed}/${totalAudits}] [${preset.toUpperCase()}] ${route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                         );
 
-                        const failedAudits = [];
-                        for (const [id, a] of Object.entries(report.audits || {})) {
-                            if (a.score !== null && a.score < 1 && a.title) {
-                                failedAudits.push({
-                                    id,
-                                    title: a.title,
-                                    score: a.score,
-                                    displayValue: a.displayValue || "",
-                                    explanation: a.explanation || "",
-                                });
-                            }
-                        }
+                        const failedAudits = extractFailedAudits(report);
 
                         regressions.push({
                             route,
@@ -364,18 +462,7 @@ async function main() {
                             console.log(
                                 `${progressTag} [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                             );
-                            const failedAudits = [];
-                            for (const [id, a] of Object.entries(report.audits || {})) {
-                                if (a.score !== null && a.score < 1 && a.title) {
-                                    failedAudits.push({
-                                        id,
-                                        title: a.title,
-                                        score: a.score,
-                                        displayValue: a.displayValue || "",
-                                        explanation: a.explanation || "",
-                                    });
-                                }
-                            }
+                            const failedAudits = extractFailedAudits(report);
                             latestCandidate = {
                                 route: cand.route,
                                 preset: cand.preset,
