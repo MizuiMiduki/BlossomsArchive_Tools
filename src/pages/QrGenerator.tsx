@@ -121,15 +121,15 @@ export default function QrGenerator() {
         <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0">
             <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
                 {/* メインツールカード */}
-                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-slate-200 min-w-0">
+                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-base-300 min-w-0">
                     {/* ヘッダーセクション */}
-                    <div class="mb-8 border-b border-slate-200 pb-5">
-                        <h1 class="text-2xl md:text-3xl font-black text-slate-800">
+                    <div class="mb-8 border-b border-base-300 pb-5">
+                        <h1 class="text-2xl md:text-3xl font-black text-base-content">
                             <BudouX text="QRコード作成・生成ツール" />
                         </h1>
                         <BudouX
                             as="p"
-                            class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed"
+                            class="text-xs font-semibold text-base-content/70 mt-2 leading-relaxed"
                             text="WebサイトのURLや任意のテキストから、高品質なQRコードをブラウザ内で瞬時に作成します。高解像度PNGに加え、拡大しても画質が荒れないベクター（SVG）出力に対応しています。"
                         />
                     </div>
@@ -142,7 +142,7 @@ export default function QrGenerator() {
                                 {/* 1. 文字列入力フォーム */}
                                 <div class="form-control w-full">
                                     <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-slate-700">
+                                        <span class="label-text font-bold text-sm text-base-content/90">
                                             QRコードに埋め込む文字列・URL
                                         </span>
                                     </label>
@@ -152,7 +152,7 @@ export default function QrGenerator() {
                                         onInput={(e) =>
                                             setText(e.currentTarget.value)
                                         }
-                                        class="textarea textarea-bordered w-full h-32 text-sm bg-white border-2 border-slate-300 text-slate-900 focus:border-slate-500 font-medium p-3 focus:outline-none shadow-sm"
+                                        class="textarea textarea-bordered w-full h-32 text-sm bg-base-100 border-2 border-base-300 text-base-content font-medium p-3 focus:outline-none shadow-sm"
                                         placeholder="https://example.com または 任意のテキストを入力してください"
                                     />
                                 </div>
@@ -160,7 +160,7 @@ export default function QrGenerator() {
                                 {/* 2. 保存フォーマットの選択 */}
                                 <div class="form-control w-full">
                                     <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-slate-700">
+                                        <span class="label-text font-bold text-sm text-base-content/90">
                                             保存形式の選択
                                         </span>
                                     </label>
@@ -175,14 +175,14 @@ export default function QrGenerator() {
                                                     class={`p-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${
                                                         fileFormat() ===
                                                         opt.value
-                                                            ? "border-slate-800 bg-slate-50 text-slate-900 shadow-sm"
-                                                            : "border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+                                                            ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                                                            : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content/80"
                                                     }`}
                                                 >
                                                     <span class="font-black text-sm">
                                                         {opt.label}
                                                     </span>
-                                                    <span class="text-[10px] text-slate-600 font-semibold mt-0.5">
+                                                    <span class="text-[10px] text-base-content/70 font-semibold mt-0.5">
                                                         {opt.desc}
                                                     </span>
                                                 </button>
@@ -198,7 +198,7 @@ export default function QrGenerator() {
                                     ref={generateButtonRef}
                                     onClick={generate}
                                     disabled={!text()}
-                                    class="btn bg-slate-800 hover:bg-slate-900 border-none text-white w-full text-lg h-16 font-black transition-all shadow-md"
+                                    class="btn btn-primary text-white w-full text-lg h-16 font-black transition-all shadow-md"
                                 >
                                     QRコードを作成する
                                 </button>
@@ -206,11 +206,11 @@ export default function QrGenerator() {
                         </div>
 
                         {/* 右側：生成プレビュー */}
-                        <div class="lg:col-span-5 flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 border border-slate-200 min-h-[300px]">
+                        <div class="lg:col-span-5 flex flex-col items-center justify-center bg-base-200/60 rounded-2xl p-6 border border-base-300 min-h-[300px]">
                             <Show
                                 when={qrData()}
                                 fallback={
-                                    <div class="text-center p-8 space-y-2 text-slate-500">
+                                    <div class="text-center p-8 space-y-2 text-base-content/60">
                                         <span class="text-5xl block mb-2">
                                             📊
                                         </span>
@@ -225,7 +225,7 @@ export default function QrGenerator() {
                                 <div
                                     class="flex flex-col items-center gap-5 w-full"
                                 >
-                                    <div class="relative group bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                                    <div class="relative group bg-white p-4 rounded-2xl shadow-sm border border-base-300">
                                         <img
                                             src={qrData()}
                                             alt="QRコード プレビュー"
@@ -233,7 +233,7 @@ export default function QrGenerator() {
                                             onClick={() => setIsLarge(true)}
                                         />
                                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl pointer-events-none">
-                                            <span class="text-white text-xs font-medium bg-slate-900/80 px-2 py-1 rounded">
+                                            <span class="text-white text-xs font-medium bg-neutral/90 px-2 py-1 rounded">
                                                 🔍 プレビューを拡大
                                             </span>
                                         </div>
@@ -242,13 +242,13 @@ export default function QrGenerator() {
                                     <div class="flex gap-3 w-full max-w-sm">
                                         <button
                                             onClick={() => setIsLarge(true)}
-                                            class="btn btn-outline border-slate-300 text-slate-700 hover:bg-slate-100 font-bold flex-1"
+                                            class="btn btn-outline border-base-300 text-base-content hover:bg-base-200 font-bold flex-1"
                                         >
                                             表示拡大
                                         </button>
                                         <button
                                             onClick={download}
-                                            class="btn bg-slate-800 hover:bg-slate-900 text-white flex-1 text-base font-black border-none shadow-md"
+                                            class="btn btn-primary text-white flex-1 text-base font-black border-none shadow-md"
                                         >
                                             保存 ({fileFormat().toUpperCase()})
                                         </button>
@@ -262,12 +262,12 @@ export default function QrGenerator() {
                 {/* 💡 お役立ちインフォメーションセクション */}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                     {/* ツールならではのメリット */}
-                    <div class="card bg-base-100 p-6 md:p-8 border border-slate-200 shadow-sm justify-between">
+                    <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm justify-between">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-800 border-b border-slate-200 pb-3 mb-5 flex items-center gap-2">
+                            <h2 class="text-lg font-bold text-base-content border-b border-base-300 pb-3 mb-5 flex items-center gap-2">
                                 ⚙️ 技術的な特徴と処理方式について
                             </h2>
-                            <div class="space-y-4 text-xs text-slate-600 leading-relaxed font-medium">
+                            <div class="space-y-4 text-xs text-base-content/80 leading-relaxed font-medium">
                                 <p>
                                     本ツールは、入力されたデータを外部のWebサーバーに転送することなく、
                                     <strong>
@@ -283,11 +283,11 @@ export default function QrGenerator() {
                                 </p>
                             </div>
                         </div>
-                        <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+                        <div class="mt-6 pt-4 border-t border-base-200 text-xs text-base-content/60">
                             ※データの取り扱い方針に関する詳細は、当サイトの
                             <a
                                 href="/privacy"
-                                class="text-slate-800 font-bold underline ml-1 hover:text-slate-950"
+                                class="text-base-content font-bold underline ml-1 hover:text-primary"
                             >
                                 プライバシーポリシー
                             </a>
@@ -296,43 +296,43 @@ export default function QrGenerator() {
                     </div>
 
                     {/* FAQ：アコーディオン（Collapse） */}
-                    <div class="card bg-base-100 p-6 md:p-8 border border-slate-200 shadow-sm">
-                        <h2 class="text-lg font-bold text-slate-800 border-b border-slate-200 pb-3 mb-5 flex items-center gap-2">
+                    <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm">
+                        <h2 class="text-lg font-bold text-base-content border-b border-base-300 pb-3 mb-5 flex items-center gap-2">
                             ❓ 技術的な仕様について（FAQ）
                         </h2>
 
                         <div class="space-y-2">
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="アクセス期限や料金についての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q.
                                     生成したQRコードにアクセス期限や料金は発生しますか？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     いいえ。本ツールで生成するQRコードは、入力された情報がそのまま画像に埋め込まれている「静的なコード」です。当サイトを経由しないため、期限切れや後から課金されるような心配は一切ございません。
                                 </div>
                             </div>
 
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="印刷・グラフィックデザインに適した形式についての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q.
                                     印刷・グラフィックデザインに適した形式はどれですか？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     パンフレットや大型ポスター、名刺など印刷用途で使用される場合は、縮小・拡大しても線の輪郭が絶対にぼやけないベクターデータ形式である
                                     <strong>「SVG形式」</strong>
                                     での保存を強く推奨します。
                                 </div>
                             </div>
 
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="カメラでQRコードが正しく読み取れない場合の対処法についての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q.
                                     カメラでQRコードが正しく読み取れない場合の対処法は？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     入力したURLや文字列が長すぎる場合、コードのドットパターンが極限まで細密になり、カメラでピントが合わずに認識しづらくなることがあります。その場合は、短縮URLサービスなどを一度経由させてからQRコードを生成することをお試しください。
                                 </div>
                             </div>
@@ -347,19 +347,19 @@ export default function QrGenerator() {
             {/* 拡大表示用モーダル */}
             <Show when={isLarge()}>
                 <div
-                    class="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-50 p-4 cursor-pointer"
+                    class="fixed inset-0 bg-neutral/80 flex items-center justify-center z-50 p-4 cursor-pointer"
                     onClick={() => setIsLarge(false)}
                 >
                     <div
-                        class="relative max-w-full max-h-full bg-white p-5 rounded-2xl shadow-2xl flex flex-col items-center border border-slate-200"
+                        class="relative max-w-full max-h-full bg-base-100 p-5 rounded-2xl shadow-2xl flex flex-col items-center border border-base-300"
                     >
                         <img
                             src={qrData()}
                             alt="QRコード 拡大表示"
-                            class="max-w-[80vw] max-h-[75vh] object-contain"
+                            class="max-w-[80vw] max-h-[75vh] object-contain bg-white p-2 rounded-lg"
                         />
                         <button
-                            class="mt-4 btn btn-sm bg-slate-800 hover:bg-slate-900 border-none text-white text-xs font-bold px-4"
+                            class="mt-4 btn btn-sm btn-primary text-white text-xs font-bold px-4"
                             onClick={() => setIsLarge(false)}
                         >
                             閉じる

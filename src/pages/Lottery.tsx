@@ -140,15 +140,15 @@ export default function Lottery() {
         >
             <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
                 {/* メインツールカード：左右スプリット（2カラム） */}
-                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-slate-200 min-w-0">
+                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-base-300 min-w-0">
                     {/* ヘッダーセクション */}
-                    <div class="mb-8 border-b border-slate-200 pb-5">
-                        <h1 class="text-2xl md:text-3xl font-black text-slate-800">
+                    <div class="mb-8 border-b border-base-300 pb-5">
+                        <h1 class="text-2xl md:text-3xl font-black text-base-content">
                             <BudouX text="抽選・ランダム選定ツール" />
                         </h1>
                         <BudouX
                             as="p"
-                            class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed"
+                            class="text-xs font-semibold text-base-content/70 mt-2 leading-relaxed"
                             text="テキストエリアに入力された複数の候補から、システム（CSPRNG）によってランダムに項目を抽出します。ブラウザ内のフロントエンド処理により一括選定を行い、ネットワーク通信なしで挙動が完結します。"
                         />
                     </div>
@@ -156,14 +156,14 @@ export default function Lottery() {
                     {/* グリッドレイアウト */}
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                         {/* 左側：入力とコントロール */}
-                        <div class="lg:col-span-5 flex flex-col gap-5 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                        <div class="lg:col-span-5 flex flex-col gap-5 bg-base-200/60 p-5 rounded-2xl border border-base-300">
                             <div class="form-control w-full">
                                 <label class="label py-1">
-                                    <span class="label-text font-bold text-sm text-slate-700">
+                                    <span class="label-text font-bold text-sm text-base-content/90">
                                         抽選対象のリスト入力
                                     </span>
                                 </label>
-                                <p class="text-[10px] text-slate-600 font-semibold mb-2">
+                                <p class="text-[10px] text-base-content/70 font-semibold mb-2">
                                     ※1行につき1つの項目（名前、番号など）を入力してください。
                                 </p>
                                 <textarea
@@ -172,16 +172,16 @@ export default function Lottery() {
                                     onInput={(e) =>
                                         setInputText(e.currentTarget.value)
                                     }
-                                    class="textarea textarea-bordered w-full h-56 text-sm bg-white border-2 border-slate-300 text-slate-900 focus:border-slate-500 font-medium p-3 focus:outline-none shadow-sm"
+                                    class="textarea textarea-bordered w-full h-56 text-sm bg-base-100 border-2 border-base-300 text-base-content focus:border-primary font-medium p-3 focus:outline-none shadow-sm"
                                     placeholder="項目 A&#10;項目 B&#10;項目 C"
                                 />
                             </div>
 
                             {/* 条件パラメータ設定 */}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end border-t border-slate-200 pt-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end border-t border-base-300 pt-4">
                                 <div class="form-control w-full">
                                     <label class="label py-1">
-                                        <span class="label-text font-bold text-xs text-slate-600">
+                                        <span class="label-text font-bold text-xs text-base-content/80">
                                             同時選定数
                                         </span>
                                     </label>
@@ -194,7 +194,7 @@ export default function Lottery() {
                                                 setDrawCount(Math.floor(v));
                                             }
                                         }}
-                                        class="select select-bordered select-sm h-11 text-xs font-bold bg-white border-2 border-slate-300 text-slate-900 w-full focus:border-slate-500"
+                                        class="select select-bordered select-sm h-11 text-xs font-bold bg-base-100 border-2 border-base-300 text-base-content w-full focus:border-primary"
                                     >
                                         <option value="1">1 個</option>
                                         <option value="2">2 個</option>
@@ -205,7 +205,7 @@ export default function Lottery() {
                                 </div>
 
                                 <div class="form-control w-full">
-                                    <label class="label cursor-pointer justify-start gap-3 h-11 px-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 w-full transition-colors">
+                                    <label class="label cursor-pointer justify-start gap-3 h-11 px-3 rounded-xl border-2 border-base-300 bg-base-100 hover:bg-base-200 w-full transition-colors">
                                         <input
                                              type="checkbox"
                                              aria-label="当選時にリストから除外"
@@ -217,7 +217,7 @@ export default function Lottery() {
                                              }
                                              class="checkbox checkbox-sm checkbox-primary rounded-md"
                                          />
-                                         <span class="label-text font-bold text-xs text-slate-700">
+                                         <span class="label-text font-bold text-xs text-base-content/90">
                                              当選時にリストから除外
                                          </span>
                                      </label>
@@ -225,17 +225,17 @@ export default function Lottery() {
                              </div>
 
                              {/* アクションボタン */}
-                             <div class="flex gap-3 border-t border-slate-200 pt-4">
+                             <div class="flex gap-3 border-t border-base-300 pt-4">
                                  <button
                                      ref={drawButtonRef}
                                      onClick={startLottery}
-                                     class="btn bg-slate-800 hover:bg-slate-900 border-none text-white flex-1 text-sm font-black h-12 min-h-0 shadow-md transition-all"
+                                     class="btn btn-primary text-primary-content flex-1 text-sm font-black h-12 min-h-0 shadow-md transition-all"
                                  >
                                      抽選を実行
                                  </button>
                                  <button
                                      onClick={resetAll}
-                                     class="btn btn-outline border-2 border-slate-300 text-slate-700 font-bold text-xs h-12 min-h-0 px-5 hover:bg-slate-100"
+                                     class="btn btn-outline border-2 border-base-300 text-base-content font-bold text-xs h-12 min-h-0 px-5 hover:bg-base-200"
                                  >
                                      クリア
                                  </button>
@@ -246,10 +246,10 @@ export default function Lottery() {
                          <div class="lg:col-span-7 flex flex-col gap-5 justify-between">
                              <Show when={results().length > 0}>
                                  <div
-                                     class="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col gap-4 shadow-sm"
+                                     class="bg-base-200/60 p-6 rounded-2xl border border-base-300 flex flex-col gap-4 shadow-sm"
                                  >
-                                     <div class="flex justify-between items-center border-b border-slate-200 pb-2.5">
-                                         <span class="text-xs font-black text-slate-600 tracking-wider">
+                                     <div class="flex justify-between items-center border-b border-base-300 pb-2.5">
+                                         <span class="text-xs font-black text-base-content/70 tracking-wider">
                                              選定結果
                                          </span>
                                          <Show
@@ -262,7 +262,7 @@ export default function Lottery() {
                                              <div class="flex gap-2">
                                                  <button
                                                      onClick={copyResults}
-                                                     class={`btn btn-xs font-bold rounded-lg text-white border-none transition-colors ${copied() ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-800 hover:bg-slate-900"}`}
+                                                     class={`btn btn-xs font-bold rounded-lg border-none transition-colors ${copied() ? "btn-success text-white" : "btn-primary text-primary-content"}`}
                                                  >
                                                      {copied()
                                                          ? "コピー完了"
@@ -270,7 +270,7 @@ export default function Lottery() {
                                                  </button>
                                                  <button
                                                      onClick={shareResults}
-                                                     class={`btn btn-xs font-bold rounded-lg text-slate-800 border-2 border-slate-300 bg-white hover:bg-slate-100 transition-colors`}
+                                                     class="btn btn-xs font-bold rounded-lg text-base-content border-2 border-base-300 bg-base-100 hover:bg-base-200 transition-colors"
                                                  >
                                                      {shared()
                                                          ? "共有完了"
@@ -284,8 +284,8 @@ export default function Lottery() {
                                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                          <For each={results()}>
                                              {(res) => (
-                                                 <div class="lottery-item bg-white border border-slate-200 rounded-xl p-4 text-center shadow-xs">
-                                                     <h3 class="text-sm font-black text-slate-800 select-all truncate">
+                                                 <div class="lottery-item bg-base-100 border border-base-300 rounded-xl p-4 text-center shadow-xs">
+                                                     <h3 class="text-sm font-black text-base-content select-all truncate">
                                                          {res}
                                                      </h3>
                                                  </div>
@@ -298,15 +298,15 @@ export default function Lottery() {
                              {/* 履歴セクション */}
                              <Show when={history().length > 0}>
                                  <div
-                                     class="bg-slate-50/50 p-5 rounded-2xl border border-slate-200 flex flex-col gap-3"
+                                     class="bg-base-200/40 p-5 rounded-2xl border border-base-300 flex flex-col gap-3"
                                  >
-                                     <div class="flex justify-between items-center border-b border-slate-200 pb-2">
-                                         <span class="text-xs font-black text-slate-500">
+                                     <div class="flex justify-between items-center border-b border-base-300 pb-2">
+                                         <span class="text-xs font-black text-base-content/70">
                                              実行ログ
                                          </span>
                                          <button
                                              onClick={clearHistory}
-                                             class="btn btn-ghost btn-xs text-rose-600 font-bold hover:bg-rose-50 rounded-lg"
+                                             class="btn btn-ghost btn-xs text-error font-bold hover:bg-error/10 rounded-lg"
                                          >
                                              ログを消去
                                          </button>
@@ -314,14 +314,14 @@ export default function Lottery() {
                                      <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
                                          <For each={history()}>
                                              {(hist) => (
-                                                 <div class="flex items-start gap-3 p-3 bg-white border border-slate-200 rounded-xl text-xs shadow-xs">
-                                                     <span class="font-mono font-semibold text-slate-600 shrink-0 mt-0.5">
+                                                 <div class="flex items-start gap-3 p-3 bg-base-100 border border-base-300 rounded-xl text-xs shadow-xs">
+                                                     <span class="font-mono font-semibold text-base-content/70 shrink-0 mt-0.5">
                                                          [{hist.time}]
                                                      </span>
                                                      <div class="flex flex-wrap gap-1.5 flex-1">
                                                          <For each={hist.items}>
                                                              {(item) => (
-                                                                 <span class="badge bg-slate-100 border border-slate-200 text-slate-700 font-bold select-all rounded-md px-2 py-1">
+                                                                 <span class="badge bg-base-200 border border-base-300 text-base-content font-bold select-all rounded-md px-2 py-1">
                                                                      {item}
                                                                  </span>
                                                              )}
@@ -341,9 +341,9 @@ export default function Lottery() {
                                      history().length === 0
                                  }
                              >
-                                 <div class="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-2xl p-8 text-center min-h-[250px]">
+                                 <div class="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-base-300 bg-base-200/40 rounded-2xl p-8 text-center min-h-[250px]">
                                      <span class="text-5xl block mb-3">📊</span>
-                                     <p class="text-xs font-bold text-slate-500">
+                                     <p class="text-xs font-bold text-base-content/70">
                                          データ入力後、「抽選を実行」を押すと結果がここに表示されます。
                                      </p>
                                  </div>
@@ -355,12 +355,12 @@ export default function Lottery() {
                  {/* 💡 技術仕様 ＆ 学術的なQ&Aセクション */}
                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                      {/* アルゴリズム仕様 */}
-                     <div class="card bg-base-100 p-6 md:p-8 border border-slate-200 shadow-sm justify-between">
+                     <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm justify-between">
                          <div>
-                             <h2 class="text-base font-bold text-slate-800 border-b border-slate-200 pb-3 mb-5">
+                             <h2 class="text-base font-bold text-base-content border-b border-base-300 pb-3 mb-5">
                                  抽選アルゴリズムおよび実行スペック
                              </h2>
-                             <div class="space-y-4 text-xs text-slate-600 leading-relaxed font-medium">
+                             <div class="space-y-4 text-xs text-base-content/80 leading-relaxed font-medium">
                                  <p>
                                      本システムは、JavaScriptの一般的な
                                      `Math.random()` ではなく、Web Cryptography
@@ -378,11 +378,11 @@ export default function Lottery() {
                                  </p>
                              </div>
                          </div>
-                         <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+                         <div class="mt-6 pt-4 border-t border-base-300 text-xs text-base-content/70">
                              ※データ保護方針等の規定については、当サイトの
                              <a
                                  href="/privacy"
-                                 class="text-slate-800 font-bold underline ml-1 hover:text-slate-950"
+                                 class="text-primary font-bold underline ml-1 hover:text-primary/80"
                              >
                                  プライバシーポリシー
                              </a>
@@ -393,23 +393,23 @@ export default function Lottery() {
                      <AdSense />
 
                      {/* 抽選技術の解説（FAQ） */}
-                     <div class="card bg-base-100 p-6 md:p-8 border border-slate-200 shadow-sm">
-                         <h2 class="text-base font-bold text-slate-800 border-b border-slate-200 pb-3 mb-5">
+                     <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm">
+                         <h2 class="text-base font-bold text-base-content border-b border-base-300 pb-3 mb-5">
                              ランダム選定に関する基本要件（FAQ）
                          </h2>
 
                          <div class="space-y-2">
-                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                             <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                  <input
                                      type="checkbox"
                                      class="peer"
                                      aria-label="FAQ: Math.randomとCrypto APIの乱数はどう違いますか？"
                                  />
-                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                 <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                      Q. Math.randomとCrypto
                                      APIの乱数はどう違いますか？
                                  </div>
-                                 <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                 <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                      標準の `Math.random()`
                                      はブラウザエンジンごとの実装（V8の場合はxorshift128+等）に依存し、暗号的に安全ではない擬似乱数を生成するため、一部のゲーム等で偏りが生じる懸念があります。`window.crypto.getRandomValues`
                                      は OS
@@ -417,31 +417,31 @@ export default function Lottery() {
                                  </div>
                              </div>
 
-                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                             <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                  <input
                                      type="checkbox"
                                      class="peer"
                                      aria-label="FAQ: 大量データの抽選時のパフォーマンスや上限は？"
                                  />
-                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                 <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                      Q.
                                      大量データの抽選時のパフォーマンスや上限は？
                                  </div>
-                                 <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                 <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                      本システムはクライアントのブラウザのCPUおよびメモリ上で直接動作します。数千件規模のリスト入力であっても、サーバーAPI通信のボトルネックが発生しないため、ミリ秒単位での結果出力が可能です。
                                  </div>
                              </div>
 
-                             <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                             <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                  <input
                                      type="checkbox"
                                      class="peer"
                                      aria-label="FAQ: 当選済みデータの除外アルゴリズムについて"
                                  />
-                                 <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                 <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                      Q. 当選済みデータの除外アルゴリズムについて
                                  </div>
-                                 <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                 <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                      「一度引いたものは消す」を有効にすると、抽出処理の終了後、入力した元の配列データから該当するインデックスを自動で
                                      `splice`
                                      して削除し、テキストエリアの値を書き換える同期処理を行います。

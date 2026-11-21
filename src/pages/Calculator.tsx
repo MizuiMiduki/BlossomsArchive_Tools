@@ -180,7 +180,7 @@ export default function Calculator() {
             return "bg-sky-700 hover:bg-sky-800 text-white font-bold border-2 border-sky-900";
         if (btn === "=")
             return "bg-indigo-700 hover:bg-indigo-800 text-white font-bold border-2 border-indigo-900";
-        return "bg-white text-slate-900 border-2 border-slate-300 hover:bg-slate-100 font-medium";
+        return "bg-base-100 text-base-content border-2 border-base-300 hover:bg-base-200 font-medium shadow-xs";
     };
 
     return (
@@ -192,7 +192,7 @@ export default function Calculator() {
                     type="text"
                     value={display()}
                     aria-label="計算結果・入力表示"
-                    class="input input-bordered w-full text-right text-3xl sm:text-4xl lg:text-6xl font-mono h-16 sm:h-20 lg:h-24 bg-white border-2 sm:border-4 border-slate-300 text-slate-900"
+                    class="input input-bordered w-full text-right text-3xl sm:text-4xl lg:text-6xl font-mono h-16 sm:h-20 lg:h-24 bg-base-100 border-2 sm:border-4 border-base-300 text-base-content shadow-sm"
                     disabled
                 />
 

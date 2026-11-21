@@ -4328,13 +4328,7 @@ export default function ExifFrame() {
                     </div>
 
                     <div
-                        class={[
-                            "order-2 lg:order-none flex-1 min-w-0 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative h-64 sm:h-72 lg:h-[520px] xl:h-[560px] shrink-0 overflow-hidden shadow-inner",
-                            {
-                                "sticky top-0 z-[5] shadow-md lg:static lg:shadow-inner":
-                                    hasImage(),
-                            },
-                        ]}
+                        class="order-2 lg:order-none flex-1 min-w-0 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative h-64 sm:h-72 lg:h-[540px] xl:h-[600px] shrink-0 overflow-hidden shadow-inner lg:sticky lg:top-4 lg:self-start"
                     >
                         <Show
                             when={hasImage()}

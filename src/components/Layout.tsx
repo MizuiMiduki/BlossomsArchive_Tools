@@ -74,7 +74,8 @@ export default function Layout(props: LayoutProps) {
                 const adsScript = document.createElement("script");
                 adsScript.async = true;
                 adsScript.src =
-                    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+                    `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
+                adsScript.setAttribute("data-overlays", "bottom");
                 adsScript.crossOrigin = "anonymous";
                 document.head.appendChild(adsScript);
 

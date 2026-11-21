@@ -100,15 +100,15 @@ export default function ImageConverter() {
         <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0">
             <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
                 {/* メインツールカード：2カラムレイアウト */}
-                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-slate-200 min-w-0">
+                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-base-300 min-w-0">
                     {/* ヘッダーセクション */}
-                    <div class="mb-8 border-b border-slate-200 pb-5">
-                        <h1 class="text-2xl md:text-3xl font-black text-slate-800">
+                    <div class="mb-8 border-b border-base-300 pb-5">
+                        <h1 class="text-2xl md:text-3xl font-black text-base-content">
                             <BudouX text="画像形式変換ツール" />
                         </h1>
                         <BudouX
                             as="p"
-                            class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed"
+                            class="text-xs font-semibold text-base-content/70 mt-2 leading-relaxed"
                             text="JPEG, PNG, WebP形式の画像を、お好みの拡張子に変換します。すべての画像リサイズ・変換処理は Canvas API（クライアントサイド）を介して実行され、アップロード通信なしで瞬時に処理されます。"
                         />
                     </div>
@@ -116,29 +116,29 @@ export default function ImageConverter() {
                     {/* グリッドレイアウト */}
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                         {/* 左側：設定とファイルアップロード */}
-                        <div class="lg:col-span-6 flex flex-col justify-between gap-6 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                        <div class="lg:col-span-6 flex flex-col justify-between gap-6 bg-base-200/60 p-5 rounded-2xl border border-base-300">
                             <div class="flex flex-col gap-6">
                                 {/* ファイル選択エリア */}
                                 <div class="form-control w-full">
                                     <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-slate-700">
+                                        <span class="label-text font-bold text-sm text-base-content/90">
                                             変換対象の画像ファイルを選択
                                         </span>
                                     </label>
                                     <label
                                         onDragOver={(e) => e.preventDefault()}
                                         onDrop={handleDrop}
-                                        class="flex flex-col items-center justify-center gap-2 h-40 border-2 border-dashed border-slate-300 rounded-xl bg-white hover:bg-slate-100 cursor-pointer px-4 transition-all group shadow-sm text-center"
+                                        class="flex flex-col items-center justify-center gap-2 h-40 border-2 border-dashed border-base-300 rounded-xl bg-base-100 hover:bg-base-200 cursor-pointer px-4 transition-all group shadow-sm text-center"
                                     >
                                         <span class="text-3xl opacity-50 group-hover:opacity-80 transition-opacity">
                                             📁
                                         </span>
-                                        <span class="text-slate-700 font-bold text-xs truncate max-w-full">
+                                        <span class="text-base-content font-bold text-xs truncate max-w-full">
                                             {selectedFile()
                                                 ? selectedFile()?.name
                                                 : "ドラッグ＆ドロップ、またはファイルを選択"}
                                         </span>
-                                        <span class="text-[9px] text-slate-600 font-medium">
+                                        <span class="text-[9px] text-base-content/70 font-medium">
                                             ※任意の主要な画像形式（png, jpeg,
                                             webp, gif等）に対応しています
                                         </span>
@@ -155,7 +155,7 @@ export default function ImageConverter() {
                                 {/* ターゲットフォーマット選択 */}
                                 <div class="form-control w-full">
                                     <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-slate-700">
+                                        <span class="label-text font-bold text-sm text-base-content/90">
                                             変換後の画像形式（フォーマット）
                                         </span>
                                     </label>
@@ -167,7 +167,7 @@ export default function ImageConverter() {
                                                 e.currentTarget.value,
                                             )
                                         }
-                                        class="select select-bordered h-12 text-sm font-bold bg-white border-2 border-slate-300 text-slate-900 w-full focus:border-slate-500"
+                                        class="select select-bordered h-12 text-sm font-bold bg-base-100 border-2 border-base-300 text-base-content w-full"
                                     >
                                         <option value="image/png">
                                             PNG形式 (.png) - 透過保持・高品質
@@ -190,7 +190,7 @@ export default function ImageConverter() {
                                         convertImage();
                                     }}
                                     disabled={!selectedFile() || isConverting()}
-                                    class="btn bg-slate-800 hover:bg-slate-900 border-none text-white w-full text-base h-14 font-black transition-all shadow-md disabled:bg-slate-200 disabled:text-slate-400"
+                                    class="btn btn-primary text-white w-full text-base h-14 font-black transition-all shadow-md disabled:bg-base-300 disabled:text-base-content/60"
                                 >
                                     {isConverting()
                                         ? "エンコード処理中..."
@@ -200,11 +200,11 @@ export default function ImageConverter() {
                         </div>
 
                         {/* 右側：変換結果プレビュー */}
-                        <div class="lg:col-span-6 flex flex-col justify-center bg-slate-50 rounded-2xl p-6 border border-slate-200 min-h-[350px]">
+                        <div class="lg:col-span-6 flex flex-col justify-center bg-base-200/60 rounded-2xl p-6 border border-base-300 min-h-[350px]">
                             <Show
                                 when={convertedUrl()}
                                 fallback={
-                                    <div class="text-center p-8 space-y-2 text-slate-500">
+                                    <div class="text-center p-8 space-y-2 text-base-content/60">
                                         <span class="text-5xl block mb-2">
                                             🖼️
                                         </span>
@@ -217,8 +217,8 @@ export default function ImageConverter() {
                                 }
                             >
                                 <div class="flex flex-col h-full gap-4">
-                                    <div class="flex justify-between items-center pb-2 border-b border-slate-200">
-                                        <span class="font-bold text-xs text-slate-600 tracking-wider">
+                                    <div class="flex justify-between items-center pb-2 border-b border-base-300">
+                                        <span class="font-bold text-xs text-base-content/80 tracking-wider">
                                             変換完了（フォーマット:{" "}
                                             {getExtensionLabel()}）
                                         </span>
@@ -231,11 +231,11 @@ export default function ImageConverter() {
                                         </a>
                                     </div>
 
-                                    <div class="bg-white border border-slate-200 rounded-xl p-3 flex justify-center items-center max-h-[300px] overflow-hidden shadow-inner">
+                                    <div class="bg-base-100 border border-base-300 rounded-xl p-3 flex justify-center items-center max-h-[300px] overflow-hidden shadow-inner">
                                         <img
                                             src={convertedUrl()}
                                             alt="Converted Preview"
-                                            class="max-w-full max-h-[270px] object-contain rounded-lg bg-slate-100"
+                                            class="max-w-full max-h-[270px] object-contain rounded-lg bg-base-200"
                                         />
                                     </div>
                                 </div>
@@ -248,12 +248,12 @@ export default function ImageConverter() {
                 {/* 💡 技術仕様 ＆ 学術的なQ&Aセクション */}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                     {/* 技術仕様仕様 */}
-                    <div class="card bg-base-100 p-6 md:p-8 border border-slate-200 shadow-sm justify-between">
+                    <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm justify-between">
                         <div>
-                            <h2 class="text-base font-bold text-slate-800 border-b border-slate-200 pb-3 mb-5">
+                            <h2 class="text-base font-bold text-base-content border-b border-base-300 pb-3 mb-5">
                                 画像変換エンジンの仕様・実行スキーム
                             </h2>
-                            <div class="space-y-4 text-xs text-slate-600 leading-relaxed font-medium">
+                            <div class="space-y-4 text-xs text-base-content/80 leading-relaxed font-medium">
                                 <p>
                                     本ツールは、HTML5の主要構成要素である{" "}
                                     <strong>Canvas Rendering Context 2D</strong>{" "}
@@ -267,11 +267,11 @@ export default function ImageConverter() {
                                 </p>
                             </div>
                         </div>
-                        <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+                        <div class="mt-6 pt-4 border-t border-base-200 text-xs text-base-content/60">
                             ※セキュリティおよび個人情報の取扱いについては、当サイトの
                             <a
                                 href="/privacy"
-                                class="text-slate-800 font-bold underline ml-1 hover:text-slate-950"
+                                class="text-base-content font-bold underline ml-1 hover:text-primary"
                             >
                                 プライバシーポリシー
                             </a>
@@ -280,18 +280,18 @@ export default function ImageConverter() {
                     </div>
 
                     {/* 技術Q&Aセクション */}
-                    <div class="card bg-base-100 p-6 md:p-8 border border-slate-200 shadow-sm">
-                        <h2 class="text-base font-bold text-slate-800 border-b border-slate-200 pb-3 mb-5">
+                    <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm">
+                        <h2 class="text-base font-bold text-base-content border-b border-base-300 pb-3 mb-5">
                             画像フォーマットに関する技術情報（FAQ）
                         </h2>
 
                         <div class="space-y-2">
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="WebP形式へ変換するメリットについての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q. WebP形式へ変換するメリットは何ですか？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     Googleがウェブ向けに開発した「WebP（ウェッピー）」は、従来のJPEGやPNGと比較して、
                                     <strong>
                                         同等画質を維持しながら最大30%程度ファイルサイズを軽量化
@@ -300,24 +300,24 @@ export default function ImageConverter() {
                                 </div>
                             </div>
 
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="PNG画像をJPEGへ変換した際の透過箇所についての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q.
                                     PNG画像をJPEGへ変換した際の透過箇所の挙動は？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     JPEG規格はアルファチャンネル（透明・透過情報）に対応していません。そのため、本ツールではCanvas上で描画する際、透過レイヤーの下地に白色（#ffffff）の背景を自動で塗り潰し補完した上でJPEGへ出力する仕様を施しています。
                                 </div>
                             </div>
 
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="変換元のファイルの最大解像度についての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q.
                                     変換元のファイルの最大解像度やサイズ制限はありますか？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     システム的なサイズ制限は設定していませんが、画像デコードとCanvas書き出しの負荷の上限値は、ご利用環境のハードウェア・ブラウザの空きメモリ容量に依存します。スマートフォンやタブレットでの巨大画像（数十メガピクセル等）の処理時は一時的に応答が遅延する可能性があります。
                                 </div>
                             </div>

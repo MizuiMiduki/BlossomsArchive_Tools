@@ -88,15 +88,15 @@ export default function PasswordGenerator() {
         <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0">
             <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
                 {/* メインツールカード */}
-                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-slate-200 min-w-0">
+                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-base-300 min-w-0">
                     {/* ヘッダーセクション */}
-                    <div class="mb-8 border-b border-slate-200 pb-5">
-                        <h1 class="text-2xl md:text-3xl font-black text-slate-800">
+                    <div class="mb-8 border-b border-base-300 pb-5">
+                        <h1 class="text-2xl md:text-3xl font-black text-base-content">
                             <BudouX text="パスワード生成ツール" />
                         </h1>
                         <BudouX
                             as="p"
-                            class="text-xs font-semibold text-slate-500 mt-2 leading-relaxed"
+                            class="text-xs font-semibold text-base-content/70 mt-2 leading-relaxed"
                             text="指定されたパラメータ（文字種・長さ）に基づき、ランダムな文字列をローカル環境で作成します。ブラウザの標準 API である Crypto API を利用してシード値を生成します。"
                         />
                     </div>
@@ -109,9 +109,9 @@ export default function PasswordGenerator() {
                                 {/* 1. パスワードの長さ */}
                                 <div class="form-control w-full">
                                     <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-slate-700">
+                                        <span class="label-text font-bold text-sm text-base-content/90">
                                             パスワードの長さ:{" "}
-                                            <span class="text-slate-900 font-black font-mono">
+                                            <span class="text-base-content font-black font-mono">
                                                 {length()}
                                             </span>{" "}
                                             文字
@@ -140,7 +140,7 @@ export default function PasswordGenerator() {
                                                     );
                                                 }
                                             }}
-                                            class="range range-xs range-primary flex-1 accent-slate-800"
+                                            class="range range-xs range-primary flex-1"
                                         />
                                         <input
                                             type="number"
@@ -164,7 +164,7 @@ export default function PasswordGenerator() {
                                                     );
                                                 }
                                             }}
-                                            class="input input-bordered w-20 h-10 text-center text-sm font-bold bg-white border-2 border-slate-300 text-slate-900"
+                                            class="input input-bordered w-20 h-10 text-center text-sm font-bold bg-base-100 border-2 border-base-300 text-base-content"
                                         />
                                     </div>
                                 </div>
@@ -172,12 +172,12 @@ export default function PasswordGenerator() {
                                 {/* 2. 使用する文字種 */}
                                 <div class="form-control w-full">
                                     <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-slate-700">
+                                        <span class="label-text font-bold text-sm text-base-content/90">
                                             使用する文字の種類
                                         </span>
                                     </label>
                                     <div class="grid grid-cols-2 gap-3">
-                                        <label class="label cursor-pointer justify-start gap-3 p-3.5 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 transition-all">
+                                        <label class="label cursor-pointer justify-start gap-3 p-3.5 rounded-xl border-2 border-base-300 bg-base-100 hover:bg-base-200 transition-all">
                                             <input
                                                 type="checkbox"
                                                 checked={useLowercase()}
@@ -188,11 +188,11 @@ export default function PasswordGenerator() {
                                                 }
                                                 class="checkbox checkbox-primary checkbox-sm rounded-md"
                                             />
-                                            <span class="label-text font-bold text-xs text-slate-800">
+                                            <span class="label-text font-bold text-xs text-base-content">
                                                 小文字 (a-z)
                                             </span>
                                         </label>
-                                        <label class="label cursor-pointer justify-start gap-3 p-3.5 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 transition-all">
+                                        <label class="label cursor-pointer justify-start gap-3 p-3.5 rounded-xl border-2 border-base-300 bg-base-100 hover:bg-base-200 transition-all">
                                             <input
                                                 type="checkbox"
                                                 checked={useUppercase()}
@@ -203,11 +203,11 @@ export default function PasswordGenerator() {
                                                 }
                                                 class="checkbox checkbox-primary checkbox-sm rounded-md"
                                             />
-                                            <span class="label-text font-bold text-xs text-slate-800">
+                                            <span class="label-text font-bold text-xs text-base-content">
                                                 大文字 (A-Z)
                                             </span>
                                         </label>
-                                        <label class="label cursor-pointer justify-start gap-3 p-3.5 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 transition-all">
+                                        <label class="label cursor-pointer justify-start gap-3 p-3.5 rounded-xl border-2 border-base-300 bg-base-100 hover:bg-base-200 transition-all">
                                             <input
                                                 type="checkbox"
                                                 checked={useNumbers()}
@@ -218,11 +218,11 @@ export default function PasswordGenerator() {
                                                 }
                                                 class="checkbox checkbox-primary checkbox-sm rounded-md"
                                             />
-                                            <span class="label-text font-bold text-xs text-slate-800">
+                                            <span class="label-text font-bold text-xs text-base-content">
                                                 数字 (0-9)
                                             </span>
                                         </label>
-                                        <label class="label cursor-pointer justify-start gap-3 p-3.5 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 transition-all">
+                                        <label class="label cursor-pointer justify-start gap-3 p-3.5 rounded-xl border-2 border-base-300 bg-base-100 hover:bg-base-200 transition-all">
                                             <input
                                                 type="checkbox"
                                                 checked={useSymbols()}
@@ -233,7 +233,7 @@ export default function PasswordGenerator() {
                                                 }
                                                 class="checkbox checkbox-primary checkbox-sm rounded-md"
                                             />
-                                            <span class="label-text font-bold text-xs text-slate-800">
+                                            <span class="label-text font-bold text-xs text-base-content">
                                                 記号 (!@#$)
                                             </span>
                                         </label>
@@ -243,7 +243,7 @@ export default function PasswordGenerator() {
                                 {/* 3. 生成個数 */}
                                 <div class="form-control w-full md:w-48">
                                     <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-slate-700">
+                                        <span class="label-text font-bold text-sm text-base-content/90">
                                             生成する個数
                                         </span>
                                     </label>
@@ -266,7 +266,7 @@ export default function PasswordGenerator() {
                                                 );
                                             }
                                         }}
-                                        class="select select-bordered h-12 text-sm font-bold bg-white border-2 border-slate-300 text-slate-900 w-full focus:border-slate-500"
+                                        class="select select-bordered h-12 text-sm font-bold bg-base-100 border-2 border-base-300 text-base-content w-full"
                                     >
                                         <option value="1">1 個</option>
                                         <option value="5">5 個</option>
@@ -281,7 +281,7 @@ export default function PasswordGenerator() {
                             <div class="mt-4">
                                 <button
                                     onClick={generatePassword}
-                                    class="btn bg-slate-800 hover:bg-slate-900 border-none text-white w-full text-lg h-16 font-black transition-all shadow-md"
+                                    class="btn btn-primary text-white w-full text-lg h-16 font-black transition-all shadow-md"
                                 >
                                     パスワードを自動生成
                                 </button>
@@ -289,11 +289,11 @@ export default function PasswordGenerator() {
                         </div>
 
                         {/* 右側：生成結果プレビュー */}
-                        <div class="lg:col-span-5 flex flex-col bg-slate-50 rounded-2xl p-6 border border-slate-200 min-h-[300px]">
+                        <div class="lg:col-span-5 flex flex-col bg-base-200/60 rounded-2xl p-6 border border-base-300 min-h-[300px]">
                             <Show
                                 when={results().length > 0}
                                 fallback={
-                                    <div class="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-2 text-slate-500">
+                                    <div class="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-2 text-base-content/60">
                                         <span class="text-5xl block mb-2">
                                             📊
                                         </span>
@@ -308,8 +308,8 @@ export default function PasswordGenerator() {
                                 <div
                                     class="flex flex-col h-full gap-4"
                                 >
-                                    <div class="flex justify-between items-center pb-2 border-b border-slate-200">
-                                        <span class="font-bold text-sm text-slate-800">
+                                    <div class="flex justify-between items-center pb-2 border-b border-base-300">
+                                        <span class="font-bold text-sm text-base-content">
                                             生成結果 ({results().length}件)
                                         </span>
                                         <Show
@@ -322,7 +322,7 @@ export default function PasswordGenerator() {
                                         >
                                             <button
                                                 onClick={copyAllToClipboard}
-                                                class={`btn btn-xs text-white border-none transition-colors ${allCopied() ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-800 hover:bg-slate-900"}`}
+                                                class={`btn btn-xs text-white border-none transition-colors ${allCopied() ? "bg-emerald-600 hover:bg-emerald-700" : "btn-neutral"}`}
                                             >
                                                 {allCopied()
                                                     ? "全コピー完了"
@@ -337,13 +337,13 @@ export default function PasswordGenerator() {
                                     >
                                         <For each={results()}>
                                             {(item, index) => (
-                                                <div class="password-item flex gap-2 bg-white p-2.5 rounded-xl border border-slate-200 items-center shadow-xs">
+                                                <div class="password-item flex gap-2 bg-base-100 p-2.5 rounded-xl border border-base-300 items-center shadow-xs">
                                                     <input
                                                         type="text"
                                                         value={item}
                                                         readonly
                                                         aria-label={`生成されたパスワード ${index() + 1}`}
-                                                        class="input input-sm flex-1 min-w-0 font-mono bg-transparent border-none text-slate-900 tracking-wide focus:outline-none text-sm h-8"
+                                                        class="input input-sm flex-1 min-w-0 font-mono bg-transparent border-none text-base-content tracking-wide focus:outline-none text-sm h-8"
                                                     />
                                                     <Show
                                                         when={
@@ -359,7 +359,7 @@ export default function PasswordGenerator() {
                                                                     index(),
                                                                 )
                                                             }
-                                                            class={`btn btn-xs text-white w-16 border-none transition-colors h-8 ${copiedIndex() === index() ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-700 hover:bg-slate-800"}`}
+                                                            class={`btn btn-xs text-white w-16 border-none transition-colors h-8 ${copiedIndex() === index() ? "bg-emerald-600 hover:bg-emerald-700" : "btn-neutral"}`}
                                                         >
                                                             {copiedIndex() ===
                                                             index()
@@ -382,12 +382,12 @@ export default function PasswordGenerator() {
                 {/* 💡 技術仕様 ＆ FAQセクション（アピールを廃止し、学術的・客観的な記述に統一） */}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                     {/* 暗号理論・乱数発生器の仕様 */}
-                    <div class="card bg-base-100 p-6 md:p-8 border border-slate-200 shadow-sm justify-between">
+                    <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm justify-between">
                         <div>
-                            <h2 class="text-base font-bold text-slate-800 border-b border-slate-200 pb-3 mb-5">
+                            <h2 class="text-base font-bold text-base-content border-b border-base-300 pb-3 mb-5">
                                 技術仕様および乱数発生アルゴリズムについて
                             </h2>
-                            <div class="space-y-4 text-xs text-slate-600 leading-relaxed font-medium">
+                            <div class="space-y-4 text-xs text-base-content/80 leading-relaxed font-medium">
                                 <p>
                                     本システムは、JavaScriptの一般的な
                                     `Math.random()` ではなく、Web Cryptography
@@ -405,11 +405,11 @@ export default function PasswordGenerator() {
                                 </p>
                             </div>
                         </div>
-                        <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+                        <div class="mt-6 pt-4 border-t border-base-200 text-xs text-base-content/60">
                             ※データ取り扱い等の基本方針は、当サイトの
                             <a
                                 href="/privacy"
-                                class="text-slate-800 font-bold underline ml-1 hover:text-slate-950"
+                                class="text-base-content font-bold underline ml-1 hover:text-primary"
                             >
                                 プライバシーポリシー
                             </a>
@@ -418,19 +418,19 @@ export default function PasswordGenerator() {
                     </div>
 
                     {/* 設計・強度の基礎知識（FAQ） */}
-                    <div class="card bg-base-100 p-6 md:p-8 border border-slate-200 shadow-sm">
-                        <h2 class="text-base font-bold text-slate-800 border-b border-slate-200 pb-3 mb-5">
+                    <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm">
+                        <h2 class="text-base font-bold text-base-content border-b border-base-300 pb-3 mb-5">
                             パスワードの強度設計（FAQ）
                         </h2>
 
                         <div class="space-y-2">
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="桁数と文字種の関係性についての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q.
                                     強度を定義するパラメータ（桁数と文字種）の関係性は？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     一般的に、文字の種類（英数字記号）を増やすよりも、
                                     <strong>
                                         パスワードの桁数を増やす方が
@@ -439,26 +439,26 @@ export default function PasswordGenerator() {
                                 </div>
                             </div>
 
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="クライアントサイドでの処理状況の確認方法についての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q.
                                     クライアントサイドでの処理状況を確認する方法は？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     ブラウザの開発者ツール（ChromeのF12キー等）から「Network」タブを開き、生成ボタン押下時に外部のドメインに対する
                                     HTTP
                                     リクエスト（POST/GET）が発生していないことを確認することで、ローカルで完結している挙動を確認できます。
                                 </div>
                             </div>
 
-                            <div class="collapse collapse-arrow bg-slate-50 border border-slate-200 rounded-lg">
+                            <div class="collapse collapse-arrow bg-base-200/60 border border-base-300 rounded-lg">
                                 <input type="checkbox" aria-label="生成されたランダム文字列の取り扱いについての質問を開閉" class="peer" />
-                                <div class="collapse-title text-xs font-bold text-slate-800 peer-checked:bg-slate-100">
+                                <div class="collapse-title text-xs font-bold text-base-content peer-checked:bg-base-200">
                                     Q.
                                     生成されたランダム文字列の適切な取り扱い方法は？
                                 </div>
-                                <div class="collapse-content text-xs text-slate-600 pt-3 peer-checked:bg-slate-100/50">
+                                <div class="collapse-content text-xs text-base-content/80 pt-3 peer-checked:bg-base-200/50">
                                     生成した強力なパスワードをブラウザのプレーンテキストとしてメモに残したり、同一アカウントの使い回しをすることはセキュリティ上の脆弱性となります。OS統合型の暗号化キーチェーン、もしくは専用のパスワード管理ツール（KeePassやBitwarden等）での管理を推奨します。
                                 </div>
                             </div>
