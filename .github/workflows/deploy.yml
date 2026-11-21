@@ -215,3 +215,12 @@ jobs:
                   gh issue create \
                     --title "[PageSpeed Alert] Lighthouse スコア退行を検出しました ($(date +'%Y-%m-%d %H:%M'))" \
                     --body-file dist/lighthouse-issue.md
+
+            - name: Close Resolved PageSpeed Issues
+              if: steps.lighthouse.outputs.has_issues == 'false'
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  for NUM in $(gh issue list --state open --search "[PageSpeed Alert] in:title" --json number --jq '.[].number'); do
+                    gh issue close "$NUM" --comment "✅ 全38パターンで Lighthouse 100/100 満点の回復を確認したため自動クローズしました。"
+                  done

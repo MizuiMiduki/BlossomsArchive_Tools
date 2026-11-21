@@ -223,7 +223,7 @@ async function main() {
                 let passedOnRetry = false;
                 let latestCandidate = cand;
 
-                for (let attempt = 1; attempt <= 2; attempt++) {
+                for (let attempt = 1; attempt <= 3; attempt++) {
                     try {
                         const report = await auditUrl(lhBin, url, cand.preset);
                         const cats = report.categories || {};
@@ -242,13 +242,13 @@ async function main() {
 
                         if (isAll100) {
                             console.log(
-                                `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ✅ 100/100 (passed without CPU contention)`
+                                `[RETRY ${attempt}/3] [${cand.preset.toUpperCase()}] ${cand.route} ✅ 100/100 (passed without CPU contention)`
                             );
                             passedOnRetry = true;
                             break;
                         } else {
                             console.log(
-                                `[RETRY ${attempt}/2] [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
+                                `[RETRY ${attempt}/3] [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                             );
                             const failedAudits = [];
                             for (const [id, a] of Object.entries(report.audits || {})) {

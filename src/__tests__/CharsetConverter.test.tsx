@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import CharsetConverter from "../pages/CharsetConverter";
 
 describe("CharsetConverter", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
+        await import("../utils/charsetConverter");
         vi.restoreAllMocks();
         globalThis.URL.createObjectURL = vi.fn().mockReturnValue("blob:http://localhost/mock-blob");
         globalThis.URL.revokeObjectURL = vi.fn();

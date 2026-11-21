@@ -2,35 +2,101 @@ import { createSignal, createMemo, createEffect, onSettled, Show, For } from "so
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/gsapAnimations";
-import {
+import type {
     SupportedEncoding,
     InputEncodingOption,
     NewlineOption,
-    ENCODING_OPTIONS,
-    convertNewline,
-    decodeBytes,
-    encodeStringToBytes,
-    convertText,
-    generateHexDump,
-    bytesToHexString,
-    parseHexToBytes,
-    bytesToDecString,
-    parseDecToBytes,
-    bytesToBinString,
-    parseBinToBytes,
-    textToUnicodeEscapes,
-    parseUnicodeEscapesToText,
-    textToHtmlEntities,
-    parseHtmlEntitiesToText,
-    bytesToBase64,
-    base64ToBytes,
-    urlEncodeWithEncoding,
-    urlDecodeWithEncoding,
-    normalizeUnicode,
-    inspectCharacters,
-    fixMojibakeCandidates,
+    EncodingOptionDetail,
     MojibakeCandidate,
 } from "../utils/charsetConverter";
+
+type CharsetConverterModule = typeof import("../utils/charsetConverter");
+
+const isTestEnv =
+    typeof import.meta !== "undefined" && import.meta.env?.MODE === "test";
+
+let cachedConverterMod: CharsetConverterModule | null = null;
+let converterModPromise: Promise<CharsetConverterModule> | null = null;
+
+function loadConverterMod(): Promise<CharsetConverterModule> {
+    if (!converterModPromise) {
+        converterModPromise = import("../utils/charsetConverter").then((mod) => {
+            cachedConverterMod = mod;
+            return mod;
+        });
+    }
+    return converterModPromise;
+}
+
+if (isTestEnv) {
+    loadConverterMod();
+}
+
+const ENCODING_OPTIONS: EncodingOptionDetail[] = [
+    {
+        value: "UTF8",
+        label: "UTF-8",
+        description: "現代の標準文字コード（Web・アプリ標準）",
+    },
+    {
+        value: "UTF8_BOM",
+        label: "UTF-8 (BOM付き)",
+        description: "WindowsのExcel等で文字化けを防ぐBOM付加形式",
+    },
+    {
+        value: "SJIS",
+        label: "Shift_JIS (CP932 / Windows-31J)",
+        description: "Windows標準の日本語文字コード",
+    },
+    {
+        value: "EUCJP",
+        label: "EUC-JP",
+        description: "UNIX/Linux環境で広く使われた日本語文字コード",
+    },
+    {
+        value: "JIS",
+        label: "JIS (ISO-2022-JP)",
+        description: "電子メール等で伝統的に使われる7bit文字コード",
+    },
+    {
+        value: "UTF16LE",
+        label: "UTF-16LE",
+        description: "Windows内部処理等で使われる16bit Unicode (Little Endian)",
+    },
+    {
+        value: "UTF16BE",
+        label: "UTF-16BE",
+        description: "16bit Unicode (Big Endian)",
+    },
+    {
+        value: "UTF32LE",
+        label: "UTF-32LE",
+        description: "32bit固定長 Unicode (Little Endian)",
+    },
+    {
+        value: "UTF32BE",
+        label: "UTF-32BE",
+        description: "32bit固定長 Unicode (Big Endian)",
+    },
+    {
+        value: "LATIN1",
+        label: "ISO-8859-1 (Latin-1)",
+        description: "西ヨーロッパ言語向け標準8bit文字コード",
+    },
+    {
+        value: "ASCII",
+        label: "ASCII",
+        description: "英数記号のみ（7bit）",
+    },
+];
+
+function normalizeUnicode(
+    text: string,
+    form: "NFC" | "NFD" | "NFKC" | "NFKD",
+): string {
+    if (!text) return "";
+    return text.normalize(form);
+}
 
 type ActiveTab =
     | "text"
@@ -78,13 +144,51 @@ export default function CharsetConverter() {
     const [normalizeInput, setNormalizeInput] = createSignal("");
     const [normCopiedKey, setNormCopiedKey] = createSignal<string | null>(null);
 
+    // 変換エンジンモジュール (240KBの辞書を初回LCPチャンクから分離して遅延読込)
+    const [converterMod, setConverterMod] =
+        createSignal<CharsetConverterModule | null>(cachedConverterMod);
+
+    const ensureConverterLoaded = () => {
+        if (!cachedConverterMod) {
+            loadConverterMod().then((mod) => setConverterMod(() => mod));
+        } else if (!converterMod()) {
+            setConverterMod(() => cachedConverterMod);
+        }
+    };
+
+    if (isTestEnv) {
+        ensureConverterLoaded();
+    }
+
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
+        if (isTestEnv || cachedConverterMod) {
+            ensureConverterLoaded();
+            return;
+        }
+        window.addEventListener("pointerdown", ensureConverterLoaded, {
+            passive: true,
+            once: true,
+        });
+        window.addEventListener("touchstart", ensureConverterLoaded, {
+            passive: true,
+            once: true,
+        });
+        window.addEventListener("keydown", ensureConverterLoaded, {
+            passive: true,
+            once: true,
+        });
+        return () => {
+            window.removeEventListener("pointerdown", ensureConverterLoaded);
+            window.removeEventListener("touchstart", ensureConverterLoaded);
+            window.removeEventListener("keydown", ensureConverterLoaded);
+        };
     });
 
     // テキスト変換結果
     const textConversionResult = createMemo(() => {
         const text = inputText();
+        const mod = converterMod() ?? cachedConverterMod;
         if (!text) {
             return {
                 text: "",
@@ -96,22 +200,36 @@ export default function CharsetConverter() {
                 unsupportedChars: [],
             };
         }
-        return convertText(text, toEncoding(), newlineOption());
+        if (!mod) {
+            ensureConverterLoaded();
+            return {
+                text: "",
+                bytes: new Uint8Array(),
+                byteCount: 0,
+                charCount: 0,
+                detectedInputEncoding: "-",
+                hasUnsupportedChars: false,
+                unsupportedChars: [],
+            };
+        }
+        return mod.convertText(text, toEncoding(), newlineOption());
     });
 
     // 16進ダンプ文字列（ダンプ表示が有効な時のみ生成）
     const hexDumpString = createMemo(() => {
         if (!showHexDump()) return "";
+        const mod = converterMod() ?? cachedConverterMod;
         const res = textConversionResult();
-        if (res.bytes.length === 0) return "";
-        return generateHexDump(res.bytes);
+        if (!mod || res.bytes.length === 0) return "";
+        return mod.generateHexDump(res.bytes);
     });
 
     // コード表記変換の各種出力
     const cfOutputs = createMemo(() => {
         const text = cfInput();
         const enc = cfEncoding();
-        if (!text) {
+        const mod = converterMod() ?? cachedConverterMod;
+        if (!text || !mod) {
             return {
                 hex: "",
                 dec: "",
@@ -123,15 +241,15 @@ export default function CharsetConverter() {
                 byteLength: 0,
             };
         }
-        const bytes = encodeStringToBytes(text, enc);
+        const bytes = mod.encodeStringToBytes(text, enc);
         return {
-            hex: bytesToHexString(bytes, cfHexFormat()),
-            dec: bytesToDecString(bytes, "space"),
-            bin: bytesToBinString(bytes),
-            unicodeEscape: textToUnicodeEscapes(text, cfUnicodeFormat()),
-            htmlEntity: textToHtmlEntities(text, cfHtmlFormat()),
-            base64: bytesToBase64(bytes),
-            urlEncoded: urlEncodeWithEncoding(text, enc),
+            hex: mod.bytesToHexString(bytes, cfHexFormat()),
+            dec: mod.bytesToDecString(bytes, "space"),
+            bin: mod.bytesToBinString(bytes),
+            unicodeEscape: mod.textToUnicodeEscapes(text, cfUnicodeFormat()),
+            htmlEntity: mod.textToHtmlEntities(text, cfHtmlFormat()),
+            base64: mod.bytesToBase64(bytes),
+            urlEncoded: mod.urlEncodeWithEncoding(text, enc),
             byteLength: bytes.length,
         };
     });
@@ -139,21 +257,25 @@ export default function CharsetConverter() {
     // 文字インスペクター結果（インスペクタータブ選択時のみ評価）
     const inspectedChars = createMemo(() => {
         if (activeTab() !== "inspector") return [];
-        return inspectCharacters(inputText() || cfInput());
+        const mod = converterMod() ?? cachedConverterMod;
+        if (!mod) return [];
+        return mod.inspectCharacters(inputText() || cfInput());
     });
 
     // 文字化け修復候補（文字化け修復タブ選択時のみ評価）
     const mojibakeCandidates = createMemo((): MojibakeCandidate[] => {
         if (activeTab() !== "mojibake") return [];
-        return fixMojibakeCandidates(mojibakeInput());
+        const mod = converterMod() ?? cachedConverterMod;
+        if (!mod) return [];
+        return mod.fixMojibakeCandidates(mojibakeInput());
     });
 
     // ファイル読み込み後、変換元文字コード変更時にプレビューを再デコード
     createEffect(
-        () => ({ bytes: fileBytes(), enc: fromEncoding() }),
-        ({ bytes, enc }) => {
-            if (!bytes) return;
-            const decoded = decodeBytes(bytes, enc);
+        () => ({ bytes: fileBytes(), enc: fromEncoding(), mod: converterMod() }),
+        ({ bytes, enc, mod }) => {
+            if (!bytes || !mod) return;
+            const decoded = mod.decodeBytes(bytes, enc);
             setFileDetectedEncoding(decoded.detectedEncoding);
             setFileContentPreview(
                 decoded.text.length > 1000
@@ -217,11 +339,13 @@ export default function CharsetConverter() {
         setIsConvertingFile(true);
 
         try {
+            const mod = converterMod() ?? cachedConverterMod ?? (await loadConverterMod());
+            setConverterMod(() => mod);
             const buffer = await file.arrayBuffer();
             const bytes = new Uint8Array(buffer);
             setFileBytes(bytes);
 
-            const decoded = decodeBytes(bytes, fromEncoding());
+            const decoded = mod.decodeBytes(bytes, fromEncoding());
             setFileDetectedEncoding(decoded.detectedEncoding);
             setFileContentPreview(
                 decoded.text.length > 1000
@@ -254,11 +378,12 @@ export default function CharsetConverter() {
     const handleDownloadConvertedFile = () => {
         const file = selectedFile();
         const bytes = fileBytes();
-        if (!file || !bytes) return;
+        const mod = converterMod();
+        if (!file || !bytes || !mod) return;
 
-        const decoded = decodeBytes(bytes, fromEncoding());
-        const adjustedText = convertNewline(decoded.text, newlineOption());
-        const convertedBytes = encodeStringToBytes(adjustedText, toEncoding());
+        const decoded = mod.decodeBytes(bytes, fromEncoding());
+        const adjustedText = mod.convertNewline(decoded.text, newlineOption());
+        const convertedBytes = mod.encodeStringToBytes(adjustedText, toEncoding());
 
         const blob = new Blob([convertedBytes as unknown as BlobPart], {
             type: "application/octet-stream",
@@ -730,8 +855,10 @@ export default function CharsetConverter() {
                                             class="btn btn-ghost btn-xs text-primary"
                                             title="16進数からテキストへ逆変換"
                                             onClick={() => {
-                                                const bytes = parseHexToBytes(cfOutputs().hex);
-                                                const text = decodeBytes(bytes, cfEncoding()).text;
+                                                const mod = converterMod();
+                                                if (!mod) return;
+                                                const bytes = mod.parseHexToBytes(cfOutputs().hex);
+                                                const text = mod.decodeBytes(bytes, cfEncoding()).text;
                                                 setCfInput(text);
                                             }}
                                         >
@@ -771,8 +898,10 @@ export default function CharsetConverter() {
                                             class="btn btn-ghost btn-xs text-primary"
                                             title="10進数からテキストへ逆変換"
                                             onClick={() => {
-                                                const bytes = parseDecToBytes(cfOutputs().dec);
-                                                const text = decodeBytes(bytes, cfEncoding()).text;
+                                                const mod = converterMod();
+                                                if (!mod) return;
+                                                const bytes = mod.parseDecToBytes(cfOutputs().dec);
+                                                const text = mod.decodeBytes(bytes, cfEncoding()).text;
                                                 setCfInput(text);
                                             }}
                                         >
@@ -812,8 +941,10 @@ export default function CharsetConverter() {
                                             class="btn btn-ghost btn-xs text-primary"
                                             title="2進数からテキストへ逆変換"
                                             onClick={() => {
-                                                const bytes = parseBinToBytes(cfOutputs().bin);
-                                                const text = decodeBytes(bytes, cfEncoding()).text;
+                                                const mod = converterMod();
+                                                if (!mod) return;
+                                                const bytes = mod.parseBinToBytes(cfOutputs().bin);
+                                                const text = mod.decodeBytes(bytes, cfEncoding()).text;
                                                 setCfInput(text);
                                             }}
                                         >
@@ -865,7 +996,9 @@ export default function CharsetConverter() {
                                             class="btn btn-ghost btn-xs text-primary"
                                             title="Unicodeエスケープからテキストへ復元"
                                             onClick={() => {
-                                                const text = parseUnicodeEscapesToText(cfOutputs().unicodeEscape);
+                                                const mod = converterMod();
+                                                if (!mod) return;
+                                                const text = mod.parseUnicodeEscapesToText(cfOutputs().unicodeEscape);
                                                 setCfInput(text);
                                             }}
                                         >
@@ -916,7 +1049,9 @@ export default function CharsetConverter() {
                                             class="btn btn-ghost btn-xs text-primary"
                                             title="数値文字参照からテキストへ復元"
                                             onClick={() => {
-                                                const text = parseHtmlEntitiesToText(cfOutputs().htmlEntity);
+                                                const mod = converterMod();
+                                                if (!mod) return;
+                                                const text = mod.parseHtmlEntitiesToText(cfOutputs().htmlEntity);
                                                 setCfInput(text);
                                             }}
                                         >
@@ -957,8 +1092,10 @@ export default function CharsetConverter() {
                                             title="Base64からテキストへ復元"
                                             onClick={() => {
                                                 try {
-                                                    const bytes = base64ToBytes(cfOutputs().base64);
-                                                    const text = decodeBytes(bytes, cfEncoding()).text;
+                                                    const mod = converterMod();
+                                                    if (!mod) return;
+                                                    const bytes = mod.base64ToBytes(cfOutputs().base64);
+                                                    const text = mod.decodeBytes(bytes, cfEncoding()).text;
                                                     setCfInput(text);
                                                 } catch {
                                                     // ignore
@@ -1003,7 +1140,9 @@ export default function CharsetConverter() {
                                             class="btn btn-ghost btn-xs text-primary"
                                             title="URLエンコード文字列をデコード"
                                             onClick={() => {
-                                                const text = urlDecodeWithEncoding(
+                                                const mod = converterMod();
+                                                if (!mod) return;
+                                                const text = mod.urlDecodeWithEncoding(
                                                     cfOutputs().urlEncoded,
                                                     cfEncoding(),
                                                 );
