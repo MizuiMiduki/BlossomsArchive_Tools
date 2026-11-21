@@ -15,4 +15,7 @@ jobs:
         permissions:
             pull-requests: write
         steps:
-            - uses: hmarr/auto-approve-action@v4
+            - name: Auto approve pull request
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: gh pr review "${{ github.event.pull_request.number }}" --approve --repo "${{ github.repository }}"
