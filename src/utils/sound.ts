@@ -52,7 +52,8 @@ export function closeAudio(): void {
 
 /**
  * Web Audio API を用いて電子音・チャイムを合成・再生します。
- * 外部音源ファイル不使用のため、ライセンス表記・著作権表記は完全に不要です。
+ * 音圧コンプレッサーと音量ブーストにより、スマホやノートPCの内蔵スピーカーでも
+ * はっきりと聞き取れる大音量・高明瞭度な通知音を出力します。
  */
 export function playNotificationSound(options: PlaySoundOptions = {}): void {
     if (typeof window === "undefined") return;
@@ -76,13 +77,31 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
 
     const currentTime = ctx.currentTime;
 
+    // 音量をしっかり届けるため、マスターゲインを2.2倍にブースト（実効音圧を大幅強化）
     const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(volume, currentTime);
-    masterGain.connect(ctx.destination);
+    masterGain.gain.setValueAtTime(volume * 2.2, currentTime);
+
+    // ダイナミクスコンプレッサー（リミッター）を通すことで音割れを防ぎつつ最大音圧を維持
+    if (typeof ctx.createDynamicsCompressor === "function") {
+        try {
+            const comp = ctx.createDynamicsCompressor();
+            comp.threshold.setValueAtTime(-8, currentTime);
+            comp.knee.setValueAtTime(6, currentTime);
+            comp.ratio.setValueAtTime(12, currentTime);
+            comp.attack.setValueAtTime(0.002, currentTime);
+            comp.release.setValueAtTime(0.15, currentTime);
+            masterGain.connect(comp);
+            comp.connect(ctx.destination);
+        } catch {
+            masterGain.connect(ctx.destination);
+        }
+    } else {
+        masterGain.connect(ctx.destination);
+    }
 
     if (soundType === "alarm") {
-        // 電子アラーム音: 「ピピピッ、ピピピッ、ピピピッ」 (明瞭で聞き取りやすい高音圧パルス3セット)
-        const baseFreq = 1046.5 * pitch; // C6 (デジタルアラームで最も通りやすい帯域)
+        // 電子アラーム音: 「ピピピッ、ピピピッ、ピピピッ」 (基音 + 倍音で力強く明瞭な高音圧パルス)
+        const baseFreq = 1046.5 * pitch; // C6 (耳に最も通りやすい帯域)
         const beeps = [
             // 1セット目
             { start: 0.0, end: 0.09, freq: baseFreq },
@@ -99,16 +118,16 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
         ];
 
         beeps.forEach(({ start, end, freq }) => {
+            // メインオシレーター（矩形波）
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
             osc.type = "square";
             osc.frequency.setValueAtTime(freq, currentTime + start);
 
-            // クリックノイズ防止のための微小フェードイン・アウト（高ゲイン 0.9 でしっかり大きく鳴らす）
             gain.gain.setValueAtTime(0, currentTime + start);
-            gain.gain.linearRampToValueAtTime(0.9, currentTime + start + 0.008);
-            gain.gain.setValueAtTime(0.9, currentTime + end - 0.008);
+            gain.gain.linearRampToValueAtTime(1.0, currentTime + start + 0.006);
+            gain.gain.setValueAtTime(1.0, currentTime + end - 0.006);
             gain.gain.linearRampToValueAtTime(0, currentTime + end);
 
             osc.connect(gain);
@@ -116,14 +135,31 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
 
             osc.start(currentTime + start);
             osc.stop(currentTime + end);
+
+            // 倍音オシレーター（音の輪郭と迫力を倍加）
+            const overtone = ctx.createOscillator();
+            const overtoneGain = ctx.createGain();
+            overtone.type = "sine";
+            overtone.frequency.setValueAtTime(freq * 2, currentTime + start);
+
+            overtoneGain.gain.setValueAtTime(0, currentTime + start);
+            overtoneGain.gain.linearRampToValueAtTime(0.5, currentTime + start + 0.006);
+            overtoneGain.gain.setValueAtTime(0.5, currentTime + end - 0.006);
+            overtoneGain.gain.linearRampToValueAtTime(0, currentTime + end);
+
+            overtone.connect(overtoneGain);
+            overtoneGain.connect(masterGain);
+
+            overtone.start(currentTime + start);
+            overtone.stop(currentTime + end);
         });
     } else {
-        // チャイム音: 「ポーン」 (倍音を含んだ明るく大きなチャイム減衰音)
+        // チャイム音: 「ポーン」 (豊かで大きな和音減衰音)
         const notes = [
-            { start: 0.0, duration: 1.1, freq: 523.25 * pitch, peak: 0.7 }, // C5
-            { start: 0.15, duration: 1.3, freq: 659.25 * pitch, peak: 0.7 }, // E5
-            { start: 0.3, duration: 1.6, freq: 783.99 * pitch, peak: 0.75 }, // G5
-            { start: 0.45, duration: 1.8, freq: 1046.5 * pitch, peak: 0.8 }, // C6
+            { start: 0.0, duration: 1.2, freq: 523.25 * pitch, peak: 1.1 }, // C5
+            { start: 0.15, duration: 1.4, freq: 659.25 * pitch, peak: 1.1 }, // E5
+            { start: 0.3, duration: 1.7, freq: 783.99 * pitch, peak: 1.2 }, // G5
+            { start: 0.45, duration: 2.0, freq: 1046.5 * pitch, peak: 1.3 }, // C6
         ];
 
         notes.forEach(({ start, duration, freq, peak }) => {
@@ -135,10 +171,14 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
 
             gain.gain.setValueAtTime(0, currentTime + start);
             gain.gain.linearRampToValueAtTime(peak, currentTime + start + 0.015);
-            gain.gain.exponentialRampToValueAtTime(
-                0.001,
-                currentTime + start + duration,
-            );
+            if (typeof gain.gain.exponentialRampToValueAtTime === "function") {
+                gain.gain.exponentialRampToValueAtTime(
+                    0.001,
+                    currentTime + start + duration,
+                );
+            } else {
+                gain.gain.linearRampToValueAtTime(0, currentTime + start + duration);
+            }
 
             osc.connect(gain);
             gain.connect(masterGain);
@@ -157,24 +197,38 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
  * @param isTock trueの場合は偶数秒の低めの音（Tock）、falseの場合は奇数秒の音（Tick）
  * @param volume 音量 (0.0 - 1.0)
  */
-export function playClockTickSound(isTock = false, volume = 0.6): void {
+export function playClockTickSound(isTock = false, volume = 0.8): void {
     if (typeof window === "undefined") return;
 
     const ctx = initAudio();
     if (!ctx) return;
 
-    const rawVolume = typeof volume === "number" ? volume : 0.6;
+    const rawVolume = typeof volume === "number" ? volume : 0.8;
     const finalVolume = Number.isFinite(rawVolume)
         ? Math.max(0, Math.min(1, rawVolume))
-        : 0.6;
+        : 0.8;
 
     if (finalVolume <= 0) return;
 
     const currentTime = ctx.currentTime;
 
+    // 音量をしっかり存在感あるレベルにするため、マスターゲインを2.0倍にブースト
     const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(finalVolume, currentTime);
-    masterGain.connect(ctx.destination);
+    masterGain.gain.setValueAtTime(finalVolume * 2.0, currentTime);
+
+    if (typeof ctx.createDynamicsCompressor === "function") {
+        try {
+            const comp = ctx.createDynamicsCompressor();
+            comp.threshold.setValueAtTime(-10, currentTime);
+            comp.ratio.setValueAtTime(8, currentTime);
+            masterGain.connect(comp);
+            comp.connect(ctx.destination);
+        } catch {
+            masterGain.connect(ctx.destination);
+        }
+    } else {
+        masterGain.connect(ctx.destination);
+    }
 
     // 1. 低域ボディ（重みのある「コッ」という共鳴打撃音）
     // Tick: 180Hz -> 60Hz, Tock: 140Hz -> 50Hz
@@ -191,7 +245,7 @@ export function playClockTickSound(isTock = false, volume = 0.6): void {
         );
     }
 
-    bodyGain.gain.setValueAtTime(0.85, currentTime);
+    bodyGain.gain.setValueAtTime(1.1, currentTime);
     if (typeof bodyGain.gain.exponentialRampToValueAtTime === "function") {
         bodyGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.045);
     } else {
@@ -217,7 +271,7 @@ export function playClockTickSound(isTock = false, volume = 0.6): void {
         );
     }
 
-    clickGain.gain.setValueAtTime(0.45, currentTime);
+    clickGain.gain.setValueAtTime(0.7, currentTime);
     if (typeof clickGain.gain.exponentialRampToValueAtTime === "function") {
         clickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
     } else {

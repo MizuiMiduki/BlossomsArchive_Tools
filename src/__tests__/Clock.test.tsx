@@ -58,22 +58,40 @@ describe("Clock", () => {
         vi.useRealTimers();
     });
 
-    it("秒針音トグルボタンで音のON/OFFが切り替えられ、localStorageに永続化されること", () => {
+    it("秒針音トグルおよび音量スライダーがアナログモード時のみ表示され、ON/OFFと音量変更がlocalStorageに永続化されること", () => {
         const { unmount } = render(() => <Clock />);
+
+        // 初期（デジタルモード）では秒針音UIは非表示
+        expect(screen.queryByRole("button", { name: "秒針音をオンにする" })).not.toBeInTheDocument();
+        expect(screen.queryByLabelText("秒針音の音量")).not.toBeInTheDocument();
+
+        // アナログモードに切り替えると秒針音コントロールが表示される
+        fireEvent.click(screen.getByRole("button", { name: "アナログ" }));
         const soundBtn = screen.getByRole("button", { name: "秒針音をオンにする" });
         expect(soundBtn).toBeInTheDocument();
-        expect(soundBtn.textContent).toContain("音: OFF");
+        expect(soundBtn.textContent).toContain("OFF");
+
+        const volumeSlider = screen.getByLabelText("秒針音の音量");
+        expect(volumeSlider).toBeInTheDocument();
 
         // クリックして ON
         fireEvent.click(soundBtn);
-        expect(soundBtn.textContent).toContain("音: ON");
+        expect(soundBtn.textContent).toContain("ON");
         expect(soundBtn).toHaveAttribute("aria-label", "秒針音をオフにする");
         expect(localStorage.getItem("ba_clock_sound_enabled")).toBe("true");
 
+        // 音量スライダーの変更
+        fireEvent.input(volumeSlider, { target: { value: "50" } });
+        expect(localStorage.getItem("ba_clock_sound_volume")).toBe("50");
+
         // 再度クリックして OFF
         fireEvent.click(soundBtn);
-        expect(soundBtn.textContent).toContain("音: OFF");
+        expect(soundBtn.textContent).toContain("OFF");
         expect(localStorage.getItem("ba_clock_sound_enabled")).toBe("false");
+
+        // デジタルモードに戻すと再び非表示になる
+        fireEvent.click(screen.getByRole("button", { name: "デジタル" }));
+        expect(screen.queryByRole("button", { name: "秒針音をオンにする" })).not.toBeInTheDocument();
 
         unmount();
     });

@@ -1,5 +1,5 @@
 // src/pages/Clock.tsx
-import { createSignal, onSettled, Switch, Match, For, createEffect } from "solid-js";
+import { createSignal, onSettled, Switch, Match, For, createEffect, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import { playPageEntrance } from "../utils/animations";
 import { initAudio, playClockTickSound } from "../utils/sound";
@@ -8,6 +8,7 @@ export default function Clock() {
     const [time, setTime] = createSignal(new Date());
     const [mode, setMode] = createSignal<"digital" | "analog">("digital");
     const [soundEnabled, setSoundEnabled] = createSignal(false);
+    const [soundVolume, setSoundVolume] = createSignal(80);
     let containerRef: HTMLDivElement | undefined;
 
     // 初期角度の計算
@@ -32,9 +33,13 @@ export default function Clock() {
     onSettled(() => {
         // localStorage から秒針音の設定を復元
         try {
-            const saved = localStorage.getItem("ba_clock_sound_enabled");
-            if (saved === "true") {
+            const savedEnabled = localStorage.getItem("ba_clock_sound_enabled");
+            if (savedEnabled === "true") {
                 setSoundEnabled(true);
+            }
+            const savedVol = Number(localStorage.getItem("ba_clock_sound_volume"));
+            if (Number.isFinite(savedVol) && savedVol >= 0 && savedVol <= 100) {
+                setSoundVolume(savedVol);
             }
         } catch {}
 
@@ -59,8 +64,8 @@ export default function Clock() {
                 updateAnalogHands(current);
 
                 // アナログ時計表示時かつ秒針音が有効な場合、重厚なTick-Tock（カチッカチッ）を鳴らす
-                if (mode() === "analog" && soundEnabled()) {
-                    playClockTickSound(currentSec % 2 === 0);
+                if (mode() === "analog" && soundEnabled() && soundVolume() > 0) {
+                    playClockTickSound(currentSec % 2 === 0, soundVolume() / 100);
                 }
             }
         };
@@ -99,58 +104,62 @@ export default function Clock() {
         setSoundEnabled(next);
         if (next) {
             initAudio();
-            playClockTickSound(time().getSeconds() % 2 === 0);
+            const currentVol = soundVolume() > 0 ? soundVolume() : 80;
+            if (soundVolume() <= 0) setSoundVolume(80);
+            playClockTickSound(time().getSeconds() % 2 === 0, currentVol / 100);
         }
         try {
             localStorage.setItem("ba_clock_sound_enabled", String(next));
         } catch {}
     };
 
+    const handleVolumeChange = (vol: number) => {
+        const clamped = Math.max(0, Math.min(100, Math.floor(vol)));
+        setSoundVolume(clamped);
+        if (clamped > 0) {
+            if (!soundEnabled()) {
+                setSoundEnabled(true);
+                try {
+                    localStorage.setItem("ba_clock_sound_enabled", "true");
+                } catch {}
+            }
+            initAudio();
+            playClockTickSound(time().getSeconds() % 2 === 0, clamped / 100);
+        } else {
+            setSoundEnabled(false);
+            try {
+                localStorage.setItem("ba_clock_sound_enabled", "false");
+            } catch {}
+        }
+        try {
+            localStorage.setItem("ba_clock_sound_volume", String(clamped));
+        } catch {}
+    };
+
     return (
         <div ref={containerRef} class="flex flex-col items-center justify-center min-h-[350px] p-2 sm:p-6 w-full min-w-0 max-w-md mx-auto">
             <h1 class="sr-only">リアルタイム時計</h1>
-            {/* 切り替えボタン & 秒針音トグル */}
-            <div class="flex items-center gap-2.5 sm:gap-3 mb-8 sm:mb-12 flex-wrap justify-center">
-                <div class="inline-flex p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
-                    <button
-                        class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                            mode() === "digital"
-                                ? "bg-primary text-white shadow-sm"
-                                : "text-base-content/70 hover:text-base-content"
-                        }`}
-                        onClick={() => switchMode("digital")}
-                    >
-                        デジタル
-                    </button>
-                    <button
-                        class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                            mode() === "analog"
-                                ? "bg-primary text-white shadow-sm"
-                                : "text-base-content/70 hover:text-base-content"
-                        }`}
-                        onClick={() => switchMode("analog")}
-                    >
-                        アナログ
-                    </button>
-                </div>
-
-                {/* 秒針音オンオフボタン */}
+            {/* 切り替えボタン */}
+            <div class="inline-flex p-1 bg-base-200 rounded-2xl mb-8 sm:mb-12 shadow-inner border border-base-300">
                 <button
-                    type="button"
-                    class={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all border shadow-sm ${
-                        soundEnabled()
-                            ? "bg-primary/10 border-primary text-primary"
-                            : "bg-base-200 border-base-300 text-base-content/70 hover:text-base-content"
+                    class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                        mode() === "digital"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-base-content/70 hover:text-base-content"
                     }`}
-                    onClick={toggleSound}
-                    aria-label={soundEnabled() ? "秒針音をオフにする" : "秒針音をオンにする"}
-                    aria-pressed={soundEnabled() ? "true" : "false"}
-                    title={soundEnabled() ? "秒針音: ON" : "秒針音: OFF"}
+                    onClick={() => switchMode("digital")}
                 >
-                    <span class="text-sm sm:text-base" aria-hidden="true">
-                        {soundEnabled() ? "🔊" : "🔇"}
-                    </span>
-                    <span>{soundEnabled() ? "秒針音: ON" : "秒針音: OFF"}</span>
+                    デジタル
+                </button>
+                <button
+                    class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                        mode() === "analog"
+                            ? "bg-primary text-white shadow-sm"
+                            : "text-base-content/70 hover:text-base-content"
+                    }`}
+                    onClick={() => switchMode("analog")}
+                >
+                    アナログ
                 </button>
             </div>
 
@@ -168,72 +177,116 @@ export default function Clock() {
                 </Match>
 
                 <Match when={mode() === "analog"}>
-                    <div
-                        class="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 max-w-[80vw] max-h-[80vw]"
-                    >
-                        <svg
-                            viewBox="0 0 100 100"
-                            class="w-full h-full stroke-base-content"
+                    <div class="flex flex-col items-center w-full">
+                        <div
+                            class="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 max-w-[80vw] max-h-[80vw]"
                         >
-                            <circle
-                                cx="50"
-                                cy="50"
-                                r="48"
-                                fill="none"
-                                stroke-width="2"
-                            />
-                            {/* 目盛り */}
-                            <For each={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}>
-                                {(i) => (
-                                    <line
-                                        x1="50"
-                                        y1="5"
-                                        x2="50"
-                                        y2="10"
-                                        transform={`rotate(${i * 30} 50 50)`}
-                                        stroke-width="2"
-                                    />
-                                )}
-                            </For>
+                            <svg
+                                viewBox="0 0 100 100"
+                                class="w-full h-full stroke-base-content"
+                            >
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="48"
+                                    fill="none"
+                                    stroke-width="2"
+                                />
+                                {/* 目盛り */}
+                                <For each={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}>
+                                    {(i) => (
+                                        <line
+                                            x1="50"
+                                            y1="5"
+                                            x2="50"
+                                            y2="10"
+                                            transform={`rotate(${i * 30} 50 50)`}
+                                            stroke-width="2"
+                                        />
+                                    )}
+                                </For>
 
-                            {/* 針 (CSSトランジションで滑らかにアニメーション描画) */}
-                            {/* 時針 */}
-                            <line
-                                x1="50"
-                                y1="50"
-                                x2="50"
-                                y2="25"
-                                stroke-width="4"
-                                stroke-linecap="round"
-                                transform={`rotate(${hourAngle()} 50 50)`}
-                                style={{ transition: "transform 0.4s ease-out" }}
-                            />
-                            {/* 分針 */}
-                            <line
-                                x1="50"
-                                y1="50"
-                                x2="50"
-                                y2="15"
-                                stroke-width="3"
-                                stroke-linecap="round"
-                                transform={`rotate(${minAngle()} 50 50)`}
-                                style={{ transition: "transform 0.4s ease-out" }}
-                            />
-                            {/* 秒針 */}
-                            <line
-                                x1="50"
-                                y1="50"
-                                x2="50"
-                                y2="10"
-                                stroke-width="1.5"
-                                stroke="red"
-                                stroke-linecap="round"
-                                transform={`rotate(${secAngle()} 50 50)`}
-                                style={{ transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
-                            />
-                            {/* 時計の中心ピン */}
-                            <circle cx="50" cy="50" r="2.5" fill="red" stroke="none" />
-                        </svg>
+                                {/* 針 (CSSトランジションで滑らかにアニメーション描画) */}
+                                {/* 時針 */}
+                                <line
+                                    x1="50"
+                                    y1="50"
+                                    x2="50"
+                                    y2="25"
+                                    stroke-width="4"
+                                    stroke-linecap="round"
+                                    transform={`rotate(${hourAngle()} 50 50)`}
+                                    style={{ transition: "transform 0.4s ease-out" }}
+                                />
+                                {/* 分針 */}
+                                <line
+                                    x1="50"
+                                    y1="50"
+                                    x2="50"
+                                    y2="15"
+                                    stroke-width="3"
+                                    stroke-linecap="round"
+                                    transform={`rotate(${minAngle()} 50 50)`}
+                                    style={{ transition: "transform 0.4s ease-out" }}
+                                />
+                                {/* 秒針 */}
+                                <line
+                                    x1="50"
+                                    y1="50"
+                                    x2="50"
+                                    y2="10"
+                                    stroke-width="1.5"
+                                    stroke="red"
+                                    stroke-linecap="round"
+                                    transform={`rotate(${secAngle()} 50 50)`}
+                                    style={{ transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+                                />
+                                {/* 時計の中心ピン */}
+                                <circle cx="50" cy="50" r="2.5" fill="red" stroke="none" />
+                            </svg>
+                        </div>
+
+                        {/* アナログ時計専用: 秒針音（カチッカチッ）の音量・ON/OFFコントロール */}
+                        <div class="mt-6 flex items-center gap-3 p-2.5 sm:px-4 sm:py-2.5 bg-base-200/70 rounded-2xl border border-base-300 w-full max-w-xs shadow-xs">
+                            <button
+                                type="button"
+                                class={`btn btn-sm rounded-xl font-bold transition-all border ${
+                                    soundEnabled()
+                                        ? "btn-primary text-white shadow-xs"
+                                        : "btn-ghost border-base-300 text-base-content/70 hover:text-base-content"
+                                }`}
+                                onClick={toggleSound}
+                                aria-label={soundEnabled() ? "秒針音をオフにする" : "秒針音をオンにする"}
+                                aria-pressed={soundEnabled() ? "true" : "false"}
+                                title={soundEnabled() ? "秒針音: ON" : "秒針音: OFF"}
+                            >
+                                <span class="text-base" aria-hidden="true">
+                                    {soundEnabled() ? "🔊" : "🔇"}
+                                </span>
+                                <span>{soundEnabled() ? "ON" : "OFF"}</span>
+                            </button>
+
+                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    value={soundEnabled() ? soundVolume() : 0}
+                                    aria-label="秒針音の音量"
+                                    onInput={(e) => {
+                                        const val = Number(e.currentTarget.value);
+                                        if (Number.isFinite(val)) {
+                                            handleVolumeChange(val);
+                                        }
+                                    }}
+                                    class="range range-xs range-primary flex-1"
+                                />
+                                <span class="font-mono text-xs tabular-nums w-10 text-right font-bold text-base-content/80">
+                                    {soundEnabled() ? `${soundVolume()}%` : "0%"}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </Match>
             </Switch>
