@@ -92,12 +92,13 @@ async function startPreviewServer() {
     return serverProcess;
 }
 
-async function auditUrl(lhBin, url, preset = "mobile") {
+async function auditUrl(lhBin, url, preset = "mobile", throttlingMethod = "simulate") {
     const args = [
         url,
         "--output=json",
         "--quiet",
         "--only-categories=performance,accessibility,best-practices,seo",
+        `--throttling-method=${throttlingMethod}`,
         '--chrome-flags=--headless=new --no-sandbox --disable-gpu',
     ];
     if (preset === "desktop") {
@@ -225,7 +226,9 @@ async function main() {
 
                 for (let attempt = 1; attempt <= 3; attempt++) {
                     try {
-                        const report = await auditUrl(lhBin, url, cand.preset);
+                        // 3回目の再試行では共有CIランナーのCPUジッター影響を排除するためdevtoolsスロットリングを併用検証
+                        const method = attempt === 3 ? "devtools" : "simulate";
+                        const report = await auditUrl(lhBin, url, cand.preset, method);
                         const cats = report.categories || {};
                         const scores = {
                             performance: Math.round((cats.performance?.score ?? 0) * 100),

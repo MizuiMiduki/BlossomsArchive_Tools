@@ -360,8 +360,8 @@ export default function Layout(props: LayoutProps) {
                                         href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText())}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
-                                        data-tip="X (Twitter)"
+                                        class="btn btn-ghost btn-square btn-sm"
+                                        title="X (Twitter)"
                                         aria-label="X"
                                     >
                                         <svg
@@ -379,8 +379,8 @@ export default function Layout(props: LayoutProps) {
                                         href={`https://www.threads.net/intent/post?text=${encodeURIComponent(getShareTitle())}&url=${encodeURIComponent(getCurrentUrl())}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
-                                        data-tip="Threads"
+                                        class="btn btn-ghost btn-square btn-sm"
+                                        title="Threads"
                                         aria-label="Threads"
                                     >
                                         <svg
@@ -398,8 +398,8 @@ export default function Layout(props: LayoutProps) {
                                         href={`https://misskey-hub.net/share/?text=${encodeURIComponent(getShareText())}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
-                                        data-tip="Misskey"
+                                        class="btn btn-ghost btn-square btn-sm"
+                                        title="Misskey"
                                         aria-label="Misskey"
                                     >
                                         <svg
@@ -417,8 +417,8 @@ export default function Layout(props: LayoutProps) {
                                         href={`https://bsky.app/intent/compose?text=${encodeURIComponent(getShareText())}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
-                                        data-tip="Bluesky"
+                                        class="btn btn-ghost btn-square btn-sm"
+                                        title="Bluesky"
                                         aria-label="Bluesky"
                                     >
                                         <svg
@@ -436,8 +436,8 @@ export default function Layout(props: LayoutProps) {
                                         href={`https://www.addtoany.com/add_to/mastodon?linkurl=${encodeURIComponent(getCurrentUrl())}&linkname=${encodeURIComponent(getShareTitle())}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
-                                        data-tip="Mastodon"
+                                        class="btn btn-ghost btn-square btn-sm"
+                                        title="Mastodon"
                                         aria-label="Mastodon"
                                     >
                                         <svg
@@ -447,15 +447,15 @@ export default function Layout(props: LayoutProps) {
                                             style="fill: #6364ff"
                                             aria-hidden="true"
                                         >
-                                            <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054 19.648 19.648 0 0 0 4.636.536c.562 0 1.124 0 1.69-.016 1.939-.056 3.995-.154 5.906-.45 .047-.007.093-.015.14-.023 2.476-.42 4.83-1.735 5.073-5.753.01-.17.038-1.774.038-1.947 0-.596.183-4.24-.025-6.478zM19.52 13.527h-2.76V7.836c0-1.202-.505-1.813-1.515-1.813-1.117 0-1.676.724-1.676 2.156v3.12h-2.744v-3.12c0-1.432-.56-2.156-1.676-2.156-1.01 0-1.515.611-1.515 1.813v5.691H4.873V7.639c0-1.202.308-2.159.924-2.87.636-.71 1.468-1.074 2.498-1.074 1.19 0 2.091.456 2.689 1.37L12 6.388l1.016-1.323c.598-.914 1.499-1.37 2.689-1.37 1.03 0 1.862.364 2.498 1.074.616.711.924 1.668.924 2.87z" />
+                                            <path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054 19.648 19.648 19.648 0 0 0 4.636.536c.562 0 1.124 0 1.69-.016 1.939-.056 3.995-.154 5.906-.45 .047-.007.093-.015.14-.023 2.476-.42 4.83-1.735 5.073-5.753.01-.17.038-1.774.038-1.947 0-.596.183-4.24-.025-6.478zM19.52 13.527h-2.76V7.836c0-1.202-.505-1.813-1.515-1.813-1.117 0-1.676.724-1.676 2.156v3.12h-2.744v-3.12c0-1.432-.56-2.156-1.676-2.156-1.01 0-1.515.611-1.515 1.813v5.691H4.873V7.639c0-1.202.308-2.159.924-2.87.636-.71 1.468-1.074 2.498-1.074 1.19 0 2.091.456 2.689 1.37L12 6.388l1.016-1.323c.598-.914 1.499-1.37 2.689-1.37 1.03 0 1.862.364 2.498 1.074.616.711.924 1.668.924 2.87z" />
                                         </svg>
                                     </a>
                                     {/* OS標準の共有 */}
                                     <Show when={typeof navigator !== "undefined" && "share" in navigator}>
                                         <button
                                             type="button"
-                                            class="btn btn-ghost btn-square btn-sm tooltip tooltip-top"
-                                            data-tip="その他の共有"
+                                            class="btn btn-ghost btn-square btn-sm"
+                                            title="その他の共有"
                                             aria-label="その他の共有"
                                             onClick={() => {
                                                 navigator

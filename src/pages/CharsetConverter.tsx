@@ -426,7 +426,7 @@ export default function CharsetConverter() {
                 <h1 class="text-3xl md:text-4xl font-bold text-primary">
                     <BudouX text="文字コード総合変換ツール" />
                 </h1>
-                <p class="text-base-content/70 max-w-2xl mx-auto text-sm md:text-base">
+                <p class="text-base-content/80 max-w-2xl mx-auto text-sm md:text-base">
                     <BudouX text="UTF-8、Shift_JIS、EUC-JP、JIS、UTF-16/32、Latin-1の文字コード・改行コード相互変換、16進数(HEX)・進数・Unicode表記・HTML数値文字参照・Base64・URLエンコード・Unicode正規化・文字化け復元まで完全対応。" />
                 </p>
                 <div class="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
@@ -627,7 +627,6 @@ export default function CharsetConverter() {
                                         type="button"
                                         class="btn btn-ghost btn-xs text-red-700 dark:text-red-400 font-bold"
                                         onClick={() => setInputText("")}
-                                        disabled={!inputText()}
                                     >
                                         クリア
                                     </button>
