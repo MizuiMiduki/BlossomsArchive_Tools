@@ -11,7 +11,6 @@ body {
     overflow-x: hidden;
     height: 100%;
     min-height: 100dvh;
-    overflow-anchor: none;
     -webkit-text-size-adjust: 100%;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -26,7 +25,14 @@ body {
 }
 
 main {
-    overflow-anchor: none;
+    overflow-anchor: auto;
+}
+
+/* AdSense自動広告によるメインコンテンツ押し下げ・レイアウトシフト(CLS)の完全防止 */
+main > .google-auto-placed:first-child,
+main > div > .google-auto-placed:first-child,
+header + .google-auto-placed {
+    display: none !important;
 }
 
 /* Exifフレーム: スマホでの入力時にiOSが自動ズームしないよう16px以上にする */

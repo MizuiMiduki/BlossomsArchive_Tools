@@ -498,7 +498,7 @@ export default function Layout(props: LayoutProps) {
             <div
                 class={`flex-1 flex flex-col min-w-0 h-dvh max-h-dvh overflow-hidden transition-all duration-300 ${isPcMenuOpen() ? "lg:ml-64" : "lg:ml-0"}`}
             >
-                <header class="h-16 shrink-0 bg-base-100/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-40 flex items-center px-3 sm:px-4 lg:px-8 shadow-sm justify-between gap-2 sm:gap-4">
+                <header class="h-16 shrink-0 bg-base-100/70 backdrop-blur-md border-b border-base-300 sticky top-0 z-40 flex items-center px-3 sm:px-4 lg:px-8 shadow-sm justify-between gap-2 sm:gap-4 google-anno-skip">
                     <div class="flex items-center gap-2 sm:gap-4 min-w-0">
                         <button
                             class={`btn btn-ghost btn-square btn-sm sm:btn-md shrink-0 ${isPcMenuOpen() ? "lg:hidden" : "flex"}`}
@@ -533,8 +533,8 @@ export default function Layout(props: LayoutProps) {
                     </div>
                 </header>
 
-                <main ref={mainRef} class="flex-1 min-h-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden [overflow-anchor:none]">
-                    <div class="p-3 sm:p-4 lg:p-8 w-full max-w-full min-w-0">{props.children}</div>
+                <main ref={mainRef} class="flex-1 min-h-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overflow-x-hidden [overflow-anchor:auto]">
+                    <div class="p-3 sm:p-4 lg:p-8 w-full max-w-full min-w-0 google-anno-skip">{props.children}</div>
                 </main>
             </div>
         </div>

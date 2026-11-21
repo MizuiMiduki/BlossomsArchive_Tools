@@ -44,6 +44,7 @@ function mountAd(
         ins.style.display = "block";
         ins.style.width = "100%";
         ins.style.minWidth = "250px";
+        ins.style.minHeight = "250px";
         ins.dataset.adClient = CLIENT_ID;
         ins.dataset.adSlot = slot;
         ins.dataset.adFormat = format;
@@ -105,7 +106,7 @@ function AdSenseUnit(props: AdSenseProps) {
     return (
         <div
             ref={container}
-            class={`my-6 flex justify-center overflow-hidden w-full min-h-[90px] [overflow-anchor:none] ${props.class ?? ""}`}
+            class={`my-6 flex justify-center overflow-hidden w-full min-h-[250px] sm:min-h-[280px] [contain-intrinsic-size:280px] [content-visibility:auto] ${props.class ?? ""}`}
         />
     );
 }
