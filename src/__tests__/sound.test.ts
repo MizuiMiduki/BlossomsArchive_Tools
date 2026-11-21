@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { initAudio, closeAudio, playNotificationSound } from "../utils/sound";
+import { initAudio, closeAudio, playNotificationSound, playClockTickSound } from "../utils/sound";
 
 describe("sound utility", () => {
     let mockOscillator: any;
@@ -11,6 +11,7 @@ describe("sound utility", () => {
             type: "sine",
             frequency: {
                 setValueAtTime: vi.fn(),
+                exponentialRampToValueAtTime: vi.fn(),
             },
             connect: vi.fn(),
             start: vi.fn(),
@@ -85,5 +86,25 @@ describe("sound utility", () => {
             playNotificationSound({ volume: NaN });
             playNotificationSound({ volume: Infinity });
         }).not.toThrow();
+    });
+
+    it("playClockTickSound (Tick / Tock) でオシレーターとゲインが適切に設定されること", () => {
+        // Tick (奇数秒相当)
+        playClockTickSound(false, 0.7);
+        expect(mockAudioCtx.createGain).toHaveBeenCalled();
+        expect(mockAudioCtx.createOscillator).toHaveBeenCalled();
+        expect(mockOscillator.start).toHaveBeenCalled();
+        expect(mockOscillator.stop).toHaveBeenCalled();
+
+        mockAudioCtx.createOscillator.mockClear();
+
+        // Tock (偶数秒相当)
+        playClockTickSound(true, 0.7);
+        expect(mockAudioCtx.createOscillator).toHaveBeenCalled();
+
+        // volume 0 の時は再生されないこと
+        mockAudioCtx.createOscillator.mockClear();
+        playClockTickSound(false, 0);
+        expect(mockAudioCtx.createOscillator).not.toHaveBeenCalled();
     });
 });

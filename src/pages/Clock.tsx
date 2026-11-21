@@ -2,10 +2,12 @@
 import { createSignal, onSettled, Switch, Match, For, createEffect } from "solid-js";
 import AdSense from "../components/AdSense";
 import { playPageEntrance } from "../utils/animations";
+import { initAudio, playClockTickSound } from "../utils/sound";
 
 export default function Clock() {
     const [time, setTime] = createSignal(new Date());
     const [mode, setMode] = createSignal<"digital" | "analog">("digital");
+    const [soundEnabled, setSoundEnabled] = createSignal(false);
     let containerRef: HTMLDivElement | undefined;
 
     // 初期角度の計算
@@ -28,6 +30,14 @@ export default function Clock() {
     };
 
     onSettled(() => {
+        // localStorage から秒針音の設定を復元
+        try {
+            const saved = localStorage.getItem("ba_clock_sound_enabled");
+            if (saved === "true") {
+                setSoundEnabled(true);
+            }
+        } catch {}
+
         // 時計のタイマー処理 (毎秒更新)
         let lastSec = -1;
         const tick = () => {
@@ -47,6 +57,11 @@ export default function Clock() {
                 isFirstTick = false;
 
                 updateAnalogHands(current);
+
+                // アナログ時計表示時かつ秒針音が有効な場合、重厚なTick-Tock（カチッカチッ）を鳴らす
+                if (mode() === "analog" && soundEnabled()) {
+                    playClockTickSound(currentSec % 2 === 0);
+                }
             }
         };
         const intervalId = window.setInterval(tick, 200);
@@ -79,30 +94,63 @@ export default function Clock() {
         setMode(newMode);
     };
 
+    const toggleSound = () => {
+        const next = !soundEnabled();
+        setSoundEnabled(next);
+        if (next) {
+            initAudio();
+            playClockTickSound(time().getSeconds() % 2 === 0);
+        }
+        try {
+            localStorage.setItem("ba_clock_sound_enabled", String(next));
+        } catch {}
+    };
+
     return (
         <div ref={containerRef} class="flex flex-col items-center justify-center min-h-[350px] p-2 sm:p-6 w-full min-w-0 max-w-md mx-auto">
             <h1 class="sr-only">リアルタイム時計</h1>
-            {/* 切り替えボタン */}
-            <div class="inline-flex p-1 bg-base-200 rounded-2xl mb-8 sm:mb-12 shadow-inner border border-base-300">
+            {/* 切り替えボタン & 秒針音トグル */}
+            <div class="flex items-center gap-2.5 sm:gap-3 mb-8 sm:mb-12 flex-wrap justify-center">
+                <div class="inline-flex p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
+                    <button
+                        class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                            mode() === "digital"
+                                ? "bg-primary text-white shadow-sm"
+                                : "text-base-content/70 hover:text-base-content"
+                        }`}
+                        onClick={() => switchMode("digital")}
+                    >
+                        デジタル
+                    </button>
+                    <button
+                        class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                            mode() === "analog"
+                                ? "bg-primary text-white shadow-sm"
+                                : "text-base-content/70 hover:text-base-content"
+                        }`}
+                        onClick={() => switchMode("analog")}
+                    >
+                        アナログ
+                    </button>
+                </div>
+
+                {/* 秒針音オンオフボタン */}
                 <button
-                    class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                        mode() === "digital"
-                            ? "bg-primary text-white shadow-sm"
-                            : "text-base-content/70 hover:text-base-content"
+                    type="button"
+                    class={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all border shadow-sm ${
+                        soundEnabled()
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "bg-base-200 border-base-300 text-base-content/70 hover:text-base-content"
                     }`}
-                    onClick={() => switchMode("digital")}
+                    onClick={toggleSound}
+                    aria-label={soundEnabled() ? "秒針音をオフにする" : "秒針音をオンにする"}
+                    aria-pressed={soundEnabled() ? "true" : "false"}
+                    title={soundEnabled() ? "秒針音: ON" : "秒針音: OFF"}
                 >
-                    デジタル
-                </button>
-                <button
-                    class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                        mode() === "analog"
-                            ? "bg-primary text-white shadow-sm"
-                            : "text-base-content/70 hover:text-base-content"
-                    }`}
-                    onClick={() => switchMode("analog")}
-                >
-                    アナログ
+                    <span class="text-sm sm:text-base" aria-hidden="true">
+                        {soundEnabled() ? "🔊" : "🔇"}
+                    </span>
+                    <span>{soundEnabled() ? "秒針音: ON" : "秒針音: OFF"}</span>
                 </button>
             </div>
 

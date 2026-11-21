@@ -148,3 +148,85 @@ export function playNotificationSound(options: PlaySoundOptions = {}): void {
         });
     }
 }
+
+/**
+ * 機械式アナログ時計の重厚な秒針音（カチッ / コチッ）をWeb Audio APIで合成・再生します。
+ * 低域レゾナンス（共鳴ボディ）と高域メカニカルアタック（エスケープメント爪音）を組み合わせ、
+ * 奇数秒と偶数秒でピッチを微調整（Tick-Tock）して重厚感と自然なリズムを表現します。
+ *
+ * @param isTock trueの場合は偶数秒の低めの音（Tock）、falseの場合は奇数秒の音（Tick）
+ * @param volume 音量 (0.0 - 1.0)
+ */
+export function playClockTickSound(isTock = false, volume = 0.6): void {
+    if (typeof window === "undefined") return;
+
+    const ctx = initAudio();
+    if (!ctx) return;
+
+    const rawVolume = typeof volume === "number" ? volume : 0.6;
+    const finalVolume = Number.isFinite(rawVolume)
+        ? Math.max(0, Math.min(1, rawVolume))
+        : 0.6;
+
+    if (finalVolume <= 0) return;
+
+    const currentTime = ctx.currentTime;
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(finalVolume, currentTime);
+    masterGain.connect(ctx.destination);
+
+    // 1. 低域ボディ（重みのある「コッ」という共鳴打撃音）
+    // Tick: 180Hz -> 60Hz, Tock: 140Hz -> 50Hz
+    const baseFreq = isTock ? 140 : 180;
+    const bodyOsc = ctx.createOscillator();
+    const bodyGain = ctx.createGain();
+
+    bodyOsc.type = "sine";
+    bodyOsc.frequency.setValueAtTime(baseFreq, currentTime);
+    if (typeof bodyOsc.frequency.exponentialRampToValueAtTime === "function") {
+        bodyOsc.frequency.exponentialRampToValueAtTime(
+            baseFreq * 0.4,
+            currentTime + 0.045,
+        );
+    }
+
+    bodyGain.gain.setValueAtTime(0.85, currentTime);
+    if (typeof bodyGain.gain.exponentialRampToValueAtTime === "function") {
+        bodyGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.045);
+    } else {
+        bodyGain.gain.setValueAtTime(0, currentTime + 0.045);
+    }
+
+    bodyOsc.connect(bodyGain);
+    bodyGain.connect(masterGain);
+
+    bodyOsc.start(currentTime);
+    bodyOsc.stop(currentTime + 0.05);
+
+    // 2. 高域アタック（「カチッ」とした金属・歯車の噛み合い音）
+    const clickOsc = ctx.createOscillator();
+    const clickGain = ctx.createGain();
+
+    clickOsc.type = "triangle";
+    clickOsc.frequency.setValueAtTime(isTock ? 1400 : 1800, currentTime);
+    if (typeof clickOsc.frequency.exponentialRampToValueAtTime === "function") {
+        clickOsc.frequency.exponentialRampToValueAtTime(
+            350,
+            currentTime + 0.015,
+        );
+    }
+
+    clickGain.gain.setValueAtTime(0.45, currentTime);
+    if (typeof clickGain.gain.exponentialRampToValueAtTime === "function") {
+        clickGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
+    } else {
+        clickGain.gain.setValueAtTime(0, currentTime + 0.015);
+    }
+
+    clickOsc.connect(clickGain);
+    clickGain.connect(masterGain);
+
+    clickOsc.start(currentTime);
+    clickOsc.stop(currentTime + 0.02);
+}

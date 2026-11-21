@@ -57,4 +57,24 @@ describe("Clock", () => {
         unmount();
         vi.useRealTimers();
     });
+
+    it("秒針音トグルボタンで音のON/OFFが切り替えられ、localStorageに永続化されること", () => {
+        const { unmount } = render(() => <Clock />);
+        const soundBtn = screen.getByRole("button", { name: "秒針音をオンにする" });
+        expect(soundBtn).toBeInTheDocument();
+        expect(soundBtn.textContent).toContain("音: OFF");
+
+        // クリックして ON
+        fireEvent.click(soundBtn);
+        expect(soundBtn.textContent).toContain("音: ON");
+        expect(soundBtn).toHaveAttribute("aria-label", "秒針音をオフにする");
+        expect(localStorage.getItem("ba_clock_sound_enabled")).toBe("true");
+
+        // 再度クリックして OFF
+        fireEvent.click(soundBtn);
+        expect(soundBtn.textContent).toContain("音: OFF");
+        expect(localStorage.getItem("ba_clock_sound_enabled")).toBe("false");
+
+        unmount();
+    });
 });
