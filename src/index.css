@@ -1,7 +1,23 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  include: alert, badge, button, card, checkbox, collapse, input, label, loading, modal, progress, radio, range, select, tab, table, textarea, toggle, tooltip;
+  include: alert, badge, button, card, checkbox, collapse, input, label, modal, progress, radio, range, select, table, textarea, toggle, tooltip;
 }
+
+/* 軽量スピナー (DaisyUIの10KB loading SVG群を省き、実際に使用するspinnerのみ定義) */
+.loading {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    vertical-align: middle;
+    border: 3px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 9999px;
+    animation: ba-spin 0.75s linear infinite;
+}
+.loading-xs { width: 1rem; height: 1rem; border-width: 2px; }
+.loading-sm { width: 1.25rem; height: 1.25rem; border-width: 2px; }
+.loading-lg { width: 2.25rem; height: 2.25rem; border-width: 4px; }
+@keyframes ba-spin { to { transform: rotate(360deg); } }
 
 /* 画面サイズ全対応: 不意な横スクロール・横揺れの完全防止とビューポート高さの安定化 */
 html,
@@ -33,15 +49,6 @@ main > .google-auto-placed:first-child,
 main > div > .google-auto-placed:first-child,
 header + .google-auto-placed {
     display: none !important;
-}
-
-/* DaisyUI v5 の非アクティブ .tab (50%半透明) がWCAG AAコントラスト比(4.5:1)を下回るのを防止 */
-.tab:is(.tabs > .tab):not(.tab-active) {
-    color: var(--color-base-content) !important;
-}
-.tab.tab-active:is(.tabs > .tab) {
-    background-color: var(--color-primary) !important;
-    color: var(--color-primary-content) !important;
 }
 
 /* Exifフレーム: スマホでの入力時にiOSが自動ズームしないよう16px以上にする */

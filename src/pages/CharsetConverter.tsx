@@ -438,13 +438,13 @@ export default function CharsetConverter() {
             {/* ナビゲーションタブ */}
             <div class="w-full overflow-x-auto border-b border-base-300 pb-2 [-webkit-overflow-scrolling:touch]">
                 <div class="flex justify-start md:justify-center items-center min-w-max px-2">
-                    <div class="tabs tabs-boxed bg-base-200 p-1 flex-nowrap shadow-sm">
+                    <div class="flex bg-base-200 p-1 rounded-xl flex-nowrap shadow-sm gap-1">
                         <button
                             type="button"
-                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "text"
-                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "!text-base-content font-medium hover:text-primary"
+                                    ? "btn-primary font-bold shadow-sm"
+                                    : "btn-ghost text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("text")}
                         >
@@ -452,10 +452,10 @@ export default function CharsetConverter() {
                         </button>
                         <button
                             type="button"
-                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "code-formats"
-                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "!text-base-content font-medium hover:text-primary"
+                                    ? "btn-primary font-bold shadow-sm"
+                                    : "btn-ghost text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("code-formats")}
                         >
@@ -463,10 +463,10 @@ export default function CharsetConverter() {
                         </button>
                         <button
                             type="button"
-                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "inspector"
-                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "!text-base-content font-medium hover:text-primary"
+                                    ? "btn-primary font-bold shadow-sm"
+                                    : "btn-ghost text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("inspector")}
                         >
@@ -474,10 +474,10 @@ export default function CharsetConverter() {
                         </button>
                         <button
                             type="button"
-                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "file"
-                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "!text-base-content font-medium hover:text-primary"
+                                    ? "btn-primary font-bold shadow-sm"
+                                    : "btn-ghost text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("file")}
                         >
@@ -485,10 +485,10 @@ export default function CharsetConverter() {
                         </button>
                         <button
                             type="button"
-                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "normalize"
-                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "!text-base-content font-medium hover:text-primary"
+                                    ? "btn-primary font-bold shadow-sm"
+                                    : "btn-ghost text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("normalize")}
                         >
@@ -496,10 +496,10 @@ export default function CharsetConverter() {
                         </button>
                         <button
                             type="button"
-                            class={`tab whitespace-nowrap transition-all text-xs md:text-sm ${
+                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
                                 activeTab() === "mojibake"
-                                    ? "tab-active !bg-primary !text-primary-content font-bold shadow-sm"
-                                    : "!text-base-content font-medium hover:text-primary"
+                                    ? "btn-primary font-bold shadow-sm"
+                                    : "btn-ghost text-base-content font-medium hover:text-primary"
                             }`}
                             onClick={() => setActiveTab("mojibake")}
                         >
