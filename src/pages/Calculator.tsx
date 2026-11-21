@@ -1,5 +1,4 @@
-import { createSignal, For, onSettled, untrack } from "solid-js";
-import AdSense from "../components/AdSense";
+import { createSignal, For, onSettled } from "solid-js";
 import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
 
 function safeCalculate(expression: string): number {
@@ -137,7 +136,13 @@ export default function Calculator() {
     };
 
     const append = (char: string) =>
-        setDisplay((prev) => (prev === "0" ? char : prev + char));
+        setDisplay((prev) =>
+            prev === "0" || prev === "Error"
+                ? char === "."
+                    ? "0."
+                    : char
+                : prev + char,
+        );
 
     const clear = (targetEl?: HTMLElement) => {
         if (targetEl) animatePop(targetEl, 0.92, 0.15);

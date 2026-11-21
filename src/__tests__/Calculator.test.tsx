@@ -119,5 +119,9 @@ describe("Calculator", () => {
         fireEvent.click(screen.getByRole("button", { name: "÷" }));
         fireEvent.click(screen.getByRole("button", { name: "=" }));
         expect(display.value).toBe("Error");
+
+        // Error 状態で直接数字を入力すると Error がクリアされて新しい数値から始まること
+        fireEvent.click(screen.getByRole("button", { name: "3" }));
+        expect(display.value).toBe("3");
     });
 });

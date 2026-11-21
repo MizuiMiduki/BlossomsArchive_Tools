@@ -1,7 +1,7 @@
 import { createSignal, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, delayedCall, playPageEntrance } from "../utils/gsapAnimations";
 
 // ボタンオプション用の型を定義して TypeScript に型を教えます
 interface FormatOption {
@@ -72,6 +72,8 @@ export default function QrGenerator() {
         const link = document.createElement("a");
         link.download = fileName;
 
+        let revokeUrl = "";
+
         if (fileFormat() === "svg") {
             try {
                 const { default: QRCode } = await import("qrcode");
@@ -80,7 +82,8 @@ export default function QrGenerator() {
                     width: 600,
                 });
                 const blob = new Blob([svgString], { type: "image/svg+xml" });
-                link.href = URL.createObjectURL(blob);
+                revokeUrl = URL.createObjectURL(blob);
+                link.href = revokeUrl;
             } catch (err) {
                 console.error(err);
                 return;
@@ -100,6 +103,10 @@ export default function QrGenerator() {
         }
 
         link.click();
+        if (revokeUrl) {
+            const urlToRevoke = revokeUrl;
+            delayedCall(1, () => URL.revokeObjectURL(urlToRevoke));
+        }
     };
 
     // ループ用のボタン形式リストに型アサーションを適用するため定数化します

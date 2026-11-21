@@ -244,7 +244,7 @@ export default function TimerStopwatch() {
                 <button
                     class="btn btn-outline w-28"
                     onClick={(e) => {
-                        animatePop(e.currentTarget, 0.92, 0.15);
+                        stop(e.currentTarget);
                         setTime(
                             mode() === "pomodoro"
                                 ? (isBreak() ? breakMin() : focusMin()) * 60

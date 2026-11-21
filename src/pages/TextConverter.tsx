@@ -5,19 +5,12 @@ import BudouX from "../components/BudouX";
 import {
     delayedCall,
     playPageEntrance,
-    animateFadeIn,
-    animatePop,
 } from "../utils/gsapAnimations";
 import {
     convertText,
     ConversionMode,
-    htmlToMarkdown,
     markdownToHtml,
-    htmlToPlainText,
-    plainTextToHtml,
-    markdownToPlainText,
     escapeHtml,
-    unescapeHtml,
     parseHtmlToAst,
     HtmlNode,
 } from "../utils/textConverter";
@@ -359,40 +352,47 @@ export default function TextConverter() {
         target.value = "";
     };
 
-    // プレビュー用HTMLの計算
-    const previewHtml = createMemo(() => {
+    // プレビュー用HTMLの計算（プレビュータブ選択時のみ評価）
+    const previewAstNodes = createMemo(() => {
+        if (activeTab() !== "preview") return [];
         const mode = selectedMode();
         const out = outputText();
-        if (!out) return "";
+        if (!out) return [];
 
+        let html = "";
         if (mode === "markdown-to-html" || mode === "plain-to-html") {
-            return out;
+            html = out;
+        } else if (mode === "html-to-markdown" || mode === "plain-to-markdown") {
+            html = markdownToHtml(out);
+        } else if (
+            mode === "html-to-plain" ||
+            mode === "markdown-to-plain" ||
+            mode === "html-entities-decode" ||
+            mode === "url-decode"
+        ) {
+            html = `<pre class="whitespace-pre-wrap font-sans">${escapeHtml(out)}</pre>`;
+        } else {
+            html = `<pre class="whitespace-pre-wrap font-mono">${escapeHtml(out)}</pre>`;
         }
-        if (mode === "html-to-markdown" || mode === "plain-to-markdown") {
-            return markdownToHtml(out);
-        }
-        if (mode === "html-to-plain" || mode === "markdown-to-plain" || mode === "html-entities-decode" || mode === "url-decode") {
-            return `<pre class="whitespace-pre-wrap font-sans">${escapeHtml(out)}</pre>`;
-        }
-        return `<pre class="whitespace-pre-wrap font-mono">${escapeHtml(out)}</pre>`;
+        return parseHtmlToAst(html).children;
     });
 
-    // カウント情報
-    const inputStats = createMemo(() => {
-        const text = inputText();
-        const lines = text ? text.split("\n").length : 0;
-        const chars = text.length;
-        const bytes = new Blob([text]).size;
-        return { lines, chars, bytes };
-    });
+    // カウント情報（split("\n")による配列生成を避けて高速走査）
+    const computeTextStats = (text: string) => {
+        if (!text) return { lines: 0, chars: 0, bytes: 0 };
+        let lines = 1;
+        for (let i = 0; i < text.length; i++) {
+            if (text.charCodeAt(i) === 10) lines++;
+        }
+        return {
+            lines,
+            chars: text.length,
+            bytes: new Blob([text]).size,
+        };
+    };
 
-    const outputStats = createMemo(() => {
-        const text = outputText();
-        const lines = text ? text.split("\n").length : 0;
-        const chars = text.length;
-        const bytes = new Blob([text]).size;
-        return { lines, chars, bytes };
-    });
+    const inputStats = createMemo(() => computeTextStats(inputText()));
+    const outputStats = createMemo(() => computeTextStats(outputText()));
 
     return (
         <div ref={containerRef} class="w-full max-w-6xl mx-auto space-y-6 sm:space-y-8 min-w-0">
@@ -659,7 +659,7 @@ export default function TextConverter() {
                                 when={activeTab() === "code"}
                                 fallback={
                                     <div class="w-full flex-1 p-4 bg-base-200/50 rounded-lg border border-base-300 overflow-y-auto h-80 lg:h-96 prose max-w-none text-xs sm:text-sm text-base-content">
-                                        <For each={parseHtmlToAst(previewHtml()).children}>
+                                        <For each={previewAstNodes()}>
                                             {(node) => renderSafeHtmlNode(node)}
                                         </For>
                                     </div>

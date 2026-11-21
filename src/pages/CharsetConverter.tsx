@@ -1,4 +1,4 @@
-import { createSignal, createMemo, onSettled, Show, For } from "solid-js";
+import { createSignal, createMemo, createEffect, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/gsapAnimations";
@@ -99,8 +99,9 @@ export default function CharsetConverter() {
         return convertText(text, toEncoding(), newlineOption());
     });
 
-    // 16進ダンプ文字列
+    // 16進ダンプ文字列（ダンプ表示が有効な時のみ生成）
     const hexDumpString = createMemo(() => {
+        if (!showHexDump()) return "";
         const res = textConversionResult();
         if (res.bytes.length === 0) return "";
         return generateHexDump(res.bytes);
@@ -135,15 +136,32 @@ export default function CharsetConverter() {
         };
     });
 
-    // 文字インスペクター結果
+    // 文字インスペクター結果（インスペクタータブ選択時のみ評価）
     const inspectedChars = createMemo(() => {
+        if (activeTab() !== "inspector") return [];
         return inspectCharacters(inputText() || cfInput());
     });
 
-    // 文字化け修復候補
+    // 文字化け修復候補（文字化け修復タブ選択時のみ評価）
     const mojibakeCandidates = createMemo((): MojibakeCandidate[] => {
+        if (activeTab() !== "mojibake") return [];
         return fixMojibakeCandidates(mojibakeInput());
     });
+
+    // ファイル読み込み後、変換元文字コード変更時にプレビューを再デコード
+    createEffect(
+        () => ({ bytes: fileBytes(), enc: fromEncoding() }),
+        ({ bytes, enc }) => {
+            if (!bytes) return;
+            const decoded = decodeBytes(bytes, enc);
+            setFileDetectedEncoding(decoded.detectedEncoding);
+            setFileContentPreview(
+                decoded.text.length > 1000
+                    ? decoded.text.substring(0, 1000) + "\n... (以下省略)"
+                    : decoded.text,
+            );
+        },
+    );
 
     // クリップボードへコピー
     const handleCopyText = async (textToCopy: string, onDone?: () => void) => {

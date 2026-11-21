@@ -12,16 +12,32 @@ export default function ImageConverter() {
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
+        return () => {
+            if (convertedUrl()) {
+                URL.revokeObjectURL(convertedUrl());
+            }
+        };
     });
+
+    const selectImageFile = (file: File) => {
+        setSelectedFile(file);
+        if (convertedUrl()) {
+            URL.revokeObjectURL(convertedUrl());
+            setConvertedUrl("");
+        }
+    };
 
     const handleFileChange = (e: Event) => {
         const target = e.target as HTMLInputElement;
         if (target.files && target.files.length > 0) {
-            setSelectedFile(target.files[0]);
-            if (convertedUrl()) {
-                URL.revokeObjectURL(convertedUrl());
-                setConvertedUrl("");
-            }
+            selectImageFile(target.files[0]);
+        }
+    };
+
+    const handleDrop = (e: DragEvent) => {
+        e.preventDefault();
+        if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+            selectImageFile(e.dataTransfer.files[0]);
         }
     };
 
@@ -30,39 +46,48 @@ export default function ImageConverter() {
         if (!file) return;
 
         setIsConverting(true);
-        const reader = new FileReader();
+        const tempUrl = URL.createObjectURL(file);
+        const img = new Image();
 
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext("2d");
+        img.onload = () => {
+            URL.revokeObjectURL(tempUrl);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
 
-                if (ctx) {
-                    if (outputFormat() === "image/jpeg") {
-                        ctx.fillStyle = "#ffffff";
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    }
-                    ctx.drawImage(img, 0, 0);
-
-                    canvas.toBlob(
-                        (blob) => {
-                            if (blob) {
-                                const url = URL.createObjectURL(blob);
-                                setConvertedUrl(url);
-                            }
-                            setIsConverting(false);
-                        },
-                        outputFormat(),
-                        0.9,
-                    );
+            if (ctx) {
+                if (outputFormat() === "image/jpeg") {
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
-            };
-            img.src = event.target?.result as string;
+                ctx.drawImage(img, 0, 0);
+
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) {
+                            if (convertedUrl()) {
+                                URL.revokeObjectURL(convertedUrl());
+                            }
+                            const url = URL.createObjectURL(blob);
+                            setConvertedUrl(url);
+                        }
+                        setIsConverting(false);
+                    },
+                    outputFormat(),
+                    0.9,
+                );
+            } else {
+                setIsConverting(false);
+            }
         };
-        reader.readAsDataURL(file);
+
+        img.onerror = () => {
+            URL.revokeObjectURL(tempUrl);
+            setIsConverting(false);
+        };
+
+        img.src = tempUrl;
     };
 
     const getExtensionLabel = () => {
@@ -100,7 +125,11 @@ export default function ImageConverter() {
                                             変換対象の画像ファイルを選択
                                         </span>
                                     </label>
-                                    <label class="flex flex-col items-center justify-center gap-2 h-40 border-2 border-dashed border-slate-300 rounded-xl bg-white hover:bg-slate-100 cursor-pointer px-4 transition-all group shadow-sm text-center">
+                                    <label
+                                        onDragOver={(e) => e.preventDefault()}
+                                        onDrop={handleDrop}
+                                        class="flex flex-col items-center justify-center gap-2 h-40 border-2 border-dashed border-slate-300 rounded-xl bg-white hover:bg-slate-100 cursor-pointer px-4 transition-all group shadow-sm text-center"
+                                    >
                                         <span class="text-3xl opacity-50 group-hover:opacity-80 transition-opacity">
                                             📁
                                         </span>

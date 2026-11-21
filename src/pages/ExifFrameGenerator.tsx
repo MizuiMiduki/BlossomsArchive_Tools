@@ -5,9 +5,8 @@ import {
     createEffect,
     onSettled,
 } from "solid-js";
-import piexif from "piexifjs";
 import AdSense from "../components/AdSense";
-import { delayedCall, playPageEntrance, animateFadeIn } from "../utils/gsapAnimations";
+import { delayedCall, playPageEntrance } from "../utils/gsapAnimations";
 export default function ExifFrame() {
     const [fileName, setFileName] = createSignal("");
     const [customExportName, setCustomExportName] = createSignal("");
@@ -590,6 +589,25 @@ export default function ExifFrame() {
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
+        return () => {
+            if (rafDrawId && typeof window !== "undefined" && "cancelAnimationFrame" in window) {
+                cancelAnimationFrame(rafDrawId);
+                rafDrawId = 0;
+            }
+            if (currentModalBlobUrl) {
+                URL.revokeObjectURL(currentModalBlobUrl);
+                currentModalBlobUrl = null;
+            }
+            const upSrc = uploadedImageSrc();
+            if (upSrc && upSrc.startsWith("blob:")) {
+                URL.revokeObjectURL(upSrc);
+            }
+            for (const item of overlayImages()) {
+                if (item.src && item.src.startsWith("blob:")) {
+                    URL.revokeObjectURL(item.src);
+                }
+            }
+        };
     });
 
     const fontList = [
@@ -2118,6 +2136,7 @@ export default function ExifFrame() {
                 await yieldToBrowser();
 
                 try {
+                    const { default: piexif } = await import("piexifjs");
                     const exifObj = piexif.load(rawFileBase64Str);
                     if (exifObj["0th"]) {
                         // キャンバス上の描画はすでに適切な向きで回転補正されているため、
@@ -2181,7 +2200,9 @@ export default function ExifFrame() {
             }
 
             preparedDownloadBlob = finalBlob;
-            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            const randArr = new Uint32Array(1);
+            window.crypto.getRandomValues(randArr);
+            const randomNum = 1000 + (randArr[0] % 9000);
             const downloadName = `${baseName}_${randomNum}.${saveFormat().split("/")[1]}`;
             setDownloadImageSrc(finalModalSrc);
             setDownloadFileName(downloadName);
@@ -2250,13 +2271,13 @@ export default function ExifFrame() {
             setSaveFormat(file.type);
         }
 
-        const base64Reader = new FileReader();
-        base64Reader.onload = (event) => {
-            if (file.type === "image/jpeg") {
+        if (file.type === "image/jpeg") {
+            const base64Reader = new FileReader();
+            base64Reader.onload = (event) => {
                 rawFileBase64Str = event.target?.result as string;
-            }
-        };
-        base64Reader.readAsDataURL(file);
+            };
+            base64Reader.readAsDataURL(file);
+        }
 
         try {
             const arrayBuffer = await file.arrayBuffer();
@@ -2283,6 +2304,11 @@ export default function ExifFrame() {
             console.error("Failed to parse EXIF:", e);
             setCameraModel("No EXIF data");
             setLensModel("");
+        }
+
+        const prevUpSrc = uploadedImageSrc();
+        if (prevUpSrc && prevUpSrc.startsWith("blob:")) {
+            URL.revokeObjectURL(prevUpSrc);
         }
 
         const img = new Image();

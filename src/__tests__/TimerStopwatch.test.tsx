@@ -41,12 +41,15 @@ describe("TimerStopwatch", () => {
         expect(screen.getByRole("button", { name: "スタート" })).toBeInTheDocument();
     });
 
-    it("リセットボタンで時間がリセットされること", () => {
+    it("リセットボタンで時間がリセットされ、動作中の場合は確実に停止すること", () => {
         render(() => <TimerStopwatch />);
+        fireEvent.click(screen.getByRole("button", { name: "スタート" }));
+        expect(screen.getByRole("button", { name: "一時停止" })).toBeInTheDocument();
+
         const resetBtn = screen.getByRole("button", { name: "リセット" });
-        expect(resetBtn).toBeInTheDocument();
         fireEvent.click(resetBtn);
         expect(screen.getByText("00:00.00")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "スタート" })).toBeInTheDocument();
     });
 
     it("タイマーモードでH:M:S入力・プリセット設定・カウントダウン終了時のダイアログ表示が動作すること", async () => {

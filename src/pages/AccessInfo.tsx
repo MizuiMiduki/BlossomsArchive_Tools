@@ -28,7 +28,6 @@ export default function AccessInfo() {
     const [userAgent, setUserAgent] = createSignal("");
     const [screenSize, setScreenSize] = createSignal("");
     const [physicScreenSize, setPhysicScreenSize] = createSignal("");
-    const [language, setLanguage] = createSignal("");
     const [networkType, setNetworkType] = createSignal("");
     const [batteryLevel, setBatteryLevel] = createSignal("");
 
@@ -47,7 +46,6 @@ export default function AccessInfo() {
 
         try {
             setUserAgent(navigator.userAgent || "不明");
-            setLanguage(navigator.language || "ja");
             setScreenSize(
                 `${window.screen.width || 0} x ${window.screen.height || 0}`,
             );

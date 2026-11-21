@@ -1,5 +1,5 @@
 // src/components/Layout.tsx
-import { For, Show, createEffect, createSignal, onSettled } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal, onSettled } from "solid-js";
 import type { JSX } from "@solidjs/web";
 import { useLocation } from "@solidjs/router";
 import { Link, Meta, Title } from "@solidjs/meta";
@@ -87,6 +87,7 @@ export default function Layout(props: LayoutProps) {
         window.addEventListener("click", triggerLoad, { passive: true, once: true });
 
         return () => {
+            if (hoverTween !== undefined) window.clearTimeout(hoverTween);
             window.removeEventListener("pointerdown", triggerLoad);
             window.removeEventListener("touchstart", triggerLoad);
             window.removeEventListener("keydown", triggerLoad);
@@ -111,16 +112,16 @@ export default function Layout(props: LayoutProps) {
         hoverTween = delayedCall(0.2, () => setIsPcMenuHovered(false));
     };
 
-    const currentPath = () => normalizePath(location.pathname);
+    const currentPath = createMemo(() => normalizePath(location.pathname));
 
-    const getHeaderTitle = () => {
+    const getHeaderTitle = createMemo(() => {
         const route = routes.find((r) => r.path === currentPath());
         return route ? route.title : "ツールダッシュボード";
-    };
+    });
 
-    const getMetadata = () => getPageMetadata(currentPath());
+    const getMetadata = createMemo(() => getPageMetadata(currentPath()));
     const getCurrentUrl = () => window.location.origin + currentPath();
-    const getKeywordsText = () => (getMetadata().keywords ?? []).join(", ");
+    const getKeywordsText = createMemo(() => (getMetadata().keywords ?? []).join(", "));
 
     const getShareTitle = () => {
         const baseTitle = "BlossomsArchive Tools";
@@ -191,8 +192,12 @@ export default function Layout(props: LayoutProps) {
     );
 
     createEffect(
-        () => ({ pathname: location.pathname, title: getMetadata().title }),
-        ({ pathname, title }) => {
+        () => ({
+            pathname: location.pathname,
+            title: getMetadata().title,
+            url: getMetadata().url,
+        }),
+        ({ pathname, title, url }) => {
             if (gaId && (window as any).gtag) {
                 (window as any).gtag("config", gaId, {
                     page_path: pathname,
@@ -220,7 +225,7 @@ export default function Layout(props: LayoutProps) {
                     canonical.setAttribute("rel", "canonical");
                     document.head.appendChild(canonical);
                 }
-                canonical.setAttribute("href", getMetadata().url);
+                canonical.setAttribute("href", url);
             }
         }
     );

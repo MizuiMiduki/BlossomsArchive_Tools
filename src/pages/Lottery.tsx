@@ -44,11 +44,11 @@ export default function Lottery() {
             : 1;
         const selectedResults: string[] = [];
         const loops = Math.min(currentDrawCount, items.length);
+        const randomArray = new Uint32Array(loops);
+        window.crypto.getRandomValues(randomArray);
 
         for (let i = 0; i < loops; i++) {
-            const randomArray = new Uint32Array(1);
-            window.crypto.getRandomValues(randomArray);
-            const randomIndex = randomArray[0] % items.length;
+            const randomIndex = randomArray[i] % items.length;
 
             const selectedItem = items[randomIndex];
             selectedResults.push(selectedItem);

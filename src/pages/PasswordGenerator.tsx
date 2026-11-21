@@ -45,13 +45,15 @@ export default function PasswordGenerator() {
             ? Math.max(4, Math.min(100, Math.floor(length())))
             : 16;
 
+        const allRandomValues = new Uint32Array(safeCount * safeLength);
+        window.crypto.getRandomValues(allRandomValues);
+
         for (let c = 0; c < safeCount; c++) {
             let password = "";
-            const randomValues = new Uint32Array(safeLength);
-            window.crypto.getRandomValues(randomValues);
+            const offset = c * safeLength;
 
             for (let i = 0; i < safeLength; i++) {
-                password += charPool[randomValues[i] % charPool.length];
+                password += charPool[allRandomValues[offset + i] % charPool.length];
             }
             newPasswords.push(password);
         }
