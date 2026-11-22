@@ -223,19 +223,13 @@ for (const route of routes) {
         initialShell,
     );
 
-    // FCP最優先化: modulepreloadおよびJSON-LDを<head>ではなく#root以降（body末尾）へ配置し<head>パース時間を最小化
+    // FCP/LCP最優先化: modulepreloadはメインバンドルとランタイムのみに絞り、回線帯域の分散競合を根絶
     const modulePreloadList = [
         runtimeJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
             : "",
-        budouxJsFile
-            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(budouxJsFile)}" />`
-            : "",
         mainJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(mainJsFile)}" />`
-            : "",
-        routeChunk
-            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
             : "",
     ].filter(Boolean);
 
