@@ -223,7 +223,7 @@ for (const route of routes) {
         initialShell,
     );
 
-    // FCP/LCP最優先化: modulepreloadはメインバンドルとランタイムのみに絞り、回線帯域の分散競合を根絶
+    // FCP/LCP最優先化: modulepreloadはメインバンドルとランタイムのみに絞り、<script type="module">の直前に配置
     const modulePreloadList = [
         runtimeJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
@@ -236,7 +236,7 @@ for (const route of routes) {
     const jsonLdTag = `<script type="application/ld+json" id="ba-tools-global-jsonld">${JSON.stringify(jsonLd)}</script>`;
 
     if (modulePreloadList.length > 0) {
-        const preloadMarkup = `  ${modulePreloadList.join("\n  ")}\n  ${jsonLdTag}\n`;
+        const preloadMarkup = `  ${modulePreloadList.join("\n  ")}\n`;
         const scriptMarker = `<script type="module"`;
         const scriptIndex = html.indexOf(scriptMarker);
         if (scriptIndex !== -1) {
@@ -244,25 +244,17 @@ for (const route of routes) {
                 html.slice(0, scriptIndex) +
                 preloadMarkup +
                 html.slice(scriptIndex);
-        } else {
-            const bodyCloseMarker = "</body>";
-            const bodyCloseIndex = html.indexOf(bodyCloseMarker);
-            if (bodyCloseIndex !== -1) {
-                html =
-                    html.slice(0, bodyCloseIndex) +
-                    preloadMarkup +
-                    html.slice(bodyCloseIndex);
-            }
         }
-    } else {
-        const bodyCloseMarker = "</body>";
-        const bodyCloseIndex = html.indexOf(bodyCloseMarker);
-        if (bodyCloseIndex !== -1) {
-            html =
-                html.slice(0, bodyCloseIndex) +
-                `  ${jsonLdTag}\n` +
-                html.slice(bodyCloseIndex);
-        }
+    }
+
+    // JSON-LD構造化データはメインJSの実行開始を一切妨げないよう、</body>直前に配置
+    const bodyCloseMarker = "</body>";
+    const bodyCloseIndex = html.indexOf(bodyCloseMarker);
+    if (bodyCloseIndex !== -1) {
+        html =
+            html.slice(0, bodyCloseIndex) +
+            `  ${jsonLdTag}\n` +
+            html.slice(bodyCloseIndex);
     }
 
     const outputDirectory =

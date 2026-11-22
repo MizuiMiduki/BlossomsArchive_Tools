@@ -2554,13 +2554,13 @@ export default function ExifFrame() {
     return (
         <div ref={containerRef} class="exif-tool h-full w-full p-0 sm:p-4 pb-36 sm:pb-36 lg:pb-4 flex flex-col gap-4 bg-base-100">
             {/* ヘッダーセクション: 初期SSR App Shellと整合し、ハイドレーション後のレイアウトシフトとLCP要素の消滅を防止 */}
-            <div class="card bg-base-100 shadow-xl border border-base-300 p-4 sm:p-6 flex flex-col gap-2">
+            <div class="card bg-base-100 shadow-xl border border-base-300 p-4 sm:p-6 flex flex-col gap-3">
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-base-content flex items-center gap-2">
                     <span>🖼️</span>
                     <span>EXIFフレーム生成</span>
                 </h1>
-                <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
-                    写真に撮影日時、カメラ機種、レンズ名、焦点距離、F値、シャッタースピード、ISO感度などのEXIF情報を美しくレイアウトしたフレーム画像をブラウザ完結で生成・保存できる無料ツールです。
+                <p class="text-sm text-base-content/80 leading-relaxed">
+                    写真に撮影日時、カメラ機種、レンズ名、焦点距離、F値、シャッタースピード、ISO感度などのEXIF情報を美しくレイアウトしたフレーム画像をブラウザ完結で生成・保存できる無料ツールです。完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。
                 </p>
             </div>
 
