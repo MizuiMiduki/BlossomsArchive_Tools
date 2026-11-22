@@ -4,6 +4,24 @@ import AdSense from "../components/AdSense";
 import { playPageEntrance } from "../utils/animations";
 import { initAudio, playClockTickSound } from "../utils/sound";
 
+// 文字盤の1〜12時の数字位置（半径35.5）
+const CLOCK_HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => {
+    const rad = (h * 30 * Math.PI) / 180;
+    const r = 35.5;
+    return {
+        hour: h,
+        x: Number((50 + r * Math.sin(rad)).toFixed(2)),
+        y: Number((50 - r * Math.cos(rad)).toFixed(2)),
+    };
+});
+
+// 文字盤の60分割目盛り（5分ごとの時目盛り＋1分ごとの分のコマ）
+const CLOCK_TICKS = Array.from({ length: 60 }, (_, i) => ({
+    i,
+    isHour: i % 5 === 0,
+    angle: i * 6,
+}));
+
 export default function Clock() {
     const [time, setTime] = createSignal(new Date());
     const [mode, setMode] = createSignal<"digital" | "analog">("digital");
@@ -177,17 +195,35 @@ export default function Clock() {
                                     fill="none"
                                     stroke-width="2"
                                 />
-                                {/* 目盛り */}
-                                <For each={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}>
-                                    {(i) => (
+                                {/* 目盛り（5分ごとの時目盛り＋1分ごとの分のコマ） */}
+                                <For each={CLOCK_TICKS}>
+                                    {(tick) => (
                                         <line
                                             x1="50"
-                                            y1="5"
+                                            y1="4"
                                             x2="50"
-                                            y2="10"
-                                            transform={`rotate(${i * 30} 50 50)`}
-                                            stroke-width="2"
+                                            y2={tick.isHour ? "8.5" : "6.2"}
+                                            transform={`rotate(${tick.angle} 50 50)`}
+                                            stroke-width={tick.isHour ? "1.8" : "0.75"}
+                                            opacity={tick.isHour ? "1" : "0.55"}
                                         />
+                                    )}
+                                </For>
+
+                                {/* 時間の数字（1〜12） */}
+                                <For each={CLOCK_HOURS}>
+                                    {(item) => (
+                                        <text
+                                            x={item.x}
+                                            y={item.y}
+                                            text-anchor="middle"
+                                            dominant-baseline="central"
+                                            class="fill-base-content font-bold select-none text-[6.5px]"
+                                            fill="currentColor"
+                                            stroke="none"
+                                        >
+                                            {item.hour}
+                                        </text>
                                     )}
                                 </For>
 
@@ -208,8 +244,8 @@ export default function Clock() {
                                     x1="50"
                                     y1="50"
                                     x2="50"
-                                    y2="15"
-                                    stroke-width="3"
+                                    y2="13"
+                                    stroke-width="2.8"
                                     stroke-linecap="round"
                                     transform={`rotate(${minAngle()} 50 50)`}
                                     style={{ transition: "transform 0.4s ease-out" }}
@@ -219,8 +255,8 @@ export default function Clock() {
                                     x1="50"
                                     y1="50"
                                     x2="50"
-                                    y2="10"
-                                    stroke-width="1.5"
+                                    y2="8"
+                                    stroke-width="1.4"
                                     stroke="red"
                                     stroke-linecap="round"
                                     transform={`rotate(${secAngle()} 50 50)`}

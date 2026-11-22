@@ -148,7 +148,7 @@ describe("Visual Regression & UI Structure / Layout Invariant Tests", () => {
         },
     );
 
-    it("Clock のデジタル表示とアナログ時計SVGジオメトリ（文字盤円・12目盛り・時分秒針）が崩れていないこと", () => {
+    it("Clock のデジタル表示とアナログ時計SVGジオメトリ（文字盤円・60目盛り・12時間数字・時分秒針）が崩れていないこと", () => {
         const { container } = render(() => <Clock />);
 
         // デジタル表示のフォント・トラッキング構造
@@ -166,6 +166,9 @@ describe("Visual Regression & UI Structure / Layout Invariant Tests", () => {
         expect(circles.length).toBeGreaterThanOrEqual(2);
 
         const lines = container.querySelectorAll("svg line");
-        expect(lines.length).toBe(15); // 12目盛り + 3針
+        expect(lines.length).toBe(63); // 60目盛り (5分時目盛り+1分コマ) + 3針
+
+        const texts = container.querySelectorAll("svg text");
+        expect(texts.length).toBe(12); // 1〜12の文字盤時間
     });
 });

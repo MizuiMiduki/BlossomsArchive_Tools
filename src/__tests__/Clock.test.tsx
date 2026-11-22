@@ -22,10 +22,15 @@ describe("Clock", () => {
         const svg = container.querySelector("svg");
         expect(svg).toBeInTheDocument();
 
-        // 針の存在確認（hour, min, sec）
+        // 目盛り（時目盛り+分のコマ 計60本）+ 針3本 = 63本
         const lines = container.querySelectorAll("svg line");
-        // 目盛り12本 + 針3本 = 15本
-        expect(lines.length).toBeGreaterThanOrEqual(15);
+        expect(lines.length).toBe(63);
+
+        // 文字盤の時間数字（1〜12）
+        const texts = container.querySelectorAll("svg text");
+        expect(texts.length).toBe(12);
+        expect(texts[0].textContent).toBe("1");
+        expect(texts[11].textContent).toBe("12");
     });
 
     it("アナログからデジタルへの切り替えが正常に行えること", () => {
