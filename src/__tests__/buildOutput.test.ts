@@ -65,6 +65,12 @@ describe("Static Build Output & Sitemap Integrity Tests", () => {
             expect(html).toContain('<header');
             expect(html).toContain('<h2');
 
+            // FCP/LCP高速化: メインモジュールスクリプトが#root以降（body後方）に配置されレンダリングをブロックしないこと
+            const rootPos = html.indexOf('<div id="root">');
+            const scriptPos = html.indexOf('<script type="module"');
+            expect(rootPos).toBeGreaterThan(0);
+            expect(scriptPos).toBeGreaterThan(rootPos);
+
             // PageSpeed最適化: クリティカルCSSと非同期CSSローディング、同一オリジンアイコン
             expect(html).toContain('id="ba-tools-critical-css"');
             expect(html).toContain('rel="preload"');

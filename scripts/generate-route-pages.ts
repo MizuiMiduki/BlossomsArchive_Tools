@@ -55,6 +55,30 @@ if (mainCssFile) {
     }
 }
 
+if (mainJsFile) {
+    const scriptTagVariants = [
+        `<script type="module" crossorigin src="/assets/${mainJsFile}"></script>`,
+        `<script type="module" src="/assets/${mainJsFile}"></script>`,
+    ];
+    for (const variant of scriptTagVariants) {
+        if (baseTemplate.includes(variant)) {
+            const index = baseTemplate.indexOf(variant);
+            baseTemplate =
+                baseTemplate.slice(0, index) +
+                baseTemplate.slice(index + variant.length);
+            const bodyCloseTag = "</body>";
+            const bodyIndex = baseTemplate.indexOf(bodyCloseTag);
+            if (bodyIndex !== -1) {
+                baseTemplate =
+                    baseTemplate.slice(0, bodyIndex) +
+                    `  ${variant}\n` +
+                    baseTemplate.slice(bodyIndex);
+            }
+            break;
+        }
+    }
+}
+
 const ROUTE_CHUNK_PREFIX: Record<string, string> = {
     "/": "Home",
     "/calculator": "Calculator",
