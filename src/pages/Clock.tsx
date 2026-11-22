@@ -116,21 +116,6 @@ export default function Clock() {
     const handleVolumeChange = (vol: number) => {
         const clamped = Math.max(0, Math.min(100, Math.floor(vol)));
         setSoundVolume(clamped);
-        if (clamped > 0) {
-            if (!soundEnabled()) {
-                setSoundEnabled(true);
-                try {
-                    localStorage.setItem("ba_clock_sound_enabled", "true");
-                } catch {}
-            }
-            initAudio();
-            playClockTickSound(time().getSeconds() % 2 === 0, clamped / 100);
-        } else {
-            setSoundEnabled(false);
-            try {
-                localStorage.setItem("ba_clock_sound_enabled", "false");
-            } catch {}
-        }
         try {
             localStorage.setItem("ba_clock_sound_volume", String(clamped));
         } catch {}

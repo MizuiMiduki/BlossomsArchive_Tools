@@ -27,12 +27,35 @@ describe("sound utility", () => {
             connect: vi.fn(),
         };
 
+        const mockBufferSource = {
+            buffer: null,
+            connect: vi.fn(),
+            start: vi.fn(),
+            stop: vi.fn(),
+        };
+
+        const mockBiquadFilter = {
+            type: "bandpass",
+            frequency: { setValueAtTime: vi.fn() },
+            Q: { setValueAtTime: vi.fn() },
+            connect: vi.fn(),
+        };
+
+        const mockBuffer = {
+            sampleRate: 44100,
+            getChannelData: vi.fn().mockReturnValue(new Float32Array(1000)),
+        };
+
         mockAudioCtx = {
             state: "suspended",
             currentTime: 10,
+            sampleRate: 44100,
             destination: {},
             createOscillator: vi.fn().mockReturnValue(mockOscillator),
             createGain: vi.fn().mockReturnValue(mockGain),
+            createBuffer: vi.fn().mockReturnValue(mockBuffer),
+            createBufferSource: vi.fn().mockReturnValue(mockBufferSource),
+            createBiquadFilter: vi.fn().mockReturnValue(mockBiquadFilter),
             resume: vi.fn().mockResolvedValue(undefined),
             close: vi.fn().mockResolvedValue(undefined),
         };

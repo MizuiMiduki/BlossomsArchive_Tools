@@ -65,7 +65,7 @@ describe("Clock", () => {
         expect(screen.queryByRole("button", { name: "秒針音をオンにする" })).not.toBeInTheDocument();
         expect(screen.queryByLabelText("秒針音の音量")).not.toBeInTheDocument();
 
-        // アナログモードに切り替えると秒針音コントロールが表示される
+        // アナログモードに切り替えると秒針音コントロールが表示される（初期状態はOFF）
         fireEvent.click(screen.getByRole("button", { name: "アナログ" }));
         const soundBtn = screen.getByRole("button", { name: "秒針音をオンにする" });
         expect(soundBtn).toBeInTheDocument();
@@ -74,13 +74,19 @@ describe("Clock", () => {
         const volumeSlider = screen.getByLabelText("秒針音の音量");
         expect(volumeSlider).toBeInTheDocument();
 
+        // 音量スライダーを変更しても勝手にONにならず、カチカチ音も鳴らないこと
+        fireEvent.input(volumeSlider, { target: { value: "70" } });
+        expect(localStorage.getItem("ba_clock_sound_volume")).toBe("70");
+        expect(soundBtn.textContent).toContain("OFF");
+        expect(localStorage.getItem("ba_clock_sound_enabled")).not.toBe("true");
+
         // クリックして ON
         fireEvent.click(soundBtn);
         expect(soundBtn.textContent).toContain("ON");
         expect(soundBtn).toHaveAttribute("aria-label", "秒針音をオフにする");
         expect(localStorage.getItem("ba_clock_sound_enabled")).toBe("true");
 
-        // 音量スライダーの変更
+        // 音量スライダーの再変更
         fireEvent.input(volumeSlider, { target: { value: "50" } });
         expect(localStorage.getItem("ba_clock_sound_volume")).toBe("50");
 
