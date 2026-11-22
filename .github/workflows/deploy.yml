@@ -208,7 +208,7 @@ jobs:
             - name: Run Sharded Lighthouse Audit
               run: |
                   export PATH="/home/runner/.npm-global/bin:$PATH"
-                  node scripts/audit-lighthouse.mjs --shard=${{ matrix.shard }}/10 --report-json=dist-reports/shard-${{ matrix.shard }}.json
+                  npx tsx scripts/audit-lighthouse.ts --shard=${{ matrix.shard }}/10 --report-json=dist-reports/shard-${{ matrix.shard }}.json
 
             - name: Upload Shard Report
               uses: actions/upload-artifact@v7
@@ -243,7 +243,7 @@ jobs:
             - name: Aggregate Reports
               id: aggregate
               run: |
-                  node scripts/audit-lighthouse.mjs --aggregate=dist-shards
+                  npx tsx scripts/audit-lighthouse.ts --aggregate=dist-shards
 
             - name: Create Issue on PageSpeed Regression
               if: steps.aggregate.outputs.has_issues == 'true'

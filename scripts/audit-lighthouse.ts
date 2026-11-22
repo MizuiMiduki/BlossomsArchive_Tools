@@ -9,7 +9,50 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
 const ISSUE_REPORT_PATH = path.join(ROOT_DIR, "dist", "lighthouse-issue.md");
 
-const ROUTE_SOURCE_MAP = {
+interface AuditDetailItem {
+    selector?: string;
+    snippet?: string;
+    nodeLabel?: string;
+    explanation?: string;
+    url?: string;
+    wastedMs?: number;
+    wastedBytes?: number;
+    description?: string;
+}
+
+interface FailedAudit {
+    id: string;
+    title: string;
+    score: number;
+    displayValue: string;
+    explanation: string;
+    description: string;
+    detailsItems: AuditDetailItem[];
+}
+
+interface RegressionScores {
+    performance?: number;
+    accessibility?: number;
+    bestPractices?: number;
+    seo?: number;
+    error?: string;
+}
+
+interface RegressionItem {
+    route: string;
+    preset: string;
+    theme?: string;
+    scores: RegressionScores;
+    failedAudits?: FailedAudit[];
+}
+
+interface AuditTask {
+    route: string;
+    preset: "mobile" | "desktop";
+    theme: "light" | "dark";
+}
+
+const ROUTE_SOURCE_MAP: Record<string, string> = {
     "/": "src/pages/Home.tsx",
     "/calculator": "src/pages/Calculator.tsx",
     "/qr_code": "src/pages/QrGenerator.tsx",
@@ -33,7 +76,7 @@ const ROUTE_SOURCE_MAP = {
 
 // コマンドライン引数の解析
 const rawArgs = process.argv.slice(2);
-function getArgValue(prefix) {
+function getArgValue(prefix: string): string | null {
     const found = rawArgs.find((a) => a.startsWith(prefix));
     if (!found) return null;
     return found.split("=")[1] || null;
@@ -44,7 +87,7 @@ const reportJsonArg = getArgValue("--report-json");
 const aggregateDirArg = getArgValue("--aggregate");
 
 // Lighthouse CLI の実行バイナリを探す
-function findLighthouseBin() {
+function findLighthouseBin(): string {
     const localBin = path.join(ROOT_DIR, "node_modules", ".bin", "lighthouse");
     if (fs.existsSync(localBin)) return localBin;
 
@@ -67,7 +110,7 @@ function findLighthouseBin() {
 }
 
 // routes.ts からルート一覧を抽出
-async function getRoutesToAudit() {
+async function getRoutesToAudit(): Promise<string[]> {
     const routesFile = fs.readFileSync(path.join(ROOT_DIR, "src", "routes.ts"), "utf8");
     const pathMatches = routesFile.match(/path:\s*["']([^"']+)["']/g) || [];
     const uniquePaths = [...new Set(pathMatches.map((m) => m.replace(/path:\s*["']|["']/g, "")))];
@@ -122,7 +165,13 @@ async function startPreviewServer() {
     return serverProcess;
 }
 
-async function auditUrl(lhBin, url, preset = "mobile", theme = "light", throttlingMethod = "simulate") {
+async function auditUrl(
+    lhBin: string,
+    url: string,
+    preset: "mobile" | "desktop" = "mobile",
+    theme: "light" | "dark" = "light",
+    throttlingMethod = "simulate"
+): Promise<any> {
     let chromeFlags = "--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-extensions --no-first-run --no-default-browser-check";
     if (theme === "dark") {
         chromeFlags += " --force-dark-mode";
@@ -164,14 +213,14 @@ async function auditUrl(lhBin, url, preset = "mobile", theme = "light", throttli
 }
 
 // 減点項目の詳細を抽出（要素セレクタ・スニペット・メトリクス等）
-function extractFailedAudits(report) {
-    const failedAudits = [];
-    for (const [id, a] of Object.entries(report.audits || {})) {
+function extractFailedAudits(report: any): FailedAudit[] {
+    const failedAudits: FailedAudit[] = [];
+    for (const [id, a] of Object.entries<any>(report.audits || {})) {
         if (a.score !== null && a.score < 1 && a.title) {
-            const detailsItems = [];
+            const detailsItems: AuditDetailItem[] = [];
             if (a.details?.items && Array.isArray(a.details.items)) {
                 for (const item of a.details.items.slice(0, 5)) {
-                    const detail = {};
+                    const detail: AuditDetailItem = {};
                     if (item.node) {
                         detail.selector = item.node.selector || "";
                         detail.snippet = item.node.snippet || "";
@@ -202,7 +251,7 @@ function extractFailedAudits(report) {
 }
 
 // レポートMarkdownを生成してファイル出力（原因要素やスニペットを特定しやすい構造化形式）
-function generateReportMarkdown(regressions) {
+function generateReportMarkdown(regressions: RegressionItem[]): void {
     if (regressions.length === 0) {
         console.log("🎉 全ルート×モバイル・デスクトップ×ライト・ダークですべて 100/100 満点を達成しました！");
         if (process.env.GITHUB_OUTPUT) {
@@ -304,7 +353,7 @@ function generateReportMarkdown(regressions) {
 }
 
 // 集約処理 (--aggregate=DIR)
-async function handleAggregate(dir) {
+async function handleAggregate(dir: string): Promise<void> {
     console.log(`📊 Aggregating Lighthouse shard reports from: ${dir}`);
     const resolvedDir = path.resolve(ROOT_DIR, dir);
     if (!fs.existsSync(resolvedDir)) {
@@ -313,7 +362,7 @@ async function handleAggregate(dir) {
         return;
     }
 
-    const allRegressions = [];
+    const allRegressions: RegressionItem[] = [];
     const files = fs.readdirSync(resolvedDir);
     for (const file of files) {
         if (file.startsWith("shard-") && file.endsWith(".json")) {
@@ -336,13 +385,13 @@ async function handleAggregate(dir) {
     generateReportMarkdown(allRegressions);
 }
 
-async function main() {
+async function main(): Promise<void> {
     if (aggregateDirArg) {
         await handleAggregate(aggregateDirArg);
         return;
     }
 
-    let serverProcess = null;
+    let serverProcess: any = null;
     const lhBin = findLighthouseBin();
     console.log(`Using Lighthouse binary: ${lhBin}`);
 
@@ -351,7 +400,7 @@ async function main() {
         const routes = await getRoutesToAudit();
         console.log(`Total routes in routes.ts: ${routes.length}`);
 
-        const allTasks = [];
+        const allTasks: AuditTask[] = [];
         for (const route of routes) {
             allTasks.push({ route, preset: "mobile", theme: "light" });
             allTasks.push({ route, preset: "desktop", theme: "light" });
@@ -371,12 +420,12 @@ async function main() {
             }
         }
 
-        const regressions = [];
+        const regressions: RegressionItem[] = [];
         const totalAudits = tasks.length;
         console.log(`Starting ${totalAudits} audits with concurrency 2...`);
 
         let completed = 0;
-        async function worker() {
+        async function worker(): Promise<void> {
             while (tasks.length > 0) {
                 const task = tasks.shift();
                 if (!task) break;
@@ -388,7 +437,7 @@ async function main() {
                     const report = await auditUrl(lhBin, url, preset, theme);
                     completed++;
                     const cats = report.categories || {};
-                    const scores = {
+                    const scores: RegressionScores = {
                         performance: Math.round((cats.performance?.score ?? 0) * 100),
                         accessibility: Math.round((cats.accessibility?.score ?? 0) * 100),
                         bestPractices: Math.round((cats["best-practices"]?.score ?? 0) * 100),
@@ -418,14 +467,14 @@ async function main() {
                             failedAudits,
                         });
                     }
-                } catch (err) {
+                } catch (err: any) {
                     completed++;
-                    console.log(`[${completed}/${totalAudits}] [${presetLabel}] ${route} ❌ Audit error: ${err.message}`);
+                    console.log(`[${completed}/${totalAudits}] [${presetLabel}] ${route} ❌ Audit error: ${err?.message || String(err)}`);
                     regressions.push({
                         route,
                         preset,
                         theme,
-                        scores: { error: err.message },
+                        scores: { error: err?.message || String(err) },
                         failedAudits: [],
                     });
                 }
@@ -440,7 +489,7 @@ async function main() {
             console.log(`\n🔄 Re-verifying ${totalCandidates} candidates in single-worker mode...`);
             // CPUとポートの安定化のため少し待機
             await new Promise((r) => setTimeout(r, 1000));
-            const confirmedRegressions = [];
+            const confirmedRegressions: RegressionItem[] = [];
 
             let candIndex = 0;
             for (const cand of regressions) {
@@ -452,9 +501,14 @@ async function main() {
 
                 for (let attempt = 1; attempt <= 2; attempt++) {
                     try {
-                        const report = await auditUrl(lhBin, url, cand.preset, cand.theme || "light");
+                        const report = await auditUrl(
+                            lhBin,
+                            url,
+                            cand.preset as "mobile" | "desktop",
+                            (cand.theme || "light") as "light" | "dark"
+                        );
                         const cats = report.categories || {};
-                        const scores = {
+                        const scores: RegressionScores = {
                             performance: Math.round((cats.performance?.score ?? 0) * 100),
                             accessibility: Math.round((cats.accessibility?.score ?? 0) * 100),
                             bestPractices: Math.round((cats["best-practices"]?.score ?? 0) * 100),
@@ -488,8 +542,8 @@ async function main() {
                                 failedAudits,
                             };
                         }
-                    } catch (err) {
-                        console.log(`[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/2)] [${presetLabel}] ${cand.route} ❌ Audit error: ${err.message}`);
+                    } catch (err: any) {
+                        console.log(`[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/2)] [${presetLabel}] ${cand.route} ❌ Audit error: ${err?.message || String(err)}`);
                     }
                 }
 
