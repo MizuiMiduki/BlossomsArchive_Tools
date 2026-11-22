@@ -173,18 +173,6 @@ for (const route of routes) {
     const routeChunk = findRouteChunk(route.path);
 
     const tags = [
-        mainJsFile
-            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(mainJsFile)}" />`
-            : "",
-        runtimeJsFile
-            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
-            : "",
-        budouxJsFile
-            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(budouxJsFile)}" />`
-            : "",
-        routeChunk
-            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
-            : "",
         `<title>${escapeAttribute(metadata.title)}</title>`,
         `<meta name="description" content="${escapeAttribute(metadata.description)}" />`,
         `<link rel="canonical" href="${escapeAttribute(metadata.url)}" />`,
@@ -230,11 +218,48 @@ for (const route of routes) {
 
     const initialShell = `<div id="root"><div style="min-height:100dvh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"><header style="height:4rem;border-bottom:1px solid rgba(128,128,128,0.2);display:flex;align-items:center;padding:0 1rem;gap:0.75rem"><span style="font-size:1.25rem">🌸</span><span style="font-weight:700;font-size:1.125rem">BlossomsArchive Tools</span></header><main style="flex:1;max-width:64rem;width:100%;margin:0 auto;padding:1.5rem 1rem"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1><div style="background:rgba(128,128,128,0.08);border:1px solid rgba(128,128,128,0.15);border-radius:1.25rem;padding:1.5rem;display:flex;flex-direction:column;gap:1rem"><h2 style="font-size:1.5rem;font-weight:800;margin:0;line-height:1.4">${escapeAttribute(cleanTitle)}</h2><p style="font-size:1rem;opacity:0.9;margin:0;line-height:1.7">${escapeAttribute(metadata.description)} 完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。</p><div style="height:160px;background:rgba(128,128,128,0.05);border-radius:0.75rem;border:1px dashed rgba(128,128,128,0.2)"></div></div></main></div></div>`;
 
-    const html = replaceExact(
+    let html = replaceExact(
         withSeo,
         '<div id="root"></div>',
         initialShell,
     );
+
+    // FCP最優先化: modulepreloadを<head>ではなく#root以降（body末尾のモジュールスクリプト直前）へ配置
+    const modulePreloadList = [
+        runtimeJsFile
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
+            : "",
+        budouxJsFile
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(budouxJsFile)}" />`
+            : "",
+        mainJsFile
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(mainJsFile)}" />`
+            : "",
+        routeChunk
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
+            : "",
+    ].filter(Boolean);
+
+    if (modulePreloadList.length > 0) {
+        const preloadMarkup = `  ${modulePreloadList.join("\n  ")}\n`;
+        const scriptMarker = `<script type="module"`;
+        const scriptIndex = html.indexOf(scriptMarker);
+        if (scriptIndex !== -1) {
+            html =
+                html.slice(0, scriptIndex) +
+                preloadMarkup +
+                html.slice(scriptIndex);
+        } else {
+            const bodyCloseMarker = "</body>";
+            const bodyCloseIndex = html.indexOf(bodyCloseMarker);
+            if (bodyCloseIndex !== -1) {
+                html =
+                    html.slice(0, bodyCloseIndex) +
+                    preloadMarkup +
+                    html.slice(bodyCloseIndex);
+            }
+        }
+    }
 
     const outputDirectory =
         route.path === "/"

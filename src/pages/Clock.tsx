@@ -74,7 +74,7 @@ export default function Clock() {
             }
         } catch {}
 
-        // 時計のタイマー処理 (毎秒更新)
+        // 時計のタイマー処理 (1秒ごとに更新しメインスレッド負荷を最小化)
         let lastSec = -1;
         const tick = () => {
             const current = new Date();
@@ -100,7 +100,8 @@ export default function Clock() {
                 }
             }
         };
-        const intervalId = window.setInterval(tick, 200);
+        tick();
+        const intervalId = window.setInterval(tick, 1000);
 
         // ページエントランスアニメーション
         if (containerRef) playPageEntrance(containerRef);
