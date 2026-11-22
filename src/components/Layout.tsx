@@ -147,6 +147,7 @@ export default function Layout(props: LayoutProps) {
         return getShareTitle() + "\n" + getCurrentUrl();
     };
 
+    let isFirstNavigation = true;
     createEffect(
         () => ({ pathname: location.pathname, hash: location.hash }),
         ({ hash }) => {
@@ -160,6 +161,11 @@ export default function Layout(props: LayoutProps) {
                 }
             }
 
+            if (isFirstNavigation) {
+                isFirstNavigation = false;
+                return;
+            }
+
             let userScrolled = false;
             const markUserScrolled = () => {
                 userScrolled = true;
@@ -168,15 +174,13 @@ export default function Layout(props: LayoutProps) {
 
             const resetScroll = () => {
                 if (userScrolled) return;
-                if (mainRef && mainRef.scrollTop !== 0) {
+                if (mainRef) {
                     mainRef.scrollTop = 0;
                     mainRef.scrollTo?.({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
                 }
                 window.scrollTo(0, 0);
-                if (document.documentElement.scrollTop !== 0) {
+                if (typeof document !== "undefined") {
                     document.documentElement.scrollTop = 0;
-                }
-                if (document.body.scrollTop !== 0) {
                     document.body.scrollTop = 0;
                 }
             };
