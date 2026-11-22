@@ -247,13 +247,23 @@ describe("exposureCalculator utility tests", () => {
         });
 
         it("calculateEvFromCameraSettings でハードウェア露光パラメータからEVを計算すること", () => {
-            // f/2.0, 1/125s, ISO 100 -> log2(4 / 0.008) = log2(500) ≈ 8.97
-            const ev = calculateEvFromCameraSettings(1 / 125, 100, 2.0);
-            expect(ev).toBeCloseTo(8.97, 1);
+            // W3C ImageCapture 仕様: 100μs 単位 (80 = 1/125s)
+            // f/2.0, 1/125s (80), ISO 100 -> log2(4 / 0.008) = log2(500) ≈ 8.97
+            const ev100us = calculateEvFromCameraSettings(80, 100, 2.0);
+            expect(ev100us).toBeCloseTo(8.97, 1);
+
+            // 秒数で直接渡された場合 (0.008s)
+            const evSeconds = calculateEvFromCameraSettings(0.008, 100, 2.0);
+            expect(evSeconds).toBeCloseTo(8.97, 1);
+
+            // 室内で一般的な設定: 333 (1/30s), ISO 400, f/1.8 -> EV 4.6〜6 付近
+            const evIndoor = calculateEvFromCameraSettings(333, 400, 1.8);
+            expect(evIndoor).toBeGreaterThan(4);
+            expect(evIndoor).toBeLessThan(7);
 
             // 無効値の場合は null を返すこと
             expect(calculateEvFromCameraSettings(undefined, 100)).toBeNull();
-            expect(calculateEvFromCameraSettings(1 / 125, 0)).toBeNull();
+            expect(calculateEvFromCameraSettings(80, 0)).toBeNull();
         });
     });
 });

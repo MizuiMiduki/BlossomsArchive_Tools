@@ -568,24 +568,37 @@ export function estimateEvFromLuminance(
 
 /**
  * カメラの MediaTrackSettings から実際の露光時間・ISO・F値が得られる場合に厳密な EV100 を計算
+ * ※ W3C MediaStream Image Capture 仕様において、exposureTime は 100μs (0.1ms = 1/10,000秒) 単位で返されます。
+ * ブラウザや端末実装によって秒単位(0.033)や100μs単位(333)が返る場合に対応して秒数に正規化します。
  */
 export function calculateEvFromCameraSettings(
-    exposureTimeSeconds?: number,
+    rawExposureTime?: number,
     iso?: number,
     fNumber?: number,
 ): number | null {
     if (
-        typeof exposureTimeSeconds === "number" &&
+        typeof rawExposureTime === "number" &&
         typeof iso === "number" &&
-        Number.isFinite(exposureTimeSeconds) &&
+        Number.isFinite(rawExposureTime) &&
         Number.isFinite(iso) &&
-        exposureTimeSeconds > 0 &&
+        rawExposureTime > 0 &&
         iso > 0
     ) {
-        const fn = typeof fNumber === "number" && Number.isFinite(fNumber) && fNumber > 0
-            ? fNumber
-            : 1.8; // スマートフォンの標準的な単焦点開放F値目安
-        return calculateEv100(fn, exposureTimeSeconds, iso);
+        let seconds = rawExposureTime;
+        // W3C Image Capture 仕様: 100 microseconds (0.1ms = 1/10,000s)
+        // 例: 333 (約1/30秒) => 333 / 10000 = 0.0333秒
+        // 例: 10 (1/1000秒) => 10 / 10000 = 0.001秒
+        // 例: 10000 (1秒) => 10000 / 10000 = 1.0秒
+        if (rawExposureTime >= 1) {
+            seconds = rawExposureTime / 10000;
+        }
+
+        const fn =
+            typeof fNumber === "number" && Number.isFinite(fNumber) && fNumber > 0
+                ? fNumber
+                : 1.8; // スマートフォンの標準的な単焦点開放F値目安
+
+        return calculateEv100(fn, seconds, iso);
     }
     return null;
 }

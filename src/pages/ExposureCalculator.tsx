@@ -51,6 +51,7 @@ export default function ExposureCalculator() {
     const [calibrationOffset, setCalibrationOffset] = createSignal(0);
     const [measuredEv, setMeasuredEv] = createSignal(12.0);
     const [measuredLux, setMeasuredLux] = createSignal(10000);
+    const [isHardwareMode, setIsHardwareMode] = createSignal(false);
     const [cameraError, setCameraError] = createSignal<string | null>(null);
 
     let mediaStream: MediaStream | null = null;
@@ -190,10 +191,12 @@ export default function ExposureCalculator() {
                 );
 
                 if (hwEv !== null && Number.isFinite(hwEv)) {
+                    setIsHardwareMode(true);
                     const finalEv = Math.round((hwEv + calibrationOffset()) * 10) / 10;
                     setMeasuredEv(finalEv);
                     setMeasuredLux(Math.round(2.5 * Math.pow(2, finalEv)));
                 } else {
+                    setIsHardwareMode(false);
                     // 画像フレーム輝度からの推定
                     try {
                         const imgData = ctx.getImageData(0, 0, w, h);
@@ -792,8 +795,8 @@ export default function ExposureCalculator() {
                                 </div>
                                 <input
                                     type="range"
-                                    min="-4"
-                                    max="4"
+                                    min="-6"
+                                    max="6"
                                     step="0.5"
                                     class="range range-xs range-primary"
                                     value={calibrationOffset()}
@@ -819,8 +822,15 @@ export default function ExposureCalculator() {
                         <div class="card-body">
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
-                                    <div class="text-xs uppercase tracking-wider opacity-85 font-semibold">
-                                        現在測定中の露出値 (EV 100)
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs uppercase tracking-wider opacity-85 font-semibold">
+                                            現在測定中の露出値 (EV 100)
+                                        </span>
+                                        <Show when={isHardwareMode()}>
+                                            <span class="badge badge-xs badge-accent font-mono text-[10px]">
+                                                カメラAE連動中
+                                            </span>
+                                        </Show>
                                     </div>
                                     <h3 class="text-4xl sm:text-5xl font-black mt-1">
                                         EV {measuredEv().toFixed(1)}
