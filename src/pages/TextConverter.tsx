@@ -399,7 +399,7 @@ export default function TextConverter() {
             {/* ページタイトル & 概要 */}
             <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0">
                 <div class="card-body p-4 sm:p-8">
-                    <h1 class="card-title text-2xl sm:text-3xl font-bold text-primary mb-2">
+                    <h1 class="card-title text-2xl sm:text-3xl font-black text-base-content dark:text-white mb-2">
                         <BudouX text="テキスト・HTML・Markdown変換ツール" />
                     </h1>
                     <p class="text-base-content/70 text-sm sm:text-base leading-relaxed">

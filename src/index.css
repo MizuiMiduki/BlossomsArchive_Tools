@@ -70,6 +70,38 @@ html[data-theme='dark'] button:disabled * {
     }
 }
 
+/* ダークモード時の全見出し・タイトルの高視認性保証 (純白・最高コントラスト 18:1) */
+html[data-theme='dark'] h1,
+html[data-theme='dark'] h2,
+html[data-theme='dark'] h3,
+html[data-theme='dark'] .card-title,
+html[data-theme='dark'] header span {
+    color: #ffffff !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme='light']) h1,
+    html:not([data-theme='light']) h2,
+    html:not([data-theme='light']) h3,
+    html:not([data-theme='light']) .card-title,
+    html:not([data-theme='light']) header span {
+        color: #ffffff !important;
+    }
+}
+
+/* ダークモード時のプレースホルダー視認性改善 (薄すぎて読めない問題を解消) */
+html[data-theme='dark'] ::placeholder {
+    color: rgba(255, 255, 255, 0.45) !important;
+    opacity: 1 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme='light']) ::placeholder {
+        color: rgba(255, 255, 255, 0.45) !important;
+        opacity: 1 !important;
+    }
+}
+
 /* 検索入力欄: WebKit等のネイティブクリアボタン非表示化とアイコン重なり防止 */
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration,

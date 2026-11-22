@@ -423,7 +423,7 @@ export default function CharsetConverter() {
         <div ref={containerRef} class="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8 min-w-0">
             {/* ヘッダー */}
             <div class="text-center space-y-3">
-                <h1 class="text-3xl md:text-4xl font-bold text-primary">
+                <h1 class="text-3xl md:text-4xl font-black text-base-content dark:text-white">
                     <BudouX text="文字コード総合変換ツール" />
                 </h1>
                 <p class="text-base-content/80 max-w-2xl mx-auto text-sm md:text-base">

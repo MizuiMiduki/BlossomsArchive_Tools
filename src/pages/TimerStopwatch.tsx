@@ -166,7 +166,7 @@ export default function TimerStopwatch() {
             {/* ダイアログ */}
             <dialog ref={modalRef} class="modal modal-bottom sm:modal-middle">
                 <div class="modal-box">
-                    <h2 class="font-bold text-xl text-primary">
+                    <h2 class="font-black text-xl text-base-content dark:text-white">
                         時間です！
                     </h2>
                     <p class="py-4 text-base-content/70">お疲れさまでした！</p>

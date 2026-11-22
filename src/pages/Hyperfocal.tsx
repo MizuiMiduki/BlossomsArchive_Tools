@@ -182,7 +182,7 @@ export default function HyperfocalCalculator() {
         <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col gap-4 min-w-0">
             <div class="card bg-base-100 shadow-2xl p-3 sm:p-6 w-full border border-base-300 min-w-0">
                 <div class="mb-4 sm:mb-6 border-b-2 border-base-300 pb-3 sm:pb-4">
-                    <h1 class="text-xl sm:text-2xl font-black text-primary flex items-center gap-2">
+                    <h1 class="text-xl sm:text-2xl font-black text-base-content dark:text-white flex items-center gap-2">
                         <BudouX text="📐 過焦点距離（パンフォーカス）計算ツール" />
                     </h1>
                     <BudouX

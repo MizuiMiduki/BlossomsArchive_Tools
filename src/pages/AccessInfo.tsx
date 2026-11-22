@@ -304,7 +304,7 @@ IPアドレス: ${data.ip}
                     <div class="w-full flex flex-col gap-6 sm:gap-8">
                         {/* 接続環境・位置情報 */}
                         <div>
-                            <h2 class="text-lg sm:text-xl font-bold mb-3 text-primary flex items-center gap-2">
+                            <h2 class="text-lg sm:text-xl font-black mb-3 text-base-content dark:text-white flex items-center gap-2">
                                 <span>🌐</span> 接続環境・位置情報
                             </h2>
                             <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
@@ -338,7 +338,7 @@ IPアドレス: ${data.ip}
 
                         {/* 端末・ブラウザ環境 */}
                         <div>
-                            <h2 class="text-lg sm:text-xl font-bold mb-3 text-secondary flex items-center gap-2">
+                            <h2 class="text-lg sm:text-xl font-black mb-3 text-base-content dark:text-white flex items-center gap-2">
                                 <span>💻</span> 端末・ブラウザ環境
                             </h2>
                             <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
