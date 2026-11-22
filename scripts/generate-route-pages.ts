@@ -55,34 +55,38 @@ if (mainCssFile) {
     }
 }
 
-const ROUTE_CHUNK_PREFIX: Record<string, string> = {
-    "/": "Home",
-    "/calculator": "Calculator",
-    "/qr_code": "QrGenerator",
-    "/password-generator": "PasswordGenerator",
-    "/lottery": "Lottery",
-    "/image_conversion": "ImageConverter",
-    "/video-compressor": "VideoCompressor",
-    "/charset-converter": "CharsetConverter",
-    "/access-info": "AccessInfo",
-    "/ogp-checker": "OgpChecker",
-    "/seo-checker": "SeoChecker",
-    "/exif-frame": "ExifFrameGenerator",
-    "/clock": "Clock",
-    "/timer": "TimerStopwatch",
-    "/privacy": "PrivacyPolicy",
-    "/credits": "Credits",
-    "/hyperfocal": "Hyperfocal",
-    "/headphone-driveability": "HeadphoneDriveability",
-    "/text-converter": "TextConverter",
+const ROUTE_DEPENDENT_CHUNKS: Record<string, string[]> = {
+    "/": ["Home"],
+    "/calculator": ["Calculator"],
+    "/qr_code": ["QrGenerator"],
+    "/password-generator": ["PasswordGenerator"],
+    "/lottery": ["Lottery", "sound"],
+    "/image_conversion": ["ImageConverter"],
+    "/video-compressor": ["VideoCompressor", "browser"],
+    "/charset-converter": ["CharsetConverter", "charsetConverter"],
+    "/access-info": ["AccessInfo"],
+    "/ogp-checker": ["OgpChecker"],
+    "/seo-checker": ["SeoChecker"],
+    "/exif-frame": ["ExifFrameGenerator", "piexif", "full.esm"],
+    "/clock": ["Clock", "sound"],
+    "/timer": ["TimerStopwatch", "sound"],
+    "/privacy": ["PrivacyPolicy"],
+    "/credits": ["Credits"],
+    "/hyperfocal": ["Hyperfocal"],
+    "/headphone-driveability": ["HeadphoneDriveability"],
+    "/text-converter": ["TextConverter"],
 };
 
-function findRouteChunk(routePath: string): string | undefined {
-    const prefix = ROUTE_CHUNK_PREFIX[routePath];
-    if (!prefix) return undefined;
-    return assetFiles.find(
-        (file) => file.startsWith(`${prefix}-`) && file.endsWith(".js"),
-    );
+function findRouteChunks(routePath: string): string[] {
+    const prefixes = ROUTE_DEPENDENT_CHUNKS[routePath] || [];
+    const chunks: string[] = [];
+    for (const prefix of prefixes) {
+        const found = assetFiles.find(
+            (file) => file.startsWith(`${prefix}-`) && file.endsWith(".js"),
+        );
+        if (found) chunks.push(found);
+    }
+    return chunks;
 }
 
 function escapeAttribute(value: string): string {
@@ -146,7 +150,7 @@ function replaceExact(
 for (const route of routes) {
     const metadata = getPageMetadata(route.path);
     const jsonLd = getPageJsonLd(route.path);
-    const routeChunk = findRouteChunk(route.path);
+    const routeChunks = findRouteChunks(route.path);
 
     const tags = [
         mainJsFile
@@ -158,9 +162,10 @@ for (const route of routes) {
         budouxJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(budouxJsFile)}" />`
             : "",
-        routeChunk
-            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
-            : "",
+        ...routeChunks.map(
+            (chunk) =>
+                `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(chunk)}" />`,
+        ),
         `<title>${escapeAttribute(metadata.title)}</title>`,
         `<meta name="description" content="${escapeAttribute(metadata.description)}" />`,
         `<link rel="canonical" href="${escapeAttribute(metadata.url)}" />`,
@@ -204,7 +209,7 @@ for (const route of routes) {
         ? metadata.title.slice(0, -suffix.length)
         : metadata.title;
 
-    const initialShell = `<div id="root"><div style="min-height:100dvh;display:flex;flex-direction:column"><header style="height:4rem;border-bottom:1px solid rgba(128,128,128,0.2);display:flex;align-items:center;padding:0 1rem;gap:0.75rem"><span style="font-size:1.25rem">🌸</span><span style="font-weight:700;font-size:1.125rem">BlossomsArchive Tools</span></header><main style="flex:1;max-width:64rem;width:100%;margin:0 auto;padding:1.5rem 1rem"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1><div style="background:rgba(128,128,128,0.08);border-radius:1rem;padding:1.5rem;margin-bottom:1rem"><h2 style="font-size:1.25rem;font-weight:800;margin:0 0 0.5rem 0">${escapeAttribute(cleanTitle)}</h2><p style="font-size:0.875rem;opacity:0.85;margin:0;line-height:1.5">${escapeAttribute(metadata.description)}</p></div></main></div></div>`;
+    const initialShell = `<div id="root"><div style="min-height:100dvh;display:flex;flex-direction:column"><header style="height:4rem;border-bottom:1px solid rgba(128,128,128,0.2);display:flex;align-items:center;padding:0 1rem;gap:0.75rem"><span style="font-size:1.25rem">🌸</span><span style="font-weight:700;font-size:1.125rem">BlossomsArchive Tools</span></header><main style="flex:1;max-width:64rem;width:100%;margin:0 auto;padding:1.5rem 1rem"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1><div style="background:rgba(128,128,128,0.08);border:1px solid rgba(128,128,128,0.15);border-radius:1.25rem;padding:1.5rem;display:flex;flex-direction:column;gap:0.75rem"><h2 style="font-size:1.5rem;font-weight:800;margin:0;line-height:1.4">${escapeAttribute(cleanTitle)}</h2><p style="font-size:1rem;opacity:0.9;margin:0;line-height:1.6">${escapeAttribute(metadata.description)}</p><div style="height:200px;background:rgba(128,128,128,0.05);border-radius:0.75rem;border:1px dashed rgba(128,128,128,0.2);margin-top:0.5rem"></div></div></main></div></div>`;
 
     const html = replaceExact(
         withSeo,
