@@ -55,38 +55,34 @@ if (mainCssFile) {
     }
 }
 
-const ROUTE_DEPENDENT_CHUNKS: Record<string, string[]> = {
-    "/": ["Home"],
-    "/calculator": ["Calculator"],
-    "/qr_code": ["QrGenerator"],
-    "/password-generator": ["PasswordGenerator"],
-    "/lottery": ["Lottery", "sound"],
-    "/image_conversion": ["ImageConverter"],
-    "/video-compressor": ["VideoCompressor", "browser"],
-    "/charset-converter": ["CharsetConverter", "charsetConverter"],
-    "/access-info": ["AccessInfo"],
-    "/ogp-checker": ["OgpChecker"],
-    "/seo-checker": ["SeoChecker"],
-    "/exif-frame": ["ExifFrameGenerator", "piexif", "full.esm"],
-    "/clock": ["Clock", "sound"],
-    "/timer": ["TimerStopwatch", "sound"],
-    "/privacy": ["PrivacyPolicy"],
-    "/credits": ["Credits"],
-    "/hyperfocal": ["Hyperfocal"],
-    "/headphone-driveability": ["HeadphoneDriveability"],
-    "/text-converter": ["TextConverter"],
+const ROUTE_CHUNK_PREFIX: Record<string, string> = {
+    "/": "Home",
+    "/calculator": "Calculator",
+    "/qr_code": "QrGenerator",
+    "/password-generator": "PasswordGenerator",
+    "/lottery": "Lottery",
+    "/image_conversion": "ImageConverter",
+    "/video-compressor": "VideoCompressor",
+    "/charset-converter": "CharsetConverter",
+    "/access-info": "AccessInfo",
+    "/ogp-checker": "OgpChecker",
+    "/seo-checker": "SeoChecker",
+    "/exif-frame": "ExifFrameGenerator",
+    "/clock": "Clock",
+    "/timer": "TimerStopwatch",
+    "/privacy": "PrivacyPolicy",
+    "/credits": "Credits",
+    "/hyperfocal": "Hyperfocal",
+    "/headphone-driveability": "HeadphoneDriveability",
+    "/text-converter": "TextConverter",
 };
 
-function findRouteChunks(routePath: string): string[] {
-    const prefixes = ROUTE_DEPENDENT_CHUNKS[routePath] || [];
-    const chunks: string[] = [];
-    for (const prefix of prefixes) {
-        const found = assetFiles.find(
-            (file) => file.startsWith(`${prefix}-`) && file.endsWith(".js"),
-        );
-        if (found) chunks.push(found);
-    }
-    return chunks;
+function findRouteChunk(routePath: string): string | undefined {
+    const prefix = ROUTE_CHUNK_PREFIX[routePath];
+    if (!prefix) return undefined;
+    return assetFiles.find(
+        (file) => file.startsWith(`${prefix}-`) && file.endsWith(".js"),
+    );
 }
 
 function escapeAttribute(value: string): string {
@@ -150,7 +146,7 @@ function replaceExact(
 for (const route of routes) {
     const metadata = getPageMetadata(route.path);
     const jsonLd = getPageJsonLd(route.path);
-    const routeChunks = findRouteChunks(route.path);
+    const routeChunk = findRouteChunk(route.path);
 
     const tags = [
         mainJsFile
@@ -162,10 +158,9 @@ for (const route of routes) {
         budouxJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(budouxJsFile)}" />`
             : "",
-        ...routeChunks.map(
-            (chunk) =>
-                `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(chunk)}" />`,
-        ),
+        routeChunk
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
+            : "",
         `<title>${escapeAttribute(metadata.title)}</title>`,
         `<meta name="description" content="${escapeAttribute(metadata.description)}" />`,
         `<link rel="canonical" href="${escapeAttribute(metadata.url)}" />`,
