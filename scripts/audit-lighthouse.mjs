@@ -192,7 +192,7 @@ function extractFailedAudits(report) {
     return failedAudits;
 }
 
-// レポートMarkdownを生成してファイル出力（AIエージェントおよび開発者が即座に修正箇所を特定できる形式）
+// レポートMarkdownを生成してファイル出力（原因要素やスニペットを特定しやすい構造化形式）
 function generateReportMarkdown(regressions) {
     if (regressions.length === 0) {
         console.log("🎉 全ルート×モバイル・デスクトップですべて 100/100 満点を達成しました！");
@@ -271,17 +271,17 @@ function generateReportMarkdown(regressions) {
     }
 
     markdown += `---\n\n`;
-    markdown += `### 🤖 AI Agent Action Guide（Gemini / エージェント向け修正手順）\n\n`;
-    markdown += `1. **対象ファイルの特定**:\n`;
-    markdown += `   - 上記の表および詳細セクションに記載された対象ファイル（例: \`src/pages/...tsx\` や \`src/components/...tsx\`）を開いてください。\n`;
-    markdown += `2. **原因要素の修正**:\n`;
-    markdown += `   - 記載されている **HTMLスニペット** や **CSSセレクタ** を検索し、該当要素を特定します。\n`;
-    markdown += `   - プロジェクト規約（\`AGENTS.md\`）に基づき、ハードコードされた文字色・背景色（\`text-slate-*\`, \`bg-slate-*\` 等）を DaisyUI セマンティッククラス（\`text-base-content\`, \`bg-base-*\`, \`border-base-*\` 等）へ置換するか、コントラスト比（4.5:1以上）、見出し階層、ARIAラベル、WebMCP属性等を修正してください。\n`;
+    markdown += `### 🛠 推奨される修正・対応手順\n\n`;
+    markdown += `1. **対象ファイルの確認**:\n`;
+    markdown += `   - 上記のサマリー一覧および詳細ログに記載された対象ファイル（\`src/pages/...tsx\` 等）を確認します。\n`;
+    markdown += `2. **該当要素の特定と修正**:\n`;
+    markdown += `   - 記載されている **HTMLスニペット** や **CSSセレクタ** を検索し、該当箇所を特定します。\n`;
+    markdown += `   - プロジェクト規約（\`AGENTS.md\`）に基づき、ハードコードされた文字色・背景色（\`text-slate-*\`, \`bg-slate-*\` 等）のセマンティッククラス化、コントラスト比（4.5:1以上）の確保、見出し階層、ARIAラベル等を適切に修正してください。\n`;
     markdown += `3. **コミット前必須検証**:\n`;
-    markdown += `   - 修正完了後、コミット前に必ず以下の統合検証コマンドを実行し、全テスト合格とビルド成功を確認してください:\n`;
+    markdown += `   - 修正後、必ず以下の統合検証コマンドを実行し、全テスト合格とビルド成功を確認してください:\n`;
     markdown += `     \`\`\`bash\n     pnpm run type-check && pnpm test && pnpm run build\n     \`\`\`\n`;
-    markdown += `4. **プッシュと自動Issue解決**:\n`;
-    markdown += `   - \`main\` ブランチへプッシュすると、GitHub Actions の Lighthouse CI（6シャード並列）が自動実行され、全38パターンで 100/100 満点に回復した時点で**このIssueは自動的にクローズ**されます。\n`;
+    markdown += `4. **反映とIssueの自動クローズ**:\n`;
+    markdown += `   - \`main\` ブランチへ反映後、GitHub Actions の Lighthouse CI（6シャード並列）が自動実行され、全38パターンで 100/100 満点への回復が確認されると**本Issueは自動的にクローズ**されます。\n`;
 
     fs.mkdirSync(path.dirname(ISSUE_REPORT_PATH), { recursive: true });
     fs.writeFileSync(ISSUE_REPORT_PATH, markdown, "utf8");
