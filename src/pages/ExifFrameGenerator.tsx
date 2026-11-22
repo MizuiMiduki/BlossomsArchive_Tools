@@ -2583,7 +2583,7 @@ export default function ExifFrame() {
                                                 class={`relative flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 lg:h-12 rounded-lg text-[10px] sm:text-[11px] font-bold transition-colors cursor-pointer select-none ${
                                                     activeTab() === tab.id
                                                         ? "bg-primary text-primary-content shadow-xs"
-                                                        : "text-base-content/70 hover:bg-base-200 active:bg-base-200"
+                                                        : "text-base-content/90 hover:bg-base-200 active:bg-base-200"
                                                 }`}
                                             >
                                                 <Show when={tab.isBeta}>

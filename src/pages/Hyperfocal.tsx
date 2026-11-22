@@ -535,7 +535,7 @@ export default function HyperfocalCalculator() {
                                 </div>
 
                                 {/* 範囲ラベル */}
-                                <div class="absolute top-2 left-0 right-0 text-center text-[10.5px] font-bold text-emerald-700">
+                                <div class="absolute top-2 left-0 right-0 text-center text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400">
                                     ピントが合う範囲：
                                     {dofData().totalDepthString}
                                 </div>
@@ -565,11 +565,11 @@ export default function HyperfocalCalculator() {
                                     }}
                                 >
                                     {/* 手前の限界距離ラベル */}
-                                    <div class="absolute -top-5 -left-1 text-[9px] font-black text-emerald-700 whitespace-nowrap">
+                                    <div class="absolute -top-5 -left-1 text-[9px] font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                                         ◀ {dofData().nearLimitMString}m
                                     </div>
                                     {/* 奥の限界距離ラベル */}
-                                    <div class="absolute -top-5 right-0 text-[9px] font-black text-emerald-700 whitespace-nowrap">
+                                    <div class="absolute -top-5 right-0 text-[9px] font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                                         {dofData().isInfinite
                                             ? "無限遠 ▶"
                                             : `${dofData().farLimitMString}m ▶`}
@@ -636,7 +636,7 @@ export default function HyperfocalCalculator() {
                                     <span class="text-[10.5px] font-black text-emerald-800 uppercase tracking-wider leading-normal break-words">
                                         その時にピントが合う範囲（パンフォーカス）
                                     </span>
-                                    <span class="text-3xl font-black text-emerald-700 font-mono leading-none my-1 break-words overflow-hidden text-ellipsis">
+                                    <span class="text-3xl font-black text-emerald-700 dark:text-emerald-400 font-mono leading-none my-1 break-words overflow-hidden text-ellipsis">
                                         {hyperfocalData().nearLimitM.toFixed(2)}
                                         m 〜 無限遠
                                     </span>
