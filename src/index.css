@@ -3,6 +3,11 @@
   include: button;
 }
 
+/* 非表示要素の完全消去 (Tailwindの.flex等のdisplay上書きによるレンダリング負荷を防止) */
+[hidden] {
+    display: none !important;
+}
+
 /* ダークモード時の高アクセシビリティ・高コントラスト配色 (WCAG AA 4.5:1以上を保証) */
 html[data-theme='dark'] {
     --color-primary: #9994ff;

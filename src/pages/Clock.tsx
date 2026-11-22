@@ -100,7 +100,6 @@ export default function Clock() {
                 }
             }
         };
-        tick();
         const intervalId = window.setInterval(tick, 1000);
 
         // ページエントランスアニメーション
@@ -159,6 +158,12 @@ export default function Clock() {
     return (
         <div ref={containerRef} class="flex flex-col items-center justify-center min-h-[350px] p-2 sm:p-6 w-full min-w-0 max-w-md mx-auto">
             <h1 class="sr-only">リアルタイム時計</h1>
+            <div class="card bg-base-100 shadow-xl p-4 sm:p-6 w-full max-w-md border border-base-300 mb-6 text-center">
+                <h2 class="text-xl sm:text-2xl font-black mb-1.5 text-base-content">現在時刻</h2>
+                <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
+                    高精度なデジタル表示と滑らかなアナログ時計でリアルタイムに時刻を確認できます。
+                </p>
+            </div>
             {/* 切り替えボタン */}
             <div class="inline-flex p-1 bg-base-200 rounded-2xl mb-8 sm:mb-12 shadow-inner border border-base-300">
                 <button
