@@ -80,7 +80,8 @@ export default function Home() {
                         <input
                             id="home-tool-search"
                             type="search"
-                            class="input input-bordered input-sm sm:input-md w-full pl-10 pr-9 rounded-xl bg-base-100 focus:outline-primary transition-all text-xs sm:text-sm"
+                            class="input input-bordered input-sm sm:input-md w-full !pl-11 !pr-9 rounded-xl bg-base-100 focus:outline-primary transition-all text-xs sm:text-sm"
+                            style={{ "padding-left": "2.75rem", "padding-right": "2.25rem" }}
                             placeholder="ツール名やキーワードで検索..."
                             value={searchQuery()}
                             onInput={(e) => setSearchQuery(e.currentTarget.value)}

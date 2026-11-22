@@ -11,6 +11,8 @@ describe("Home page", () => {
         const searchInput = screen.getByLabelText("ツールを検索");
         expect(searchInput).toBeInTheDocument();
         expect(searchInput).toHaveAttribute("placeholder", "ツール名やキーワードで検索...");
+        // アイコンとの重なり防止のためインラインスタイルおよびクラスで左パディングが確保されていること
+        expect((searchInput as HTMLInputElement).style.paddingLeft).toBe("2.75rem");
 
         // ツールカードが複数表示されていること
         const cards = container.querySelectorAll(".card");

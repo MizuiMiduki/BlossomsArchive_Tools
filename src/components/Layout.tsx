@@ -382,7 +382,8 @@ export default function Layout(props: LayoutProps) {
                         <input
                             id="sidebar-menu-search"
                             type="search"
-                            class="input input-bordered input-xs w-full pl-8 pr-7 rounded-lg bg-base-200/50 focus:bg-base-100 text-xs"
+                            class="input input-bordered input-xs w-full !pl-8 !pr-7 rounded-lg bg-base-200/50 focus:bg-base-100 text-xs"
+                            style={{ "padding-left": "2.25rem", "padding-right": "1.75rem" }}
                             placeholder="メニューを検索..."
                             value={sidebarSearchQuery()}
                             onInput={(e) => setSidebarSearchQuery(e.currentTarget.value)}

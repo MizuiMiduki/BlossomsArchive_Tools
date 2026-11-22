@@ -214,6 +214,8 @@ describe("Layout Component", () => {
 
         const searchInput = screen.getByLabelText("メニュー内を検索");
         expect(searchInput).toBeInTheDocument();
+        // アイコンとの重なり防止のため十分な左パディングが確保されていること
+        expect((searchInput as HTMLInputElement).style.paddingLeft).toBe("2.25rem");
 
         // 「電卓」で絞り込み
         fireEvent.input(searchInput, { target: { value: "電卓" } });
