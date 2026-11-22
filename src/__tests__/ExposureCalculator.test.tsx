@@ -9,6 +9,9 @@ describe("ExposureCalculator Page Component", () => {
             screen.getByRole("heading", { level: 1, name: /カメラ露出計算機/ }),
         ).toBeInTheDocument();
         expect(
+            screen.getByRole("button", { name: "カメラ露出計測光タブ" }),
+        ).toBeInTheDocument();
+        expect(
             screen.getByRole("button", { name: "適正露出シミュレータータブ" }),
         ).toBeInTheDocument();
         expect(
@@ -138,5 +141,35 @@ describe("ExposureCalculator Page Component", () => {
         // NaNを入力しても画面に NaN が露出しないこと
         fireEvent.input(focalInput, { target: { value: "NaN" } });
         expect(container.textContent).not.toContain("NaN");
+    });
+
+    it("カメラ露出計タブで測光モード変更やシミュレーターへの値反映ができること", () => {
+        render(() => <ExposureCalculator />);
+
+        // カメラ露出計タブへ切り替え
+        fireEvent.click(
+            screen.getByRole("button", { name: "カメラ露出計測光タブ" }),
+        );
+        expect(
+            screen.getByText(/スマホカメラ リアルタイム露出計/),
+        ).toBeInTheDocument();
+
+        // 測光モードの切り替え
+        const spotRadio = screen.getByLabelText("スポット測光モード");
+        fireEvent.click(spotRadio);
+
+        // キャリブレーション補正
+        const calibSlider = screen.getByLabelText("露出計キャリブレーションスライダー") as HTMLInputElement;
+        fireEvent.input(calibSlider, { target: { value: "1.0" } });
+        expect(calibSlider.value).toBe("1");
+
+        // 「この露出値で計算する」ボタン押下でシミュレータータブへ移動すること
+        const applyBtn = screen.getByRole("button", {
+            name: "測定したEV値を適正露出計算に適用する",
+        });
+        fireEvent.click(applyBtn);
+
+        // シミュレーター画面になり手動EVスライダーが表示されていること
+        expect(screen.getByLabelText("手動EVスライダー")).toBeInTheDocument();
     });
 });

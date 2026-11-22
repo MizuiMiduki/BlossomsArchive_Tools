@@ -9,6 +9,9 @@ import {
     calculateNdExposure,
     formatShutterSpeed,
     calculateAstroShutterLimit,
+    calculateLuminanceFromImageData,
+    estimateEvFromLuminance,
+    calculateEvFromCameraSettings,
     STANDARD_APERTURES,
     STANDARD_ISOS,
     STANDARD_SHUTTER_SPEEDS,
@@ -189,6 +192,68 @@ describe("exposureCalculator utility tests", () => {
 
         it("シーンプリセットが空でないこと", () => {
             expect(SCENE_PRESETS.length).toBeGreaterThanOrEqual(8);
+        });
+    });
+
+    describe("カメラ測光（露出計）ユーティリティ", () => {
+        it("ImageData から平均輝度を算出できること", () => {
+            // 4x4ピクセルの白画像 (RGB 255)
+            const whiteData = new Uint8ClampedArray(4 * 4 * 4).fill(255);
+            const mockImageData = {
+                width: 4,
+                height: 4,
+                data: whiteData,
+                colorSpace: "srgb" as PredefinedColorSpace,
+            };
+            const lum = calculateLuminanceFromImageData(mockImageData, "matrix");
+            expect(lum).toBeCloseTo(255, 0);
+
+            // 黒画像 (RGB 0)
+            const blackData = new Uint8ClampedArray(4 * 4 * 4).fill(0);
+            const mockBlack = {
+                width: 4,
+                height: 4,
+                data: blackData,
+                colorSpace: "srgb" as PredefinedColorSpace,
+            };
+            const lumBlack = calculateLuminanceFromImageData(mockBlack, "matrix");
+            expect(lumBlack).toBe(0);
+        });
+
+        it("スポット測光・中央重点測光で重み付けが機能すること", () => {
+            const data = new Uint8ClampedArray(10 * 10 * 4).fill(0);
+            // 中央ピクセルだけ白にする
+            const mockImage = {
+                width: 10,
+                height: 10,
+                data,
+                colorSpace: "srgb" as PredefinedColorSpace,
+            };
+            const spotLum = calculateLuminanceFromImageData(mockImage, "spot");
+            expect(Number.isFinite(spotLum)).toBe(true);
+        });
+
+        it("estimateEvFromLuminance で基準輝度からEVとLuxを算出すること", () => {
+            // 輝度120なら offset 0、baseEv 10 なら EV 10
+            const result = estimateEvFromLuminance(120, 10, 0);
+            expect(result.ev).toBe(10);
+            expect(result.offsetEv).toBe(0);
+            expect(result.lux).toBeGreaterThan(0);
+
+            // 輝度が2倍なら +1EV
+            const brightResult = estimateEvFromLuminance(240, 10, 0);
+            expect(brightResult.offsetEv).toBe(1);
+            expect(brightResult.ev).toBe(11);
+        });
+
+        it("calculateEvFromCameraSettings でハードウェア露光パラメータからEVを計算すること", () => {
+            // f/2.0, 1/125s, ISO 100 -> log2(4 / 0.008) = log2(500) ≈ 8.97
+            const ev = calculateEvFromCameraSettings(1 / 125, 100, 2.0);
+            expect(ev).toBeCloseTo(8.97, 1);
+
+            // 無効値の場合は null を返すこと
+            expect(calculateEvFromCameraSettings(undefined, 100)).toBeNull();
+            expect(calculateEvFromCameraSettings(1 / 125, 0)).toBeNull();
         });
     });
 });

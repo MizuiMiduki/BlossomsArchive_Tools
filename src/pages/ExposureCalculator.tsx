@@ -19,6 +19,10 @@ import {
     calculateNdExposure,
     formatShutterSpeed,
     calculateAstroShutterLimit,
+    calculateLuminanceFromImageData,
+    estimateEvFromLuminance,
+    calculateEvFromCameraSettings,
+    type MeteringMode,
     STANDARD_APERTURES,
     STANDARD_ISOS,
     STANDARD_SHUTTER_SPEEDS,
@@ -27,14 +31,30 @@ import {
     SENSOR_PRESETS,
 } from "../utils/exposureCalculator";
 
-type CalculatorMode = "simulator" | "nd-bulb" | "equivalent" | "astro";
+type CalculatorMode = "meter" | "simulator" | "nd-bulb" | "equivalent" | "astro";
 type SolveTarget = "shutter" | "aperture" | "iso";
 
 export default function ExposureCalculator() {
     let containerRef: HTMLDivElement | undefined;
+    let videoRef: HTMLVideoElement | undefined;
+    let canvasRef: HTMLCanvasElement | undefined;
 
     // 現在のタブ
     const [activeTab, setActiveTab] = createSignal<CalculatorMode>("simulator");
+
+    // ==========================================
+    // 0. カメラ露出計（リアルタイム測光）用状態
+    // ==========================================
+    const [isCameraActive, setIsCameraActive] = createSignal(false);
+    const [cameraFacing, setCameraFacing] = createSignal<"environment" | "user">("environment");
+    const [meterMode, setMeterMode] = createSignal<MeteringMode>("center");
+    const [calibrationOffset, setCalibrationOffset] = createSignal(0);
+    const [measuredEv, setMeasuredEv] = createSignal(12.0);
+    const [measuredLux, setMeasuredLux] = createSignal(10000);
+    const [cameraError, setCameraError] = createSignal<string | null>(null);
+
+    let mediaStream: MediaStream | null = null;
+    let meteringIntervalId: number | undefined;
 
     // ==========================================
     // 1. 適正露出シミュレーター用状態
@@ -94,6 +114,7 @@ export default function ExposureCalculator() {
             playPageEntrance(containerRef, ".card");
         }
         return () => {
+            stopCamera();
             if (timerIntervalId !== undefined) {
                 window.clearInterval(timerIntervalId);
                 timerIntervalId = undefined;
@@ -101,6 +122,106 @@ export default function ExposureCalculator() {
             closeAudio();
         };
     });
+
+    const stopCamera = () => {
+        setIsCameraActive(false);
+        if (meteringIntervalId !== undefined) {
+            window.clearInterval(meteringIntervalId);
+            meteringIntervalId = undefined;
+        }
+        if (mediaStream) {
+            mediaStream.getTracks().forEach((track) => track.stop());
+            mediaStream = null;
+        }
+        if (videoRef) {
+            videoRef.srcObject = null;
+        }
+    };
+
+    const startCamera = async () => {
+        setCameraError(null);
+        stopCamera();
+
+        if (
+            typeof navigator === "undefined" ||
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+            setCameraError(
+                "お使いのブラウザまたは端末はカメラアクセスAPIに対応していません。",
+            );
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { ideal: cameraFacing() },
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                },
+                audio: false,
+            });
+
+            mediaStream = stream;
+            if (videoRef) {
+                videoRef.srcObject = stream;
+                await videoRef.play().catch(() => {});
+            }
+            setIsCameraActive(true);
+
+            // 測光ループ（約120ms間隔でフレーム解析）
+            meteringIntervalId = window.setInterval(() => {
+                if (!videoRef || !canvasRef || videoRef.readyState < 2) return;
+                const ctx = canvasRef.getContext("2d", { willReadFrequently: true });
+                if (!ctx) return;
+
+                const w = canvasRef.width;
+                const h = canvasRef.height;
+                ctx.drawImage(videoRef, 0, 0, w, h);
+
+                const track = mediaStream?.getVideoTracks()[0];
+                const settings = track?.getSettings?.() as any;
+
+                // ハードウェア露光情報がある場合
+                const hwEv = calculateEvFromCameraSettings(
+                    settings?.exposureTime,
+                    settings?.iso,
+                );
+
+                if (hwEv !== null && Number.isFinite(hwEv)) {
+                    const finalEv = Math.round((hwEv + calibrationOffset()) * 10) / 10;
+                    setMeasuredEv(finalEv);
+                    setMeasuredLux(Math.round(2.5 * Math.pow(2, finalEv)));
+                } else {
+                    // 画像フレーム輝度からの推定
+                    try {
+                        const imgData = ctx.getImageData(0, 0, w, h);
+                        const lum = calculateLuminanceFromImageData(imgData, meterMode());
+                        const res = estimateEvFromLuminance(lum, 11.5, calibrationOffset());
+                        setMeasuredEv(res.ev);
+                        setMeasuredLux(res.lux);
+                    } catch {
+                        // 読み取りスキップ
+                    }
+                }
+            }, 120);
+        } catch (err: any) {
+            stopCamera();
+            if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+                setCameraError("カメラへのアクセス権限が拒否されました。ブラウザの設定でカメラを許可してください。");
+            } else {
+                setCameraError(`カメラの起動に失敗しました: ${err?.message || "エラーが発生しました"}`);
+            }
+        }
+    };
+
+    const applyMeasuredEvToSimulator = () => {
+        setManualEv(measuredEv());
+        setIsManualEv(true);
+        setActiveTab("simulator");
+        stopCamera();
+    };
 
     // ------------------------------------------
     // シーン選択連動
@@ -409,6 +530,18 @@ export default function ExposureCalculator() {
                         <button
                             type="button"
                             class={`tab flex-1 min-w-[130px] rounded-xl font-medium transition-all ${
+                                activeTab() === "meter"
+                                    ? "tab-active bg-primary text-primary-content shadow-sm"
+                                    : "hover:bg-base-300/60 text-base-content/80"
+                            }`}
+                            onClick={() => setActiveTab("meter")}
+                            aria-label="カメラ露出計測光タブ"
+                        >
+                            📷 カメラ露出計
+                        </button>
+                        <button
+                            type="button"
+                            class={`tab flex-1 min-w-[130px] rounded-xl font-medium transition-all ${
                                 activeTab() === "simulator"
                                     ? "tab-active bg-primary text-primary-content shadow-sm"
                                     : "hover:bg-base-300/60 text-base-content/80"
@@ -459,6 +592,261 @@ export default function ExposureCalculator() {
             </div>
 
             {/* ======================================================== */}
+            {/* 0. リアルタイムカメラ露出計 */}
+            {/* ======================================================== */}
+            <Show when={activeTab() === "meter"}>
+                <form
+                    class="space-y-6"
+                    {...({
+                        toolname: "camera-realtime-light-meter",
+                        tooldescription:
+                            "端末のカメラを用いて被写体の明るさ・EV値・照度Luxをリアルタイムに測光・計測します。",
+                    } as Record<string, string>)}
+                    onSubmit={(e) => e.preventDefault()}
+                >
+                    <div class="card bg-base-100 shadow-xl border border-base-200">
+                        <div class="card-body space-y-6">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-base-200 pb-2">
+                                <h2 class="card-title text-xl">
+                                    📷 スマホカメラ リアルタイム露出計
+                                </h2>
+                                <span class="badge badge-outline text-xs">
+                                    完全ローカル解析・外部送信なし
+                                </span>
+                            </div>
+
+                            <p class="text-xs text-base-content/80 leading-relaxed">
+                                スマートフォンやPCのカメラ映像から被写体の明るさをリアルタイム解析し、露出値（EV100）と照度（Lux）を計測します。被写体にカメラを向けて測定してください。
+                            </p>
+
+                            {/* カメラエラー表示 */}
+                            <Show when={cameraError()}>
+                                <div class="alert alert-error text-sm">
+                                    <span>⚠️ {cameraError()}</span>
+                                </div>
+                            </Show>
+
+                            {/* ビデオプレビューコンテナ */}
+                            <div class="relative max-w-lg mx-auto w-full rounded-2xl overflow-hidden bg-black aspect-[4/3] flex items-center justify-center border border-base-300 shadow-inner">
+                                <video
+                                    ref={videoRef}
+                                    playsinline
+                                    muted
+                                    autoplay
+                                    class={`w-full h-full object-cover ${
+                                        isCameraActive() ? "block" : "hidden"
+                                    }`}
+                                />
+                                <canvas
+                                    ref={canvasRef}
+                                    width="160"
+                                    height="120"
+                                    class="hidden"
+                                />
+
+                                {/* 測光照準オーバーレイ */}
+                                <Show when={isCameraActive()}>
+                                    <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                        <Show when={meterMode() === "spot"}>
+                                            <div class="w-16 h-16 border-2 border-secondary/80 rounded-full flex items-center justify-center shadow-sm">
+                                                <div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+                                            </div>
+                                        </Show>
+                                        <Show when={meterMode() === "center"}>
+                                            <div class="w-40 h-40 border-2 border-dashed border-primary/80 rounded-full flex items-center justify-center shadow-sm">
+                                                <div class="w-2 h-2 bg-primary rounded-full"></div>
+                                            </div>
+                                        </Show>
+                                        <Show when={meterMode() === "matrix"}>
+                                            <div class="w-[85%] h-[85%] border-2 border-primary/50 rounded-xl flex items-center justify-center">
+                                                <div class="w-2 h-2 bg-primary/70 rounded-full"></div>
+                                            </div>
+                                        </Show>
+                                    </div>
+                                    <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-xs font-mono text-white flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        測光中: {meterMode() === "spot" ? "スポット" : meterMode() === "center" ? "中央重点" : "全体平均"}
+                                    </div>
+                                </Show>
+
+                                {/* 未起動時のプレースホルダー */}
+                                <Show when={!isCameraActive()}>
+                                    <div class="text-center p-6 space-y-4">
+                                        <div class="text-5xl" aria-hidden="true">
+                                            📷
+                                        </div>
+                                        <div class="text-sm font-medium text-white/80">
+                                            カメラを起動して明るさを測光
+                                        </div>
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary px-6"
+                                            onClick={() => startCamera()}
+                                            aria-label="カメラを起動して測光を開始する"
+                                        >
+                                            カメラを起動する
+                                        </button>
+                                    </div>
+                                </Show>
+                            </div>
+
+                            {/* コントロールボタン群 */}
+                            <Show when={isCameraActive()}>
+                                <div class="flex flex-wrap justify-center gap-3">
+                                    <button
+                                        type="button"
+                                        class="btn btn-error btn-sm px-4"
+                                        onClick={() => stopCamera()}
+                                        aria-label="カメラを停止する"
+                                    >
+                                        🛑 カメラを停止
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline btn-sm"
+                                        onClick={() => {
+                                            setCameraFacing((prev) =>
+                                                prev === "environment"
+                                                    ? "user"
+                                                    : "environment",
+                                            );
+                                            startCamera();
+                                        }}
+                                        aria-label="背面カメラと前面カメラを切り替える"
+                                    >
+                                        🔄 {cameraFacing() === "environment" ? "インカメラに切替" : "背面カメラに切替"}
+                                    </button>
+                                </div>
+                            </Show>
+
+                            {/* 測光方式の選択 */}
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-base-200/50 transition-colors">
+                                    <input
+                                        type="radio"
+                                        name="meterMode"
+                                        class="radio radio-primary radio-sm"
+                                        checked={meterMode() === "center"}
+                                        onChange={() => setMeterMode("center")}
+                                        aria-label="中央重点測光モード"
+                                    />
+                                    <div>
+                                        <div class="font-bold text-xs">
+                                            ⭕ 中央重点測光
+                                        </div>
+                                        <div class="text-[11px] text-base-content/70">
+                                            中央被写体を重視（標準的）
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-base-200/50 transition-colors">
+                                    <input
+                                        type="radio"
+                                        name="meterMode"
+                                        class="radio radio-primary radio-sm"
+                                        checked={meterMode() === "spot"}
+                                        onChange={() => setMeterMode("spot")}
+                                        aria-label="スポット測光モード"
+                                    />
+                                    <div>
+                                        <div class="font-bold text-xs">
+                                            🎯 スポット測光
+                                        </div>
+                                        <div class="text-[11px] text-base-content/70">
+                                            中央の狭い一点のみを測定
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-base-200/50 transition-colors">
+                                    <input
+                                        type="radio"
+                                        name="meterMode"
+                                        class="radio radio-primary radio-sm"
+                                        checked={meterMode() === "matrix"}
+                                        onChange={() => setMeterMode("matrix")}
+                                        aria-label="平均測光モード"
+                                    />
+                                    <div>
+                                        <div class="font-bold text-xs">
+                                            🔲 全画面平均測光
+                                        </div>
+                                        <div class="text-[11px] text-base-content/70">
+                                            画面全体の明るさを均等評価
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {/* キャリブレーション補正 */}
+                            <div class="bg-base-200/50 p-4 rounded-xl border border-base-300/60 max-w-lg mx-auto w-full space-y-2">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-semibold text-base-content/80">
+                                        ⚙️ EVキャリブレーション補正
+                                    </span>
+                                    <span class="font-mono font-bold text-primary">
+                                        {calibrationOffset() > 0
+                                            ? `+${calibrationOffset().toFixed(1)}`
+                                            : calibrationOffset().toFixed(1)}{" "}
+                                        EV
+                                    </span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="-4"
+                                    max="4"
+                                    step="0.5"
+                                    class="range range-xs range-primary"
+                                    value={calibrationOffset()}
+                                    onInput={(e) => {
+                                        const v = parseFloat(
+                                            e.currentTarget.value,
+                                        );
+                                        setCalibrationOffset(
+                                            Number.isFinite(v) ? v : 0,
+                                        );
+                                    }}
+                                    aria-label="露出計キャリブレーションスライダー"
+                                />
+                                <div class="text-[11px] text-base-content/60">
+                                    スマホごとの自動露出特性やグレーカードに合わせて基準オフセットを微調整できます。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 測定結果表示カード */}
+                    <div class="card bg-primary text-primary-content shadow-xl border border-primary/20">
+                        <div class="card-body">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <div class="text-xs uppercase tracking-wider opacity-85 font-semibold">
+                                        現在測定中の露出値 (EV 100)
+                                    </div>
+                                    <h3 class="text-4xl sm:text-5xl font-black mt-1">
+                                        EV {measuredEv().toFixed(1)}
+                                    </h3>
+                                    <div class="text-xs opacity-90 mt-1">
+                                        推定照度: 約{" "}
+                                        {measuredLux().toLocaleString()} Lux
+                                    </div>
+                                </div>
+                                <div class="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary w-full sm:w-auto font-bold shadow-md"
+                                        onClick={() => applyMeasuredEvToSimulator()}
+                                        aria-label="測定したEV値を適正露出計算に適用する"
+                                    >
+                                        ☀️ この露出値で計算する
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </Show>
+
+            {/* ======================================================== */}
             {/* 1. 適正露出シミュレーター */}
             {/* ======================================================== */}
             <Show when={activeTab() === "simulator"}>
@@ -473,9 +861,22 @@ export default function ExposureCalculator() {
                 >
                     <div class="card bg-base-100 shadow-xl border border-base-200">
                         <div class="card-body space-y-6">
-                            <h2 class="card-title text-xl border-b border-base-200 pb-2">
-                                1. 撮影環境・シーンの選択 (目標EV)
-                            </h2>
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-base-200 pb-2">
+                                <h2 class="card-title text-xl">
+                                    1. 撮影環境・シーンの選択 (目標EV)
+                                </h2>
+                                <button
+                                    type="button"
+                                    class="btn btn-xs btn-outline btn-primary"
+                                    onClick={() => {
+                                        setActiveTab("meter");
+                                        startCamera();
+                                    }}
+                                    aria-label="カメラを起動して明るさを測光する"
+                                >
+                                    📷 カメラで測光する
+                                </button>
+                            </div>
 
                             {/* 手動 / プリセット切り替え */}
                             <div class="flex items-center gap-4">

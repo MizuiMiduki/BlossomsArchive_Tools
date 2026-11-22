@@ -168,11 +168,13 @@ export const routes: Route[] = [
         path: "/exposure-calculator",
         title: "カメラ露出計算機",
         description:
-            "通常撮影から長秒露光・星空撮影まで、絞り(F値)・シャッタースピード・ISO感度・NDフィルターの適正露出を即座にシミュレーション・換算できる無料Webカメラ露出計算ツールです。",
+            "スマホカメラでのリアルタイム露出計(測光)からND長秒露光・星空撮影まで、絞り(F値)・シャッター速度・ISO・NDの適正露出をシミュレーション・換算できる無料Webツールです。",
         applicationCategory: "MultimediaApplication",
         keywords: [
             "カメラ露出計算",
             "適正露出",
+            "カメラ露出計",
+            "スマホ露出計",
             "長秒露光",
             "NDフィルター計算",
             "シャッタースピード",

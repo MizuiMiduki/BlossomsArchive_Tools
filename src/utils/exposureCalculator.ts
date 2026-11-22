@@ -466,3 +466,127 @@ export function calculateAstroShutterLimit(
         npfRule: Math.round(npfRule * 10) / 10,
     };
 }
+
+export type MeteringMode = "spot" | "center" | "matrix";
+
+/**
+ * ImageData から指定された測光方式（スポット/中央重点/平均）で平均輝度(0〜255)を計算
+ */
+export function calculateLuminanceFromImageData(
+    imageData: ImageData,
+    mode: MeteringMode = "center",
+): number {
+    const { width, height, data } = imageData;
+    if (width <= 0 || height <= 0 || !data || data.length === 0) return 120;
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const spotRadiusX = width * 0.12;
+    const spotRadiusY = height * 0.12;
+    const centerRadiusX = width * 0.35;
+    const centerRadiusY = height * 0.35;
+
+    let totalWeightedLum = 0;
+    let totalWeight = 0;
+
+    // パフォーマンスのため適宜間引きサンプリング (縦横2pxステップ)
+    const step = Math.max(1, Math.floor(Math.min(width, height) / 120));
+
+    for (let y = 0; y < height; y += step) {
+        for (let x = 0; x < width; x += step) {
+            const idx = (y * width + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            // ITU-R BT.709 相対輝度
+            const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+            let weight = 1.0;
+            const dx = Math.abs(x - centerX);
+            const dy = Math.abs(y - centerY);
+
+            if (mode === "spot") {
+                // スポット: 中央スポット枠外は重み0
+                if (dx <= spotRadiusX && dy <= spotRadiusY) {
+                    weight = 1.0;
+                } else {
+                    weight = 0;
+                }
+            } else if (mode === "center") {
+                // 中央重点: 中央部に3倍のウェイト
+                if (dx <= centerRadiusX && dy <= centerRadiusY) {
+                    weight = 3.0;
+                } else {
+                    weight = 1.0;
+                }
+            } else {
+                // 画面全体平均 (matrix)
+                weight = 1.0;
+            }
+
+            if (weight > 0) {
+                totalWeightedLum += lum * weight;
+                totalWeight += weight;
+            }
+        }
+    }
+
+    if (totalWeight <= 0) return 120;
+    return totalWeightedLum / totalWeight;
+}
+
+/**
+ * 測定された輝度とカメラ自動露出特性から EV100 を推定
+ * targetLum = 120 (標準18%グレー付近)
+ */
+export function estimateEvFromLuminance(
+    measuredLum: number,
+    baseEv = 10,
+    calibrationOffset = 0,
+): { ev: number; offsetEv: number; lux: number } {
+    const safeLum = Number.isFinite(measuredLum) && measuredLum > 0
+        ? Math.max(1, Math.min(255, measuredLum))
+        : 120;
+    const targetLum = 120;
+
+    // 輝度比率からの露出ズレ段数 (EV offset)
+    const offsetEv = Math.log2(safeLum / targetLum);
+
+    // 有効EV = 基準EV + オフセット + ユーザーキャリブレーション
+    const rawEv = baseEv + offsetEv + (Number.isFinite(calibrationOffset) ? calibrationOffset : 0);
+    const ev = Math.round(Math.max(-8, Math.min(22, rawEv)) * 10) / 10;
+
+    // 照度 (Lux) の概算: Lux ≈ 2.5 * 2^EV
+    const lux = Math.round(2.5 * Math.pow(2, ev));
+
+    return {
+        ev,
+        offsetEv: Math.round(offsetEv * 10) / 10,
+        lux: Math.max(0, lux),
+    };
+}
+
+/**
+ * カメラの MediaTrackSettings から実際の露光時間・ISO・F値が得られる場合に厳密な EV100 を計算
+ */
+export function calculateEvFromCameraSettings(
+    exposureTimeSeconds?: number,
+    iso?: number,
+    fNumber?: number,
+): number | null {
+    if (
+        typeof exposureTimeSeconds === "number" &&
+        typeof iso === "number" &&
+        Number.isFinite(exposureTimeSeconds) &&
+        Number.isFinite(iso) &&
+        exposureTimeSeconds > 0 &&
+        iso > 0
+    ) {
+        const fn = typeof fNumber === "number" && Number.isFinite(fNumber) && fNumber > 0
+            ? fNumber
+            : 1.8; // スマートフォンの標準的な単焦点開放F値目安
+        return calculateEv100(fn, exposureTimeSeconds, iso);
+    }
+    return null;
+}
+

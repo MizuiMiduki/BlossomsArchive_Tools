@@ -431,8 +431,9 @@
       "displayName": "カメラ露出計算機 | BlossomsArchive Tools",
       "type": "application/agent-skills+md",
       "url": "https://tools.blossomsarchive.com/exposure-calculator",
-      "description": "通常撮影から長秒露光・星空撮影まで、絞り・シャッター速度・ISO・NDフィルターの適正露出をシミュレーション・換算しバルブタイマーも使える無料Webツール。",
+      "description": "スマホカメラでのリアルタイム露出計（測光）から長秒露光・星空撮影まで、絞り・シャッター速度・ISO・NDの適正露出をシミュレーション・換算しバルブタイマーも使える無料Webツール。",
       "capabilities": [
+        "CameraLightMeter",
         "ExposureValueCalculation",
         "LongExposureNdCalculator",
         "EquivalentExposureConversion",
@@ -440,6 +441,8 @@
       ],
       "tags": [
         "カメラ露出",
+        "露出計",
+        "スマホ露出計",
         "露出計算",
         "長秒露光",
         "NDフィルター",
@@ -448,6 +451,7 @@
       "version": "1.0.0",
       "updatedAt": "2026-11-22T00:00:00Z",
       "representativeQueries": [
+        "スマホのカメラを使ってリアルタイムに明るさや露出（EV値）を測光したい",
         "カメラの絞り・シャッタースピード・ISO感度の適正露出を計算したい",
         "ND1000を付けたときの長秒露光時間を計算してタイマーで測りたい",
         "露出を保ったまま絞りを変えたときの等価露出シャッター速度を求めたい",
