@@ -227,4 +227,25 @@ describe("Layout Component", () => {
         fireEvent.click(clearBtn);
         expect(screen.getByText("QRコード生成")).toBeInTheDocument();
     });
+
+    it("ダークモード視認性: サイドバーのタイトルおよび非アクティブリンクに高明度文字色クラスが付与されていること", () => {
+        const HighContrastRouter = createRouter({
+            history: memoryHistory(),
+            routes: [{ path: "/", component: () => <div>視認性テスト</div> }],
+        });
+
+        render(() => (
+            <HighContrastRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </HighContrastRouter>
+        ));
+
+        // タイトル
+        const brandTitle = screen.getByText("BA Tools");
+        expect(brandTitle.className).toContain("dark:text-white");
+
+        // 非アクティブリンク（例: QRコード生成）
+        const qrLink = screen.getByRole("link", { name: "QRコード生成" });
+        expect(qrLink.className).toContain("dark:text-gray-100");
+    });
 });

@@ -179,8 +179,8 @@ export default function Calculator() {
         if (["÷", "×", "-", "+"].includes(btn))
             return "bg-sky-700 hover:bg-sky-800 text-white font-bold border-2 border-sky-900";
         if (btn === "=")
-            return "bg-indigo-700 hover:bg-indigo-800 text-white font-bold border-2 border-indigo-900";
-        return "bg-base-100 text-base-content border-2 border-base-300 hover:bg-base-200 font-medium shadow-xs";
+            return "bg-indigo-600 hover:bg-indigo-700 text-white font-bold border-2 border-indigo-900";
+        return "bg-base-100 text-base-content dark:text-white border-2 border-base-300 hover:bg-base-200 font-bold shadow-xs";
     };
 
     return (
@@ -192,7 +192,7 @@ export default function Calculator() {
                     type="text"
                     value={display()}
                     aria-label="計算結果・入力表示"
-                    class="input input-bordered w-full text-right text-3xl sm:text-4xl lg:text-6xl font-mono h-16 sm:h-20 lg:h-24 bg-base-100 border-2 sm:border-4 border-base-300 text-base-content shadow-sm"
+                    class="input input-bordered w-full text-right text-3xl sm:text-4xl lg:text-6xl font-mono h-16 sm:h-20 lg:h-24 bg-base-100 border-2 sm:border-4 border-base-300 text-base-content dark:text-white shadow-sm"
                     disabled
                 />
 
@@ -209,7 +209,7 @@ export default function Calculator() {
                     </For>
                     <button
                         onClick={(e) => clear(e.currentTarget)}
-                        class="btn bg-red-700 hover:bg-red-800 border-red-900 btn-lg text-lg sm:text-xl lg:text-2xl text-white col-span-4 h-12 sm:h-14 lg:h-16 min-h-0"
+                        class="btn bg-red-600 hover:bg-red-700 border-red-800 btn-lg text-lg sm:text-xl lg:text-2xl !text-white font-bold col-span-4 h-12 sm:h-14 lg:h-16 min-h-0"
                     >
                         クリア
                     </button>
@@ -217,7 +217,7 @@ export default function Calculator() {
             </div>
 
             <div class="w-full lg:w-1/4 max-h-60 lg:max-h-none lg:h-auto bg-base-100 p-3 sm:p-4 rounded-xl border border-base-200 shadow-sm overflow-y-auto lg:order-1">
-                <h2 class="font-bold mb-3 sm:mb-4 border-b border-base-200 pb-2 text-sm sm:text-base">
+                <h2 class="font-bold mb-3 sm:mb-4 border-b border-base-200 pb-2 text-sm sm:text-base dark:text-white">
                     計算履歴
                 </h2>
                 <ul class="space-y-2">
@@ -225,7 +225,7 @@ export default function Calculator() {
                         {(item) => (
                             <li
                                 onClick={() => loadFromHistory(item)}
-                                class="p-2 sm:p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-primary hover:text-white transition-all text-xs sm:text-sm font-mono break-all"
+                                class="p-2 sm:p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-primary hover:text-white dark:hover:text-gray-900 transition-all text-xs sm:text-sm font-mono break-all text-base-content dark:text-gray-100"
                             >
                                 {item}
                             </li>

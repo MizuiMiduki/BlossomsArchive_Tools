@@ -75,7 +75,9 @@ html[data-theme='dark'] h1,
 html[data-theme='dark'] h2,
 html[data-theme='dark'] h3,
 html[data-theme='dark'] .card-title,
-html[data-theme='dark'] header span {
+html[data-theme='dark'] header span,
+html[data-theme='dark'] aside span.font-bold,
+html[data-theme='dark'] aside span.font-black {
     color: #ffffff !important;
 }
 
@@ -84,8 +86,42 @@ html[data-theme='dark'] header span {
     html:not([data-theme='light']) h2,
     html:not([data-theme='light']) h3,
     html:not([data-theme='light']) .card-title,
-    html:not([data-theme='light']) header span {
+    html:not([data-theme='light']) header span,
+    html:not([data-theme='light']) aside span.font-bold,
+    html:not([data-theme='light']) aside span.font-black {
         color: #ffffff !important;
+    }
+}
+
+/* ダークモード時のサイドバー全リンク・フッター・ナビゲーションの視認性保証 (黒背景と同化しない高明度 #f3f4f6) */
+html[data-theme='dark'] aside nav a:not(.bg-primary),
+html[data-theme='dark'] aside footer,
+html[data-theme='dark'] aside footer a {
+    color: #f3f4f6 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme='light']) aside nav a:not(.bg-primary),
+    html:not([data-theme='light']) aside footer,
+    html:not([data-theme='light']) aside footer a {
+        color: #f3f4f6 !important;
+    }
+}
+
+/* 計算機・表示欄の disabled 入力文字色保証 */
+html[data-theme='dark'] input:disabled,
+html[data-theme='dark'] input[disabled] {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme='light']) input:disabled,
+    html:not([data-theme='light']) input[disabled] {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        opacity: 1 !important;
     }
 }
 

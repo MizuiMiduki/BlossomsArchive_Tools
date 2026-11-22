@@ -170,7 +170,7 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         expect(fs.existsSync(path.join(ROOT_DIR, "public", "icon-192.png"))).toBe(true);
     });
 
-    it("ダークモード視認性ガード: src/index.css に全見出し・タイトルの純白化ルールおよび非活性ボタンの明瞭化ルールが存在すること", () => {
+    it("ダークモード視認性ガード: src/index.css に全見出し・タイトルの純白化ルールおよび非活性ボタン・サイドバーリンクの明瞭化ルールが存在すること", () => {
         const indexCss = fs.readFileSync(
             path.join(ROOT_DIR, "src", "index.css"),
             "utf8",
@@ -179,6 +179,8 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         expect(indexCss).toContain("color: #ffffff !important;");
         expect(indexCss).toContain("html[data-theme='dark'] .btn:disabled");
         expect(indexCss).toContain("rgba(255, 255, 255, 0.65)");
+        expect(indexCss).toContain("html[data-theme='dark'] aside nav a:not(.bg-primary)");
+        expect(indexCss).toContain("#f3f4f6");
     });
 
     it("テスト網羅ガード: src/pages 内の全ページコンポーネントに対応するテストコードが存在し、visualRegression に登録されていること", () => {
