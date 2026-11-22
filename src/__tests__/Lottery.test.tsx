@@ -141,4 +141,44 @@ describe("Lottery", () => {
 
         expect(screen.getByText("選定結果")).toBeInTheDocument();
     });
+
+    it("演出用音量スライダーおよびミュートボタンで音量を小さく調整でき、localStorageに保存されること", () => {
+        localStorage.clear();
+        const { unmount } = render(() => <Lottery />);
+
+        // 演出なし（デフォルト）では音量スライダーは非表示
+        expect(screen.queryByLabelText("演出音量")).not.toBeInTheDocument();
+
+        // 演出モードをルーレットに切り替えると音量スライダーが表示される
+        const animSelect = screen.getByLabelText("抽選演出") as HTMLSelectElement;
+        fireEvent.change(animSelect, { target: { value: "roulette" } });
+
+        const volumeSlider = screen.getByLabelText("演出音量") as HTMLInputElement;
+        expect(volumeSlider).toBeInTheDocument();
+        // 初期値（デフォルト）は 50%
+        expect(volumeSlider.value).toBe("50");
+
+        // 音量を小さく（20%）変更
+        fireEvent.input(volumeSlider, { target: { value: "20" } });
+        expect(localStorage.getItem("ba_lottery_sound_volume")).toBe("20");
+        expect(screen.getByText("20%")).toBeInTheDocument();
+
+        // ミュートボタンをクリックして 0% にできること
+        const muteBtn = screen.getByRole("button", { name: "ミュート" });
+        fireEvent.click(muteBtn);
+        expect(localStorage.getItem("ba_lottery_sound_volume")).toBe("0");
+        expect(screen.getByText("0%")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "ミュート解除" })).toBeInTheDocument();
+
+        unmount();
+
+        // 再レンダリング（リロード）時に小さくした音量（0%）が復元されること
+        const { unmount: unmount2 } = render(() => <Lottery />);
+        const animSelect2 = screen.getByLabelText("抽選演出") as HTMLSelectElement;
+        fireEvent.change(animSelect2, { target: { value: "roulette" } });
+
+        const volumeSlider2 = screen.getByLabelText("演出音量") as HTMLInputElement;
+        expect(volumeSlider2.value).toBe("0");
+        unmount2();
+    });
 });

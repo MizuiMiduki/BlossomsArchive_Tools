@@ -13,11 +13,24 @@ interface HistoryItem {
 export type LotteryAnimationMode = "none" | "roulette" | "countdown";
 
 export default function Lottery() {
+    const getInitialVolume = (): number => {
+        if (typeof window === "undefined") return 50;
+        try {
+            const raw = localStorage.getItem("ba_lottery_sound_volume");
+            if (raw !== null) {
+                const saved = Number(raw);
+                if (Number.isFinite(saved) && saved >= 0 && saved <= 100) return Math.floor(saved);
+            }
+        } catch {}
+        return 50;
+    };
+
     const [inputText, setInputText] = createSignal("");
     const [results, setResults] = createSignal<string[]>([]);
     const [drawCount, setDrawCount] = createSignal(1);
     const [removeOnDraw, setRemoveOnDraw] = createSignal(false);
     const [animationMode, setAnimationMode] = createSignal<LotteryAnimationMode>("none");
+    const [soundVolume, setSoundVolume] = createSignal(getInitialVolume());
     const [isAnimating, setIsAnimating] = createSignal(false);
     const [rouletteCandidate, setRouletteCandidate] = createSignal("");
     const [countdownNumber, setCountdownNumber] = createSignal<number | null>(null);
@@ -29,6 +42,14 @@ export default function Lottery() {
     let drawButtonRef: HTMLButtonElement | undefined;
     let animationTimers: number[] = [];
     let pendingDrawAction: (() => void) | null = null;
+
+    const handleVolumeChange = (vol: number) => {
+        const clamped = Math.max(0, Math.min(100, Math.floor(vol)));
+        setSoundVolume(clamped);
+        try {
+            localStorage.setItem("ba_lottery_sound_volume", String(clamped));
+        } catch {}
+    };
 
     const clearAllTimers = () => {
         animationTimers.forEach((t) => window.clearTimeout(t));
@@ -120,8 +141,12 @@ export default function Lottery() {
         clearAllTimers();
         setIsAnimating(true);
 
+        const volRatio = soundVolume() / 100;
+
         const doFinish = () => {
-            playNotificationSound({ soundType: "chime", volume: 0.8 });
+            if (volRatio > 0) {
+                playNotificationSound({ soundType: "chime", volume: 0.8 * volRatio });
+            }
             finishDraw(selectedResults, remainingItems);
         };
         pendingDrawAction = doFinish;
@@ -140,7 +165,9 @@ export default function Lottery() {
                     // ランダムな候補を表示
                     const randIdx = Math.floor(Math.random() * items.length);
                     setRouletteCandidate(items[randIdx]);
-                    playClockTickSound(idx % 2 === 0, 0.45);
+                    if (volRatio > 0) {
+                        playClockTickSound(idx % 2 === 0, 0.45 * volRatio);
+                    }
 
                     // 最後のステップで確定
                     if (idx === steps.length - 1) {
@@ -158,16 +185,22 @@ export default function Lottery() {
         // ドキドキ演出: カウントダウンモード (3, 2, 1)
         if (mode === "countdown") {
             setCountdownNumber(3);
-            playClockTickSound(true, 0.6);
+            if (volRatio > 0) {
+                playClockTickSound(true, 0.6 * volRatio);
+            }
 
             const t1 = window.setTimeout(() => {
                 setCountdownNumber(2);
-                playClockTickSound(false, 0.6);
+                if (volRatio > 0) {
+                    playClockTickSound(false, 0.6 * volRatio);
+                }
             }, 700);
 
             const t2 = window.setTimeout(() => {
                 setCountdownNumber(1);
-                playClockTickSound(true, 0.6);
+                if (volRatio > 0) {
+                    playClockTickSound(true, 0.6 * volRatio);
+                }
             }, 1400);
 
             const t3 = window.setTimeout(() => {
@@ -355,6 +388,45 @@ export default function Lottery() {
                                     </span>
                                 </label>
                             </div>
+
+                            {/* 演出用音量コントロール (演出が選択されている場合のみ表示) */}
+                            <Show when={animationMode() !== "none"}>
+                                <div class="form-control w-full border-t border-base-300 pt-3">
+                                    <div class="flex justify-between items-center text-xs text-base-content/80 mb-1.5">
+                                        <label for="lottery-sound-volume" class="font-bold">
+                                            演出音量
+                                        </label>
+                                        <div class="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                class="text-[11px] text-primary hover:underline font-bold"
+                                                onClick={() => handleVolumeChange(soundVolume() === 0 ? 50 : 0)}
+                                            >
+                                                {soundVolume() === 0 ? "ミュート解除" : "ミュート"}
+                                            </button>
+                                            <span class="font-mono text-xs tabular-nums font-bold w-10 text-right text-base-content/90">
+                                                {soundVolume()}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <input
+                                        id="lottery-sound-volume"
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="5"
+                                        value={soundVolume()}
+                                        aria-label="演出音量"
+                                        onInput={(e) => {
+                                            const v = Number(e.currentTarget.value);
+                                            if (Number.isFinite(v)) {
+                                                handleVolumeChange(v);
+                                            }
+                                        }}
+                                        class="range range-xs range-primary w-full"
+                                    />
+                                </div>
+                            </Show>
 
                             {/* アクションボタン */}
                             <div class="flex gap-3 border-t border-base-300 pt-4">
