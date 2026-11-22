@@ -21,27 +21,52 @@ html[data-theme='dark'] {
 }
 
 /* ダークモード時の primary 背景要素（ボタン・バッジ・アクティブナビ等）の文字色を濃色に強制 (WCAG AA 4.5:1以上を保証) */
-html[data-theme='dark'] .btn-primary:not(.btn-outline),
-html[data-theme='dark'] .btn-primary:not(.btn-outline) *,
+html[data-theme='dark'] .btn-primary:not(.btn-outline):not(:disabled):not([disabled]),
+html[data-theme='dark'] .btn-primary:not(.btn-outline):not(:disabled):not([disabled]) *,
 html[data-theme='dark'] .badge-primary,
 html[data-theme='dark'] .badge-primary *,
-html[data-theme='dark'] .bg-primary:not([class*="/"]),
-html[data-theme='dark'] .bg-primary:not([class*="/"]) *,
+html[data-theme='dark'] .bg-primary:not([class*="/"]):not(:disabled):not([disabled]),
+html[data-theme='dark'] .bg-primary:not([class*="/"]):not(:disabled):not([disabled]) *,
 html[data-theme='dark'] [data-active].bg-primary,
 html[data-theme='dark'] [data-active].bg-primary * {
     color: #111827 !important;
 }
 
 @media (prefers-color-scheme: dark) {
-    html:not([data-theme='light']) .btn-primary:not(.btn-outline),
-    html:not([data-theme='light']) .btn-primary:not(.btn-outline) *,
+    html:not([data-theme='light']) .btn-primary:not(.btn-outline):not(:disabled):not([disabled]),
+    html:not([data-theme='light']) .btn-primary:not(.btn-outline):not(:disabled):not([disabled]) *,
     html:not([data-theme='light']) .badge-primary,
     html:not([data-theme='light']) .badge-primary *,
-    html:not([data-theme='light']) .bg-primary:not([class*="/"]),
-    html:not([data-theme='light']) .bg-primary:not([class*="/"]) *,
+    html:not([data-theme='light']) .bg-primary:not([class*="/"]):not(:disabled):not([disabled]),
+    html:not([data-theme='light']) .bg-primary:not([class*="/"]):not(:disabled):not([disabled]) *,
     html:not([data-theme='light']) [data-active].bg-primary,
     html:not([data-theme='light']) [data-active].bg-primary * {
         color: #111827 !important;
+    }
+}
+
+/* 非活性（disabled）ボタンの視認性保証: ダークモードでも文字が背景と同化・消滅しない高視認性スタイル */
+html[data-theme='dark'] .btn:disabled,
+html[data-theme='dark'] .btn[disabled],
+html[data-theme='dark'] button:disabled,
+html[data-theme='dark'] .btn:disabled *,
+html[data-theme='dark'] .btn[disabled] *,
+html[data-theme='dark'] button:disabled * {
+    color: rgba(255, 255, 255, 0.65) !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme='light']) .btn:disabled,
+    html:not([data-theme='light']) .btn[disabled],
+    html:not([data-theme='light']) button:disabled,
+    html:not([data-theme='light']) .btn:disabled *,
+    html:not([data-theme='light']) .btn[disabled] *,
+    html:not([data-theme='light']) button:disabled * {
+        color: rgba(255, 255, 255, 0.65) !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
     }
 }
 

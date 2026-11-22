@@ -175,14 +175,14 @@ export default function QrGenerator() {
                                                     class={`p-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${
                                                         fileFormat() ===
                                                         opt.value
-                                                            ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
-                                                            : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content/80"
+                                                            ? "border-primary bg-primary/25 text-primary dark:text-white font-black shadow-sm"
+                                                            : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content font-bold"
                                                     }`}
                                                 >
                                                     <span class="font-black text-sm">
                                                         {opt.label}
                                                     </span>
-                                                    <span class="text-[10px] text-base-content/70 font-semibold mt-0.5">
+                                                    <span class="text-[10px] text-base-content/85 font-semibold mt-0.5">
                                                         {opt.desc}
                                                     </span>
                                                 </button>

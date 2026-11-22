@@ -111,6 +111,12 @@ describe("Visual Regression & UI Structure / Layout Invariant Tests", () => {
         // 横スクロール・高さ崩れ防止のための overflow-x-hidden / min-h-0 構造の確認
         expect(main?.className).toContain("overflow-x-hidden");
         expect(main?.className).toContain("min-h-0");
+
+        // ヘッダータイトルの高コントラスト・ダークモード視認性クラスの確認
+        const headerTitle = header?.querySelector("span.truncate");
+        expect(headerTitle).not.toBeNull();
+        expect(headerTitle?.className).toContain("dark:text-white");
+        expect(headerTitle?.className).toContain("font-black");
     });
 
     it.each(PAGE_ENTRIES)(

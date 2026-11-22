@@ -7,14 +7,16 @@ describe("QrGenerator", () => {
         vi.restoreAllMocks();
     });
 
-    it("初期状態で入力エリアとフォーマット選択ボタンが表示されること", () => {
+    it("初期状態で入力エリアとフォーマット選択ボタンが表示され、高視認性クラスが付与されていること", () => {
         render(() => <QrGenerator />);
         expect(screen.getByText("QRコード作成・生成ツール")).toBeInTheDocument();
         expect(screen.getByPlaceholderText(/https:\/\/example\.com/)).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "QRコードを作成する" })).toBeInTheDocument();
 
-        // 各フォーマット
-        expect(screen.getByText("PNG")).toBeInTheDocument();
+        // 各フォーマットと高視認性クラス
+        const pngBtn = screen.getByText("PNG").closest("button");
+        expect(pngBtn).toHaveClass("border-primary");
+        expect(pngBtn).toHaveClass("font-black");
         expect(screen.getByText("JPEG")).toBeInTheDocument();
         expect(screen.getByText("WebP")).toBeInTheDocument();
         expect(screen.getByText("SVG")).toBeInTheDocument();

@@ -630,7 +630,7 @@ export default function Layout(props: LayoutProps) {
                                 ></path>
                             </svg>
                         </button>
-                        <span class="font-bold text-base sm:text-lg truncate">
+                        <span class="font-black text-base sm:text-lg truncate text-base-content dark:text-white">
                             {getHeaderTitle()}
                         </span>
                     </div>
