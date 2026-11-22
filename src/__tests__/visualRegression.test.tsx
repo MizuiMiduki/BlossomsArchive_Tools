@@ -171,4 +171,50 @@ describe("Visual Regression & UI Structure / Layout Invariant Tests", () => {
         const texts = container.querySelectorAll("svg text");
         expect(texts.length).toBe(12); // 1〜12の文字盤時間
     });
+
+    it("Home画面のカードグリッド構造と均一インフィード広告カードのデザイン整合性（card, border, shadow, badge）が維持されていること", () => {
+        const TestRouter = createRouter({
+            history: memoryHistory(),
+            routes: [{ path: "/", component: Home }],
+        });
+
+        const { container } = render(() => <TestRouter />);
+
+        // 検索バーが存在し、プレースホルダーとアクセシブルラベルが整っていること
+        const searchInput = container.querySelector('input[type="search"]');
+        expect(searchInput).not.toBeNull();
+        expect(searchInput?.getAttribute("placeholder")).toContain("検索");
+        expect(searchInput?.getAttribute("aria-label")).toContain("検索");
+
+        // 全カード一覧
+        const allCards = container.querySelectorAll(".grid > div.card");
+        expect(allCards.length).toBeGreaterThan(0);
+
+        // ツールカード一覧 (.card-title を持つカード)
+        const toolCards = Array.from(allCards).filter((c) => c.querySelector(".card-title"));
+        expect(toolCards.length).toBeGreaterThan(0);
+
+        // インフィード広告カード一覧 (.badge スポンサー を持つカード)
+        const adCards = Array.from(allCards).filter((c) => c.querySelector(".badge"));
+        expect(adCards.length).toBeGreaterThan(0);
+
+        // ツールカードと広告カードがデザイン共通クラス（card, bg-base-100, border-base-300, shadow-sm）を共有していること
+        for (const card of toolCards) {
+            expect(card.classList.contains("card")).toBe(true);
+            expect(card.classList.contains("bg-base-100")).toBe(true);
+            expect(card.classList.contains("border-base-300")).toBe(true);
+            expect(card.classList.contains("shadow-sm")).toBe(true);
+        }
+
+        for (const adCard of adCards) {
+            expect(adCard.classList.contains("card")).toBe(true);
+            expect(adCard.classList.contains("bg-base-100")).toBe(true);
+            expect(adCard.classList.contains("border-base-300")).toBe(true);
+            expect(adCard.classList.contains("shadow-sm")).toBe(true);
+            // スポンサーバッジが存在すること
+            const badge = adCard.querySelector(".badge");
+            expect(badge).not.toBeNull();
+            expect(badge?.textContent?.trim()).toBe("スポンサー");
+        }
+    });
 });

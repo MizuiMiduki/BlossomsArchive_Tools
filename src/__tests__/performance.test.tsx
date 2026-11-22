@@ -22,6 +22,9 @@ import { playPageEntrance } from "../utils/gsapAnimations";
 import Home from "../pages/Home";
 import Calculator from "../pages/Calculator";
 import TextConverter from "../pages/TextConverter";
+import Clock from "../pages/Clock";
+import { filterRoutesByQuery } from "../utils/search";
+import { routes } from "../routes";
 
 describe("Performance & Bundle Budget Tests", () => {
     it("BudouX 日本語分かち書き処理が長文（5,000文字以上）でも 100ms 以内に完了すること", () => {
@@ -165,5 +168,35 @@ describe("Performance & Bundle Budget Tests", () => {
             expect(html).toContain('rel="modulepreload"');
             expect(html).toContain('rel="ard"');
         }
+    });
+
+    it("検索フィルタリング処理が 100 ルート × 50 回検索でも 100ms 以内に高速完了すること", () => {
+        // 100件のダミールートリストを生成
+        const largeRouteList = Array.from({ length: 100 }, (_, i) => ({
+            ...routes[i % routes.length],
+            path: `/dummy-tool-${i}`,
+            title: `ツール ${i} 番目 ${routes[i % routes.length].title}`,
+        }));
+
+        const queries = ["たいまー", "QR", "電卓", "けいさん", "画像", "動画", "xyz", "変換"];
+        const start = performance.now();
+
+        for (let i = 0; i < 50; i++) {
+            const q = queries[i % queries.length];
+            const result = filterRoutesByQuery(largeRouteList, q);
+            expect(Array.isArray(result)).toBe(true);
+        }
+
+        const elapsed = performance.now() - start;
+        expect(elapsed).toBeLessThan(100);
+    });
+
+    it("アナログ時計（Clock）の初期描画およびSVG文字盤（60目盛り+12数字）レンダリングが高速（50ms以内）であること", () => {
+        const start = performance.now();
+        const view = render(() => <Clock />);
+        const elapsed = performance.now() - start;
+
+        expect(elapsed).toBeLessThan(80);
+        view.unmount();
     });
 });

@@ -12,6 +12,8 @@ import SeoChecker from "../pages/SeoChecker";
 import OgpChecker from "../pages/OgpChecker";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import Credits from "../pages/Credits";
+import TimerStopwatch from "../pages/TimerStopwatch";
+import Clock from "../pages/Clock";
 import NotFound from "../pages/NotFound";
 
 function createFullE2ERouter() {
@@ -26,6 +28,8 @@ function createFullE2ERouter() {
             { path: "/text-converter", component: TextConverter },
             { path: "/seo-checker", component: SeoChecker },
             { path: "/ogp-checker", component: OgpChecker },
+            { path: "/timer", component: TimerStopwatch },
+            { path: "/clock", component: Clock },
             { path: "/privacy", component: PrivacyPolicy },
             { path: "/credits", component: Credits },
             { path: "*404", component: NotFound },
@@ -183,5 +187,58 @@ describe("E2E User Journey Tests (End-to-End Application Workflows)", () => {
             .filter((a) => a.getAttribute("href") === "/credits");
         fireEvent.click(creditsLinks[0]);
         expect(await screen.findByText("Solid.js")).toBeInTheDocument();
+    });
+
+    it("Journey 4: 検索機能（かな正規化対応）と画面遷移、アナログ時計（目盛り・数字表示）の一連のワークフローが正常に動作すること", async () => {
+        const AppRouter = createFullE2ERouter();
+        render(() => (
+            <AppRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </AppRouter>
+        ));
+
+        // 1. ホーム画面で "たいまー" (ひらがな) を検索
+        const homeSearch = screen.getByPlaceholderText(/ツール名やキーワードで検索/i);
+        fireEvent.input(homeSearch, { target: { value: "たいまー" } });
+
+        // タイマーカードが表示され、電卓カードの見出しは非表示になる
+        expect(screen.getAllByText("タイマー・ストップウォッチ").length).toBeGreaterThan(0);
+        expect(screen.queryByRole("heading", { name: "電卓ツール" })).toBeNull();
+
+        // タイマーカードをクリックして遷移
+        const timerLink = screen
+            .getAllByRole("link")
+            .find((a) => a.getAttribute("href") === "/timer");
+        expect(timerLink).toBeDefined();
+        if (timerLink) fireEvent.click(timerLink);
+
+        // タイマー画面の要素確認（「スタート」ボタン等）
+        expect(await screen.findByRole("button", { name: "スタート" })).toBeInTheDocument();
+
+        // 2. サイドバーの検索バーで "あなろぐ" (ひらがな) を検索してアナログ時計へ遷移
+        const sidebarSearch = screen.getByPlaceholderText("メニューを検索...") as HTMLInputElement;
+        fireEvent.input(sidebarSearch, { target: { value: "あなろぐ" } });
+
+        const clockLink = screen
+            .getAllByRole("link")
+            .find((a) => a.getAttribute("href") === "/clock");
+        expect(clockLink).toBeDefined();
+        if (clockLink) fireEvent.click(clockLink);
+
+        // 時計画面へ遷移したことを確認
+        expect(await screen.findByText("リアルタイム時計")).toBeInTheDocument();
+        const analogBtn = screen.getByRole("button", { name: "アナログ" });
+        expect(analogBtn).toBeInTheDocument();
+
+        // アナログ時計モードに切り替え
+        fireEvent.click(analogBtn);
+
+        // 文字盤SVGの数字（1〜12）が正しく描画されていること
+        const hourTexts = document.querySelectorAll("svg text");
+        expect(hourTexts.length).toBe(12);
+        expect(Array.from(hourTexts).map((t) => t.textContent)).toContain("12");
+
+        // ページ遷移によりサイドバー検索入力が自動リセットされていること
+        expect(sidebarSearch.value).toBe("");
     });
 });

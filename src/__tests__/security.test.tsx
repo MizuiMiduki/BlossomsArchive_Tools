@@ -14,6 +14,9 @@ import TextConverter from "../pages/TextConverter";
 import PasswordGenerator from "../pages/PasswordGenerator";
 import Lottery from "../pages/Lottery";
 import Credits from "../pages/Credits";
+import ThemeToggle from "../components/ThemeToggle";
+import { filterRoutesByQuery } from "../utils/search";
+import { routes } from "../routes";
 
 describe("Security Tests (XSS, Sanitization, Code Injection, CSPRNG & Headers)", () => {
     beforeEach(() => {
@@ -190,5 +193,43 @@ describe("Security Tests (XSS, Sanitization, Code Injection, CSPRNG & Headers)",
         expect(htaccess).toContain("nosniff");
         expect(htaccess).toContain("X-Frame-Options");
         expect(htaccess).toContain("Strict-Transport-Security");
+    });
+
+    it("検索クエリ安全性: filterRoutesByQuery に ReDoS や正規表現メタ文字、XSS ペイロードが渡されても例外を起こさず安全に処理されること", () => {
+        const maliciousQueries = [
+            ".*+?^${}()|[]\\",
+            "((((((a+)+)+)+)+)+)+",
+            '<script>alert("xss")</script>',
+            '"><img src=x onerror=alert(1)>',
+            "'; DROP TABLE routes; --",
+            "\u0000\u0007\b\f\r\t\v",
+            "a".repeat(1000),
+        ];
+
+        for (const query of maliciousQueries) {
+            expect(() => {
+                const results = filterRoutesByQuery(routes, query);
+                expect(Array.isArray(results)).toBe(true);
+            }).not.toThrow();
+        }
+    });
+
+    it("テーマ切り替え安全性: URLパラメータ ?theme= に悪意ある文字列が注入されても安全なテーマ値（dark/light）のみに正規化されること", () => {
+        // 不正なクエリ文字列を設定
+        const originalLocation = window.location;
+        delete (window as any).location;
+        window.location = {
+            ...originalLocation,
+            search: '?theme="><script>alert(1)</script>',
+        } as any;
+
+        const view = render(() => <ThemeToggle />);
+        const themeAttr = document.documentElement.getAttribute("data-theme");
+        expect(themeAttr).toBeOneOf(["light", "dark", null]);
+        expect(themeAttr).not.toContain("<script");
+        expect(themeAttr).not.toContain('"');
+
+        view.unmount();
+        (window as any).location = originalLocation;
     });
 });

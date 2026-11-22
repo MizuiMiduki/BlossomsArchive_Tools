@@ -205,4 +205,56 @@ describe("Integration Tests (Router + Layout + Metadata + Discovery Files)", () 
             }
         }
     });
+
+    it("サイドバー検索とルーティング遷移の結合: 検索フィルタリング・ページ遷移・検索欄自動リセット・アクティブリンク表示が連動すること", async () => {
+        const AppRouter = createRouter({
+            history: memoryHistory(),
+            routes: [
+                { path: "/", component: Home },
+                { path: "/calculator", component: Calculator },
+                { path: "/seo-checker", component: SeoChecker },
+            ],
+        });
+
+        render(() => (
+            <AppRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </AppRouter>
+        ));
+
+        const sidebarSearchInput = screen.getByPlaceholderText("メニューを検索...") as HTMLInputElement;
+        expect(sidebarSearchInput).toBeInTheDocument();
+
+        // 1. "たいまー" (ひらがな) でサイドバー内を検索
+        fireEvent.input(sidebarSearchInput, { target: { value: "たいまー" } });
+
+        // タイマー・ストップウォッチリンク（keywords: "タイマー"）が表示されていること
+        const timerLink = screen.getByRole("link", { name: "タイマー・ストップウォッチ" });
+        expect(timerLink).toBeInTheDocument();
+
+        // 電卓ツールリンクはサイドバーから除外されていること
+        expect(screen.queryByRole("link", { name: "電卓ツール" })).toBeNull();
+
+        // 2. 検索クリアボタンをクリックして復元できること
+        const clearBtn = screen.getByRole("button", { name: "メニュー検索をクリア" });
+        fireEvent.click(clearBtn);
+        expect(sidebarSearchInput.value).toBe("");
+
+        // 復元後、電卓ツールリンクが再表示されること
+        const calcLink = screen.getByRole("link", { name: "電卓ツール" });
+        expect(calcLink).toBeInTheDocument();
+
+        // 3. 電卓ツールリンクをクリックして遷移
+        fireEvent.click(calcLink);
+
+        // 電卓画面が表示されたこと
+        expect(await screen.findByRole("textbox")).toBeInTheDocument();
+
+        // 4. 現在のルートリンクがアクティブ表示 (bg-primary) になっていること
+        const allLinksAfterNav = screen.getAllByRole("link");
+        const activeCalcLink = allLinksAfterNav.find(
+            (a) => a.getAttribute("href") === "/calculator" && a.classList.contains("bg-primary"),
+        );
+        expect(activeCalcLink).toBeDefined();
+    });
 });
