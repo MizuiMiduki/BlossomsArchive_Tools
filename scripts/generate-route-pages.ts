@@ -42,7 +42,7 @@ if (mainCssFile) {
         `<link rel="stylesheet" crossorigin href="/assets/${mainCssFile}">`,
         `<link rel="stylesheet" href="/assets/${mainCssFile}">`,
     ];
-    const asyncCssMarkup = `<link rel="preload" href="/assets/${mainCssFile}" as="style" />\n  <link rel="stylesheet" href="/assets/${mainCssFile}" media="print" onload="this.media='all'" />\n  <noscript><link rel="stylesheet" href="/assets/${mainCssFile}"></noscript>`;
+    const asyncCssMarkup = `<link rel="stylesheet" href="/assets/${mainCssFile}" media="print" onload="this.media='all'" />\n  <noscript><link rel="stylesheet" href="/assets/${mainCssFile}"></noscript>`;
     for (const variant of originalLinkVariants) {
         if (baseTemplate.includes(variant)) {
             const index = baseTemplate.indexOf(variant);

@@ -75,9 +75,8 @@ describe("Static Build Output & Sitemap Integrity Tests", () => {
             expect(jsonLdPos).toBeGreaterThan(rootPos);
             expect(scriptPos).toBeGreaterThan(preloadPos);
 
-            // PageSpeed最適化: クリティカルCSSと非同期CSSローディング、同一オリジンアイコン
+            // PageSpeed最適化: クリティカルCSSと完全非同期CSSローディング、同一オリジンアイコン
             expect(html).toContain('id="ba-tools-critical-css"');
-            expect(html).toContain('rel="preload"');
             expect(html).toContain('media="print" onload="this.media=\'all\'"');
             expect(html).toContain('icon-32.png');
             expect(html).toContain('icon-192.png');
