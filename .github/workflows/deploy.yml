@@ -249,10 +249,11 @@ jobs:
               if: steps.aggregate.outputs.has_issues == 'true'
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  TZ: 'Asia/Tokyo'
               run: |
                   OLD_ISSUES=$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title | startswith("[PageSpeed Alert]")) | .number')
                   NEW_URL=$(gh issue create \
-                    --title "[PageSpeed Alert] Lighthouse スコア退行を検出しました ($(date +'%Y-%m-%d %H:%M'))" \
+                    --title "[PageSpeed Alert] Lighthouse スコア退行を検出しました ($(TZ='Asia/Tokyo' date +'%Y-%m-%d %H:%M'))" \
                     --body-file dist/lighthouse-issue.md)
                   for NUM in $OLD_ISSUES; do
                     gh issue close "$NUM" --comment "🔄 新しい監査結果 ($NEW_URL) に更新されたため、古いレポートを自動クローズしました。"

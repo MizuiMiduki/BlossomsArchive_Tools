@@ -260,7 +260,18 @@ function generateReportMarkdown(regressions: RegressionItem[]): void {
         return;
     }
 
+    const jstTimestamp = new Intl.DateTimeFormat("ja-JP", {
+        timeZone: "Asia/Tokyo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    }).format(new Date());
+
     let markdown = `## ⚠️ PageSpeed / Lighthouse スコア退行レポート\n\n`;
+    markdown += `> **計測日時 (JST)**: ${jstTimestamp}\n\n`;
     markdown += `ビルド後の自動 Lighthouse 監査にて、100点満点未満の減点が検出されました。\n`;
     markdown += `以下の検出サマリーと要素特定詳細を確認し、対象ソースコードを修正してください。\n\n`;
 
