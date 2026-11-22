@@ -161,4 +161,47 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         expect(fs.existsSync(path.join(ROOT_DIR, "public", "icon-32.png"))).toBe(true);
         expect(fs.existsSync(path.join(ROOT_DIR, "public", "icon-192.png"))).toBe(true);
     });
+
+    it("テスト網羅ガード: src/pages 内の全ページコンポーネントに対応するテストコードが存在し、visualRegression に登録されていること", () => {
+        const pagesDir = path.join(ROOT_DIR, "src", "pages");
+        const testsDir = path.join(ROOT_DIR, "src", "__tests__");
+        const visualRegressionSrc = fs.readFileSync(
+            path.join(testsDir, "visualRegression.test.tsx"),
+            "utf8",
+        );
+
+        const pageFiles = fs
+            .readdirSync(pagesDir)
+            .filter((f) => f.endsWith(".tsx"));
+        expect(pageFiles.length).toBeGreaterThan(0);
+
+        const testFiles = fs.readdirSync(testsDir);
+        const missingTests: string[] = [];
+        const missingFromVisualRegression: string[] = [];
+
+        // 静的ページ（個別テストではなく StaticPages.test.tsx に統合されているページ）
+        const staticPages = new Set(["Credits.tsx", "NotFound.tsx", "PrivacyPolicy.tsx"]);
+
+        for (const file of pageFiles) {
+            const baseName = path.basename(file, ".tsx");
+            const expectedTestFile = `${baseName}.test.tsx`;
+
+            // 1. 個別テストまたは統合テストが存在すること
+            if (!staticPages.has(file)) {
+                if (!testFiles.includes(expectedTestFile)) {
+                    missingTests.push(`${file} -> ${expectedTestFile} が存在しません`);
+                }
+            } else {
+                expect(testFiles).toContain("StaticPages.test.tsx");
+            }
+
+            // 2. visualRegression.test.tsx の PAGE_ENTRIES に全ページが登録されていること
+            if (!visualRegressionSrc.includes(baseName)) {
+                missingFromVisualRegression.push(`${baseName} が visualRegression.test.tsx に登録されていません`);
+            }
+        }
+
+        expect(missingTests).toEqual([]);
+        expect(missingFromVisualRegression).toEqual([]);
+    });
 });

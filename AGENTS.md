@@ -6,7 +6,8 @@
 
 ## 1. 必須検証コマンド（コミット・プッシュ前の品質ゲート）
 
-コードを変更した際は、コミット前に必ず以下の統合チェックを実行し、すべてパスすることを確認してください。
+コードを変更（新機能追加、既存機能の修正・リファクタリング、バグ修正）した際は、**必ず対応するテストコードを新規作成または更新してください（テストコードの追加・更新のない実装変更は禁止）**。
+コミット前に必ず以下の統合チェックを実行し、すべてパスすることを確認してください。
 
 ```bash
 pnpm run type-check && pnpm test && pnpm run build
@@ -64,15 +65,22 @@ pnpm run type-check && pnpm test && pnpm run build
 
 ---
 
-## 5. テストスイート構成 (`src/__tests__/`)
+## 5. テスト駆動・品質維持規約 (`src/__tests__/`)
 
-機能追加・修正時は、以下の各テストカテゴリのうち該当するテストを追加・更新してください。
+新機能追加・UI変更・ロジック修正・バグ修正を行う際は、**必ず以下の7つのテストカテゴリのうち該当するテストを新規作成または更新してください。テストコードの追加・更新が確認できない変更はコミット・プッシュしてはなりません。**
 
-- **単体テスト / UIコンポーネントテスト**: 各ページ・ユーティリティの個別テストおよび `Components.test.tsx`
-- **結合テスト**: `integration.test.tsx`（Router + Layout + メタタグ/JSON-LD/ディスカバリファイル連携）
-- **E2Eテスト**: `e2e.test.tsx`（複数ページを横断するユーザージャーニー）
-- **ビジュアルリグレッション / UI構造テスト**: `visualRegression.test.tsx`（ランドマーク、レスポンシブクラス、A11y構造、SVGジオメトリ）
-- **パフォーマンステスト**: `performance.test.tsx`（処理時間ベンチマーク、LCP即時描画、チャンクサイズ予算）
-- **セキュリティテスト**: `security.test.tsx`（XSS、多段タグ除去、URLスキーム、CSPRNG、セキュリティヘッダー）
-- **モンキーテスト / カオスファジング**: `monkey.test.tsx`（全ルート×80回ランダム操作＋クロスルート150回連続遷移）
-- **コード品質・アーキテクチャガード**: `codeQualityGuard.test.ts`（静的コード規約・ルート同期・マニフェスト整合性の自動検査）
+1. **単体テスト (Unit) / UIコンポーネントテスト**:
+   - ロジック・ユーティリティ関数（`src/utils/`）を変更した場合は、境界値・特殊文字・異常系を含めた単体テストを追加・更新する。
+   - 新規ページ（`src/pages/`）や共通コンポーネント（`src/components/`）を追加・改修した場合は、初期描画・ボタン操作・入力イベント・状態遷移を網羅するテスト（`<PageName>.test.tsx`）を必ず作成・更新する。
+2. **結合テスト (Integration)**: `src/__tests__/integration.test.tsx`
+   - ルーティング、Layout、グローバルメタデータ、サイドバー連携、検索フィルタリング連動、ディスカバリファイル（`ard.json` / `llms.txt`）の結合整合性を検証する。
+3. **E2Eテスト (End-to-End)**: `src/__tests__/e2e.test.tsx`
+   - 複数ページやツール間を横断するユーザー操作シナリオ（Journey）を維持・拡充する。
+4. **ビジュアルリグレッション / UI構造テスト**: `src/__tests__/visualRegression.test.tsx`
+   - 新規ページ追加時は必ず `PAGE_ENTRIES` に登録し、見出し階層（`h1`）、ボタン・入力欄のアクセシブル名、カードデザインの視覚的整合性（`card`, `border`, `shadow` 等）、SVGジオメトリを検証する。
+5. **パフォーマンステスト**: `src/__tests__/performance.test.tsx`
+   - 重い計算処理、大量テキスト処理、LCP即時描画（`playPageEntrance`）、初期マウント速度、バンドルサイズ予算をベンチマーク検証する。
+6. **セキュリティテスト**: `src/__tests__/security.test.tsx`
+   - XSS、多段サニタイズ（CodeQL `js/incomplete-multi-character-sanitization`）、ReDoS、URLスキーム、CSPRNG乱数、クエリパラメータ注入耐性を検証する。
+7. **コード品質・アーキテクチャガード**: `src/__tests__/codeQualityGuard.test.ts`
+   - 全ページのテストファイル存在確認、静的規約（Solid 1.x非推奨フック禁止、212KB budoux直接import禁止、低コントラスト禁止、`target="_blank"` の `noopener noreferrer` 必須等）の自動検査をパスすること。
