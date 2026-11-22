@@ -6,13 +6,15 @@ export default function ThemeToggle() {
     const [isDark, setIsDark] = createSignal(false);
 
     onSettled(() => {
-        // 初回読み込み時にlocalStorageを確認して反映します
+        // 初回読み込み時にURLクエリパラメータ・localStorage・prefers-color-schemeを確認して反映します
+        const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const themeParam = urlParams?.get("theme");
         const savedTheme = localStorage.getItem("theme");
         const prefersDark = window.matchMedia(
             "(prefers-color-scheme: dark)",
         ).matches;
 
-        if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+        if (themeParam === "dark" || (!themeParam && (savedTheme === "dark" || (!savedTheme && prefersDark)))) {
             document.documentElement.setAttribute("data-theme", "dark");
             setIsDark(true);
         } else {

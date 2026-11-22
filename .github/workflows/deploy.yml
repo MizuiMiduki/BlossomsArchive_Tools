@@ -149,13 +149,13 @@ jobs:
                   server-dir: "${{ secrets.FTP_TARGET_DIR }}"
                   dangerous-clean-slate: ${{ github.event_name == 'workflow_dispatch' && inputs['サーバーを全削除して再デプロイ'] || false }}
 
-    # ─── 4. Lighthouse 並列分散監査 (6シャード×2ワーカーで約1.5〜2分に超高速化) ───
+    # ─── 4. Lighthouse 並列分散監査 (10シャード×2ワーカーで約1.5〜2分に超高速化) ───
     lighthouse-audit:
         needs: [build]
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                shard: [1, 2, 3, 4, 5, 6]
+                shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
             fail-fast: false
         steps:
             - name: Checkout repository
@@ -208,7 +208,7 @@ jobs:
             - name: Run Sharded Lighthouse Audit
               run: |
                   export PATH="/home/runner/.npm-global/bin:$PATH"
-                  node scripts/audit-lighthouse.mjs --shard=${{ matrix.shard }}/6 --report-json=dist-reports/shard-${{ matrix.shard }}.json
+                  node scripts/audit-lighthouse.mjs --shard=${{ matrix.shard }}/10 --report-json=dist-reports/shard-${{ matrix.shard }}.json
 
             - name: Upload Shard Report
               uses: actions/upload-artifact@v7
@@ -264,5 +264,5 @@ jobs:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   for NUM in $(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title | startswith("[PageSpeed Alert]")) | .number'); do
-                    gh issue close "$NUM" --comment "✅ 最新のCI監査にて全38パターンで Lighthouse 100/100 満点の回復を確認したため、古いIssueを自動クローズしました。"
+                    gh issue close "$NUM" --comment "✅ 最新のCI監査にて全76パターン（ライト/ダーク×モバイル/デスクトップ）で Lighthouse 100/100 満点の回復を確認したため、古いIssueを自動クローズしました。"
                   done

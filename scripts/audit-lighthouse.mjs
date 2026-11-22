@@ -122,21 +122,30 @@ async function startPreviewServer() {
     return serverProcess;
 }
 
-async function auditUrl(lhBin, url, preset = "mobile", throttlingMethod = "simulate") {
+async function auditUrl(lhBin, url, preset = "mobile", theme = "light", throttlingMethod = "simulate") {
+    let chromeFlags = "--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-extensions --no-first-run --no-default-browser-check";
+    if (theme === "dark") {
+        chromeFlags += " --force-dark-mode";
+    }
+
+    const auditTargetUrl = theme === "dark"
+        ? (url.includes("?") ? `${url}&theme=dark` : `${url}?theme=dark`)
+        : url;
+
     const args = [
-        url,
+        auditTargetUrl,
         "--output=json",
         "--quiet",
         "--only-categories=performance,accessibility,best-practices,seo",
         `--throttling-method=${throttlingMethod}`,
-        "--chrome-flags=--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-extensions --no-first-run --no-default-browser-check",
+        `--chrome-flags=${chromeFlags}`,
     ];
     if (preset === "desktop") {
         args.push("--preset=desktop");
     }
 
     const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const tmpOutput = path.join(ROOT_DIR, `lh-temp-${preset}-${uniqueSuffix}.json`);
+    const tmpOutput = path.join(ROOT_DIR, `lh-temp-${preset}-${theme}-${uniqueSuffix}.json`);
     args.push(`--output-path=${tmpOutput}`);
 
     try {
@@ -195,7 +204,7 @@ function extractFailedAudits(report) {
 // レポートMarkdownを生成してファイル出力（原因要素やスニペットを特定しやすい構造化形式）
 function generateReportMarkdown(regressions) {
     if (regressions.length === 0) {
-        console.log("🎉 全ルート×モバイル・デスクトップですべて 100/100 満点を達成しました！");
+        console.log("🎉 全ルート×モバイル・デスクトップ×ライト・ダークですべて 100/100 満点を達成しました！");
         if (process.env.GITHUB_OUTPUT) {
             fs.appendFileSync(process.env.GITHUB_OUTPUT, "has_issues=false\n");
         }
@@ -207,19 +216,20 @@ function generateReportMarkdown(regressions) {
     markdown += `以下の検出サマリーと要素特定詳細を確認し、対象ソースコードを修正してください。\n\n`;
 
     markdown += `### 📊 検出サマリー一覧\n\n`;
-    markdown += `| ルート | プリセット | 対象ソースファイル | Performance | Accessibility | Best Practices | SEO |\n`;
+    markdown += `| ルート | プリセット (テーマ) | 対象ソースファイル | Performance | Accessibility | Best Practices | SEO |\n`;
     markdown += `| :--- | :---: | :--- | :---: | :---: | :---: | :---: |\n`;
 
     for (const r of regressions) {
         const sourceFile = ROUTE_SOURCE_MAP[r.route] ? `\`${ROUTE_SOURCE_MAP[r.route]}\`` : "-";
+        const presetTheme = `${r.preset}${r.theme ? ` (${r.theme})` : ""}`;
         if (r.scores.error) {
-            markdown += `| \`${r.route}\` | ${r.preset} | ${sourceFile} | 監査エラー | - | - | - |\n`;
+            markdown += `| \`${r.route}\` | ${presetTheme} | ${sourceFile} | 監査エラー | - | - | - |\n`;
         } else {
             const p = r.scores.performance === 100 ? "100" : `**${r.scores.performance}** ⚠️`;
             const a = r.scores.accessibility === 100 ? "100" : `**${r.scores.accessibility}** ⚠️`;
             const b = r.scores.bestPractices === 100 ? "100" : `**${r.scores.bestPractices}** ⚠️`;
             const s = r.scores.seo === 100 ? "100" : `**${r.scores.seo}** ⚠️`;
-            markdown += `| \`${r.route}\` | ${r.preset} | ${sourceFile} | ${p} | ${a} | ${b} | ${s} |\n`;
+            markdown += `| \`${r.route}\` | ${presetTheme} | ${sourceFile} | ${p} | ${a} | ${b} | ${s} |\n`;
         }
     }
 
@@ -229,7 +239,8 @@ function generateReportMarkdown(regressions) {
     for (const r of regressions) {
         if (r.failedAudits && r.failedAudits.length > 0) {
             const sourceFile = ROUTE_SOURCE_MAP[r.route] || "該当コンポーネント";
-            markdown += `#### 📄 \`${r.route}\` (${r.preset}) — 対象: \`${sourceFile}\`\n\n`;
+            const presetTheme = `${r.preset}${r.theme ? ` / ${r.theme}` : ""}`;
+            markdown += `#### 📄 \`${r.route}\` (${presetTheme}) — 対象: \`${sourceFile}\`\n\n`;
             for (const a of r.failedAudits) {
                 markdown += `##### ❌ ${a.title} (スコア: ${a.score}点${a.displayValue ? ` / 計測値: ${a.displayValue}` : ""})\n\n`;
                 if (a.description) {
@@ -281,7 +292,7 @@ function generateReportMarkdown(regressions) {
     markdown += `   - 修正後、必ず以下の統合検証コマンドを実行し、全テスト合格とビルド成功を確認してください:\n`;
     markdown += `     \`\`\`bash\n     pnpm run type-check && pnpm test && pnpm run build\n     \`\`\`\n`;
     markdown += `4. **反映とIssueの自動クローズ**:\n`;
-    markdown += `   - \`main\` ブランチへ反映後、GitHub Actions の Lighthouse CI（6シャード並列）が自動実行され、全38パターンで 100/100 満点への回復が確認されると**本Issueは自動的にクローズ**されます。\n`;
+    markdown += `   - \`main\` ブランチへ反映後、GitHub Actions の Lighthouse CI（10シャード並列）が自動実行され、全76パターン（ライト/ダーク × モバイル/デスクトップ）で 100/100 満点への回復が確認されると**本Issueは自動的にクローズ**されます。\n`;
 
     fs.mkdirSync(path.dirname(ISSUE_REPORT_PATH), { recursive: true });
     fs.writeFileSync(ISSUE_REPORT_PATH, markdown, "utf8");
@@ -342,8 +353,10 @@ async function main() {
 
         const allTasks = [];
         for (const route of routes) {
-            allTasks.push({ route, preset: "mobile" });
-            allTasks.push({ route, preset: "desktop" });
+            allTasks.push({ route, preset: "mobile", theme: "light" });
+            allTasks.push({ route, preset: "desktop", theme: "light" });
+            allTasks.push({ route, preset: "mobile", theme: "dark" });
+            allTasks.push({ route, preset: "desktop", theme: "dark" });
         }
 
         // シャード分割 (--shard=INDEX/TOTAL)
@@ -367,11 +380,12 @@ async function main() {
             while (tasks.length > 0) {
                 const task = tasks.shift();
                 if (!task) break;
-                const { route, preset } = task;
+                const { route, preset, theme } = task;
                 const url = `http://127.0.0.1:4173${route}`;
+                const presetLabel = `${preset.toUpperCase()} (${theme.toUpperCase()})`;
 
                 try {
-                    const report = await auditUrl(lhBin, url, preset);
+                    const report = await auditUrl(lhBin, url, preset, theme);
                     completed++;
                     const cats = report.categories || {};
                     const scores = {
@@ -388,10 +402,10 @@ async function main() {
                         scores.seo === 100;
 
                     if (isAll100) {
-                        console.log(`[${completed}/${totalAudits}] [${preset.toUpperCase()}] ${route} ✅ 100/100`);
+                        console.log(`[${completed}/${totalAudits}] [${presetLabel}] ${route} ✅ 100/100`);
                     } else {
                         console.log(
-                            `[${completed}/${totalAudits}] [${preset.toUpperCase()}] ${route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
+                            `[${completed}/${totalAudits}] [${presetLabel}] ${route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                         );
 
                         const failedAudits = extractFailedAudits(report);
@@ -399,16 +413,18 @@ async function main() {
                         regressions.push({
                             route,
                             preset,
+                            theme,
                             scores,
                             failedAudits,
                         });
                     }
                 } catch (err) {
                     completed++;
-                    console.log(`[${completed}/${totalAudits}] [${preset.toUpperCase()}] ${route} ❌ Audit error: ${err.message}`);
+                    console.log(`[${completed}/${totalAudits}] [${presetLabel}] ${route} ❌ Audit error: ${err.message}`);
                     regressions.push({
                         route,
                         preset,
+                        theme,
                         scores: { error: err.message },
                         failedAudits: [],
                     });
@@ -430,12 +446,13 @@ async function main() {
             for (const cand of regressions) {
                 candIndex++;
                 const url = `http://127.0.0.1:4173${cand.route}`;
+                const presetLabel = `${cand.preset.toUpperCase()} (${(cand.theme || "light").toUpperCase()})`;
                 let passedOnRetry = false;
                 let latestCandidate = cand;
 
                 for (let attempt = 1; attempt <= 2; attempt++) {
                     try {
-                        const report = await auditUrl(lhBin, url, cand.preset);
+                        const report = await auditUrl(lhBin, url, cand.preset, cand.theme || "light");
                         const cats = report.categories || {};
                         const scores = {
                             performance: Math.round((cats.performance?.score ?? 0) * 100),
@@ -454,24 +471,25 @@ async function main() {
 
                         if (isAll100) {
                             console.log(
-                                `${progressTag} [${cand.preset.toUpperCase()}] ${cand.route} ✅ 100/100 (単独検証で満点合格)`
+                                `${progressTag} [${presetLabel}] ${cand.route} ✅ 100/100 (単独検証で満点合格)`
                             );
                             passedOnRetry = true;
                             break;
                         } else {
                             console.log(
-                                `${progressTag} [${cand.preset.toUpperCase()}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
+                                `${progressTag} [${presetLabel}] ${cand.route} ⚠️ P:${scores.performance} A:${scores.accessibility} B:${scores.bestPractices} S:${scores.seo}`
                             );
                             const failedAudits = extractFailedAudits(report);
                             latestCandidate = {
                                 route: cand.route,
                                 preset: cand.preset,
+                                theme: cand.theme || "light",
                                 scores,
                                 failedAudits,
                             };
                         }
                     } catch (err) {
-                        console.log(`[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/2)] [${cand.preset.toUpperCase()}] ${cand.route} ❌ Audit error: ${err.message}`);
+                        console.log(`[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/2)] [${presetLabel}] ${cand.route} ❌ Audit error: ${err.message}`);
                     }
                 }
 
