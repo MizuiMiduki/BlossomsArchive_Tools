@@ -15,6 +15,31 @@ html[data-theme='dark'] {
     }
 }
 
+/* ダークモード時の primary 背景要素（ボタン・バッジ・アクティブナビ等）の文字色を濃色に強制 (WCAG AA 4.5:1以上を保証) */
+html[data-theme='dark'] .btn-primary:not(.btn-outline),
+html[data-theme='dark'] .btn-primary:not(.btn-outline) *,
+html[data-theme='dark'] .badge-primary,
+html[data-theme='dark'] .badge-primary *,
+html[data-theme='dark'] .bg-primary:not([class*="/"]),
+html[data-theme='dark'] .bg-primary:not([class*="/"]) *,
+html[data-theme='dark'] [data-active].bg-primary,
+html[data-theme='dark'] [data-active].bg-primary * {
+    color: #111827 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme='light']) .btn-primary:not(.btn-outline),
+    html:not([data-theme='light']) .btn-primary:not(.btn-outline) *,
+    html:not([data-theme='light']) .badge-primary,
+    html:not([data-theme='light']) .badge-primary *,
+    html:not([data-theme='light']) .bg-primary:not([class*="/"]),
+    html:not([data-theme='light']) .bg-primary:not([class*="/"]) *,
+    html:not([data-theme='light']) [data-active].bg-primary,
+    html:not([data-theme='light']) [data-active].bg-primary * {
+        color: #111827 !important;
+    }
+}
+
 /* フォームラベル (DaisyUIのlabelがcurrentColor 60%に減衰させてWCAG AAコントラスト違反を起こすのを防ぎ、高コントラストを維持) */
 .label {
     display: flex;

@@ -632,15 +632,15 @@ export default function HyperfocalCalculator() {
                                 </div>
 
                                 {/* パンフォーカス範囲 */}
-                                <div class="bg-emerald-50 border-2 border-emerald-300 p-5 rounded-xl flex flex-col gap-1.5 shadow-xs overflow-hidden">
-                                    <span class="text-[10.5px] font-black text-emerald-800 uppercase tracking-wider leading-normal break-words">
+                                <div class="bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-300 dark:border-emerald-700/60 p-5 rounded-xl flex flex-col gap-1.5 shadow-xs overflow-hidden">
+                                    <span class="text-[10.5px] font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider leading-normal break-words">
                                         その時にピントが合う範囲（パンフォーカス）
                                     </span>
-                                    <span class="text-3xl font-black text-emerald-700 dark:text-emerald-400 font-mono leading-none my-1 break-words overflow-hidden text-ellipsis">
+                                    <span class="text-3xl font-black text-emerald-700 dark:text-emerald-300 font-mono leading-none my-1 break-words overflow-hidden text-ellipsis">
                                         {hyperfocalData().nearLimitM.toFixed(2)}
                                         m 〜 無限遠
                                     </span>
-                                    <span class="text-[10px] text-emerald-900/80 font-bold leading-relaxed mt-1 break-words" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
+                                    <span class="text-[10px] text-emerald-900/80 dark:text-emerald-200/90 font-bold leading-relaxed mt-1 break-words" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
                                         <BudouX text="上記のお勧め距離に合わせるだけで、手前約 " />
                                         <strong>
                                             {hyperfocalData().nearLimitM.toFixed(1)}m
