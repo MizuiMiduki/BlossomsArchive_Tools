@@ -51,6 +51,7 @@ beforeEach(() => {
 describe("ExifFrameGenerator", () => {
     it("初期状態のレンダリング確認", () => {
         render(() => <ExifFrame />);
+        expect(screen.getByRole("heading", { level: 1, name: /EXIFフレーム生成/ })).toBeInTheDocument();
         expect(screen.getByText("📁 写真を選択する")).toBeInTheDocument();
         expect(screen.queryByText("✨ 額縁付き画像を生成")).not.toBeInTheDocument();
         expect(screen.getByText("⚡ 区切り文字")).toBeInTheDocument();
