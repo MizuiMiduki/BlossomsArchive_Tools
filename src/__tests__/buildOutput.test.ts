@@ -60,6 +60,11 @@ describe("Static Build Output & Sitemap Integrity Tests", () => {
             expect(html).toContain('rel="modulepreload"');
             expect(html).toContain('<h1 class="sr-only">');
 
+            // PageSpeed LCP最適化: 初期App Shellプレレンダリング（ヘッダー・タイトル・説明文）が含まれること
+            expect(html).toContain('BlossomsArchive Tools');
+            expect(html).toContain('<header');
+            expect(html).toContain('<h2');
+
             // PageSpeed最適化: クリティカルCSSと非同期CSSローディング、同一オリジンアイコン
             expect(html).toContain('id="ba-tools-critical-css"');
             expect(html).toContain('rel="preload"');

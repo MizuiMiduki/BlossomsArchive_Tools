@@ -199,10 +199,17 @@ for (const route of routes) {
         SEO_END_MARKER,
         tags,
     );
+    const suffix = " | BlossomsArchive Tools";
+    const cleanTitle = metadata.title.endsWith(suffix)
+        ? metadata.title.slice(0, -suffix.length)
+        : metadata.title;
+
+    const initialShell = `<div id="root"><div style="min-height:100dvh;display:flex;flex-direction:column"><header style="height:4rem;border-bottom:1px solid rgba(128,128,128,0.2);display:flex;align-items:center;padding:0 1rem;gap:0.75rem"><span style="font-size:1.25rem">🌸</span><span style="font-weight:700;font-size:1.125rem">BlossomsArchive Tools</span></header><main style="flex:1;max-width:64rem;width:100%;margin:0 auto;padding:1.5rem 1rem"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1><div style="background:rgba(128,128,128,0.08);border-radius:1rem;padding:1.5rem;margin-bottom:1rem"><h2 style="font-size:1.25rem;font-weight:800;margin:0 0 0.5rem 0">${escapeAttribute(cleanTitle)}</h2><p style="font-size:0.875rem;opacity:0.85;margin:0;line-height:1.5">${escapeAttribute(metadata.description)}</p></div></main></div></div>`;
+
     const html = replaceExact(
         withSeo,
         '<div id="root"></div>',
-        `<div id="root"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1></div>`,
+        initialShell,
     );
 
     const outputDirectory =
