@@ -200,7 +200,6 @@ for (const route of routes) {
         `<meta name="twitter:title" content="${escapeAttribute(metadata.title)}" />`,
         `<meta name="twitter:description" content="${escapeAttribute(metadata.description)}" />`,
         `<meta name="twitter:image" content="${escapeAttribute(DEFAULT_OG_IMAGE)}" />`,
-        `<script type="application/ld+json" id="ba-tools-global-jsonld">${JSON.stringify(jsonLd, null, 2)}</script>`,
     ]
         .filter(Boolean)
         .join("\n  ");
@@ -216,7 +215,7 @@ for (const route of routes) {
         ? metadata.title.slice(0, -suffix.length)
         : metadata.title;
 
-    const initialShell = `<div id="root"><div style="min-height:100dvh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"><header style="height:4rem;border-bottom:1px solid rgba(128,128,128,0.2);display:flex;align-items:center;padding:0 1rem;gap:0.75rem"><span style="font-size:1.25rem">🌸</span><span style="font-weight:700;font-size:1.125rem">BlossomsArchive Tools</span></header><main style="flex:1;max-width:64rem;width:100%;margin:0 auto;padding:1.5rem 1rem"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1><div style="background:rgba(128,128,128,0.08);border:1px solid rgba(128,128,128,0.15);border-radius:1.25rem;padding:1.5rem;display:flex;flex-direction:column;gap:1rem"><h2 style="font-size:1.5rem;font-weight:800;margin:0;line-height:1.4">${escapeAttribute(cleanTitle)}</h2><p style="font-size:1rem;opacity:0.9;margin:0;line-height:1.7">${escapeAttribute(metadata.description)} 完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。</p><div style="height:160px;background:rgba(128,128,128,0.05);border-radius:0.75rem;border:1px dashed rgba(128,128,128,0.2)"></div></div></main></div></div>`;
+    const initialShell = `<div id="root"><div style="min-height:100dvh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"><header style="height:4rem;border-bottom:1px solid rgba(128,128,128,0.2);display:flex;align-items:center;padding:0 1rem;gap:0.75rem"><span style="font-size:1.25rem">🌸</span><span style="font-weight:700;font-size:1.125rem">BlossomsArchive Tools</span></header><main style="flex:1;max-width:64rem;width:100%;margin:0 auto;padding:1.5rem 1rem"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1><div style="background:rgba(128,128,128,0.08);border:1px solid rgba(128,128,128,0.15);border-radius:1.25rem;padding:1.5rem;display:flex;flex-direction:column;gap:1rem"><h2 style="font-size:1.75rem;font-weight:800;margin:0;line-height:1.35;contain:layout style">${escapeAttribute(cleanTitle)}</h2><p style="font-size:1.05rem;opacity:0.95;margin:0;line-height:1.75;contain:layout style">${escapeAttribute(metadata.description)} 完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。</p><div style="height:140px;background:rgba(128,128,128,0.05);border-radius:0.75rem;border:1px dashed rgba(128,128,128,0.2)"></div></div></main></div></div>`;
 
     let html = replaceExact(
         withSeo,
@@ -224,7 +223,7 @@ for (const route of routes) {
         initialShell,
     );
 
-    // FCP最優先化: modulepreloadを<head>ではなく#root以降（body末尾のモジュールスクリプト直前）へ配置
+    // FCP最優先化: modulepreloadおよびJSON-LDを<head>ではなく#root以降（body末尾）へ配置し<head>パース時間を最小化
     const modulePreloadList = [
         runtimeJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
@@ -240,8 +239,10 @@ for (const route of routes) {
             : "",
     ].filter(Boolean);
 
+    const jsonLdTag = `<script type="application/ld+json" id="ba-tools-global-jsonld">${JSON.stringify(jsonLd)}</script>`;
+
     if (modulePreloadList.length > 0) {
-        const preloadMarkup = `  ${modulePreloadList.join("\n  ")}\n`;
+        const preloadMarkup = `  ${modulePreloadList.join("\n  ")}\n  ${jsonLdTag}\n`;
         const scriptMarker = `<script type="module"`;
         const scriptIndex = html.indexOf(scriptMarker);
         if (scriptIndex !== -1) {
@@ -258,6 +259,15 @@ for (const route of routes) {
                     preloadMarkup +
                     html.slice(bodyCloseIndex);
             }
+        }
+    } else {
+        const bodyCloseMarker = "</body>";
+        const bodyCloseIndex = html.indexOf(bodyCloseMarker);
+        if (bodyCloseIndex !== -1) {
+            html =
+                html.slice(0, bodyCloseIndex) +
+                `  ${jsonLdTag}\n` +
+                html.slice(bodyCloseIndex);
         }
     }
 
