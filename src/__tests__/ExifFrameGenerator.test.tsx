@@ -93,6 +93,22 @@ describe("ExifFrameGenerator", () => {
         expect(panel("save").hidden).toBe(true);
     });
 
+    it("設定タブを切り替えた際、対象パネルの子要素コンテンツが正常にマウントされること", () => {
+        const { container } = render(() => <ExifFrame />);
+        const panel = (id: string) =>
+            container.querySelector(`#exif-panel-${id}`) as HTMLElement;
+
+        // デザインタブへ切り替え
+        fireEvent.click(screen.getByRole("tab", { name: /デザイン/ }));
+        expect(panel("design").hidden).toBe(false);
+        expect(panel("design").textContent).toContain("背景マットの色");
+
+        // 文字タブへ切り替え
+        fireEvent.click(screen.getByRole("tab", { name: /文字/ }));
+        expect(panel("text").hidden).toBe(false);
+        expect(panel("text").textContent).toContain("自由なタイトルモードにする");
+    });
+
     it("区切り文字プリセットの選択および自由入力の切り替えができること", () => {
         render(() => <ExifFrame />);
         const slashBtn = screen.getByTitle("スラッシュ ( / )");

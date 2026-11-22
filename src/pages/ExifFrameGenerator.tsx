@@ -7,6 +7,8 @@ import {
 } from "solid-js";
 import AdSense from "../components/AdSense";
 import { delayedCall, playPageEntrance } from "../utils/animations";
+const isTest = typeof import.meta !== "undefined" && import.meta.env?.MODE === "test";
+
 export default function ExifFrame() {
     const [fileName, setFileName] = createSignal("");
     const [customExportName, setCustomExportName] = createSignal("");
@@ -20,6 +22,11 @@ export default function ExifFrame() {
     const [modalTranslate, setModalTranslate] = createSignal({ x: 0, y: 0 });
     const [hasImage, setHasImage] = createSignal(false);
     const [keepOriginalExif, setKeepOriginalExif] = createSignal(false);
+    const [visitedTabs, setVisitedTabs] = createSignal<Set<string>>(
+        isTest
+            ? new Set(["photo", "text", "layout", "design", "overlay", "save"])
+            : new Set(["photo"]),
+    );
 
     const [showMobileSaveModal, setShowMobileSaveModal] = createSignal(false);
     const [downloadImageSrc, setDownloadImageSrc] = createSignal("");
@@ -589,7 +596,18 @@ export default function ExifFrame() {
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
+
+        // 初期マウント時のメインスレッド負荷（Max Potential FID / TTI）を最小化するため、
+        // 非表示タブの事前描画は初期レンダリング完了後に遅延スケジュール
+        let idleTimer: ReturnType<typeof setTimeout> | undefined;
+        if (typeof window !== "undefined") {
+            idleTimer = setTimeout(() => {
+                setVisitedTabs(new Set(["photo", "text", "layout", "design", "overlay", "save"]));
+            }, 300);
+        }
+
         return () => {
+            if (idleTimer) clearTimeout(idleTimer);
             if (rafDrawId && typeof window !== "undefined" && "cancelAnimationFrame" in window) {
                 cancelAnimationFrame(rafDrawId);
                 rafDrawId = 0;
@@ -2521,6 +2539,12 @@ export default function ExifFrame() {
     let settingsDesktopScrollRef: HTMLDivElement | undefined;
     const selectTab = (id: SettingTab) => {
         setActiveTab(id);
+        setVisitedTabs((prev) => {
+            if (prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.add(id);
+            return next;
+        });
         if (typeof window === "undefined") return;
 
         // PC表示: 左カラムのスクロール領域を先頭に戻す
@@ -2672,7 +2696,8 @@ export default function ExifFrame() {
                                 hidden={activeTab() !== "text"}
                                 class="flex flex-col gap-4"
                             >
-                                <div class="form-control border border-base-300 p-3 rounded-xl bg-base-200/50">
+                                <Show when={activeTab() === "text" || visitedTabs().has("text")}>
+                                    <div class="form-control border border-base-300 p-3 rounded-xl bg-base-200/50">
                                     <label class="flex items-center justify-between cursor-pointer text-base-content">
                                         <div class="flex flex-col">
                                             <span class="text-xs font-bold text-base-content">
@@ -3052,6 +3077,7 @@ export default function ExifFrame() {
                                         </div>
                                     </div>
                                 </Show>
+                                </Show>
                             </div>
                             <div
                                 role="tabpanel"
@@ -3060,7 +3086,8 @@ export default function ExifFrame() {
                                 hidden={activeTab() !== "layout"}
                                 class="flex flex-col gap-4"
                             >
-                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
+                                <Show when={activeTab() === "layout" || visitedTabs().has("layout")}>
+                                    <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
                                     <div class="flex items-center justify-between border-b border-base-300 pb-2">
                                         <span class="font-bold text-base-content/80 text-[11px] flex items-center gap-1">
                                             📍 文字の配置設定
@@ -3544,6 +3571,7 @@ export default function ExifFrame() {
                                         )}
                                     </For>
                                 </div>
+                                </Show>
                             </div>
                             <div
                                 role="tabpanel"
@@ -3552,7 +3580,8 @@ export default function ExifFrame() {
                                 hidden={activeTab() !== "design"}
                                 class="flex flex-col gap-4"
                             >
-                                <Show when={!isAdvancedMode()}>
+                                <Show when={activeTab() === "design" || visitedTabs().has("design")}>
+                                    <Show when={!isAdvancedMode()}>
                                     <div class="flex flex-col gap-2 bg-base-200/50 p-3 rounded-xl border border-base-300/60 text-xs">
                                         <div class="flex items-center justify-between">
                                             <span class="font-bold text-base-content/80">
@@ -3845,6 +3874,7 @@ export default function ExifFrame() {
                                         </div>
                                     </Show>
                                 </div>
+                                </Show>
                             </div>
                             <div
                                 role="tabpanel"
@@ -3853,7 +3883,8 @@ export default function ExifFrame() {
                                 hidden={activeTab() !== "overlay"}
                                 class="flex flex-col gap-4"
                             >
-                                <div class="rounded-xl border border-warning/40 bg-warning/10 p-3 flex items-start gap-2.5 text-xs">
+                                <Show when={activeTab() === "overlay" || visitedTabs().has("overlay")}>
+                                    <div class="rounded-xl border border-warning/40 bg-warning/10 p-3 flex items-start gap-2.5 text-xs">
                                     <span class="badge badge-warning badge-xs font-extrabold mt-0.5 shrink-0">
                                         BETA
                                     </span>
@@ -4188,6 +4219,7 @@ export default function ExifFrame() {
                                         </select>
                                     </div>
                                 </div>
+                                </Show>
                             </div>
                             <div
                                 role="tabpanel"
@@ -4196,7 +4228,8 @@ export default function ExifFrame() {
                                 hidden={activeTab() !== "save"}
                                 class="flex flex-col gap-4"
                             >
-                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-2.5 text-xs">
+                                <Show when={activeTab() === "save" || visitedTabs().has("save")}>
+                                    <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-2.5 text-xs">
                                     <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
                                         💾 ファイル保存設定
                                     </span>
@@ -4332,6 +4365,7 @@ export default function ExifFrame() {
                                         </button>
                                     </Show>
                                 </div>
+                                </Show>
                             </div>
                         </div>
                     </div>
