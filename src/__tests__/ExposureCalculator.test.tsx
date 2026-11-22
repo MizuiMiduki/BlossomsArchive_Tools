@@ -127,7 +127,7 @@ describe("ExposureCalculator Page Component", () => {
         expect(screen.getByText("必要絞り値(F値)")).toBeInTheDocument();
     });
 
-    it("星空タブで焦点距離やセンサーサイズ変更で限界速度が再計算されること", () => {
+    it("星空タブで焦点距離を全消ししてから新しい数値をスムーズに入力できること", () => {
         const { container } = render(() => <ExposureCalculator />);
 
         fireEvent.click(
@@ -135,12 +135,20 @@ describe("ExposureCalculator Page Component", () => {
         );
 
         const focalInput = screen.getByLabelText("焦点距離mm入力") as HTMLInputElement;
-        fireEvent.input(focalInput, { target: { value: "14" } });
-        expect(focalInput.value).toBe("14");
 
-        // NaNを入力しても画面に NaN が露出しないこと
-        fireEvent.input(focalInput, { target: { value: "NaN" } });
+        // 全て消して空文字にする
+        fireEvent.input(focalInput, { target: { value: "" } });
+        expect(focalInput.value).toBe("");
+
+        // 空文字の状態でも NaN が画面に表示されないこと
         expect(container.textContent).not.toContain("NaN");
+
+        // 新しい数値 (50mm) を入力
+        fireEvent.input(focalInput, { target: { value: "50" } });
+        expect(focalInput.value).toBe("50");
+
+        // 再計算結果が表示されていること
+        expect(screen.getByText("約 10 秒")).toBeInTheDocument();
     });
 
     it("カメラ露出計タブで測光モード変更やシミュレーターへの値反映ができること", () => {

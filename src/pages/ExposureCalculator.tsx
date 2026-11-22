@@ -61,7 +61,7 @@ export default function ExposureCalculator() {
     // 1. 適正露出シミュレーター用状態
     // ==========================================
     const [selectedScene, setSelectedScene] = createSignal("sunny-16");
-    const [manualEv, setManualEv] = createSignal(15);
+    const [manualEv, setManualEv] = createSignal<number | "">(15);
     const [isManualEv, setIsManualEv] = createSignal(false);
     const [evCompensation, setEvCompensation] = createSignal(0);
     const [solveTarget, setSolveTarget] = createSignal<SolveTarget>("shutter");
@@ -76,7 +76,7 @@ export default function ExposureCalculator() {
     // ==========================================
     const [ndBaseShutter, setNdBaseShutter] = createSignal<number>(1 / 125);
     const [selectedNdFilter, setSelectedNdFilter] = createSignal("nd1000");
-    const [customNdStops, setCustomNdStops] = createSignal(10);
+    const [customNdStops, setCustomNdStops] = createSignal<number | "">(10);
 
     // タイマー関連状態
     const [timerRemainingSeconds, setTimerRemainingSeconds] = createSignal(0);
@@ -104,9 +104,9 @@ export default function ExposureCalculator() {
     // 4. 星空限界シャッター速度用状態
     // ==========================================
     const [astroSensor, setAstroSensor] = createSignal("fullframe");
-    const [astroCropFactor, setAstroCropFactor] = createSignal(1.0);
+    const [astroCropFactor, setAstroCropFactor] = createSignal<number | "">(1.0);
     const [astroPixelPitch, setAstroPixelPitch] = createSignal(5.9);
-    const [astroFocalLength, setAstroFocalLength] = createSignal(24);
+    const [astroFocalLength, setAstroFocalLength] = createSignal<number | "">(24);
     const [astroAperture, setAstroAperture] = createSignal(2.8);
 
     // ライフサイクル
@@ -255,11 +255,15 @@ export default function ExposureCalculator() {
 
     // 目標実効EV (EV100 + 補正)
     const currentTargetEv = createMemo(() => {
-        const base = isManualEv()
-            ? manualEv()
-            : SCENE_PRESETS.find((s) => s.id === selectedScene())?.ev100 ?? 15;
+        let base = 15;
+        if (isManualEv()) {
+            const raw = manualEv();
+            base = typeof raw === "number" && Number.isFinite(raw) ? raw : 15;
+        } else {
+            base = SCENE_PRESETS.find((s) => s.id === selectedScene())?.ev100 ?? 15;
+        }
         const comp = evCompensation();
-        return (Number.isFinite(base) ? base : 15) + (Number.isFinite(comp) ? comp : 0);
+        return base + (Number.isFinite(comp) ? comp : 0);
     });
 
     // ==========================================
@@ -343,7 +347,7 @@ export default function ExposureCalculator() {
         const sel = selectedNdFilter();
         if (sel === "custom") {
             const c = customNdStops();
-            return Number.isFinite(c) && c >= 0 ? c : 0;
+            return typeof c === "number" && Number.isFinite(c) && c >= 0 ? c : 0;
         }
         const found = ND_FILTER_PRESETS.find((p) => p.id === sel);
         return found ? found.stops : 0;
@@ -505,8 +509,16 @@ export default function ExposureCalculator() {
     // 4. 星景シャッター速度限界
     // ==========================================
     const astroResult = createMemo(() => {
-        const focal = astroFocalLength();
-        const crop = astroCropFactor();
+        const rawFocal = astroFocalLength();
+        const focal =
+            typeof rawFocal === "number" && Number.isFinite(rawFocal) && rawFocal > 0
+                ? rawFocal
+                : 24;
+        const rawCrop = astroCropFactor();
+        const crop =
+            typeof rawCrop === "number" && Number.isFinite(rawCrop) && rawCrop > 0
+                ? rawCrop
+                : 1.0;
         const aperture = astroAperture();
         const pixelPitch = astroPixelPitch();
 
@@ -950,7 +962,10 @@ export default function ExposureCalculator() {
                                             class="block font-medium text-sm text-base-content/80 mb-1"
                                             for="manual-ev-input"
                                         >
-                                            露出値 (EV100): {manualEv()} EV
+                                            露出値 (EV100):{" "}
+                                            {typeof manualEv() === "number"
+                                                ? `${manualEv()} EV`
+                                                : "未入力 (15.0 EV)"}
                                         </label>
                                         <input
                                             id="manual-ev-input"
@@ -959,7 +974,11 @@ export default function ExposureCalculator() {
                                             max="18"
                                             step="0.5"
                                             class="range range-primary"
-                                            value={manualEv()}
+                                            value={
+                                                typeof manualEv() === "number"
+                                                    ? manualEv()
+                                                    : 15
+                                            }
                                             onInput={(e) => {
                                                 const v = parseFloat(
                                                     e.currentTarget.value,
@@ -983,11 +1002,16 @@ export default function ExposureCalculator() {
                                             type="number"
                                             step="0.1"
                                             class="input input-bordered w-full"
+                                            placeholder="例: 15.0"
                                             value={manualEv()}
                                             onInput={(e) => {
-                                                const v = parseFloat(
-                                                    e.currentTarget.value,
-                                                );
+                                                const raw =
+                                                    e.currentTarget.value;
+                                                if (raw === "") {
+                                                    setManualEv("");
+                                                    return;
+                                                }
+                                                const v = parseFloat(raw);
                                                 if (Number.isFinite(v)) {
                                                     setManualEv(
                                                         Math.max(
@@ -1414,16 +1438,21 @@ export default function ExposureCalculator() {
                                             max="25"
                                             step="0.5"
                                             class="input input-bordered w-full"
+                                            placeholder="例: 10"
                                             value={customNdStops()}
                                             onInput={(e) => {
-                                                const v = parseFloat(
-                                                    e.currentTarget.value,
-                                                );
-                                                setCustomNdStops(
-                                                    Number.isFinite(v)
-                                                        ? Math.max(0, v)
-                                                        : 0,
-                                                );
+                                                const raw =
+                                                    e.currentTarget.value;
+                                                if (raw === "") {
+                                                    setCustomNdStops("");
+                                                    return;
+                                                }
+                                                const v = parseFloat(raw);
+                                                if (Number.isFinite(v)) {
+                                                    setCustomNdStops(
+                                                        Math.max(0, v),
+                                                    );
+                                                }
                                             }}
                                             aria-label="カスタムND減光段数入力"
                                         />
@@ -1915,16 +1944,20 @@ export default function ExposureCalculator() {
                                         min="4"
                                         max="1200"
                                         class="input input-bordered w-full"
+                                        placeholder="例: 24"
                                         value={astroFocalLength()}
                                         onInput={(e) => {
-                                            const v = parseFloat(
-                                                e.currentTarget.value,
-                                            );
-                                            setAstroFocalLength(
-                                                Number.isFinite(v)
-                                                    ? Math.max(1, v)
-                                                    : 24,
-                                            );
+                                            const raw = e.currentTarget.value;
+                                            if (raw === "") {
+                                                setAstroFocalLength("");
+                                                return;
+                                            }
+                                            const v = parseFloat(raw);
+                                            if (Number.isFinite(v)) {
+                                                setAstroFocalLength(
+                                                    Math.max(1, v),
+                                                );
+                                            }
                                         }}
                                         aria-label="焦点距離mm入力"
                                     />
@@ -1966,10 +1999,20 @@ export default function ExposureCalculator() {
                                         class="block font-medium text-sm text-base-content/80 mb-1"
                                         for="astro-crop-input"
                                     >
-                                        クロップ係数: {astroCropFactor()}x (35mm換算:{" "}
+                                        クロップ係数:{" "}
+                                        {typeof astroCropFactor() === "number"
+                                            ? `${astroCropFactor()}x`
+                                            : "1.0x"}{" "}
+                                        (35mm換算:{" "}
                                         {(
-                                            astroFocalLength() *
-                                            astroCropFactor()
+                                            (typeof astroFocalLength() ===
+                                            "number"
+                                                ? (astroFocalLength() as number)
+                                                : 24) *
+                                            (typeof astroCropFactor() ===
+                                            "number"
+                                                ? (astroCropFactor() as number)
+                                                : 1.0)
                                         ).toFixed(1)}
                                         mm)
                                     </label>
@@ -1980,17 +2023,21 @@ export default function ExposureCalculator() {
                                         min="0.5"
                                         max="5.0"
                                         class="input input-bordered w-full"
+                                        placeholder="例: 1.0"
                                         disabled={astroSensor() !== "custom"}
                                         value={astroCropFactor()}
                                         onInput={(e) => {
-                                            const v = parseFloat(
-                                                e.currentTarget.value,
-                                            );
-                                            setAstroCropFactor(
-                                                Number.isFinite(v)
-                                                    ? Math.max(0.1, v)
-                                                    : 1.0,
-                                            );
+                                            const raw = e.currentTarget.value;
+                                            if (raw === "") {
+                                                setAstroCropFactor("");
+                                                return;
+                                            }
+                                            const v = parseFloat(raw);
+                                            if (Number.isFinite(v)) {
+                                                setAstroCropFactor(
+                                                    Math.max(0.1, v),
+                                                );
+                                            }
                                         }}
                                         aria-label="クロップ係数入力"
                                     />
