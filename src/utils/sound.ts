@@ -239,18 +239,18 @@ export function playClockTickSound(isTock = false, volume = 1.0): void {
 
     const currentTime = ctx.currentTime;
 
-    // 音圧と音量を最適化（通常端末音量でも心地よく明瞭に聴こえるゲイン）
+    // 音圧と音量を大幅ブースト（ノートPCやスマホの内蔵スピーカーでもしっかり明瞭に聴こえる設計）
     const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(finalVolume * 2.8, currentTime);
+    masterGain.gain.setValueAtTime(finalVolume * 4.8, currentTime);
 
     if (typeof ctx.createDynamicsCompressor === "function") {
         try {
             const comp = ctx.createDynamicsCompressor();
-            comp.threshold.setValueAtTime(-6, currentTime);
-            comp.knee.setValueAtTime(3, currentTime);
-            comp.ratio.setValueAtTime(8, currentTime);
-            comp.attack.setValueAtTime(0.001, currentTime);
-            comp.release.setValueAtTime(0.08, currentTime);
+            comp.threshold.setValueAtTime(-2, currentTime);
+            comp.knee.setValueAtTime(4, currentTime);
+            comp.ratio.setValueAtTime(6, currentTime);
+            comp.attack.setValueAtTime(0.0005, currentTime);
+            comp.release.setValueAtTime(0.05, currentTime);
             masterGain.connect(comp);
             comp.connect(ctx.destination);
         } catch {
@@ -264,22 +264,22 @@ export function playClockTickSound(isTock = false, volume = 1.0): void {
     const hasBufferSource = typeof ctx.createBufferSource === "function";
     const hasFilter = typeof ctx.createBiquadFilter === "function";
 
-    // 1. プレ・ストライク（アンクル爪がガンギ車から外れる約3ms前の超微細な高域金属音）
+    // 1. プレ・ストライク（アンクル爪がガンギ車から外れる約3ms前の微細な高域金属音）
     if (noiseBuffer && hasBufferSource && hasFilter) {
         try {
             const preNoise = ctx.createBufferSource();
             preNoise.buffer = noiseBuffer;
             const preFilter = ctx.createBiquadFilter();
             preFilter.type = "bandpass";
-            preFilter.frequency.setValueAtTime(isTock ? 4800 : 5400, currentTime);
-            preFilter.Q.setValueAtTime(5.0, currentTime);
+            preFilter.frequency.setValueAtTime(isTock ? 4600 : 5200, currentTime);
+            preFilter.Q.setValueAtTime(4.0, currentTime);
 
             const preGain = ctx.createGain();
-            preGain.gain.setValueAtTime(0.3, currentTime);
+            preGain.gain.setValueAtTime(0.5, currentTime);
             if (typeof preGain.gain.exponentialRampToValueAtTime === "function") {
-                preGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.004);
+                preGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.005);
             } else {
-                preGain.gain.setValueAtTime(0, currentTime + 0.004);
+                preGain.gain.setValueAtTime(0, currentTime + 0.005);
             }
 
             preNoise.connect(preFilter);
@@ -287,30 +287,30 @@ export function playClockTickSound(isTock = false, volume = 1.0): void {
             preGain.connect(masterGain);
 
             preNoise.start(currentTime);
-            preNoise.stop(currentTime + 0.005);
+            preNoise.stop(currentTime + 0.006);
         } catch {}
     }
 
     // 2. メイン・ストライク（ルビーパレットと硬化スチール歯の衝突音: 約4ms後）
     const strikeTime = currentTime + 0.004;
 
-    // 2-a. 高精度メカニカル打撃音（硬質でクリスプな金属クリック「チッ」）
+    // 2-a. 高精度メカニカル打撃音（硬質でクリスプな金属クリック「チッ」「カチッ」）
     if (noiseBuffer && hasBufferSource && hasFilter) {
         try {
             const strikeNoise = ctx.createBufferSource();
             strikeNoise.buffer = noiseBuffer;
             const strikeFilter = ctx.createBiquadFilter();
             strikeFilter.type = "bandpass";
-            // 高級時計のクリスプな周波数帯域（3.3kHz〜3.9kHz）
-            strikeFilter.frequency.setValueAtTime(isTock ? 3300 : 3900, strikeTime);
-            strikeFilter.Q.setValueAtTime(4.5, strikeTime);
+            // しっかり耳に届くクリスプな周波数帯域（3.0kHz〜3.6kHz）
+            strikeFilter.frequency.setValueAtTime(isTock ? 3000 : 3600, strikeTime);
+            strikeFilter.Q.setValueAtTime(3.5, strikeTime);
 
             const strikeGain = ctx.createGain();
-            strikeGain.gain.setValueAtTime(1.0, strikeTime);
+            strikeGain.gain.setValueAtTime(1.8, strikeTime);
             if (typeof strikeGain.gain.exponentialRampToValueAtTime === "function") {
-                strikeGain.gain.exponentialRampToValueAtTime(0.001, strikeTime + 0.014);
+                strikeGain.gain.exponentialRampToValueAtTime(0.001, strikeTime + 0.022);
             } else {
-                strikeGain.gain.setValueAtTime(0, strikeTime + 0.014);
+                strikeGain.gain.setValueAtTime(0, strikeTime + 0.022);
             }
 
             strikeNoise.connect(strikeFilter);
@@ -318,7 +318,7 @@ export function playClockTickSound(isTock = false, volume = 1.0): void {
             strikeGain.connect(masterGain);
 
             strikeNoise.start(strikeTime);
-            strikeNoise.stop(strikeTime + 0.016);
+            strikeNoise.stop(strikeTime + 0.025);
         } catch {}
     }
 
@@ -326,37 +326,59 @@ export function playClockTickSound(isTock = false, volume = 1.0): void {
     const ringOsc = ctx.createOscillator();
     const ringGain = ctx.createGain();
     ringOsc.type = "sine";
-    const ringFreq = isTock ? 3850 : 4550;
+    const ringFreq = isTock ? 3600 : 4200;
     ringOsc.frequency.setValueAtTime(ringFreq, strikeTime);
 
-    ringGain.gain.setValueAtTime(0.28, strikeTime);
+    ringGain.gain.setValueAtTime(0.55, strikeTime);
     if (typeof ringGain.gain.exponentialRampToValueAtTime === "function") {
-        ringGain.gain.exponentialRampToValueAtTime(0.001, strikeTime + 0.009);
+        ringGain.gain.exponentialRampToValueAtTime(0.001, strikeTime + 0.014);
     } else {
-        ringGain.gain.setValueAtTime(0, strikeTime + 0.009);
+        ringGain.gain.setValueAtTime(0, strikeTime + 0.014);
     }
 
     ringOsc.connect(ringGain);
     ringGain.connect(masterGain);
     ringOsc.start(strikeTime);
-    ringOsc.stop(strikeTime + 0.011);
+    ringOsc.stop(strikeTime + 0.016);
 
-    // 2-c. ステンレスケースのソリッドな芯（「ポッ」と鳴る低域を排除し、硬質なハイミッド 1.4kHz〜1.7kHz を採用）
+    // 2-c. 硬質金属の衝突打撃芯（「ポッ」と鳴る低域を排除し、850Hz〜1050Hzのタイトな金属インパルスで音圧と存在感を確保）
+    const coreOsc = ctx.createOscillator();
+    const coreGain = ctx.createGain();
+    coreOsc.type = "sine";
+    const coreFreq = isTock ? 880 : 1050;
+    coreOsc.frequency.setValueAtTime(coreFreq, strikeTime);
+    if (typeof coreOsc.frequency.exponentialRampToValueAtTime === "function") {
+        coreOsc.frequency.exponentialRampToValueAtTime(coreFreq * 0.75, strikeTime + 0.016);
+    }
+
+    coreGain.gain.setValueAtTime(0.75, strikeTime);
+    if (typeof coreGain.gain.exponentialRampToValueAtTime === "function") {
+        coreGain.gain.exponentialRampToValueAtTime(0.001, strikeTime + 0.016);
+    } else {
+        coreGain.gain.setValueAtTime(0, strikeTime + 0.016);
+    }
+
+    coreOsc.connect(coreGain);
+    coreGain.connect(masterGain);
+    coreOsc.start(strikeTime);
+    coreOsc.stop(strikeTime + 0.018);
+
+    // 2-d. ステンレスケースのソリッド高域共鳴ノイズ（ハイミッド 1.3kHz〜1.6kHz）
     if (noiseBuffer && hasBufferSource && hasFilter) {
         try {
             const caseNoise = ctx.createBufferSource();
             caseNoise.buffer = noiseBuffer;
             const caseFilter = ctx.createBiquadFilter();
             caseFilter.type = "bandpass";
-            caseFilter.frequency.setValueAtTime(isTock ? 1400 : 1700, strikeTime);
-            caseFilter.Q.setValueAtTime(5.5, strikeTime);
+            caseFilter.frequency.setValueAtTime(isTock ? 1350 : 1650, strikeTime);
+            caseFilter.Q.setValueAtTime(4.5, strikeTime);
 
             const caseGain = ctx.createGain();
-            caseGain.gain.setValueAtTime(0.45, strikeTime);
+            caseGain.gain.setValueAtTime(0.8, strikeTime);
             if (typeof caseGain.gain.exponentialRampToValueAtTime === "function") {
-                caseGain.gain.exponentialRampToValueAtTime(0.001, strikeTime + 0.012);
+                caseGain.gain.exponentialRampToValueAtTime(0.001, strikeTime + 0.018);
             } else {
-                caseGain.gain.setValueAtTime(0, strikeTime + 0.012);
+                caseGain.gain.setValueAtTime(0, strikeTime + 0.018);
             }
 
             caseNoise.connect(caseFilter);
@@ -364,23 +386,7 @@ export function playClockTickSound(isTock = false, volume = 1.0): void {
             caseGain.connect(masterGain);
 
             caseNoise.start(strikeTime);
-            caseNoise.stop(strikeTime + 0.014);
+            caseNoise.stop(strikeTime + 0.020);
         } catch {}
-    } else {
-        // フォールバック: ノイズバッファが使えない環境向け高域オシレーター
-        const fallbackOsc = ctx.createOscillator();
-        const fallbackGain = ctx.createGain();
-        fallbackOsc.type = "sine";
-        fallbackOsc.frequency.setValueAtTime(isTock ? 1800 : 2200, strikeTime);
-        fallbackGain.gain.setValueAtTime(0.3, strikeTime);
-        if (typeof fallbackGain.gain.exponentialRampToValueAtTime === "function") {
-            fallbackGain.gain.exponentialRampToValueAtTime(0.001, strikeTime + 0.012);
-        } else {
-            fallbackGain.gain.setValueAtTime(0, strikeTime + 0.012);
-        }
-        fallbackOsc.connect(fallbackGain);
-        fallbackGain.connect(masterGain);
-        fallbackOsc.start(strikeTime);
-        fallbackOsc.stop(strikeTime + 0.014);
     }
 }
