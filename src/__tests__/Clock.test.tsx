@@ -1,8 +1,12 @@
 import { render, fireEvent, screen } from "@solidjs/testing-library";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import Clock from "../pages/Clock";
 
 describe("Clock", () => {
+    beforeEach(() => {
+        localStorage.clear();
+    });
+
     it("初期レンダリングでデジタル時計が表示されていること", () => {
         const { container } = render(() => <Clock />);
         expect(screen.getByRole("button", { name: "デジタル" })).toBeInTheDocument();
@@ -105,5 +109,33 @@ describe("Clock", () => {
         expect(screen.queryByRole("button", { name: "秒針音をオンにする" })).not.toBeInTheDocument();
 
         unmount();
+    });
+
+    it("時計モード（デジタル/アナログ）の切り替えがlocalStorageに保存され、リロード後も選択モードが復元されること", () => {
+        // 1. 初回レンダリング時はデフォルトでデジタル時計
+        const { unmount: unmount1, container: container1 } = render(() => <Clock />);
+        expect(container1.querySelector(".font-mono.tracking-tighter")).toBeInTheDocument();
+        expect(container1.querySelector("svg")).not.toBeInTheDocument();
+
+        // 2. 「アナログ」に切り替え -> localStorage に保存される
+        fireEvent.click(screen.getByRole("button", { name: "アナログ" }));
+        expect(container1.querySelector("svg")).toBeInTheDocument();
+        expect(localStorage.getItem("ba_clock_mode")).toBe("analog");
+        unmount1();
+
+        // 3. リロード（再マウント）時にアナログ時計モードが自動復元されること
+        const { unmount: unmount2, container: container2 } = render(() => <Clock />);
+        expect(container2.querySelector("svg")).toBeInTheDocument();
+        expect(container2.querySelector(".font-mono.tracking-tighter")).not.toBeInTheDocument();
+
+        // 4. 「デジタル」に切り替えて再マウント -> デジタル時計が復元されること
+        fireEvent.click(screen.getByRole("button", { name: "デジタル" }));
+        expect(localStorage.getItem("ba_clock_mode")).toBe("digital");
+        unmount2();
+
+        const { unmount: unmount3, container: container3 } = render(() => <Clock />);
+        expect(container3.querySelector(".font-mono.tracking-tighter")).toBeInTheDocument();
+        expect(container3.querySelector("svg")).not.toBeInTheDocument();
+        unmount3();
     });
 });

@@ -23,8 +23,17 @@ const CLOCK_TICKS = Array.from({ length: 60 }, (_, i) => ({
 }));
 
 export default function Clock() {
+    const getInitialMode = (): "digital" | "analog" => {
+        if (typeof window === "undefined") return "digital";
+        try {
+            const saved = localStorage.getItem("ba_clock_mode");
+            if (saved === "analog" || saved === "digital") return saved;
+        } catch {}
+        return "digital";
+    };
+
     const [time, setTime] = createSignal(new Date());
-    const [mode, setMode] = createSignal<"digital" | "analog">("digital");
+    const [mode, setMode] = createSignal<"digital" | "analog">(getInitialMode());
     const [soundEnabled, setSoundEnabled] = createSignal(false);
     const [soundVolume, setSoundVolume] = createSignal(100);
     let containerRef: HTMLDivElement | undefined;
@@ -49,8 +58,12 @@ export default function Clock() {
     };
 
     onSettled(() => {
-        // localStorage から秒針音の設定を復元
+        // localStorage からモード・秒針音の設定を復元
         try {
+            const savedMode = localStorage.getItem("ba_clock_mode");
+            if (savedMode === "analog" || savedMode === "digital") {
+                setMode(savedMode);
+            }
             const savedEnabled = localStorage.getItem("ba_clock_sound_enabled");
             if (savedEnabled === "true") {
                 setSoundEnabled(true);
@@ -115,6 +128,9 @@ export default function Clock() {
     const switchMode = (newMode: "digital" | "analog") => {
         if (mode() === newMode) return;
         setMode(newMode);
+        try {
+            localStorage.setItem("ba_clock_mode", newMode);
+        } catch {}
     };
 
     const toggleSound = () => {
