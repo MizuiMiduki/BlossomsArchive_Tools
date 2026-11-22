@@ -18,7 +18,7 @@ import {
 } from "../utils/charsetConverter";
 import { parseSeoFromHtml, stripHtmlTagsToPlainText } from "../pages/SeoChecker";
 import { parseOgpFromHtml } from "../pages/OgpChecker";
-import { playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/animations";
 import Home from "../pages/Home";
 import Calculator from "../pages/Calculator";
 import TextConverter from "../pages/TextConverter";

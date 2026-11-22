@@ -6,7 +6,7 @@ import {
     onSettled,
 } from "solid-js";
 import AdSense from "../components/AdSense";
-import { delayedCall, playPageEntrance } from "../utils/gsapAnimations";
+import { delayedCall, playPageEntrance } from "../utils/animations";
 export default function ExifFrame() {
     const [fileName, setFileName] = createSignal("");
     const [customExportName, setCustomExportName] = createSignal("");

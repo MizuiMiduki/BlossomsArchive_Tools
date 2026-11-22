@@ -7,7 +7,7 @@ import {
 } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/animations";
 
 export default function HyperfocalCalculator() {
     const [sensorType, setSensorType] = createSignal("apsc-sony");

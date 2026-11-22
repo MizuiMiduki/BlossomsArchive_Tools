@@ -1,5 +1,5 @@
 import { createSignal, For, onSettled } from "solid-js";
-import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, playPageEntrance } from "../utils/animations";
 
 function safeCalculate(expression: string): number {
     const sanitized = expression

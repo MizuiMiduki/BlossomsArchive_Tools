@@ -1,7 +1,7 @@
 import { createSignal, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { delayedCall, playPageEntrance } from "../utils/gsapAnimations";
+import { delayedCall, playPageEntrance } from "../utils/animations";
 
 export default function PasswordGenerator() {
     const [length, setLength] = createSignal(16);

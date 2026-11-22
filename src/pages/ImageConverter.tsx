@@ -1,7 +1,7 @@
 import { createSignal, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, playPageEntrance } from "../utils/animations";
 
 export default function ImageConverter() {
     let containerRef: HTMLDivElement | undefined;

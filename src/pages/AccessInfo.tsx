@@ -1,7 +1,7 @@
 import { createSignal, Show, onSettled } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { delayedCall, playPageEntrance, animatePop } from "../utils/gsapAnimations";
+import { delayedCall, playPageEntrance, animatePop } from "../utils/animations";
 
 interface IpData {
     ip: string;

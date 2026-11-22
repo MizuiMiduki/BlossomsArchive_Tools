@@ -1,7 +1,7 @@
 import { createSignal, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { delayedCall, playPageEntrance, animatePop } from "../utils/gsapAnimations";
+import { delayedCall, playPageEntrance, animatePop } from "../utils/animations";
 import { playNotificationSound, playClockTickSound, initAudio } from "../utils/sound";
 
 interface HistoryItem {

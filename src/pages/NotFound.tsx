@@ -1,6 +1,6 @@
 import { onSettled } from "solid-js";
 import { Meta } from "@solidjs/meta";
-import { playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/animations";
 
 export default function NotFound() {
     let containerRef: HTMLDivElement | undefined;

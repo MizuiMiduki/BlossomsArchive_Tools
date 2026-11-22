@@ -12,7 +12,7 @@ import {
     animatePop,
     delayedCall,
     playPageEntrance,
-} from "../utils/gsapAnimations";
+} from "../utils/animations";
 
 export interface MetaTagItem {
     key: string;

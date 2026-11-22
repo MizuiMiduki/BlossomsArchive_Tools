@@ -1,7 +1,7 @@
 import { createMemo, createSignal, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/animations";
 
 function formatRange(min: number, max: number, digits: number, unit: string) {
     const minText = min.toFixed(digits);

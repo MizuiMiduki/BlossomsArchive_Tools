@@ -1,6 +1,6 @@
 // src/pages/PrivacyPolicy.tsx
 import { onSettled } from "solid-js";
-import { playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/animations";
 
 export default function PrivacyPolicy() {
     let containerRef: HTMLDivElement | undefined;

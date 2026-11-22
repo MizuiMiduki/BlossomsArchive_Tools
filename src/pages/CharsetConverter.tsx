@@ -1,7 +1,7 @@
 import { createSignal, createMemo, createEffect, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/animations";
 import type {
     SupportedEncoding,
     InputEncodingOption,

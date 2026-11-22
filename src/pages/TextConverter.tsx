@@ -5,7 +5,7 @@ import BudouX from "../components/BudouX";
 import {
     delayedCall,
     playPageEntrance,
-} from "../utils/gsapAnimations";
+} from "../utils/animations";
 import {
     convertText,
     ConversionMode,

@@ -15,7 +15,7 @@ import {
     PUBLISHER_NAME,
 } from "../routes";
 import ThemeToggle from "./ThemeToggle";
-import { delayedCall } from "../utils/gsapAnimations";
+import { delayedCall } from "../utils/animations";
 import { filterRoutesByQuery } from "../utils/search";
 
 interface LayoutProps {

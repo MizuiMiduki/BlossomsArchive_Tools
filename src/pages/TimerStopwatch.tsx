@@ -1,5 +1,5 @@
 import { createSignal, Switch, Match, For, Show, createEffect, onSettled } from "solid-js";
-import { animatePop, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, playPageEntrance } from "../utils/animations";
 import { initAudio, closeAudio, playNotificationSound } from "../utils/sound";
 
 export default function TimerStopwatch() {

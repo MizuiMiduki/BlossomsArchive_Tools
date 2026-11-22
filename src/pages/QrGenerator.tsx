@@ -1,7 +1,7 @@
 import { createSignal, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
-import { animatePop, delayedCall, playPageEntrance } from "../utils/gsapAnimations";
+import { animatePop, delayedCall, playPageEntrance } from "../utils/animations";
 
 // ボタンオプション用の型を定義して TypeScript に型を教えます
 interface FormatOption {

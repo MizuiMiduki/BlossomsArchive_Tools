@@ -1,7 +1,7 @@
 import { For, Show, createSignal, createMemo, onSettled } from "solid-js";
 import { routes, type Route } from "../routes";
 import AdSense from "../components/AdSense";
-import { playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/animations";
 import { filterRoutesByQuery } from "../utils/search";
 
 type HomeGridItem =

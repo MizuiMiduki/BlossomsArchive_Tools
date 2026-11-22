@@ -1,6 +1,6 @@
 // src/pages/Credits.tsx
 import { onSettled } from "solid-js";
-import { playPageEntrance } from "../utils/gsapAnimations";
+import { playPageEntrance } from "../utils/animations";
 
 interface Library {
     name: string;

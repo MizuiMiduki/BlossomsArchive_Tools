@@ -77,6 +77,9 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         const budouxDirectImportPattern = new RegExp(
             "from\\s+[\"'`]budoux[\"'`]",
         );
+        const gsapDirectImportPattern = new RegExp(
+            "from\\s+[\"'`](?:gsap|.*gsapAnimations.*)[\"'`]",
+        );
         const solidLegacyLifecyclePattern = new RegExp(
             "\\b(?:onMount|onCleanup)\\b",
         );
@@ -94,6 +97,11 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
             if (budouxDirectImportPattern.test(content)) {
                 violations.push(
                     `${rel}: Direct import from 'budoux' (212KB dictionary) is forbidden; use src/utils/budoux.ts (Intl.Segmenter)`,
+                );
+            }
+            if (gsapDirectImportPattern.test(content)) {
+                violations.push(
+                    `${rel}: Direct import from 'gsap' or 'gsapAnimations' is forbidden; use src/utils/animations.ts`,
                 );
             }
             if (solidLegacyLifecyclePattern.test(content)) {
