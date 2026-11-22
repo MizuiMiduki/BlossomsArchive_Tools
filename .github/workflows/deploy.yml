@@ -60,12 +60,18 @@ jobs:
             - name: Run Type Check & Test Suite (Parallel)
               shell: bash
               run: |
+                  STATUS_TYPE=0
+                  STATUS_TEST=0
                   pnpm run type-check &
                   PID_TYPE=$!
                   pnpm test &
                   PID_TEST=$!
-                  wait $PID_TYPE
-                  wait $PID_TEST
+                  wait $PID_TYPE || STATUS_TYPE=$?
+                  wait $PID_TEST || STATUS_TEST=$?
+                  if [ "$STATUS_TYPE" -ne 0 ] || [ "$STATUS_TEST" -ne 0 ]; then
+                    echo "❌ Quality gate failed: type-check=$STATUS_TYPE, test=$STATUS_TEST"
+                    exit 1
+                  fi
 
     # ─── 2. 本番ビルド (quality-gate と並行に即時開始) ───
     build:
