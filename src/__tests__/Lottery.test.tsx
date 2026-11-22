@@ -100,4 +100,45 @@ describe("Lottery", () => {
         const clearHistoryBtn = screen.getByRole("button", { name: /ログを消去/ });
         fireEvent.click(clearHistoryBtn);
     });
+
+    it("抽選演出の選択（デフォルトは演出オフ）およびドキドキ演出（ルーレット・カウントダウン）とスキップ機能が正常に動作すること", () => {
+        render(() => <Lottery />);
+
+        // 1. デフォルト設定の確認: 演出は「演出なし（即時）」が選択されていること
+        const animSelect = screen.getByLabelText("抽選演出") as HTMLSelectElement;
+        expect(animSelect).toBeInTheDocument();
+        expect(animSelect.value).toBe("none");
+
+        const textarea = screen.getByPlaceholderText(/項目 A/) as HTMLTextAreaElement;
+        fireEvent.input(textarea, { target: { value: "金賞\n銀賞\n銅賞" } });
+
+        // 2. 「ドキドキ演出（ルーレット）」を選択
+        fireEvent.change(animSelect, { target: { value: "roulette" } });
+        expect(animSelect.value).toBe("roulette");
+
+        // 抽選ボタンを押すと演出中（ROULETTE表示、ボタンdisabled）になる
+        const drawBtn = screen.getByRole("button", { name: "抽選を実行" });
+        fireEvent.click(drawBtn);
+
+        expect(screen.getByText("ROULETTE")).toBeInTheDocument();
+        expect(screen.getAllByText(/抽選中/).length).toBeGreaterThan(0);
+
+        // 演出スキップボタンを押すと即座に結果が確定すること
+        const skipBtn = screen.getByRole("button", { name: /演出をスキップ/ });
+        expect(skipBtn).toBeInTheDocument();
+        fireEvent.click(skipBtn);
+
+        expect(screen.getByText("選定結果")).toBeInTheDocument();
+        expect(screen.getByText("🎉 当選")).toBeInTheDocument();
+
+        // 3. 「カウントダウン演出（3秒）」を選択してテスト
+        fireEvent.change(animSelect, { target: { value: "countdown" } });
+        fireEvent.click(screen.getByRole("button", { name: "抽選を実行" }));
+
+        expect(screen.getByText("COUNTDOWN")).toBeInTheDocument();
+        const skipBtn2 = screen.getByRole("button", { name: /演出をスキップ/ });
+        fireEvent.click(skipBtn2);
+
+        expect(screen.getByText("選定結果")).toBeInTheDocument();
+    });
 });

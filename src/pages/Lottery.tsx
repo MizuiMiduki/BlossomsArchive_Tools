@@ -2,6 +2,7 @@ import { createSignal, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { delayedCall, playPageEntrance, animatePop } from "../utils/gsapAnimations";
+import { playNotificationSound, playClockTickSound, initAudio } from "../utils/sound";
 
 interface HistoryItem {
     id: number;
@@ -9,23 +10,69 @@ interface HistoryItem {
     items: string[];
 }
 
+export type LotteryAnimationMode = "none" | "roulette" | "countdown";
+
 export default function Lottery() {
     const [inputText, setInputText] = createSignal("");
     const [results, setResults] = createSignal<string[]>([]);
     const [drawCount, setDrawCount] = createSignal(1);
     const [removeOnDraw, setRemoveOnDraw] = createSignal(false);
+    const [animationMode, setAnimationMode] = createSignal<LotteryAnimationMode>("none");
+    const [isAnimating, setIsAnimating] = createSignal(false);
+    const [rouletteCandidate, setRouletteCandidate] = createSignal("");
+    const [countdownNumber, setCountdownNumber] = createSignal<number | null>(null);
     const [copied, setCopied] = createSignal(false);
     const [shared, setShared] = createSignal(false);
     const [history, setHistory] = createSignal<HistoryItem[]>([]);
 
     let containerRef: HTMLDivElement | undefined;
     let drawButtonRef: HTMLButtonElement | undefined;
+    let animationTimers: number[] = [];
+    let pendingDrawAction: (() => void) | null = null;
+
+    const clearAllTimers = () => {
+        animationTimers.forEach((t) => window.clearTimeout(t));
+        animationTimers = [];
+    };
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
+        return () => {
+            clearAllTimers();
+        };
     });
 
+    const finishDraw = (selectedResults: string[], remainingItems: string[]) => {
+        clearAllTimers();
+        pendingDrawAction = null;
+        setIsAnimating(false);
+        setCountdownNumber(null);
+        setRouletteCandidate("");
+        setResults(selectedResults);
+        setCopied(false);
+        setShared(false);
+
+        const now = new Date();
+        const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+
+        setHistory((prev) => [
+            { id: Date.now(), time: timeStr, items: selectedResults },
+            ...prev,
+        ]);
+
+        if (removeOnDraw()) {
+            setInputText(remainingItems.join("\n"));
+        }
+    };
+
+    const skipAnimation = () => {
+        if (pendingDrawAction) {
+            pendingDrawAction();
+        }
+    };
+
     const startLottery = () => {
+        if (isAnimating()) return;
         if (drawButtonRef) animatePop(drawButtonRef);
 
         let items = inputText()
@@ -47,31 +94,87 @@ export default function Lottery() {
         const randomArray = new Uint32Array(loops);
         window.crypto.getRandomValues(randomArray);
 
+        // 抽選アイテムのインデックス選定
+        const clonedItems = [...items];
         for (let i = 0; i < loops; i++) {
-            const randomIndex = randomArray[i] % items.length;
-
-            const selectedItem = items[randomIndex];
+            const randomIndex = randomArray[i] % clonedItems.length;
+            const selectedItem = clonedItems[randomIndex];
             selectedResults.push(selectedItem);
 
             if (removeOnDraw()) {
-                items.splice(randomIndex, 1);
+                clonedItems.splice(randomIndex, 1);
             }
         }
 
-        setResults(selectedResults);
-        setCopied(false);
-        setShared(false);
+        const remainingItems = clonedItems;
+        const mode = animationMode();
 
-        const now = new Date();
-        const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+        // 演出なし（デフォルト: 即時決定）
+        if (mode === "none") {
+            finishDraw(selectedResults, remainingItems);
+            return;
+        }
 
-        setHistory((prev) => [
-            { id: Date.now(), time: timeStr, items: selectedResults },
-            ...prev,
-        ]);
+        // 音声コンテキストの初期化
+        initAudio();
+        clearAllTimers();
+        setIsAnimating(true);
 
-        if (removeOnDraw()) {
-            setInputText(items.join("\n"));
+        const doFinish = () => {
+            playNotificationSound({ soundType: "chime", volume: 0.8 });
+            finishDraw(selectedResults, remainingItems);
+        };
+        pendingDrawAction = doFinish;
+
+        // ドキドキ演出: ルーレットモード
+        if (mode === "roulette") {
+            // 徐々に減速するタイミングステップ（ミリ秒）
+            const steps = [
+                50, 50, 50, 50, 50, 60, 60, 70, 80, 100, 120, 150, 190, 240, 310, 400
+            ];
+            let elapsed = 0;
+
+            steps.forEach((delay, idx) => {
+                elapsed += delay;
+                const timerId = window.setTimeout(() => {
+                    // ランダムな候補を表示
+                    const randIdx = Math.floor(Math.random() * items.length);
+                    setRouletteCandidate(items[randIdx]);
+                    playClockTickSound(idx % 2 === 0, 0.45);
+
+                    // 最後のステップで確定
+                    if (idx === steps.length - 1) {
+                        const finalTimer = window.setTimeout(() => {
+                            doFinish();
+                        }, 300);
+                        animationTimers.push(finalTimer);
+                    }
+                }, elapsed);
+                animationTimers.push(timerId);
+            });
+            return;
+        }
+
+        // ドキドキ演出: カウントダウンモード (3, 2, 1)
+        if (mode === "countdown") {
+            setCountdownNumber(3);
+            playClockTickSound(true, 0.6);
+
+            const t1 = window.setTimeout(() => {
+                setCountdownNumber(2);
+                playClockTickSound(false, 0.6);
+            }, 700);
+
+            const t2 = window.setTimeout(() => {
+                setCountdownNumber(1);
+                playClockTickSound(true, 0.6);
+            }, 1400);
+
+            const t3 = window.setTimeout(() => {
+                doFinish();
+            }, 2100);
+
+            animationTimers.push(t1, t2, t3);
         }
     };
 
@@ -205,95 +308,187 @@ export default function Lottery() {
                                 </div>
 
                                 <div class="form-control w-full">
-                                    <label class="label cursor-pointer justify-start gap-3 h-11 px-3 rounded-xl border-2 border-base-300 bg-base-100 hover:bg-base-200 w-full transition-colors">
-                                        <input
-                                             type="checkbox"
-                                             aria-label="当選時にリストから除外"
-                                             checked={removeOnDraw()}
-                                             onChange={(e) =>
-                                                 setRemoveOnDraw(
-                                                     e.currentTarget.checked,
-                                                 )
-                                             }
-                                             class="checkbox checkbox-sm checkbox-primary rounded-md"
-                                         />
-                                         <span class="label-text font-bold text-xs text-base-content/90">
-                                             当選時にリストから除外
-                                         </span>
-                                     </label>
-                                 </div>
-                             </div>
+                                    <label class="label py-1">
+                                        <span class="label-text font-bold text-xs text-base-content/80">
+                                            抽選演出
+                                        </span>
+                                    </label>
+                                    <select
+                                        value={animationMode()}
+                                        aria-label="抽選演出"
+                                        onChange={(e) =>
+                                            setAnimationMode(
+                                                e.currentTarget
+                                                    .value as LotteryAnimationMode,
+                                            )
+                                        }
+                                        class="select select-bordered select-sm h-11 text-xs font-bold bg-base-100 border-2 border-base-300 text-base-content w-full focus:border-primary"
+                                    >
+                                        <option value="none">
+                                            演出なし（即時）
+                                        </option>
+                                        <option value="roulette">
+                                            ドキドキ演出（ルーレット）
+                                        </option>
+                                        <option value="countdown">
+                                            カウントダウン演出（3秒）
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
 
-                             {/* アクションボタン */}
-                             <div class="flex gap-3 border-t border-base-300 pt-4">
-                                 <button
-                                     ref={drawButtonRef}
-                                     onClick={startLottery}
-                                     class="btn btn-primary text-primary-content flex-1 text-sm font-black h-12 min-h-0 shadow-md transition-all"
-                                 >
-                                     抽選を実行
-                                 </button>
-                                 <button
-                                     onClick={resetAll}
-                                     class="btn btn-outline border-2 border-base-300 text-base-content font-bold text-xs h-12 min-h-0 px-5 hover:bg-base-200"
-                                 >
-                                     クリア
-                                 </button>
-                             </div>
-                         </div>
+                            <div class="form-control w-full border-t border-base-300 pt-3">
+                                <label class="label cursor-pointer justify-start gap-3 h-11 px-3 rounded-xl border-2 border-base-300 bg-base-100 hover:bg-base-200 w-full transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        aria-label="当選時にリストから除外"
+                                        checked={removeOnDraw()}
+                                        onChange={(e) =>
+                                            setRemoveOnDraw(
+                                                e.currentTarget.checked,
+                                            )
+                                        }
+                                        class="checkbox checkbox-sm checkbox-primary rounded-md"
+                                    />
+                                    <span class="label-text font-bold text-xs text-base-content/90">
+                                        当選時にリストから除外
+                                    </span>
+                                </label>
+                            </div>
 
-                         {/* 右側：抽選結果および履歴表示 */}
-                         <div class="lg:col-span-7 flex flex-col gap-5 justify-between">
-                             <Show when={results().length > 0}>
-                                 <div
-                                     class="bg-base-200/60 p-6 rounded-2xl border border-base-300 flex flex-col gap-4 shadow-sm"
-                                 >
-                                     <div class="flex justify-between items-center border-b border-base-300 pb-2.5">
-                                         <span class="text-xs font-black text-base-content/70 tracking-wider">
-                                             選定結果
-                                         </span>
-                                         <Show
-                                             when={
-                                                 !results()[0].startsWith(
-                                                     "抽選対象",
-                                                 )
-                                             }
-                                         >
-                                             <div class="flex gap-2">
-                                                 <button
-                                                     onClick={copyResults}
-                                                     class={`btn btn-xs font-bold rounded-lg border-none transition-colors ${copied() ? "btn-success text-white" : "btn-primary text-primary-content"}`}
-                                                 >
-                                                     {copied()
-                                                         ? "コピー完了"
-                                                         : "クリップボードにコピー"}
-                                                 </button>
-                                                 <button
-                                                     onClick={shareResults}
-                                                     class="btn btn-xs font-bold rounded-lg text-base-content border-2 border-base-300 bg-base-100 hover:bg-base-200 transition-colors"
-                                                 >
-                                                     {shared()
-                                                         ? "共有完了"
-                                                         : "共有 / 出力"}
-                                                 </button>
-                                             </div>
-                                         </Show>
-                                     </div>
+                            {/* アクションボタン */}
+                            <div class="flex gap-3 border-t border-base-300 pt-4">
+                                <button
+                                    ref={drawButtonRef}
+                                    onClick={startLottery}
+                                    disabled={isAnimating()}
+                                    class="btn btn-primary text-primary-content flex-1 text-sm font-black h-12 min-h-0 shadow-md transition-all disabled:opacity-60"
+                                >
+                                    <Show
+                                        when={isAnimating()}
+                                        fallback="抽選を実行"
+                                    >
+                                        <span class="loading loading-spinner loading-xs mr-2" />
+                                        抽選中...
+                                    </Show>
+                                </button>
+                                <button
+                                    onClick={resetAll}
+                                    disabled={isAnimating()}
+                                    class="btn btn-outline border-2 border-base-300 text-base-content font-bold text-xs h-12 min-h-0 px-5 hover:bg-base-200"
+                                >
+                                    クリア
+                                </button>
+                            </div>
+                        </div>
 
-                                     {/* 当選アイテム */}
-                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                         <For each={results()}>
-                                             {(res) => (
-                                                 <div class="lottery-item bg-base-100 border border-base-300 rounded-xl p-4 text-center shadow-xs">
-                                                     <h3 class="text-sm font-black text-base-content select-all truncate">
-                                                         {res}
-                                                     </h3>
-                                                 </div>
-                                             )}
-                                         </For>
-                                     </div>
-                                 </div>
-                             </Show>
+                        {/* 右側：抽選結果および履歴表示 */}
+                        <div class="lg:col-span-7 flex flex-col gap-5 justify-between">
+                            {/* 演出中画面 */}
+                            <Show when={isAnimating()}>
+                                <div class="bg-base-200/90 p-6 sm:p-8 rounded-2xl border-2 border-primary/50 flex flex-col items-center justify-center gap-5 shadow-lg min-h-[280px]">
+                                    <div class="flex items-center justify-between w-full border-b border-base-300 pb-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="badge badge-primary font-bold text-xs text-primary-content animate-pulse">
+                                                🎯 抽選中
+                                            </span>
+                                            <span class="text-xs text-base-content/70 font-semibold">
+                                                結果を選定しています...
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={skipAnimation}
+                                            class="btn btn-ghost btn-xs text-xs text-primary font-bold hover:underline"
+                                        >
+                                            演出をスキップ ⏩
+                                        </button>
+                                    </div>
+
+                                    {/* ルーレットモード */}
+                                    <Show when={animationMode() === "roulette"}>
+                                        <div class="flex flex-col items-center justify-center my-4 w-full">
+                                            <span class="text-xs text-base-content/60 font-bold mb-2 tracking-wider">
+                                                ROULETTE
+                                            </span>
+                                            <div class="text-xl sm:text-3xl font-black text-primary px-6 py-4 bg-base-100 border-2 border-primary rounded-2xl shadow-inner min-w-[240px] max-w-full text-center truncate animate-bounce">
+                                                {rouletteCandidate() || "..."}
+                                            </div>
+                                        </div>
+                                    </Show>
+
+                                    {/* カウントダウンモード */}
+                                    <Show when={animationMode() === "countdown"}>
+                                        <div class="flex flex-col items-center justify-center my-4">
+                                            <span class="text-xs text-base-content/60 font-bold mb-2 tracking-wider">
+                                                COUNTDOWN
+                                            </span>
+                                            <div class="text-6xl sm:text-7xl font-black text-primary animate-ping">
+                                                {countdownNumber() ?? "3"}
+                                            </div>
+                                        </div>
+                                    </Show>
+
+                                    <div class="text-[11px] text-base-content/60 font-semibold">
+                                        ※ 暗号学的乱数（CSPRNG）による厳正な抽選を行っています
+                                    </div>
+                                </div>
+                            </Show>
+
+                            {/* 確定結果 */}
+                            <Show when={!isAnimating() && results().length > 0}>
+                                <div
+                                    class="bg-base-200/60 p-6 rounded-2xl border border-base-300 flex flex-col gap-4 shadow-sm"
+                                >
+                                    <div class="flex justify-between items-center border-b border-base-300 pb-2.5">
+                                        <span class="text-xs font-black text-base-content/70 tracking-wider">
+                                            選定結果
+                                        </span>
+                                        <Show
+                                            when={
+                                                !results()[0].startsWith(
+                                                    "抽選対象",
+                                                )
+                                            }
+                                        >
+                                            <div class="flex gap-2">
+                                                <button
+                                                    onClick={copyResults}
+                                                    class={`btn btn-xs font-bold rounded-lg border-none transition-colors ${copied() ? "btn-success text-white" : "btn-primary text-primary-content"}`}
+                                                >
+                                                    {copied()
+                                                        ? "コピー完了"
+                                                        : "クリップボードにコピー"}
+                                                </button>
+                                                <button
+                                                    onClick={shareResults}
+                                                    class="btn btn-xs font-bold rounded-lg text-base-content border-2 border-base-300 bg-base-100 hover:bg-base-200 transition-colors"
+                                                >
+                                                    {shared()
+                                                        ? "共有完了"
+                                                        : "共有 / 出力"}
+                                                </button>
+                                            </div>
+                                        </Show>
+                                    </div>
+
+                                    {/* 当選アイテム */}
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <For each={results()}>
+                                            {(res) => (
+                                                <div class="lottery-item bg-base-100 border-2 border-primary/30 rounded-xl p-4 text-center shadow-xs transition-transform hover:scale-[1.02]">
+                                                    <div class="text-[10px] text-primary font-black uppercase tracking-wider mb-1">
+                                                        🎉 当選
+                                                    </div>
+                                                    <h3 class="text-base font-black text-base-content select-all truncate">
+                                                        {res}
+                                                    </h3>
+                                                </div>
+                                            )}
+                                        </For>
+                                    </div>
+                                </div>
+                            </Show>
 
                              {/* 履歴セクション */}
                              <Show when={history().length > 0}>
@@ -337,6 +532,7 @@ export default function Lottery() {
                              {/* 初期表示（未実行時） */}
                              <Show
                                  when={
+                                     !isAnimating() &&
                                      results().length === 0 &&
                                      history().length === 0
                                  }
