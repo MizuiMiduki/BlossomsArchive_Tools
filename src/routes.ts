@@ -165,6 +165,23 @@ export const routes: Route[] = [
         keywords: ["テキスト変換", "Markdown HTML変換", "HTMLプレーンテキスト変換", "全角半角変換"],
     },
     {
+        path: "/exposure-calculator",
+        title: "カメラ露出計算機",
+        description:
+            "通常撮影から長秒露光・星空撮影まで、絞り(F値)・シャッタースピード・ISO感度・NDフィルターの適正露出を即座にシミュレーション・換算できる無料Webカメラ露出計算ツールです。",
+        applicationCategory: "MultimediaApplication",
+        keywords: [
+            "カメラ露出計算",
+            "適正露出",
+            "長秒露光",
+            "NDフィルター計算",
+            "シャッタースピード",
+            "F値",
+            "ISO感度",
+            "露出換算",
+        ],
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",

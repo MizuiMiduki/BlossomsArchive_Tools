@@ -5,7 +5,7 @@
       "displayName": "BlossomsArchive Tools | 無料Webツール集",
       "type": "application/agent-skills+md",
       "url": "https://tools.blossomsarchive.com/llms-full.txt",
-      "description": "電卓、QRコード生成、パスワード生成、抽選、画像形式変換、動画圧縮、文字コード変換、アクセス情報確認、OGP・SEO確認、EXIFフレーム生成、時計、タイマー、過焦点距離計算、ヘッドホン駆動難易度計算、テキスト変換の完全ブラウザ完結型Webツール一覧と仕様書です。",
+      "description": "電卓、QRコード生成、パスワード生成、抽選、画像形式変換、動画圧縮、文字コード変換、アクセス情報確認、OGP・SEO確認、EXIFフレーム生成、時計、タイマー、過焦点距離計算、ヘッドホン駆動難易度計算、テキスト変換、カメラ露出・長秒露光計算の完全ブラウザ完結型Webツール一覧と仕様書です。",
       "capabilities": [
         "ClientSideWebTools",
         "PrivacyPreservingProcessing",
@@ -424,6 +424,34 @@
         "HTMLをMarkdownに、またはMarkdownをHTMLに相互変換したい",
         "HTMLタグを除去してプレーンテキストだけを抽出したい",
         "HTML特殊文字エスケープやURLエンコードをブラウザ上で変換したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:exposure-calculator",
+      "displayName": "カメラ露出計算機 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/exposure-calculator",
+      "description": "通常撮影から長秒露光・星空撮影まで、絞り・シャッター速度・ISO・NDフィルターの適正露出をシミュレーション・換算しバルブタイマーも使える無料Webツール。",
+      "capabilities": [
+        "ExposureValueCalculation",
+        "LongExposureNdCalculator",
+        "EquivalentExposureConversion",
+        "AstroShutterLimit"
+      ],
+      "tags": [
+        "カメラ露出",
+        "露出計算",
+        "長秒露光",
+        "NDフィルター",
+        "適正露出"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-22T00:00:00Z",
+      "representativeQueries": [
+        "カメラの絞り・シャッタースピード・ISO感度の適正露出を計算したい",
+        "ND1000を付けたときの長秒露光時間を計算してタイマーで測りたい",
+        "露出を保ったまま絞りを変えたときの等価露出シャッター速度を求めたい",
+        "星景写真で星が流れない限界シャッター速度（500ルール・NPFルール）を調べたい"
       ]
     }
   ]

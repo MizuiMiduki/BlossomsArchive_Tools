@@ -1,0 +1,1701 @@
+import {
+    createSignal,
+    createMemo,
+    createEffect,
+    onSettled,
+    For,
+    Show,
+} from "solid-js";
+import AdSense from "../components/AdSense";
+import BudouX from "../components/BudouX";
+import { playPageEntrance, animatePop } from "../utils/animations";
+import { initAudio, closeAudio, playNotificationSound } from "../utils/sound";
+import {
+    calculateEv100,
+    calculateShutterSpeed,
+    calculateAperture,
+    calculateIso,
+    findClosestStandardValue,
+    calculateNdExposure,
+    formatShutterSpeed,
+    calculateAstroShutterLimit,
+    STANDARD_APERTURES,
+    STANDARD_ISOS,
+    STANDARD_SHUTTER_SPEEDS,
+    ND_FILTER_PRESETS,
+    SCENE_PRESETS,
+    SENSOR_PRESETS,
+} from "../utils/exposureCalculator";
+
+type CalculatorMode = "simulator" | "nd-bulb" | "equivalent" | "astro";
+type SolveTarget = "shutter" | "aperture" | "iso";
+
+export default function ExposureCalculator() {
+    let containerRef: HTMLDivElement | undefined;
+
+    // 現在のタブ
+    const [activeTab, setActiveTab] = createSignal<CalculatorMode>("simulator");
+
+    // ==========================================
+    // 1. 適正露出シミュレーター用状態
+    // ==========================================
+    const [selectedScene, setSelectedScene] = createSignal("sunny-16");
+    const [manualEv, setManualEv] = createSignal(15);
+    const [isManualEv, setIsManualEv] = createSignal(false);
+    const [evCompensation, setEvCompensation] = createSignal(0);
+    const [solveTarget, setSolveTarget] = createSignal<SolveTarget>("shutter");
+
+    const [simAperture, setSimAperture] = createSignal<number>(8.0);
+    const [simShutter, setSimShutter] = createSignal<number>(1 / 250);
+    const [simIso, setSimIso] = createSignal<number>(100);
+    const [simNdStops, setSimNdStops] = createSignal<number>(0);
+
+    // ==========================================
+    // 2. ND長秒露光 & バルブタイマー用状態
+    // ==========================================
+    const [ndBaseShutter, setNdBaseShutter] = createSignal<number>(1 / 125);
+    const [selectedNdFilter, setSelectedNdFilter] = createSignal("nd1000");
+    const [customNdStops, setCustomNdStops] = createSignal(10);
+
+    // タイマー関連状態
+    const [timerRemainingSeconds, setTimerRemainingSeconds] = createSignal(0);
+    const [timerTotalSeconds, setTimerTotalSeconds] = createSignal(0);
+    const [isTimerRunning, setIsTimerRunning] = createSignal(false);
+    const [soundAlert, setSoundAlert] = createSignal(true);
+    let timerIntervalId: number | undefined;
+
+    // ==========================================
+    // 3. 等価露出換算用状態
+    // ==========================================
+    const [eqBaseAperture, setEqBaseAperture] = createSignal(8.0);
+    const [eqBaseShutter, setEqBaseShutter] = createSignal(1 / 250);
+    const [eqBaseIso, setEqBaseIso] = createSignal(100);
+    const [eqBaseNdStops, setEqBaseNdStops] = createSignal(0);
+
+    const [eqTargetParam, setEqTargetParam] =
+        createSignal<SolveTarget>("shutter");
+    const [eqNewAperture, setEqNewAperture] = createSignal(2.8);
+    const [eqNewShutter, setEqNewShutter] = createSignal(1 / 1000);
+    const [eqNewIso, setEqNewIso] = createSignal(100);
+    const [eqNewNdStops, setEqNewNdStops] = createSignal(0);
+
+    // ==========================================
+    // 4. 星空限界シャッター速度用状態
+    // ==========================================
+    const [astroSensor, setAstroSensor] = createSignal("fullframe");
+    const [astroCropFactor, setAstroCropFactor] = createSignal(1.0);
+    const [astroPixelPitch, setAstroPixelPitch] = createSignal(5.9);
+    const [astroFocalLength, setAstroFocalLength] = createSignal(24);
+    const [astroAperture, setAstroAperture] = createSignal(2.8);
+
+    // ライフサイクル
+    onSettled(() => {
+        if (containerRef) {
+            playPageEntrance(containerRef, ".card");
+        }
+        return () => {
+            if (timerIntervalId !== undefined) {
+                window.clearInterval(timerIntervalId);
+                timerIntervalId = undefined;
+            }
+            closeAudio();
+        };
+    });
+
+    // ------------------------------------------
+    // シーン選択連動
+    // ------------------------------------------
+    createEffect(
+        () => ({ sceneId: selectedScene(), isManual: isManualEv() }),
+        ({ sceneId, isManual }) => {
+            if (!isManual) {
+                const found = SCENE_PRESETS.find((s) => s.id === sceneId);
+                if (found) {
+                    setManualEv(found.ev100);
+                }
+            }
+        },
+    );
+
+    // センサー選択連動
+    createEffect(
+        () => astroSensor(),
+        (sensorId) => {
+            const found = SENSOR_PRESETS.find((s) => s.id === sensorId);
+            if (found && sensorId !== "custom") {
+                setAstroCropFactor(found.cropFactor);
+                setAstroPixelPitch(found.defaultPixelPitchUm);
+            }
+        },
+    );
+
+    // 目標実効EV (EV100 + 補正)
+    const currentTargetEv = createMemo(() => {
+        const base = isManualEv()
+            ? manualEv()
+            : SCENE_PRESETS.find((s) => s.id === selectedScene())?.ev100 ?? 15;
+        const comp = evCompensation();
+        return (Number.isFinite(base) ? base : 15) + (Number.isFinite(comp) ? comp : 0);
+    });
+
+    // ==========================================
+    // 1. シミュレーター計算結果
+    // ==========================================
+    const simResult = createMemo(() => {
+        const targetEv = currentTargetEv();
+        const target = solveTarget();
+        const nd = simNdStops();
+
+        if (target === "shutter") {
+            const aperture = simAperture();
+            const iso = simIso();
+            const calculatedSec = calculateShutterSpeed(
+                targetEv,
+                aperture,
+                iso,
+                nd,
+            );
+            const standard = findClosestStandardValue(
+                calculatedSec,
+                STANDARD_SHUTTER_SPEEDS,
+                (s) => s.value,
+            );
+            return {
+                type: "shutter" as const,
+                exactValue: calculatedSec,
+                displayExact: formatShutterSpeed(calculatedSec),
+                standardLabel: standard.label,
+                standardValue: standard.value,
+            };
+        } else if (target === "aperture") {
+            const shutter = simShutter();
+            const iso = simIso();
+            const calculatedF = calculateAperture(
+                targetEv,
+                shutter,
+                iso,
+                nd,
+            );
+            const standard = findClosestStandardValue(
+                calculatedF,
+                STANDARD_APERTURES,
+                (v) => v,
+            );
+            return {
+                type: "aperture" as const,
+                exactValue: calculatedF,
+                displayExact: `f/${calculatedF.toFixed(1)}`,
+                standardLabel: `f/${standard}`,
+                standardValue: standard,
+            };
+        } else {
+            const aperture = simAperture();
+            const shutter = simShutter();
+            const calculatedIso = calculateIso(
+                targetEv,
+                aperture,
+                shutter,
+                nd,
+            );
+            const standard = findClosestStandardValue(
+                calculatedIso,
+                STANDARD_ISOS,
+                (v) => v,
+            );
+            return {
+                type: "iso" as const,
+                exactValue: calculatedIso,
+                displayExact: `ISO ${calculatedIso}`,
+                standardLabel: `ISO ${standard}`,
+                standardValue: standard,
+            };
+        }
+    });
+
+    // ==========================================
+    // 2. ND長秒露光計算結果
+    // ==========================================
+    const activeNdStops = createMemo(() => {
+        const sel = selectedNdFilter();
+        if (sel === "custom") {
+            const c = customNdStops();
+            return Number.isFinite(c) && c >= 0 ? c : 0;
+        }
+        const found = ND_FILTER_PRESETS.find((p) => p.id === sel);
+        return found ? found.stops : 0;
+    });
+
+    const ndCalculatedSeconds = createMemo(() => {
+        const base = ndBaseShutter();
+        const stops = activeNdStops();
+        return calculateNdExposure(base, stops);
+    });
+
+    // ------------------------------------------
+    // タイマー操作
+    // ------------------------------------------
+    const setTimerFromNd = () => {
+        const secs = Math.max(1, Math.round(ndCalculatedSeconds()));
+        setTimerTotalSeconds(secs);
+        setTimerRemainingSeconds(secs);
+    };
+
+    const toggleTimer = (el?: HTMLElement) => {
+        if (el) animatePop(el, 0.94, 0.15);
+        if (isTimerRunning()) {
+            // 一時停止
+            setIsTimerRunning(false);
+            if (timerIntervalId !== undefined) {
+                window.clearInterval(timerIntervalId);
+                timerIntervalId = undefined;
+            }
+        } else {
+            // 開始
+            initAudio();
+            let rem = timerRemainingSeconds();
+            if (rem <= 0) {
+                const initSec = Math.max(1, Math.round(ndCalculatedSeconds()));
+                setTimerTotalSeconds(initSec);
+                setTimerRemainingSeconds(initSec);
+                rem = initSec;
+            }
+            setIsTimerRunning(true);
+            timerIntervalId = window.setInterval(() => {
+                setTimerRemainingSeconds((prev) => {
+                    if (prev <= 1) {
+                        // タイマー終了
+                        if (timerIntervalId !== undefined) {
+                            window.clearInterval(timerIntervalId);
+                            timerIntervalId = undefined;
+                        }
+                        setIsTimerRunning(false);
+                        if (soundAlert()) {
+                            playNotificationSound({ soundType: "chime" });
+                        }
+                        if (
+                            typeof navigator !== "undefined" &&
+                            "vibrate" in navigator
+                        ) {
+                            try {
+                                navigator.vibrate([300, 150, 300, 150, 500]);
+                            } catch {
+                                // 無視
+                            }
+                        }
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+    };
+
+    const resetTimer = (el?: HTMLElement) => {
+        if (el) animatePop(el, 0.94, 0.15);
+        setIsTimerRunning(false);
+        if (timerIntervalId !== undefined) {
+            window.clearInterval(timerIntervalId);
+            timerIntervalId = undefined;
+        }
+        const total = timerTotalSeconds() > 0
+            ? timerTotalSeconds()
+            : Math.max(1, Math.round(ndCalculatedSeconds()));
+        setTimerRemainingSeconds(total);
+    };
+
+    // ==========================================
+    // 3. 等価露出換算計算結果
+    // ==========================================
+    const eqBaseEv = createMemo(() => {
+        return calculateEv100(
+            eqBaseAperture(),
+            eqBaseShutter(),
+            eqBaseIso(),
+            eqBaseNdStops(),
+        );
+    });
+
+    const eqResult = createMemo(() => {
+        const targetEv = eqBaseEv();
+        const targetParam = eqTargetParam();
+        const nd = eqNewNdStops();
+
+        if (targetParam === "shutter") {
+            const calculatedSec = calculateShutterSpeed(
+                targetEv,
+                eqNewAperture(),
+                eqNewIso(),
+                nd,
+            );
+            const standard = findClosestStandardValue(
+                calculatedSec,
+                STANDARD_SHUTTER_SPEEDS,
+                (s) => s.value,
+            );
+            return {
+                label: "必要シャッタースピード",
+                exact: formatShutterSpeed(calculatedSec),
+                standard: standard.label,
+                raw: calculatedSec,
+            };
+        } else if (targetParam === "aperture") {
+            const calculatedF = calculateAperture(
+                targetEv,
+                eqNewShutter(),
+                eqNewIso(),
+                nd,
+            );
+            const standard = findClosestStandardValue(
+                calculatedF,
+                STANDARD_APERTURES,
+                (v) => v,
+            );
+            return {
+                label: "必要絞り値(F値)",
+                exact: `f/${calculatedF.toFixed(1)}`,
+                standard: `f/${standard}`,
+                raw: calculatedF,
+            };
+        } else {
+            const calculatedIso = calculateIso(
+                targetEv,
+                eqNewAperture(),
+                eqNewShutter(),
+                nd,
+            );
+            const standard = findClosestStandardValue(
+                calculatedIso,
+                STANDARD_ISOS,
+                (v) => v,
+            );
+            return {
+                label: "必要ISO感度",
+                exact: `ISO ${calculatedIso}`,
+                standard: `ISO ${standard}`,
+                raw: calculatedIso,
+            };
+        }
+    });
+
+    // ==========================================
+    // 4. 星景シャッター速度限界
+    // ==========================================
+    const astroResult = createMemo(() => {
+        const focal = astroFocalLength();
+        const crop = astroCropFactor();
+        const aperture = astroAperture();
+        const pixelPitch = astroPixelPitch();
+
+        return calculateAstroShutterLimit(focal, crop, aperture, pixelPitch);
+    });
+
+    return (
+        <div ref={containerRef} class="space-y-8 max-w-5xl mx-auto px-2 sm:px-4">
+            {/* ページタイトル & リード文 */}
+            <div class="card bg-base-100 shadow-xl border border-base-200">
+                <div class="card-body">
+                    <h1 class="card-title text-2xl sm:text-3xl font-bold flex items-center gap-2">
+                        <span class="text-3xl" aria-hidden="true">
+                            📷
+                        </span>
+                        カメラ露出計算機
+                    </h1>
+                    <p class="text-base-content/80 text-sm sm:text-base leading-relaxed">
+                        <BudouX text="日常の通常撮影から、NDフィルターを用いた長秒露光（滝・波・夜景）、星空撮影まで。絞り(F値)・シャッタースピード・ISO感度の適正露出を瞬時にシミュレーション・換算できるツールです。" />
+                    </p>
+
+                    {/* タブナビゲーション */}
+                    <div class="tabs tabs-box bg-base-200/60 p-1.5 rounded-2xl flex flex-wrap gap-1 mt-4">
+                        <button
+                            type="button"
+                            class={`tab flex-1 min-w-[130px] rounded-xl font-medium transition-all ${
+                                activeTab() === "simulator"
+                                    ? "tab-active bg-primary text-primary-content shadow-sm"
+                                    : "hover:bg-base-300/60 text-base-content/80"
+                            }`}
+                            onClick={() => setActiveTab("simulator")}
+                            aria-label="適正露出シミュレータータブ"
+                        >
+                            ☀️ 適正露出計算
+                        </button>
+                        <button
+                            type="button"
+                            class={`tab flex-1 min-w-[130px] rounded-xl font-medium transition-all ${
+                                activeTab() === "nd-bulb"
+                                    ? "tab-active bg-primary text-primary-content shadow-sm"
+                                    : "hover:bg-base-300/60 text-base-content/80"
+                            }`}
+                            onClick={() => setActiveTab("nd-bulb")}
+                            aria-label="ND長秒露光とタイマータブ"
+                        >
+                            🌊 ND長秒・バルブ
+                        </button>
+                        <button
+                            type="button"
+                            class={`tab flex-1 min-w-[130px] rounded-xl font-medium transition-all ${
+                                activeTab() === "equivalent"
+                                    ? "tab-active bg-primary text-primary-content shadow-sm"
+                                    : "hover:bg-base-300/60 text-base-content/80"
+                            }`}
+                            onClick={() => setActiveTab("equivalent")}
+                            aria-label="等価露出換算タブ"
+                        >
+                            ⚖️ 等価露出換算
+                        </button>
+                        <button
+                            type="button"
+                            class={`tab flex-1 min-w-[130px] rounded-xl font-medium transition-all ${
+                                activeTab() === "astro"
+                                    ? "tab-active bg-primary text-primary-content shadow-sm"
+                                    : "hover:bg-base-300/60 text-base-content/80"
+                            }`}
+                            onClick={() => setActiveTab("astro")}
+                            aria-label="星空シャッター限界タブ"
+                        >
+                            🌌 星空限界速度
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* ======================================================== */}
+            {/* 1. 適正露出シミュレーター */}
+            {/* ======================================================== */}
+            <Show when={activeTab() === "simulator"}>
+                <form
+                    class="space-y-6"
+                    {...({
+                        toolname: "camera-exposure-simulator",
+                        tooldescription:
+                            "撮影環境の明るさ(EV)から、適正露出となるシャッター速度・絞り・ISO感度を自動算出します。",
+                    } as Record<string, string>)}
+                    onSubmit={(e) => e.preventDefault()}
+                >
+                    <div class="card bg-base-100 shadow-xl border border-base-200">
+                        <div class="card-body space-y-6">
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2">
+                                1. 撮影環境・シーンの選択 (目標EV)
+                            </h2>
+
+                            {/* 手動 / プリセット切り替え */}
+                            <div class="flex items-center gap-4">
+                                <label class="label cursor-pointer gap-2">
+                                    <input
+                                        type="checkbox"
+                                        class="toggle toggle-primary"
+                                        checked={isManualEv()}
+                                        onChange={(e) =>
+                                            setIsManualEv(e.currentTarget.checked)
+                                        }
+                                        aria-label="EV値を数値で直接手動入力する"
+                                    />
+                                    <span class="label-text font-medium text-base-content/80">
+                                        EV値を手動で直接指定する
+                                    </span>
+                                </label>
+                            </div>
+
+                            <Show
+                                when={isManualEv()}
+                                fallback={
+                                    <div class="space-y-2">
+                                        <label
+                                            class="block font-medium text-sm text-base-content/80"
+                                            for="scene-select"
+                                        >
+                                            シーン・環境プリセット
+                                        </label>
+                                        <select
+                                            id="scene-select"
+                                            class="select select-bordered w-full max-w-lg"
+                                            value={selectedScene()}
+                                            onChange={(e) =>
+                                                setSelectedScene(e.currentTarget.value)
+                                            }
+                                            aria-label="撮影シーンプリセット選択"
+                                        >
+                                            <For each={SCENE_PRESETS}>
+                                                {(scene) => (
+                                                    <option value={scene.id}>
+                                                        {scene.title} (EV{" "}
+                                                        {scene.ev100})
+                                                    </option>
+                                                )}
+                                            </For>
+                                        </select>
+                                        <p class="text-xs text-base-content/70 mt-1">
+                                            {
+                                                SCENE_PRESETS.find(
+                                                    (s) => s.id === selectedScene(),
+                                                )?.description
+                                            }
+                                        </p>
+                                    </div>
+                                }
+                            >
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+                                    <div>
+                                        <label
+                                            class="block font-medium text-sm text-base-content/80 mb-1"
+                                            for="manual-ev-input"
+                                        >
+                                            露出値 (EV100): {manualEv()} EV
+                                        </label>
+                                        <input
+                                            id="manual-ev-input"
+                                            type="range"
+                                            min="-6"
+                                            max="18"
+                                            step="0.5"
+                                            class="range range-primary"
+                                            value={manualEv()}
+                                            onInput={(e) => {
+                                                const v = parseFloat(
+                                                    e.currentTarget.value,
+                                                );
+                                                setManualEv(
+                                                    Number.isFinite(v) ? v : 15,
+                                                );
+                                            }}
+                                            aria-label="手動EVスライダー"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block font-medium text-sm text-base-content/80 mb-1"
+                                            for="manual-ev-num"
+                                        >
+                                            数値入力
+                                        </label>
+                                        <input
+                                            id="manual-ev-num"
+                                            type="number"
+                                            step="0.1"
+                                            class="input input-bordered w-full"
+                                            value={manualEv()}
+                                            onInput={(e) => {
+                                                const v = parseFloat(
+                                                    e.currentTarget.value,
+                                                );
+                                                if (Number.isFinite(v)) {
+                                                    setManualEv(
+                                                        Math.max(
+                                                            -10,
+                                                            Math.min(25, v),
+                                                        ),
+                                                    );
+                                                }
+                                            }}
+                                            aria-label="手動EV数値入力"
+                                        />
+                                    </div>
+                                </div>
+                            </Show>
+
+                            {/* 露出補正 (EV Compensation) */}
+                            <div class="max-w-lg">
+                                <label
+                                    class="block font-medium text-sm text-base-content/80 mb-1"
+                                    for="ev-comp-select"
+                                >
+                                    露出補正 (±EV):{" "}
+                                    {evCompensation() > 0
+                                        ? `+${evCompensation()}`
+                                        : evCompensation()}{" "}
+                                    EV
+                                </label>
+                                <select
+                                    id="ev-comp-select"
+                                    class="select select-bordered w-full"
+                                    value={evCompensation()}
+                                    onChange={(e) => {
+                                        const v = parseFloat(e.currentTarget.value);
+                                        setEvCompensation(
+                                            Number.isFinite(v) ? v : 0,
+                                        );
+                                    }}
+                                    aria-label="露出補正選択"
+                                >
+                                    <option value="-3">-3.0 EV (かなり暗め)</option>
+                                    <option value="-2">-2.0 EV</option>
+                                    <option value="-1">-1.0 EV (暗め・引き締め)</option>
+                                    <option value="-0.67">-0.67 EV (-2/3段)</option>
+                                    <option value="-0.33">-0.33 EV (-1/3段)</option>
+                                    <option value="0">±0.0 EV (標準適正)</option>
+                                    <option value="0.33">+0.33 EV (+1/3段)</option>
+                                    <option value="0.67">+0.67 EV (+2/3段)</option>
+                                    <option value="1">+1.0 EV (明るめ・ハイキー)</option>
+                                    <option value="2">+2.0 EV</option>
+                                    <option value="3">+3.0 EV (かなり明るめ)</option>
+                                </select>
+                            </div>
+
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2 pt-2">
+                                2. 自動算出したいパラメータを選択
+                            </h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-base-200/50 transition-colors">
+                                    <input
+                                        type="radio"
+                                        name="solveTarget"
+                                        class="radio radio-primary"
+                                        checked={solveTarget() === "shutter"}
+                                        onChange={() =>
+                                            setSolveTarget("shutter")
+                                        }
+                                        aria-label="シャッタースピードを自動計算する"
+                                    />
+                                    <div>
+                                        <div class="font-bold text-sm">
+                                            ⏱️ シャッタースピード
+                                        </div>
+                                        <div class="text-xs text-base-content/70">
+                                            F値とISOから適正秒数を計算
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-base-200/50 transition-colors">
+                                    <input
+                                        type="radio"
+                                        name="solveTarget"
+                                        class="radio radio-primary"
+                                        checked={solveTarget() === "aperture"}
+                                        onChange={() =>
+                                            setSolveTarget("aperture")
+                                        }
+                                        aria-label="絞り値を自動計算する"
+                                    />
+                                    <div>
+                                        <div class="font-bold text-sm">
+                                            ⭕ 絞り (F値)
+                                        </div>
+                                        <div class="text-xs text-base-content/70">
+                                            秒数とISOから適正F値を計算
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-base-200/50 transition-colors">
+                                    <input
+                                        type="radio"
+                                        name="solveTarget"
+                                        class="radio radio-primary"
+                                        checked={solveTarget() === "iso"}
+                                        onChange={() => setSolveTarget("iso")}
+                                        aria-label="ISO感度を自動計算する"
+                                    />
+                                    <div>
+                                        <div class="font-bold text-sm">
+                                            ⚡ ISO感度
+                                        </div>
+                                        <div class="text-xs text-base-content/70">
+                                            F値と秒数から適正ISOを計算
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2 pt-2">
+                                3. 固定パラメータの設定
+                            </h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* 絞り値 (F値) */}
+                                <div
+                                    class={
+                                        solveTarget() === "aperture"
+                                            ? "opacity-40 pointer-events-none"
+                                            : ""
+                                    }
+                                >
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="sim-aperture-select"
+                                    >
+                                        絞り (F値)
+                                    </label>
+                                    <select
+                                        id="sim-aperture-select"
+                                        class="select select-bordered w-full"
+                                        value={simAperture()}
+                                        disabled={solveTarget() === "aperture"}
+                                        onChange={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setSimAperture(
+                                                Number.isFinite(v) ? v : 2.8,
+                                            );
+                                        }}
+                                        aria-label="固定絞り値選択"
+                                    >
+                                        <For each={STANDARD_APERTURES}>
+                                            {(ap) => (
+                                                <option value={ap}>f/{ap}</option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+
+                                {/* シャッタースピード */}
+                                <div
+                                    class={
+                                        solveTarget() === "shutter"
+                                            ? "opacity-40 pointer-events-none"
+                                            : ""
+                                    }
+                                >
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="sim-shutter-select"
+                                    >
+                                        シャッタースピード
+                                    </label>
+                                    <select
+                                        id="sim-shutter-select"
+                                        class="select select-bordered w-full"
+                                        value={simShutter()}
+                                        disabled={solveTarget() === "shutter"}
+                                        onChange={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setSimShutter(
+                                                Number.isFinite(v) ? v : 1 / 125,
+                                            );
+                                        }}
+                                        aria-label="固定シャッタースピード選択"
+                                    >
+                                        <For each={STANDARD_SHUTTER_SPEEDS}>
+                                            {(s) => (
+                                                <option value={s.value}>
+                                                    {s.label}
+                                                </option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+
+                                {/* ISO感度 */}
+                                <div
+                                    class={
+                                        solveTarget() === "iso"
+                                            ? "opacity-40 pointer-events-none"
+                                            : ""
+                                    }
+                                >
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="sim-iso-select"
+                                    >
+                                        ISO感度
+                                    </label>
+                                    <select
+                                        id="sim-iso-select"
+                                        class="select select-bordered w-full"
+                                        value={simIso()}
+                                        disabled={solveTarget() === "iso"}
+                                        onChange={(e) => {
+                                            const v = parseInt(
+                                                e.currentTarget.value,
+                                                10,
+                                            );
+                                            setSimIso(
+                                                Number.isFinite(v) ? v : 100,
+                                            );
+                                        }}
+                                        aria-label="固定ISO感度選択"
+                                    >
+                                        <For each={STANDARD_ISOS}>
+                                            {(iso) => (
+                                                <option value={iso}>
+                                                    ISO {iso}
+                                                </option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* NDフィルター減光段数 */}
+                            <div class="max-w-md">
+                                <label
+                                    class="block font-medium text-sm text-base-content/80 mb-1"
+                                    for="sim-nd-select"
+                                >
+                                    NDフィルター (減光段数)
+                                </label>
+                                <select
+                                    id="sim-nd-select"
+                                    class="select select-bordered w-full"
+                                    value={simNdStops()}
+                                    onChange={(e) => {
+                                        const v = parseFloat(e.currentTarget.value);
+                                        setSimNdStops(
+                                            Number.isFinite(v) ? v : 0,
+                                        );
+                                    }}
+                                    aria-label="シミュレーターNDフィルター選択"
+                                >
+                                    <For each={ND_FILTER_PRESETS}>
+                                        {(nd) => (
+                                            <option value={nd.stops}>
+                                                {nd.name}
+                                            </option>
+                                        )}
+                                    </For>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 計算結果カード */}
+                    <div class="card bg-primary text-primary-content shadow-xl border border-primary/20">
+                        <div class="card-body">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <div class="text-xs uppercase tracking-wider opacity-85 font-semibold">
+                                        計算された最適設定
+                                    </div>
+                                    <h3 class="text-3xl sm:text-4xl font-extrabold mt-1">
+                                        {simResult().standardLabel}
+                                    </h3>
+                                    <div class="text-sm opacity-90 mt-1">
+                                        理論値: {simResult().displayExact}
+                                    </div>
+                                </div>
+                                <div class="bg-primary-content/10 px-4 py-3 rounded-xl border border-primary-content/20 text-xs space-y-1">
+                                    <div>
+                                        目標基準: EV {currentTargetEv().toFixed(1)}
+                                    </div>
+                                    <div>
+                                        露出バランス:{" "}
+                                        {simNdStops() > 0
+                                            ? `ND -${simNdStops()}段 装着中`
+                                            : "適正露光"}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 長秒露光ワンクリック連携 */}
+                            <Show
+                                when={
+                                    simResult().type === "shutter" &&
+                                    simResult().exactValue >= 1
+                                }
+                            >
+                                <div class="mt-4 pt-4 border-t border-primary-content/20 flex flex-wrap items-center gap-3">
+                                    <span class="text-sm">
+                                        ⏱️ 1秒以上の露光時間です。バルブタイマーにセットしますか？
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary"
+                                        onClick={() => {
+                                            const sec = Math.max(
+                                                1,
+                                                Math.round(simResult().exactValue),
+                                            );
+                                            setTimerTotalSeconds(sec);
+                                            setTimerRemainingSeconds(sec);
+                                            setActiveTab("nd-bulb");
+                                        }}
+                                        aria-label="計算された露光時間をタイマーに転送して開く"
+                                    >
+                                        バルブタイマーを開く
+                                    </button>
+                                </div>
+                            </Show>
+                        </div>
+                    </div>
+                </form>
+            </Show>
+
+            {/* ======================================================== */}
+            {/* 2. ND長秒露光 & バルブタイマー */}
+            {/* ======================================================== */}
+            <Show when={activeTab() === "nd-bulb"}>
+                <form
+                    class="space-y-6"
+                    {...({
+                        toolname: "camera-nd-long-exposure",
+                        tooldescription:
+                            "NDフィルターなしの基準シャッタースピードとND減光段数から、必要な長秒露光時間を計算しタイマーを実行します。",
+                    } as Record<string, string>)}
+                    onSubmit={(e) => e.preventDefault()}
+                >
+                    <div class="card bg-base-100 shadow-xl border border-base-200">
+                        <div class="card-body space-y-6">
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2">
+                                1. NDなしの基準シャッタースピード
+                            </h2>
+                            <p class="text-xs text-base-content/70">
+                                フィルター未装着の状態でカメラの露出計またはテスト撮影で得られた適正シャッタースピードを選択してください。
+                            </p>
+                            <div class="max-w-md">
+                                <label
+                                    class="block font-medium text-sm text-base-content/80 mb-1"
+                                    for="nd-base-shutter-select"
+                                >
+                                    基準シャッタースピード
+                                </label>
+                                <select
+                                    id="nd-base-shutter-select"
+                                    class="select select-bordered w-full"
+                                    value={ndBaseShutter()}
+                                    onChange={(e) => {
+                                        const v = parseFloat(e.currentTarget.value);
+                                        setNdBaseShutter(
+                                            Number.isFinite(v) ? v : 1 / 125,
+                                        );
+                                    }}
+                                    aria-label="ND基準シャッタースピード選択"
+                                >
+                                    <For each={STANDARD_SHUTTER_SPEEDS}>
+                                        {(s) => (
+                                            <option value={s.value}>
+                                                {s.label}
+                                            </option>
+                                        )}
+                                    </For>
+                                </select>
+                            </div>
+
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2 pt-2">
+                                2. 装着するNDフィルター
+                            </h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+                                <div>
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="nd-filter-select"
+                                    >
+                                        NDフィルター選択
+                                    </label>
+                                    <select
+                                        id="nd-filter-select"
+                                        class="select select-bordered w-full"
+                                        value={selectedNdFilter()}
+                                        onChange={(e) =>
+                                            setSelectedNdFilter(e.currentTarget.value)
+                                        }
+                                        aria-label="NDフィルター選択"
+                                    >
+                                        <For each={ND_FILTER_PRESETS}>
+                                            {(p) => (
+                                                <option value={p.id}>
+                                                    {p.name}
+                                                </option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                                <Show when={selectedNdFilter() === "custom"}>
+                                    <div>
+                                        <label
+                                            class="block font-medium text-sm text-base-content/80 mb-1"
+                                            for="custom-nd-input"
+                                        >
+                                            減光段数 (Stops)
+                                        </label>
+                                        <input
+                                            id="custom-nd-input"
+                                            type="number"
+                                            min="0"
+                                            max="25"
+                                            step="0.5"
+                                            class="input input-bordered w-full"
+                                            value={customNdStops()}
+                                            onInput={(e) => {
+                                                const v = parseFloat(
+                                                    e.currentTarget.value,
+                                                );
+                                                setCustomNdStops(
+                                                    Number.isFinite(v)
+                                                        ? Math.max(0, v)
+                                                        : 0,
+                                                );
+                                            }}
+                                            aria-label="カスタムND減光段数入力"
+                                        />
+                                    </div>
+                                </Show>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ND計算結果 & バルブタイマーカード */}
+                    <div class="card bg-base-100 shadow-xl border border-base-200">
+                        <div class="card-body">
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2">
+                                ⏱️ 長秒露光時間 & バルブ撮影タイマー
+                            </h2>
+
+                            <div class="bg-base-200/50 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 my-4 border border-base-300/60">
+                                <div>
+                                    <div class="text-xs uppercase tracking-wider text-base-content/70 font-semibold">
+                                        ND装着後の必要露光時間
+                                    </div>
+                                    <div class="text-3xl sm:text-4xl font-extrabold text-primary mt-1">
+                                        {formatShutterSpeed(
+                                            ndCalculatedSeconds(),
+                                        )}
+                                    </div>
+                                    <div class="text-xs text-base-content/70 mt-1">
+                                        減光段数: {activeNdStops().toFixed(1)} stops
+                                        (光量{" "}
+                                        {(
+                                            (1 / Math.pow(2, activeNdStops())) *
+                                            100
+                                        ).toFixed(4)}
+                                        %)
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="btn btn-outline btn-primary"
+                                    onClick={() => setTimerFromNd()}
+                                    aria-label="計算された時間をタイマーにセットする"
+                                >
+                                    📥 タイマーにセット
+                                </button>
+                            </div>
+
+                            {/* カウントダウン表示エリア */}
+                            <div class="text-center p-6 bg-base-300/30 rounded-2xl border border-base-300">
+                                <div class="text-xs text-base-content/70 mb-2 font-medium">
+                                    バルブ露光タイマー (残り時間)
+                                </div>
+                                <div
+                                    class={`text-5xl sm:text-6xl font-mono font-black my-2 ${
+                                        isTimerRunning()
+                                            ? "text-primary animate-pulse"
+                                            : "text-base-content"
+                                    }`}
+                                >
+                                    {Math.floor(timerRemainingSeconds() / 60)}:
+                                    {String(
+                                        timerRemainingSeconds() % 60,
+                                    ).padStart(2, "0")}
+                                </div>
+                                <div class="text-xs text-base-content/60">
+                                    合計設定時間:{" "}
+                                    {formatShutterSpeed(timerTotalSeconds())}
+                                </div>
+
+                                {/* コントロールボタン */}
+                                <div class="flex justify-center items-center gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        class={`btn ${
+                                            isTimerRunning()
+                                                ? "btn-warning"
+                                                : "btn-primary"
+                                        } px-8`}
+                                        onClick={(e) =>
+                                            toggleTimer(e.currentTarget)
+                                        }
+                                        aria-label={
+                                            isTimerRunning()
+                                                ? "タイマーを一時停止"
+                                                : "タイマースタート"
+                                        }
+                                    >
+                                        {isTimerRunning() ? "⏸️ 一時停止" : "▶️ スタート"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-ghost border-base-300"
+                                        onClick={(e) =>
+                                            resetTimer(e.currentTarget)
+                                        }
+                                        aria-label="タイマーリセット"
+                                    >
+                                        🔄 リセット
+                                    </button>
+                                </div>
+
+                                <div class="flex justify-center items-center gap-4 mt-4">
+                                    <label class="label cursor-pointer gap-2 text-xs">
+                                        <input
+                                            type="checkbox"
+                                            class="checkbox checkbox-sm checkbox-primary"
+                                            checked={soundAlert()}
+                                            onChange={(e) =>
+                                                setSoundAlert(
+                                                    e.currentTarget.checked,
+                                                )
+                                            }
+                                            aria-label="露光完了時にチャイム音で通知する"
+                                        />
+                                        <span class="label-text text-base-content/80">
+                                            露光完了時にアラーム音で通知
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </Show>
+
+            {/* ======================================================== */}
+            {/* 3. 等価露出換算 */}
+            {/* ======================================================== */}
+            <Show when={activeTab() === "equivalent"}>
+                <form
+                    class="space-y-6"
+                    {...({
+                        toolname: "camera-equivalent-exposure",
+                        tooldescription:
+                            "露出を一定に保ったまま、絞り・シャッター速度・ISO・NDフィルターの組み合わせを相互に換算します。",
+                    } as Record<string, string>)}
+                    onSubmit={(e) => e.preventDefault()}
+                >
+                    <div class="card bg-base-100 shadow-xl border border-base-200">
+                        <div class="card-body space-y-6">
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2">
+                                1. 現在の基準設定 (ベース露出)
+                            </h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="eq-base-aperture"
+                                    >
+                                        絞り (F値)
+                                    </label>
+                                    <select
+                                        id="eq-base-aperture"
+                                        class="select select-bordered w-full"
+                                        value={eqBaseAperture()}
+                                        onChange={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setEqBaseAperture(
+                                                Number.isFinite(v) ? v : 8.0,
+                                            );
+                                        }}
+                                        aria-label="ベース絞り値"
+                                    >
+                                        <For each={STANDARD_APERTURES}>
+                                            {(v) => (
+                                                <option value={v}>f/{v}</option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="eq-base-shutter"
+                                    >
+                                        シャッタースピード
+                                    </label>
+                                    <select
+                                        id="eq-base-shutter"
+                                        class="select select-bordered w-full"
+                                        value={eqBaseShutter()}
+                                        onChange={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setEqBaseShutter(
+                                                Number.isFinite(v) ? v : 1 / 250,
+                                            );
+                                        }}
+                                        aria-label="ベースシャッタースピード"
+                                    >
+                                        <For each={STANDARD_SHUTTER_SPEEDS}>
+                                            {(s) => (
+                                                <option value={s.value}>
+                                                    {s.label}
+                                                </option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="eq-base-iso"
+                                    >
+                                        ISO感度
+                                    </label>
+                                    <select
+                                        id="eq-base-iso"
+                                        class="select select-bordered w-full"
+                                        value={eqBaseIso()}
+                                        onChange={(e) => {
+                                            const v = parseInt(
+                                                e.currentTarget.value,
+                                                10,
+                                            );
+                                            setEqBaseIso(
+                                                Number.isFinite(v) ? v : 100,
+                                            );
+                                        }}
+                                        aria-label="ベースISO感度"
+                                    >
+                                        <For each={STANDARD_ISOS}>
+                                            {(v) => (
+                                                <option value={v}>
+                                                    ISO {v}
+                                                </option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-xs text-base-content/70">
+                                基準露出値: EV {eqBaseEv().toFixed(1)} (at ISO 100)
+                            </div>
+
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2 pt-2">
+                                2. 変更後の設定 (等しい露出を保つための換算)
+                            </h2>
+
+                            <div class="space-y-2">
+                                <label class="block font-medium text-sm text-base-content/80">
+                                    自動計算で求めたいパラメータ
+                                </label>
+                                <div class="flex flex-wrap gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="eqTargetParam"
+                                            class="radio radio-primary"
+                                            checked={
+                                                eqTargetParam() === "shutter"
+                                            }
+                                            onChange={() =>
+                                                setEqTargetParam("shutter")
+                                            }
+                                            aria-label="換算シャッタースピードを求める"
+                                        />
+                                        <span class="text-sm">
+                                            シャッタースピードを求める
+                                        </span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="eqTargetParam"
+                                            class="radio radio-primary"
+                                            checked={
+                                                eqTargetParam() === "aperture"
+                                            }
+                                            onChange={() =>
+                                                setEqTargetParam("aperture")
+                                            }
+                                            aria-label="換算絞り値を求める"
+                                        />
+                                        <span class="text-sm">
+                                            絞り(F値)を求める
+                                        </span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="eqTargetParam"
+                                            class="radio radio-primary"
+                                            checked={eqTargetParam() === "iso"}
+                                            onChange={() =>
+                                                setEqTargetParam("iso")
+                                            }
+                                            aria-label="換算ISO感度を求める"
+                                        />
+                                        <span class="text-sm">
+                                            ISO感度を求める
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                                <div
+                                    class={
+                                        eqTargetParam() === "aperture"
+                                            ? "opacity-40 pointer-events-none"
+                                            : ""
+                                    }
+                                >
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="eq-new-aperture"
+                                    >
+                                        変更後 絞り (F値)
+                                    </label>
+                                    <select
+                                        id="eq-new-aperture"
+                                        class="select select-bordered w-full"
+                                        value={eqNewAperture()}
+                                        disabled={eqTargetParam() === "aperture"}
+                                        onChange={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setEqNewAperture(
+                                                Number.isFinite(v) ? v : 2.8,
+                                            );
+                                        }}
+                                        aria-label="変更後絞り値"
+                                    >
+                                        <For each={STANDARD_APERTURES}>
+                                            {(v) => (
+                                                <option value={v}>f/{v}</option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                                <div
+                                    class={
+                                        eqTargetParam() === "shutter"
+                                            ? "opacity-40 pointer-events-none"
+                                            : ""
+                                    }
+                                >
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="eq-new-shutter"
+                                    >
+                                        変更後 シャッター
+                                    </label>
+                                    <select
+                                        id="eq-new-shutter"
+                                        class="select select-bordered w-full"
+                                        value={eqNewShutter()}
+                                        disabled={eqTargetParam() === "shutter"}
+                                        onChange={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setEqNewShutter(
+                                                Number.isFinite(v) ? v : 1 / 1000,
+                                            );
+                                        }}
+                                        aria-label="変更後シャッター"
+                                    >
+                                        <For each={STANDARD_SHUTTER_SPEEDS}>
+                                            {(s) => (
+                                                <option value={s.value}>
+                                                    {s.label}
+                                                </option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                                <div
+                                    class={
+                                        eqTargetParam() === "iso"
+                                            ? "opacity-40 pointer-events-none"
+                                            : ""
+                                    }
+                                >
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="eq-new-iso"
+                                    >
+                                        変更後 ISO感度
+                                    </label>
+                                    <select
+                                        id="eq-new-iso"
+                                        class="select select-bordered w-full"
+                                        value={eqNewIso()}
+                                        disabled={eqTargetParam() === "iso"}
+                                        onChange={(e) => {
+                                            const v = parseInt(
+                                                e.currentTarget.value,
+                                                10,
+                                            );
+                                            setEqNewIso(
+                                                Number.isFinite(v) ? v : 100,
+                                            );
+                                        }}
+                                        aria-label="変更後ISO"
+                                    >
+                                        <For each={STANDARD_ISOS}>
+                                            {(v) => (
+                                                <option value={v}>
+                                                    ISO {v}
+                                                </option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 換算結果 */}
+                    <div class="card bg-primary text-primary-content shadow-xl border border-primary/20">
+                        <div class="card-body">
+                            <div class="text-xs uppercase tracking-wider opacity-85 font-semibold">
+                                {eqResult().label}
+                            </div>
+                            <h3 class="text-3xl sm:text-4xl font-extrabold mt-1">
+                                {eqResult().standard}
+                            </h3>
+                            <div class="text-sm opacity-90 mt-1">
+                                計算値: {eqResult().exact}
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </Show>
+
+            {/* ======================================================== */}
+            {/* 4. 星空シャッター速度限界 */}
+            {/* ======================================================== */}
+            <Show when={activeTab() === "astro"}>
+                <form
+                    class="space-y-6"
+                    {...({
+                        toolname: "camera-astro-shutter-limit",
+                        tooldescription:
+                            "星景写真において地球の自転による星の流れを防ぎ、点像として写す限界露光時間を500ルールとNPFルールで計算します。",
+                    } as Record<string, string>)}
+                    onSubmit={(e) => e.preventDefault()}
+                >
+                    <div class="card bg-base-100 shadow-xl border border-base-200">
+                        <div class="card-body space-y-6">
+                            <h2 class="card-title text-xl border-b border-base-200 pb-2">
+                                🌌 星景・天体写真 露光限界速度の計算
+                            </h2>
+                            <p class="text-xs text-base-content/70">
+                                星景写真では、露出時間が長すぎると地球の自転によって星が点ではなく線状に流れてしまいます。点像を維持できる限界シャッター速度を算出します。
+                            </p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="astro-sensor-select"
+                                    >
+                                        センサーサイズ
+                                    </label>
+                                    <select
+                                        id="astro-sensor-select"
+                                        class="select select-bordered w-full"
+                                        value={astroSensor()}
+                                        onChange={(e) =>
+                                            setAstroSensor(e.currentTarget.value)
+                                        }
+                                        aria-label="センサーサイズ選択"
+                                    >
+                                        <For each={SENSOR_PRESETS}>
+                                            {(s) => (
+                                                <option value={s.id}>
+                                                    {s.name}
+                                                </option>
+                                            )}
+                                        </For>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="astro-focal-input"
+                                    >
+                                        レンズの焦点距離 (mm)
+                                    </label>
+                                    <input
+                                        id="astro-focal-input"
+                                        type="number"
+                                        min="4"
+                                        max="1200"
+                                        class="input input-bordered w-full"
+                                        value={astroFocalLength()}
+                                        onInput={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setAstroFocalLength(
+                                                Number.isFinite(v)
+                                                    ? Math.max(1, v)
+                                                    : 24,
+                                            );
+                                        }}
+                                        aria-label="焦点距離mm入力"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="astro-aperture-select"
+                                    >
+                                        レンズの開放F値
+                                    </label>
+                                    <select
+                                        id="astro-aperture-select"
+                                        class="select select-bordered w-full"
+                                        value={astroAperture()}
+                                        onChange={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setAstroAperture(
+                                                Number.isFinite(v) ? v : 2.8,
+                                            );
+                                        }}
+                                        aria-label="星空撮影絞りF値選択"
+                                    >
+                                        <option value="1.4">f/1.4</option>
+                                        <option value="1.8">f/1.8</option>
+                                        <option value="2.0">f/2.0</option>
+                                        <option value="2.8">f/2.8</option>
+                                        <option value="3.5">f/3.5</option>
+                                        <option value="4.0">f/4.0</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block font-medium text-sm text-base-content/80 mb-1"
+                                        for="astro-crop-input"
+                                    >
+                                        クロップ係数: {astroCropFactor()}x (35mm換算:{" "}
+                                        {(
+                                            astroFocalLength() *
+                                            astroCropFactor()
+                                        ).toFixed(1)}
+                                        mm)
+                                    </label>
+                                    <input
+                                        id="astro-crop-input"
+                                        type="number"
+                                        step="0.01"
+                                        min="0.5"
+                                        max="5.0"
+                                        class="input input-bordered w-full"
+                                        disabled={astroSensor() !== "custom"}
+                                        value={astroCropFactor()}
+                                        onInput={(e) => {
+                                            const v = parseFloat(
+                                                e.currentTarget.value,
+                                            );
+                                            setAstroCropFactor(
+                                                Number.isFinite(v)
+                                                    ? Math.max(0.1, v)
+                                                    : 1.0,
+                                            );
+                                        }}
+                                        aria-label="クロップ係数入力"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 星空結果カード */}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="card bg-base-100 shadow-xl border border-base-200">
+                            <div class="card-body">
+                                <div class="badge badge-primary font-semibold">
+                                    500ルール（従来基準）
+                                </div>
+                                <div class="text-3xl font-extrabold text-primary mt-2">
+                                    約 {astroResult().rule500} 秒
+                                </div>
+                                <p class="text-xs text-base-content/70 mt-2 leading-relaxed">
+                                    広角レンズでSNS投稿や一般的な鑑賞用途に適した伝統的な目安（500
+                                    ÷ 換算焦点距離）です。
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="card bg-base-100 shadow-xl border border-primary/40">
+                            <div class="card-body">
+                                <div class="badge badge-secondary font-semibold">
+                                    NPFルール（現代高画素機・厳密推奨）
+                                </div>
+                                <div class="text-3xl font-extrabold text-secondary mt-2">
+                                    約 {astroResult().npfRule} 秒
+                                </div>
+                                <p class="text-xs text-base-content/70 mt-2 leading-relaxed">
+                                    等倍鑑賞や高画素センサー（2400万〜6000万画素超）で星を完全に点像として捉えたい場合の高精度な推奨値です。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </Show>
+
+            {/* ======================================================== */}
+            {/* 露出の基礎知識 & 撮影ヒントガイド */}
+            {/* ======================================================== */}
+            <div class="card bg-base-100 shadow-xl border border-base-200">
+                <div class="card-body space-y-4">
+                    <h2 class="card-title text-xl border-b border-base-200 pb-2">
+                        💡 露出の基礎知識と撮影テクニック
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <div class="p-4 bg-base-200/50 rounded-xl space-y-2 border border-base-300/40">
+                            <h3 class="font-bold text-sm flex items-center gap-1.5">
+                                <span>⭕</span> 絞り (F値)
+                            </h3>
+                            <p class="text-xs text-base-content/80 leading-relaxed">
+                                光の入る窓の大きさ。値を小さくする（f/1.4やf/2.8）と背景が大きくボケて光が多く入ります。絞り込む（f/8やf/11）と全体にピントが合います（パンフォーカス）。
+                            </p>
+                        </div>
+                        <div class="p-4 bg-base-200/50 rounded-xl space-y-2 border border-base-300/40">
+                            <h3 class="font-bold text-sm flex items-center gap-1.5">
+                                <span>⏱️</span> シャッタースピード
+                            </h3>
+                            <p class="text-xs text-base-content/80 leading-relaxed">
+                                光を取り込む時間の長さ。1/1000秒などの高速は動体をピタッと静止させ、手ブレを防ぎます。数秒〜数十秒の長秒露光は水流を絹のように滑らかに表現できます。
+                            </p>
+                        </div>
+                        <div class="p-4 bg-base-200/50 rounded-xl space-y-2 border border-base-300/40">
+                            <h3 class="font-bold text-sm flex items-center gap-1.5">
+                                <span>⚡</span> ISO感度
+                            </h3>
+                            <p class="text-xs text-base-content/80 leading-relaxed">
+                                センサーが光を増幅する度合い。暗い場所でシャッター速度を稼げますが、数値を高くしすぎると写真にノイズ（ざらつき）が発生します。基本はISO 100等の低感度を保ちます。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="collapse collapse-arrow bg-base-200/40 border border-base-200 rounded-xl mt-2">
+                        <input type="checkbox" aria-label="Sunny 16 ルールについての詳細を開く" />
+                        <div class="collapse-title text-sm font-semibold">
+                            ☀️ 快晴時の基準則「Sunny 16 ルール」とは？
+                        </div>
+                        <div class="collapse-content text-xs text-base-content/80 leading-relaxed space-y-2">
+                            <p>
+                                「Sunny 16 (サニーシックスティーン)」とは、露出計が普及する前から写真家に愛用されている経験則です。快晴の日中において、絞りを <strong>f/16</strong> に設定したとき、適正シャッタースピードは <strong>1 / (ISO感度) 秒</strong> になります。
+                            </p>
+                            <p>
+                                例えば、ISO 100 なら 1/100秒（カメラ標準で 1/125秒）、ISO 400 なら 1/400秒（標準で 1/500秒）が適正露出（EV 15）となります。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="collapse collapse-arrow bg-base-200/40 border border-base-200 rounded-xl">
+                        <input type="checkbox" aria-label="NDフィルターを活用した長秒露光撮影のコツを開く" />
+                        <div class="collapse-title text-sm font-semibold">
+                            🌊 NDフィルターを活用した長秒露光撮影のコツ
+                        </div>
+                        <div class="collapse-content text-xs text-base-content/80 leading-relaxed space-y-2">
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li>
+                                    <strong>三脚とレリーズ（リモコン）を使用する:</strong> 1秒以上の露光では手持ち撮影が不可能になります。頑丈な三脚にカメラを固定し、シャッターボタンを直接押すときのブレを防ぐためリモコンや2秒タイマーを活用しましょう。
+                                </li>
+                                <li>
+                                    <strong>手ブレ補正（IBIS/レンズ手ブレ補正）をOFFにする:</strong> 三脚使用時に手ブレ補正がONのままだと、カメラが微小な誤検知をしてかえって像がブレてしまう現象（揺り戻し）が起きることがあります。
+                                </li>
+                                <li>
+                                    <strong>ファインダーからの逆入射光を防ぐ（一眼レフの場合）:</strong> 一眼レフカメラではファインダーのアイピースから光が逆流して測光や露光に影響するため、アイピースシャッターを閉じるか遮光カバーをかけます。
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 広告エリア */}
+            <AdSense />
+        </div>
+    );
+}

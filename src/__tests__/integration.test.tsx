@@ -171,7 +171,7 @@ describe("Integration Tests (Router + Layout + Metadata + Discovery Files)", () 
         ).toBeGreaterThan(0);
     });
 
-    it("全19ルートのメタデータ・JSON-LD・ard.json・llms.txt が整合していること", () => {
+    it("全ルートのメタデータ・JSON-LD・ard.json・llms.txt が整合していること", () => {
         const rootDir = path.resolve(process.cwd());
         const ardPath = path.join(rootDir, "public", ".well-known", "ard.json");
         const llmsPath = path.join(rootDir, "public", "llms.txt");

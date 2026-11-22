@@ -20,6 +20,7 @@ import TimerStopwatch from "../pages/TimerStopwatch";
 import HyperfocalCalculator from "../pages/Hyperfocal";
 import HeadphoneDriveability from "../pages/HeadphoneDriveability";
 import TextConverter from "../pages/TextConverter";
+import ExposureCalculator from "../pages/ExposureCalculator";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import Credits from "../pages/Credits";
 import NotFound from "../pages/NotFound";
@@ -70,6 +71,11 @@ const PAGE_ENTRIES: Array<{ path: string; name: string; component: Component }> 
         component: HeadphoneDriveability,
     },
     { path: "/text-converter", name: "TextConverter", component: TextConverter },
+    {
+        path: "/exposure-calculator",
+        name: "ExposureCalculator",
+        component: ExposureCalculator,
+    },
     { path: "/privacy", name: "PrivacyPolicy", component: PrivacyPolicy },
     { path: "/credits", name: "Credits", component: Credits },
     { path: "/404", name: "NotFound", component: NotFound },

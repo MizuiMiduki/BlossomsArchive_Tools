@@ -27,6 +27,7 @@
 - [過焦点距離・被写界深度計算](https://tools.blossomsarchive.com/hyperfocal/): カメラのセンサーサイズ（フルサイズ、APS-C、マイクロフォーサーズ、中判、1インチ等）、焦点距離、絞り値（F値）からパンフォーカス撮影に最適な過焦点距離と被写界深度（前方・後方限界）を精密シミュレーション。
 - [イヤホン・ヘッドホンの鳴らしやすさ](https://tools.blossomsarchive.com/headphone-driveability/): インピーダンス（Ω）と音圧感度（dB/mWまたはdB/Vrms）から、目標音圧（110dB SPL / 115dB SPL / 120dB SPL）に必要な出力電圧、電流、電力を計算し、アンプやポタアンの駆動難易度を判定。
 - [テキスト・マークアップ変換](https://tools.blossomsarchive.com/text-converter/): HTMLからMarkdown、MarkdownからHTML、プレーンテキスト抽出、特殊文字HTMLエンティティエスケープ・アンエスケープ、URLエンコード・デコードを瞬時に相互変換。
+- [カメラ露出計算機](https://tools.blossomsarchive.com/exposure-calculator/): 通常撮影からND長秒露光（水流・夜景）、星空撮影（500ルール/NPFルール）まで、絞り(F値)・シャッタースピード・ISO感度・NDフィルターの適正露出を即座にシミュレーション・換算しバルブタイマーも実行可能。
 
 ## 開発・運営情報
 - 運営元: BlossomsArchive (https://blossomsarchive.com)

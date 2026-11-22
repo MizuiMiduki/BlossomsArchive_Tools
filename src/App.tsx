@@ -22,6 +22,7 @@ const Credits = lazy(() => import("./pages/Credits"));
 const HyperfocalCalculator = lazy(() => import("./pages/Hyperfocal"));
 const HeadphoneDriveability = lazy(() => import("./pages/HeadphoneDriveability"));
 const TextConverter = lazy(() => import("./pages/TextConverter"));
+const ExposureCalculator = lazy(() => import("./pages/ExposureCalculator"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 export const Router = createRouter({
@@ -45,6 +46,7 @@ export const Router = createRouter({
         { path: "/hyperfocal", component: HyperfocalCalculator },
         { path: "/headphone-driveability", component: HeadphoneDriveability },
         { path: "/text-converter", component: TextConverter },
+        { path: "/exposure-calculator", component: ExposureCalculator },
         { path: "*", component: NotFound },
     ],
 });
