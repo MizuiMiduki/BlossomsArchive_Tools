@@ -16,6 +16,7 @@ import {
 } from "../routes";
 import ThemeToggle from "./ThemeToggle";
 import { delayedCall } from "../utils/gsapAnimations";
+import { filterRoutesByQuery } from "../utils/search";
 
 interface LayoutProps {
     children?: JSX.Element;
@@ -28,6 +29,7 @@ export default function Layout(props: LayoutProps) {
         localStorage.getItem("isPcMenuOpen") !== "false",
     );
     const [isPcMenuHovered, setIsPcMenuHovered] = createSignal(false);
+    const [sidebarSearchQuery, setSidebarSearchQuery] = createSignal("");
 
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
@@ -152,6 +154,7 @@ export default function Layout(props: LayoutProps) {
         () => ({ pathname: location.pathname, hash: location.hash }),
         ({ hash }) => {
             setIsMenuOpen(false);
+            setSidebarSearchQuery("");
 
             if (hash) {
                 const target = document.getElementById(hash.slice(1));
@@ -353,11 +356,75 @@ export default function Layout(props: LayoutProps) {
                     </button>
                 </div>
 
+                {/* サイドバー用メニュー検索バー */}
+                <div class="px-6 pb-3 shrink-0">
+                    <label for="sidebar-menu-search" class="sr-only">
+                        メニュー内を検索
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-base-content/60">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-3.5 h-3.5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
+                            </svg>
+                        </span>
+                        <input
+                            id="sidebar-menu-search"
+                            type="search"
+                            class="input input-bordered input-xs w-full pl-8 pr-7 rounded-lg bg-base-200/50 focus:bg-base-100 text-xs"
+                            placeholder="メニューを検索..."
+                            value={sidebarSearchQuery()}
+                            onInput={(e) => setSidebarSearchQuery(e.currentTarget.value)}
+                            aria-label="メニュー内を検索"
+                        />
+                        <Show when={sidebarSearchQuery().trim()}>
+                            <button
+                                type="button"
+                                class="absolute inset-y-0 right-0 flex items-center pr-2 text-base-content/60 hover:text-base-content"
+                                onClick={() => setSidebarSearchQuery("")}
+                                aria-label="メニュー検索をクリア"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="w-3 h-3"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            </button>
+                        </Show>
+                    </div>
+                </div>
+
                 {/* スクロール領域 */}
                 <div class="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
                     <nav class="flex flex-col min-h-full justify-between gap-6">
                         <div class="space-y-2">
-                            <For each={routes.filter((r) => !r.hidden)}>
+                            <For
+                                each={filterRoutesByQuery(
+                                    routes.filter((r) => !r.hidden),
+                                    sidebarSearchQuery()
+                                )}
+                            >
                                 {(route) => (
                                     <a
                                         href={route.path}
@@ -367,6 +434,18 @@ export default function Layout(props: LayoutProps) {
                                     </a>
                                 )}
                             </For>
+                            <Show
+                                when={
+                                    filterRoutesByQuery(
+                                        routes.filter((r) => !r.hidden),
+                                        sidebarSearchQuery()
+                                    ).length === 0
+                                }
+                            >
+                                <div class="py-6 px-2 text-center text-xs text-base-content/60">
+                                    一致するメニューがありません
+                                </div>
+                            </Show>
                         </div>
 
                         <div class="space-y-4">

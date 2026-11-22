@@ -199,4 +199,30 @@ describe("Layout Component", () => {
         await Promise.resolve();
         expect(localStorage.getItem("isPcMenuOpen")).toBe("true");
     });
+
+    it("サイドバーの検索バーでメニューをリアルタイムに絞り込めること", () => {
+        const MenuSearchRouter = createRouter({
+            history: memoryHistory(),
+            routes: [{ path: "/", component: () => <div>メニュー検索テスト</div> }],
+        });
+
+        render(() => (
+            <MenuSearchRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </MenuSearchRouter>
+        ));
+
+        const searchInput = screen.getByLabelText("メニュー内を検索");
+        expect(searchInput).toBeInTheDocument();
+
+        // 「電卓」で絞り込み
+        fireEvent.input(searchInput, { target: { value: "電卓" } });
+        expect(screen.getByText("電卓ツール")).toBeInTheDocument();
+        expect(screen.queryByText("QRコード生成")).not.toBeInTheDocument();
+
+        // 検索クリアボタンでリセット
+        const clearBtn = screen.getByLabelText("メニュー検索をクリア");
+        fireEvent.click(clearBtn);
+        expect(screen.getByText("QRコード生成")).toBeInTheDocument();
+    });
 });
