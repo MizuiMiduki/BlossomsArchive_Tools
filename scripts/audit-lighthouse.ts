@@ -75,6 +75,7 @@ const ROUTE_SOURCE_MAP: Record<string, string> = {
     "/bpm-calculator": "src/pages/BpmCalculator.tsx",
     "/json-formatter": "src/pages/JsonFormatter.tsx",
     "/word-counter": "src/pages/WordCounter.tsx",
+    "/tier-maker": "src/pages/TierMaker.tsx",
     "/privacy": "src/pages/PrivacyPolicy.tsx",
     "/credits": "src/pages/Credits.tsx",
 };

@@ -370,7 +370,7 @@ export default function TierMaker() {
     };
 
     return (
-        <div ref={containerRef} class="space-y-6">
+        <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0 font-sans space-y-6">
             {/* SEO & アクセシビリティ用隠しCanvas */}
             <canvas ref={exportCanvasRef} class="hidden" />
 
@@ -384,19 +384,17 @@ export default function TierMaker() {
             </Show>
 
             {/* ページタイトル & 概要 */}
-            <div class="text-center space-y-2">
-                <h1 class="text-3xl font-extrabold text-base-content tracking-tight">
-                    ティア表作成ツール (Tier List Maker)
+            <div class="w-full card bg-base-100 shadow-sm p-4 sm:p-6 border border-base-300 min-w-0 text-center space-y-2">
+                <h1 class="text-2xl md:text-3xl font-black text-base-content tracking-tight">
+                    <BudouX text="ティア表作成ツール (Tier List)" />
                 </h1>
-                <p class="text-base-content/80 text-sm max-w-2xl mx-auto">
-                    <BudouX
-                        text="画像やテキストを自由に並べてオリジナルのランキング・ティア表を作成。段数の増減や配色変更、アイテムごとのA+・A-上下微調整、高画質PNG画像の保存に対応しています。"
-                    />
+                <p class="text-xs sm:text-sm font-semibold text-base-content/70 max-w-2xl mx-auto leading-relaxed">
+                    画像やテキストを自由に並べてオリジナルのランキング・ティア表を作成。段数の増減や配色変更、アイテムごとのA+・A-上下微調整、高画質PNG画像の保存に対応しています。
                 </p>
             </div>
 
             {/* コントロールヘッダー */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm p-4 space-y-4">
+            <div class="w-full card bg-base-100 border border-base-300 shadow-sm p-4 space-y-4">
                 <form
                     {...({
                         toolname: "tier-list-maker",
@@ -426,7 +424,7 @@ export default function TierMaker() {
                             type="button"
                             onClick={() => addTier("bottom")}
                             class="btn btn-outline btn-sm"
-                            aria-label="新しいランク段を下に追加"
+                            title="新しいランク段を下に追加"
                         >
                             + ランク追加
                         </button>
@@ -446,7 +444,6 @@ export default function TierMaker() {
                                     <button
                                         type="button"
                                         onClick={() => applyPresetTemplate("s-d")}
-                                        aria-label="S〜D 5段階テンプレートを適用"
                                     >
                                         標準 5段階 (S〜D)
                                     </button>
@@ -455,7 +452,6 @@ export default function TierMaker() {
                                     <button
                                         type="button"
                                         onClick={() => applyPresetTemplate("s-f")}
-                                        aria-label="S〜F 6段階テンプレートを適用"
                                     >
                                         詳細 6段階 (S〜F)
                                     </button>
@@ -464,7 +460,6 @@ export default function TierMaker() {
                                     <button
                                         type="button"
                                         onClick={() => applyPresetTemplate("high-low")}
-                                        aria-label="高中低 3段階テンプレートを適用"
                                     >
                                         シンプル 3段階 (高・中・低)
                                     </button>
@@ -476,7 +471,6 @@ export default function TierMaker() {
                             onClick={handleExportImage}
                             disabled={isExporting()}
                             class="btn btn-primary btn-sm"
-                            aria-label="完成したティア表を画像として保存"
                         >
                             <Show when={isExporting()} fallback="画像として保存 (PNG)">
                                 生成中...
@@ -485,8 +479,8 @@ export default function TierMaker() {
                         <button
                             type="button"
                             onClick={handleResetAll}
-                            class="btn btn-ghost btn-sm text-error"
-                            aria-label="ティア表全体をリセット"
+                            class="btn btn-outline btn-error btn-sm"
+                            title="ティア表全体をリセット"
                         >
                             リセット
                         </button>
@@ -495,7 +489,7 @@ export default function TierMaker() {
             </div>
 
             {/* ティア表メインビュー */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+            <div class="w-full card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
                 <div class="divide-y divide-base-300">
                     <For each={tiers()}>
                         {(tier, index) => (
@@ -705,7 +699,6 @@ export default function TierMaker() {
                         <button
                             type="submit"
                             class="btn btn-outline btn-sm w-full"
-                            aria-label="テキストアイテムを追加"
                         >
                             + テキストを追加
                         </button>
@@ -744,7 +737,6 @@ export default function TierMaker() {
                                 type="button"
                                 onClick={handleResetToPool}
                                 class="btn btn-ghost btn-xs text-base-content/70"
-                                aria-label="すべてのアイテムをプールに戻す"
                             >
                                 全てプールに戻す
                             </button>
@@ -929,7 +921,6 @@ export default function TierMaker() {
                             type="button"
                             onClick={() => previewModalRef?.close()}
                             class="btn btn-ghost btn-sm"
-                            aria-label="プレビューを閉じる"
                         >
                             閉じる
                         </button>
@@ -937,7 +928,6 @@ export default function TierMaker() {
                             type="button"
                             onClick={handleDownloadPng}
                             class="btn btn-primary btn-sm"
-                            aria-label="PNG画像を端末にダウンロード"
                         >
                             PNG画像をダウンロード
                         </button>

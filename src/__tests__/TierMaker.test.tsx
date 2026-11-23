@@ -37,7 +37,7 @@ describe("TierMaker Page Component Tests", () => {
         render(() => <TierMaker />);
 
         const heading = screen.getByRole("heading", { level: 1 });
-        expect(heading).toHaveTextContent("ティア表作成ツール (Tier List Maker)");
+        expect(heading).toHaveTextContent("ティア表作成ツール (Tier List)");
 
         expect(screen.getByDisplayValue("S")).toBeInTheDocument();
         expect(screen.getByDisplayValue("A")).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe("TierMaker Page Component Tests", () => {
         render(() => <TierMaker />);
 
         const addTierButton = screen.getByRole("button", {
-            name: "新しいランク段を下に追加",
+            name: "+ ランク追加",
         });
         fireEvent.click(addTierButton);
 
@@ -78,7 +78,7 @@ describe("TierMaker Page Component Tests", () => {
             "アイテム名（例: キャラ名、曲名、単語など）",
         );
         const submitButton = screen.getByRole("button", {
-            name: "テキストアイテムを追加",
+            name: "+ テキストを追加",
         });
 
         fireEvent.input(textarea, { target: { value: "新キャラX\n新キャラY" } });
@@ -116,7 +116,7 @@ describe("TierMaker Page Component Tests", () => {
         render(() => <TierMaker />);
 
         const exportButton = screen.getByRole("button", {
-            name: "完成したティア表を画像として保存",
+            name: "画像として保存 (PNG)",
         });
 
         fireEvent.click(exportButton);
