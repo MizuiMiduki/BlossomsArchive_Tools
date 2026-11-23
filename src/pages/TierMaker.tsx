@@ -479,7 +479,7 @@ export default function TierMaker() {
                         <button
                             type="button"
                             onClick={handleResetAll}
-                            class="btn btn-outline btn-error btn-sm"
+                            class="btn btn-outline btn-sm text-base-content/80 hover:bg-base-200"
                             title="ティア表全体をリセット"
                         >
                             リセット
