@@ -216,6 +216,14 @@ export const routes: Route[] = [
         keywords: ["文字数カウント", "原稿用紙換算", "文字数チェッカー", "読了時間", "文章分析"],
     },
     {
+        path: "/tier-maker",
+        title: "ティア表作成ツール (Tier List)",
+        description:
+            "画像や文字を自由に並べてオリジナルのティア表を作成できる無料Webツールです。ランク数の増減や配色変更、アイテムごとのA+やA-などの上下微調整、高画質画像エクスポートに対応。ブラウザ完結で安全に動作します。",
+        applicationCategory: "DesignApplication",
+        keywords: ["ティア表", "Tier表", "TierMaker", "ランキング作成", "ティアリスト"],
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",

@@ -104,6 +104,7 @@ const ROUTE_CHUNK_PREFIX: Record<string, string> = {
     "/bpm-calculator": "BpmCalculator",
     "/json-formatter": "JsonFormatter",
     "/word-counter": "WordCounter",
+    "/tier-maker": "TierMaker",
 };
 
 function findRouteChunk(routePath: string): string | undefined {

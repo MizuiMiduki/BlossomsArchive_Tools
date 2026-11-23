@@ -563,6 +563,33 @@
         "文章が400字詰め原稿用紙で何枚分になるか調べたい",
         "ブログ記事の読了目安時間とひらがな・漢字の比率を分析したい"
       ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:tier-maker",
+      "displayName": "ティア表作成ツール (Tier List) | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/tier-maker",
+      "description": "画像や文字を自由に並べてオリジナルのティア表を作成できる無料Webツール。段数の増減や配色変更、アイテムごとのA+やA-などの上下微調整、高画質画像エクスポートに対応。",
+      "capabilities": [
+        "TierListMaker",
+        "SubTierAdjustment",
+        "ImageAndTextCards",
+        "ClientSideCanvasExport"
+      ],
+      "tags": [
+        "ティア表",
+        "Tier表",
+        "TierMaker",
+        "ランキング作成",
+        "ティアリスト"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-24T00:00:00Z",
+      "representativeQueries": [
+        "ブラウザ上で画像や文字を並べてTier表を作りたい",
+        "同じランクの中でA+やA-のように微調整できるティア表作成ツールを探している",
+        "作成したティア表を高画質画像としてダウンロード保存したい"
+      ]
     }
   ]
 }
