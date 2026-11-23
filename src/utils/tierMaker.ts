@@ -2,6 +2,8 @@
  * ティア表作成ツール (Tier List Maker) ユーティリティ
  */
 
+import { createSignal } from "solid-js";
+
 export type SubTier = "plus" | "normal" | "minus";
 export type ItemType = "image" | "text";
 
@@ -9,6 +11,33 @@ export interface Tier {
     id: string;
     label: string;
     color: string;
+}
+
+/**
+ * リレンダー時のフォーカス喪失を防止する Fine-grained Reactive Tier モデル
+ */
+export interface TierModel {
+    id: string;
+    label: () => string;
+    setLabel: (val: string) => void;
+    color: () => string;
+    setColor: (val: string) => void;
+}
+
+export function createTierModel(
+    id: string,
+    initialLabel: string,
+    initialColor: string,
+): TierModel {
+    const [label, setLabel] = createSignal(initialLabel);
+    const [color, setColor] = createSignal(initialColor);
+    return {
+        id,
+        label,
+        setLabel,
+        color,
+        setColor,
+    };
 }
 
 export interface TierItem {

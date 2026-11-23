@@ -57,6 +57,26 @@ describe("TierMaker Page Component Tests", () => {
         expect(screen.getByDisplayValue("Rank 6")).toBeInTheDocument();
     });
 
+    it("ランク追加後にリネームで連続入力しても入力要素が破棄されず値が更新されること", () => {
+        render(() => <TierMaker />);
+
+        const addTierButton = screen.getByRole("button", {
+            name: "+ ランク追加",
+        });
+        fireEvent.click(addTierButton);
+
+        const newTierInput = screen.getByDisplayValue("Rank 6") as HTMLInputElement;
+        newTierInput.focus();
+
+        // 1文字目入力
+        fireEvent.input(newTierInput, { target: { value: "神" } });
+        expect(screen.getByDisplayValue("神")).toBe(newTierInput);
+
+        // 2文字目以降の連続入力
+        fireEvent.input(newTierInput, { target: { value: "神ランク" } });
+        expect(screen.getByDisplayValue("神ランク")).toBe(newTierInput);
+    });
+
     it("ランク削除時に段が消え、アイテムが未分類プールへ安全に戻ること", () => {
         render(() => <TierMaker />);
 

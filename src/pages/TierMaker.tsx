@@ -4,11 +4,13 @@ import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
 import {
     type Tier,
+    type TierModel,
     type TierItem,
     type SubTier,
     type ItemType,
     DEFAULT_TIERS,
     PRESET_COLORS,
+    createTierModel,
     generateTierId,
     cycleSubTier,
     getSubTierInfo,
@@ -24,7 +26,9 @@ export default function TierMaker() {
 
     // 状態管理
     const [title, setTitle] = createSignal("ティア表");
-    const [tiers, setTiers] = createSignal<Tier[]>([...DEFAULT_TIERS]);
+    const [tiers, setTiers] = createSignal<TierModel[]>(
+        DEFAULT_TIERS.map((t) => createTierModel(t.id, t.label, t.color)),
+    );
     const [items, setItems] = createSignal<TierItem[]>([
         {
             id: generateTierId("item"),
@@ -119,11 +123,11 @@ export default function TierMaker() {
         const availableColors = PRESET_COLORS;
         const currentCount = tiers().length;
         const nextColor = availableColors[currentCount % availableColors.length];
-        const newTier: Tier = {
-            id: newId,
-            label: `Rank ${currentCount + 1}`,
-            color: nextColor,
-        };
+        const newTier = createTierModel(
+            newId,
+            `Rank ${currentCount + 1}`,
+            nextColor,
+        );
 
         if (position === "top") {
             setTiers((prev) => [newTier, ...prev]);
@@ -157,20 +161,6 @@ export default function TierMaker() {
         current[index] = current[targetIndex];
         current[targetIndex] = temp;
         setTiers(current);
-    };
-
-    // ティア名変更
-    const updateTierLabel = (tierId: string, label: string) => {
-        setTiers((prev) =>
-            prev.map((t) => (t.id === tierId ? { ...t, label } : t)),
-        );
-    };
-
-    // ティアカラー変更
-    const updateTierColor = (tierId: string, color: string) => {
-        setTiers((prev) =>
-            prev.map((t) => (t.id === tierId ? { ...t, color } : t)),
-        );
     };
 
     // ティアクリア（そのティアのアイテムをプールに戻す）
@@ -299,21 +289,23 @@ export default function TierMaker() {
         setItems((prev) => prev.map((it) => ({ ...it, tierId: null })));
 
         if (type === "s-d") {
-            setTiers([...DEFAULT_TIERS]);
+            setTiers(
+                DEFAULT_TIERS.map((t) => createTierModel(t.id, t.label, t.color)),
+            );
         } else if (type === "s-f") {
             setTiers([
-                { id: "tier-s", label: "S", color: "#ff7f7f" },
-                { id: "tier-a", label: "A", color: "#ffbf7f" },
-                { id: "tier-b", label: "B", color: "#ffff7f" },
-                { id: "tier-c", label: "C", color: "#7fff7f" },
-                { id: "tier-d", label: "D", color: "#7fbfff" },
-                { id: "tier-f", label: "F", color: "#9ca3af" },
+                createTierModel("tier-s", "S", "#ff7f7f"),
+                createTierModel("tier-a", "A", "#ffbf7f"),
+                createTierModel("tier-b", "B", "#ffff7f"),
+                createTierModel("tier-c", "C", "#7fff7f"),
+                createTierModel("tier-d", "D", "#7fbfff"),
+                createTierModel("tier-f", "F", "#9ca3af"),
             ]);
         } else if (type === "high-low") {
             setTiers([
-                { id: "tier-high", label: "高 (High)", color: "#ff7f7f" },
-                { id: "tier-mid", label: "中 (Mid)", color: "#ffff7f" },
-                { id: "tier-low", label: "低 (Low)", color: "#7fbfff" },
+                createTierModel("tier-high", "高 (High)", "#ff7f7f"),
+                createTierModel("tier-mid", "中 (Mid)", "#ffff7f"),
+                createTierModel("tier-low", "低 (Low)", "#7fbfff"),
             ]);
         }
         showNotification("テンプレートを適用しました");
@@ -323,7 +315,9 @@ export default function TierMaker() {
     const handleResetAll = () => {
         if (!confirm("ティア表をすべて初期状態にリセットしますか？")) return;
         setTitle("ティア表");
-        setTiers([...DEFAULT_TIERS]);
+        setTiers(
+            DEFAULT_TIERS.map((t) => createTierModel(t.id, t.label, t.color)),
+        );
         setItems([]);
         showNotification("すべてリセットしました");
     };
@@ -341,7 +335,11 @@ export default function TierMaker() {
         try {
             await renderTierListToCanvas(exportCanvasRef, {
                 title: title(),
-                tiers: tiers(),
+                tiers: tiers().map((t) => ({
+                    id: t.id,
+                    label: t.label(),
+                    color: t.color(),
+                })),
                 items: items(),
             });
             const dataUrl = exportCanvasRef.toDataURL("image/png");
@@ -502,20 +500,20 @@ export default function TierMaker() {
                                 {/* 左側：ティアラベル & 操作 */}
                                 <div
                                     class="w-full sm:w-36 md:w-44 p-3 flex sm:flex-col items-center justify-between gap-2 shrink-0 select-none"
-                                    style={{ "background-color": tier.color }}
+                                    style={{ "background-color": tier.color() }}
                                 >
                                     <div class="flex-1 w-full flex items-center justify-center">
                                         <input
                                             type="text"
-                                            value={tier.label}
+                                            value={tier.label()}
                                             onInput={(e) =>
-                                                updateTierLabel(tier.id, e.currentTarget.value)
+                                                tier.setLabel(e.currentTarget.value)
                                             }
                                             class="w-full font-black text-center bg-transparent border-b border-transparent hover:border-current focus:border-current focus:outline-none text-lg md:text-xl px-1"
                                             style={{
-                                                color: getContrastTextColor(tier.color),
+                                                color: getContrastTextColor(tier.color()),
                                             }}
-                                            aria-label={`${tier.label} ランクのラベル名`}
+                                            aria-label={`${tier.label()} ランクのラベル名`}
                                         />
                                     </div>
 
@@ -526,8 +524,8 @@ export default function TierMaker() {
                                             onClick={() => moveTier(index(), "up")}
                                             disabled={index() === 0}
                                             class="btn btn-xs btn-ghost p-1 opacity-75 hover:opacity-100"
-                                            style={{ color: getContrastTextColor(tier.color) }}
-                                            aria-label={`${tier.label} ランクを1つ上に移動`}
+                                            style={{ color: getContrastTextColor(tier.color()) }}
+                                            aria-label={`${tier.label()} ランクを1つ上に移動`}
                                             title="上へ移動"
                                         >
                                             ▲
@@ -537,8 +535,8 @@ export default function TierMaker() {
                                             onClick={() => moveTier(index(), "down")}
                                             disabled={index() === tiers().length - 1}
                                             class="btn btn-xs btn-ghost p-1 opacity-75 hover:opacity-100"
-                                            style={{ color: getContrastTextColor(tier.color) }}
-                                            aria-label={`${tier.label} ランクを1つ下に移動`}
+                                            style={{ color: getContrastTextColor(tier.color()) }}
+                                            aria-label={`${tier.label()} ランクを1つ下に移動`}
                                             title="下へ移動"
                                         >
                                             ▼
@@ -546,12 +544,12 @@ export default function TierMaker() {
                                         {/* 色変更 */}
                                         <input
                                             type="color"
-                                            value={tier.color}
+                                            value={tier.color()}
                                             onInput={(e) =>
-                                                updateTierColor(tier.id, e.currentTarget.value)
+                                                tier.setColor(e.currentTarget.value)
                                             }
                                             class="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
-                                            aria-label={`${tier.label} ランクの背景色を変更`}
+                                            aria-label={`${tier.label()} ランクの背景色を変更`}
                                             title="色を変更"
                                         />
                                         {/* 削除 */}
@@ -559,8 +557,8 @@ export default function TierMaker() {
                                             type="button"
                                             onClick={() => removeTier(tier.id)}
                                             class="btn btn-xs btn-ghost p-1 text-error opacity-75 hover:opacity-100"
-                                            style={{ color: getContrastTextColor(tier.color) }}
-                                            aria-label={`${tier.label} ランクを削除`}
+                                            style={{ color: getContrastTextColor(tier.color()) }}
+                                            aria-label={`${tier.label()} ランクを削除`}
                                             title="ランクを削除"
                                         >
                                             ✕
@@ -825,7 +823,7 @@ export default function TierMaker() {
                                     >
                                         <option value="pool">未分類プール</option>
                                         <For each={tiers()}>
-                                            {(t) => <option value={t.id}>{t.label} ランク</option>}
+                                            {(t) => <option value={t.id}>{t.label()} ランク</option>}
                                         </For>
                                     </select>
 
