@@ -12,8 +12,4 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   );
 }
 
-if (root) {
-  root.textContent = '';
-}
-
 render(() => <App />, root!);

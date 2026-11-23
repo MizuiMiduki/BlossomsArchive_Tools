@@ -515,8 +515,11 @@ async function main(): Promise<void> {
                 let passedOnRetry = false;
                 let latestCandidate = cand;
 
-                for (let attempt = 1; attempt <= 2; attempt++) {
+                for (let attempt = 1; attempt <= 3; attempt++) {
                     try {
+                        if (attempt > 1) {
+                            await new Promise((resolve) => setTimeout(resolve, 1500));
+                        }
                         const report = await auditUrl(
                             lhBin,
                             url,
@@ -537,7 +540,7 @@ async function main(): Promise<void> {
                             scores.bestPractices === 100 &&
                             scores.seo === 100;
 
-                        const progressTag = `[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/2)]`;
+                        const progressTag = `[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/3)]`;
 
                         if (isAll100) {
                             console.log(
@@ -559,7 +562,7 @@ async function main(): Promise<void> {
                             };
                         }
                     } catch (err: any) {
-                        console.log(`[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/2)] [${presetLabel}] ${cand.route} ❌ Audit error: ${err?.message || String(err)}`);
+                        console.log(`[RETRY ${candIndex}/${totalCandidates} (試行${attempt}/3)] [${presetLabel}] ${cand.route} ❌ Audit error: ${err?.message || String(err)}`);
                     }
                 }
 
