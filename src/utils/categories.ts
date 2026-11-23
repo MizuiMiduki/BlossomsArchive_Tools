@@ -11,7 +11,7 @@ export interface CategoryDefinition {
 
 export const CATEGORIES: CategoryDefinition[] = [
     { id: "all", name: "すべて", icon: "🌟", badgeClass: "badge-ghost border-base-300 text-base-content font-bold" },
-    { id: "camera", name: "写真・カメラ", icon: "📷", badgeClass: "badge-primary font-bold text-primary-content" },
+    { id: "camera", name: "写真・カメラ", icon: "📷", badgeClass: "bg-blue-700 text-white font-bold border-transparent" },
     { id: "utility", name: "日常・便利", icon: "🛠️", badgeClass: "bg-emerald-700 text-white font-bold border-transparent" },
     { id: "developer", name: "開発者・Web", icon: "💻", badgeClass: "bg-purple-700 text-white font-bold border-transparent" },
     { id: "audio", name: "音響・オーディオ", icon: "🎵", badgeClass: "bg-amber-700 text-white font-bold border-transparent" },

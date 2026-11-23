@@ -20,11 +20,9 @@ html[data-theme='dark'] {
     }
 }
 
-/* ダークモード時の primary 背景要素（ボタン・バッジ・アクティブナビ等）の文字色を濃色に強制 (WCAG AA 4.5:1以上を保証) */
+/* ダークモード時の primary 背景要素（ボタン・アクティブナビ等）の文字色を濃色に強制 (WCAG AA 4.5:1以上を保証) */
 html[data-theme='dark'] .btn-primary:not(.btn-outline):not(:disabled):not([disabled]),
 html[data-theme='dark'] .btn-primary:not(.btn-outline):not(:disabled):not([disabled]) *,
-html[data-theme='dark'] .badge-primary,
-html[data-theme='dark'] .badge-primary *,
 html[data-theme='dark'] .bg-primary:not([class*="/"]):not(:disabled):not([disabled]),
 html[data-theme='dark'] .bg-primary:not([class*="/"]):not(:disabled):not([disabled]) *,
 html[data-theme='dark'] [data-active].bg-primary,
@@ -35,8 +33,6 @@ html[data-theme='dark'] [data-active].bg-primary * {
 @media (prefers-color-scheme: dark) {
     html:not([data-theme='light']) .btn-primary:not(.btn-outline):not(:disabled):not([disabled]),
     html:not([data-theme='light']) .btn-primary:not(.btn-outline):not(:disabled):not([disabled]) *,
-    html:not([data-theme='light']) .badge-primary,
-    html:not([data-theme='light']) .badge-primary *,
     html:not([data-theme='light']) .bg-primary:not([class*="/"]):not(:disabled):not([disabled]),
     html:not([data-theme='light']) .bg-primary:not([class*="/"]):not(:disabled):not([disabled]) *,
     html:not([data-theme='light']) [data-active].bg-primary,
@@ -616,15 +612,11 @@ input[type="search"]::-webkit-search-results-decoration {
     line-height: 1rem;
     border-radius: 9999px;
     border: 1px solid var(--color-base-300);
+    background-color: var(--color-base-200);
+    color: var(--color-base-content);
     vertical-align: middle;
     white-space: nowrap;
     user-select: none;
-}
-.badge:not([class*="bg-"]) {
-    background-color: var(--color-base-200);
-}
-.badge:not([class*="text-"]) {
-    color: var(--color-base-content);
 }
 .badge-outline {
     background-color: transparent;
@@ -635,9 +627,14 @@ input[type="search"]::-webkit-search-results-decoration {
     border-color: transparent;
 }
 .badge-primary {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #ffffff;
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff !important;
+}
+html[data-theme='dark'] .badge-primary {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #ffffff !important;
 }
 .badge-secondary {
     background-color: var(--color-secondary);
@@ -650,9 +647,14 @@ input[type="search"]::-webkit-search-results-decoration {
     color: #ffffff;
 }
 .badge-neutral {
-    background-color: var(--color-neutral);
-    border-color: var(--color-neutral);
-    color: var(--color-neutral-content, #ffffff);
+    background-color: #1f2937;
+    border-color: #1f2937;
+    color: #ffffff !important;
+}
+html[data-theme='dark'] .badge-neutral {
+    background-color: #374151;
+    border-color: #374151;
+    color: #ffffff !important;
 }
 .badge-success {
     background-color: var(--color-success);
