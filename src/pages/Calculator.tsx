@@ -102,28 +102,21 @@ export default function Calculator() {
     let displayInputRef: HTMLInputElement | undefined;
     const [display, setDisplay] = createSignal("0");
     const [history, setHistory] = createSignal<string[]>([]);
+    const [isScientific, setIsScientific] = createSignal(false);
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
     });
 
-    const buttons = [
-        "7",
-        "8",
-        "9",
-        "÷",
-        "4",
-        "5",
-        "6",
-        "×",
-        "1",
-        "2",
-        "3",
-        "-",
-        "0",
-        ".",
-        "=",
-        "+",
+    const standardButtons = [
+        "7", "8", "9", "÷",
+        "4", "5", "6", "×",
+        "1", "2", "3", "-",
+        "0", ".", "=", "+",
+    ];
+
+    const scientificButtons = [
+        "(", ")", "√", "x²", "±", "%",
     ];
 
     const handleButtonClick = (btn: string, targetEl: HTMLElement) => {
@@ -132,6 +125,36 @@ export default function Calculator() {
             calculate();
         } else {
             append(btn);
+        }
+    };
+
+    const handleScientificOp = (op: string, targetEl: HTMLElement) => {
+        animatePop(targetEl, 0.9, 0.15);
+        if (op === "(" || op === ")") {
+            append(op);
+            return;
+        }
+
+        try {
+            const currentVal = safeCalculate(display());
+            let result: number;
+            if (op === "√") {
+                if (currentVal < 0) throw new Error("Negative square root");
+                result = Math.round(Math.sqrt(currentVal) * 1e12) / 1e12;
+            } else if (op === "x²") {
+                result = Math.round(Math.pow(currentVal, 2) * 1e12) / 1e12;
+            } else if (op === "±") {
+                result = -currentVal;
+            } else if (op === "%") {
+                result = Math.round((currentVal / 100) * 1e12) / 1e12;
+            } else {
+                return;
+            }
+            const entry = `${op}(${display()}) = ${result}`;
+            setHistory((prev) => [entry, ...prev]);
+            setDisplay(String(result));
+        } catch {
+            setDisplay("Error");
         }
     };
 
@@ -187,6 +210,21 @@ export default function Calculator() {
         <div ref={containerRef} class="h-full w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-4 lg:gap-6">
             <h1 class="sr-only">シンプル計算機</h1>
             <div class="w-full lg:w-3/4 flex flex-col gap-4 sm:gap-6 max-w-xl mx-auto lg:order-2">
+                {/* モード切替とディスプレイ */}
+                <div class="flex items-center justify-between px-1">
+                    <span class="text-xs font-semibold text-base-content/70">
+                        {isScientific() ? "関数電卓モード" : "基本電卓モード"}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setIsScientific(!isScientific())}
+                        class="btn btn-ghost btn-xs text-xs font-bold text-primary hover:bg-primary/10"
+                        aria-label={isScientific() ? "基本モードへ切替" : "関数モードへ切替"}
+                    >
+                        {isScientific() ? "基本モード" : "関数電卓"}
+                    </button>
+                </div>
+
                 <input
                     ref={displayInputRef}
                     type="text"
@@ -196,12 +234,29 @@ export default function Calculator() {
                     disabled
                 />
 
+                {/* 関数電卓用ボタングリッド */}
+                <div class={`grid grid-cols-6 gap-1.5 sm:gap-2 transition-all ${isScientific() ? "block" : "hidden"}`}>
+                    <For each={scientificButtons}>
+                        {(op) => (
+                            <button
+                                type="button"
+                                class="btn btn-neutral btn-sm sm:btn-md font-mono text-sm sm:text-base font-bold shadow-sm"
+                                onClick={(e) => handleScientificOp(op, e.currentTarget)}
+                                aria-label={op}
+                            >
+                                {op}
+                            </button>
+                        )}
+                    </For>
+                </div>
+
                 <div class="grid grid-cols-4 gap-1.5 sm:gap-2 lg:gap-4">
-                    <For each={buttons}>
+                    <For each={standardButtons}>
                         {(btn) => (
                             <button
                                 class={`btn text-xl sm:text-2xl lg:text-3xl shadow-md h-14 sm:h-16 lg:h-20 min-h-0 w-full ${getButtonClass(btn)}`}
                                 onClick={(e) => handleButtonClick(btn, e.currentTarget)}
+                                aria-label={btn}
                             >
                                 {btn}
                             </button>
@@ -210,6 +265,7 @@ export default function Calculator() {
                     <button
                         onClick={(e) => clear(e.currentTarget)}
                         class="btn bg-red-600 hover:bg-red-700 border-red-800 btn-lg text-lg sm:text-xl lg:text-2xl !text-white font-bold col-span-4 h-12 sm:h-14 lg:h-16 min-h-0"
+                        aria-label="クリア"
                     >
                         クリア
                     </button>

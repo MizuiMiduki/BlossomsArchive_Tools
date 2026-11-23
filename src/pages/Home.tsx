@@ -3,6 +3,15 @@ import { routes, type Route } from "../routes";
 import AdSense from "../components/AdSense";
 import { playPageEntrance } from "../utils/animations";
 import { filterRoutesByQuery } from "../utils/search";
+import { getFavorites, toggleFavorite } from "../utils/favorites";
+import {
+    CATEGORIES,
+    TOOL_CATEGORIES_CONFIG,
+    type ToolCategoryId,
+    getToolIcon,
+    getToolCategory,
+    getRoutesByCategory,
+} from "../utils/categories";
 
 type HomeGridItem =
     | { type: "tool"; route: Route }
@@ -11,13 +20,35 @@ type HomeGridItem =
 export default function Home() {
     let containerRef: HTMLDivElement | undefined;
     const [searchQuery, setSearchQuery] = createSignal("");
+    const [selectedCategory, setSelectedCategory] = createSignal<ToolCategoryId>("all");
 
     const availableRoutes = createMemo(() =>
         routes.filter((r) => r.path !== "/" && !r.hidden)
     );
 
+    const categoryCounts = createMemo(() => {
+        const counts: Record<ToolCategoryId, number> = {
+            all: availableRoutes().length,
+            camera: 0,
+            utility: 0,
+            developer: 0,
+            audio: 0,
+        };
+        for (const route of availableRoutes()) {
+            const cat = TOOL_CATEGORIES_CONFIG[route.path]?.category;
+            if (cat && cat in counts) {
+                counts[cat]++;
+            }
+        }
+        return counts;
+    });
+
+    const categoryRoutes = createMemo(() =>
+        getRoutesByCategory(availableRoutes(), selectedCategory())
+    );
+
     const filteredRoutes = createMemo(() =>
-        filterRoutesByQuery(availableRoutes(), searchQuery())
+        filterRoutesByQuery(categoryRoutes(), searchQuery())
     );
 
     // ツールカードの合間にデザインの揃った広告カードを挿入
@@ -115,17 +146,58 @@ export default function Home() {
                 </div>
             </header>
 
-            {/* 検索結果件数表示（検索時のみ） */}
-            <Show when={searchQuery().trim()}>
+            {/* カテゴリ切り替えフィルター */}
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 -mt-2 sm:-mt-4 scrollbar-none" role="tablist" aria-label="ツールカテゴリ">
+                <For each={CATEGORIES}>
+                    {(cat) => (
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={selectedCategory() === cat.id ? "true" : "false"}
+                            class={`btn btn-sm rounded-full transition-all gap-1.5 shrink-0 ${
+                                selectedCategory() === cat.id
+                                    ? "btn-primary text-white font-bold shadow-xs"
+                                    : "btn-ghost bg-base-200/70 hover:bg-base-200 text-base-content dark:text-gray-100"
+                            }`}
+                            onClick={() => setSelectedCategory(cat.id)}
+                        >
+                            <span aria-hidden="true">{cat.icon}</span>
+                            <span>{cat.name}</span>
+                            <span
+                                class={`badge badge-xs px-1.5 py-0.5 ${
+                                    selectedCategory() === cat.id
+                                        ? "bg-white/20 text-white border-transparent"
+                                        : "badge-ghost text-base-content/70 dark:text-gray-300"
+                                }`}
+                            >
+                                {categoryCounts()[cat.id]}
+                            </span>
+                        </button>
+                    )}
+                </For>
+            </div>
+
+            {/* 検索結果・絞り込み件数表示 */}
+            <Show when={searchQuery().trim() || selectedCategory() !== "all"}>
                 <div class="flex items-center justify-between text-xs text-base-content/70 px-1">
                     <span>
-                        「<span class="font-bold text-base-content">{searchQuery().trim()}</span>」の検索結果:{" "}
+                        <Show when={selectedCategory() !== "all"}>
+                            <span class="badge badge-sm badge-outline mr-1.5">
+                                {CATEGORIES.find((c) => c.id === selectedCategory())?.name}
+                            </span>
+                        </Show>
+                        <Show when={searchQuery().trim()}>
+                            「<span class="font-bold text-base-content">{searchQuery().trim()}</span>」の検索結果:{" "}
+                        </Show>
                         <span class="font-bold text-primary">{filteredRoutes().length}</span> 件
                     </span>
                     <button
                         type="button"
                         class="text-xs text-primary hover:underline"
-                        onClick={() => setSearchQuery("")}
+                        onClick={() => {
+                            setSearchQuery("");
+                            setSelectedCategory("all");
+                        }}
                     >
                         すべて表示
                     </button>
@@ -142,15 +214,30 @@ export default function Home() {
                         ツールが見つかりませんでした
                     </h2>
                     <p class="text-xs text-base-content/60 mb-4 leading-relaxed">
-                        「{searchQuery()}」に一致するツールは見つかりませんでした。別のキーワードでお試しください。
+                        {searchQuery().trim()
+                            ? `「${searchQuery()}」に一致するツールは見つかりませんでした。別のキーワードでお試しください。`
+                            : "このカテゴリに一致するツールはありません。"}
                     </p>
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-ghost border-base-300 mx-auto"
-                        onClick={() => setSearchQuery("")}
-                    >
-                        検索をクリア
-                    </button>
+                    <div class="flex items-center justify-center gap-2">
+                        <Show when={searchQuery().trim()}>
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-ghost border-base-300"
+                                onClick={() => setSearchQuery("")}
+                            >
+                                検索をクリア
+                            </button>
+                        </Show>
+                        <Show when={selectedCategory() !== "all"}>
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-primary"
+                                onClick={() => setSelectedCategory("all")}
+                            >
+                                すべてのカテゴリを表示
+                            </button>
+                        </Show>
+                    </div>
                 </div>
             </Show>
 
@@ -193,9 +280,56 @@ export default function Home() {
                                         <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0 flex flex-col">
                                             <div class="card-body p-4 sm:p-6 flex flex-col justify-between h-full">
                                                 <div>
-                                                    <h2 class="card-title text-base sm:text-lg font-black text-base-content dark:text-white">
-                                                        {route.title}
-                                                    </h2>
+                                                    <div class="flex items-start justify-between gap-2 mb-2">
+                                                        <div class="flex items-center gap-2.5 min-w-0">
+                                                            <span
+                                                                aria-hidden="true"
+                                                                class="text-xl sm:text-2xl shrink-0 p-1.5 rounded-lg bg-base-200/70 dark:bg-base-300/40"
+                                                            >
+                                                                {getToolIcon(route.path)}
+                                                            </span>
+                                                            <div class="min-w-0">
+                                                                <h2 class="card-title text-base sm:text-lg font-black text-base-content dark:text-white truncate">
+                                                                    {route.title}
+                                                                </h2>
+                                                                <span
+                                                                    class={`badge badge-xs font-semibold mt-0.5 ${getToolCategory(route.path).badgeClass}`}
+                                                                >
+                                                                    {getToolCategory(route.path).name}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            class={`btn btn-ghost btn-xs btn-square shrink-0 ${
+                                                                getFavorites().includes(route.path)
+                                                                    ? "text-amber-500"
+                                                                    : "text-base-content/60 hover:text-base-content"
+                                                            }`}
+                                                            onClick={() => toggleFavorite(route.path)}
+                                                            aria-label={
+                                                                getFavorites().includes(route.path)
+                                                                    ? `${route.title}のピン留めを解除`
+                                                                    : `${route.title}をピン留め`
+                                                            }
+                                                        >
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                viewBox="0 0 24 24"
+                                                                class="w-4 h-4"
+                                                                fill={getFavorites().includes(route.path) ? "currentColor" : "none"}
+                                                                stroke="currentColor"
+                                                                stroke-width="2"
+                                                                aria-hidden="true"
+                                                            >
+                                                                <path
+                                                                    stroke-linecap="round"
+                                                                    stroke-linejoin="round"
+                                                                    d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                     <p class="text-xs sm:text-sm text-base-content/85 leading-relaxed mb-4">
                                                         {route.description || "便利なツールです"}
                                                     </p>

@@ -89,4 +89,28 @@ describe("QrGenerator", () => {
         fireEvent.click(screen.getByText("SVG"));
         fireEvent.click(screen.getByRole("button", { name: "保存 (SVG)" }));
     });
+
+    it("Wi-Fiモードに切り替えてSSIDを入力し、Wi-Fi用QRコードが作成できること", async () => {
+        render(() => <QrGenerator />);
+
+        // Wi-Fi接続設定タブに切り替え
+        const wifiTab = screen.getByRole("button", { name: "Wi-Fi接続設定" });
+        fireEvent.click(wifiTab);
+
+        const ssidInput = screen.getByLabelText("SSID (ネットワーク名)");
+        expect(ssidInput).toBeInTheDocument();
+
+        const generateBtn = screen.getByRole("button", { name: "QRコードを作成する" });
+        expect(generateBtn).toBeDisabled();
+
+        fireEvent.input(ssidInput, { target: { value: "Blossoms_Guest_WiFi" } });
+        expect(generateBtn).not.toBeDisabled();
+
+        const passInput = screen.getByLabelText("Wi-Fiパスワード");
+        fireEvent.input(passInput, { target: { value: "SecurePass123" } });
+
+        fireEvent.click(generateBtn);
+        const img = await screen.findByAltText("QRコード プレビュー");
+        expect(img).toBeInTheDocument();
+    });
 });

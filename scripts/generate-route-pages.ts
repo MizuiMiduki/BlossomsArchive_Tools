@@ -100,6 +100,10 @@ const ROUTE_CHUNK_PREFIX: Record<string, string> = {
     "/headphone-driveability": "HeadphoneDriveability",
     "/text-converter": "TextConverter",
     "/exposure-calculator": "ExposureCalculator",
+    "/timelapse-calculator": "TimelapseCalculator",
+    "/bpm-calculator": "BpmCalculator",
+    "/json-formatter": "JsonFormatter",
+    "/word-counter": "WordCounter",
 };
 
 function findRouteChunk(routePath: string): string | undefined {

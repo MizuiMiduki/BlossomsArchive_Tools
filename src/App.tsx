@@ -23,6 +23,10 @@ const HyperfocalCalculator = lazy(() => import("./pages/Hyperfocal"));
 const HeadphoneDriveability = lazy(() => import("./pages/HeadphoneDriveability"));
 const TextConverter = lazy(() => import("./pages/TextConverter"));
 const ExposureCalculator = lazy(() => import("./pages/ExposureCalculator"));
+const TimelapseCalculator = lazy(() => import("./pages/TimelapseCalculator"));
+const BpmCalculator = lazy(() => import("./pages/BpmCalculator"));
+const JsonFormatter = lazy(() => import("./pages/JsonFormatter"));
+const WordCounter = lazy(() => import("./pages/WordCounter"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 export const Router = createRouter({
@@ -47,6 +51,10 @@ export const Router = createRouter({
         { path: "/headphone-driveability", component: HeadphoneDriveability },
         { path: "/text-converter", component: TextConverter },
         { path: "/exposure-calculator", component: ExposureCalculator },
+        { path: "/timelapse-calculator", component: TimelapseCalculator },
+        { path: "/bpm-calculator", component: BpmCalculator },
+        { path: "/json-formatter", component: JsonFormatter },
+        { path: "/word-counter", component: WordCounter },
         { path: "*", component: NotFound },
     ],
 });

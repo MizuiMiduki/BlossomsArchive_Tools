@@ -21,6 +21,10 @@ import HyperfocalCalculator from "../pages/Hyperfocal";
 import HeadphoneDriveability from "../pages/HeadphoneDriveability";
 import TextConverter from "../pages/TextConverter";
 import ExposureCalculator from "../pages/ExposureCalculator";
+import TimelapseCalculator from "../pages/TimelapseCalculator";
+import BpmCalculator from "../pages/BpmCalculator";
+import JsonFormatter from "../pages/JsonFormatter";
+import WordCounter from "../pages/WordCounter";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import Credits from "../pages/Credits";
 import NotFound from "../pages/NotFound";
@@ -75,6 +79,26 @@ const PAGE_ENTRIES: Array<{ path: string; name: string; component: Component }> 
         path: "/exposure-calculator",
         name: "ExposureCalculator",
         component: ExposureCalculator,
+    },
+    {
+        path: "/timelapse-calculator",
+        name: "TimelapseCalculator",
+        component: TimelapseCalculator,
+    },
+    {
+        path: "/bpm-calculator",
+        name: "BpmCalculator",
+        component: BpmCalculator,
+    },
+    {
+        path: "/json-formatter",
+        name: "JsonFormatter",
+        component: JsonFormatter,
+    },
+    {
+        path: "/word-counter",
+        name: "WordCounter",
+        component: WordCounter,
     },
     { path: "/privacy", name: "PrivacyPolicy", component: PrivacyPolicy },
     { path: "/credits", name: "Credits", component: Credits },
@@ -206,8 +230,8 @@ describe("Visual Regression & UI Structure / Layout Invariant Tests", () => {
         const toolCards = Array.from(allCards).filter((c) => c.querySelector(".card-title"));
         expect(toolCards.length).toBeGreaterThan(0);
 
-        // インフィード広告カード一覧 (.badge スポンサー を持つカード)
-        const adCards = Array.from(allCards).filter((c) => c.querySelector(".badge"));
+        // インフィード広告カード一覧 (.card-title を持たないカード)
+        const adCards = Array.from(allCards).filter((c) => !c.querySelector(".card-title"));
         expect(adCards.length).toBeGreaterThan(0);
 
         // ツールカードと広告カードがデザイン共通クラス（card, bg-base-100, border-base-300, shadow-sm）を共有していること

@@ -11,13 +11,42 @@ interface FormatOption {
 }
 
 export default function QrGenerator() {
+    const [mode, setMode] = createSignal<"text" | "wifi">("text");
     const [text, setText] = createSignal("");
+    const [wifiSsid, setWifiSsid] = createSignal("");
+    const [wifiPassword, setWifiPassword] = createSignal("");
+    const [wifiAuth, setWifiAuth] = createSignal<"WPA" | "WEP" | "nopass">("WPA");
+    const [wifiHidden, setWifiHidden] = createSignal(false);
+    const [showPassword, setShowPassword] = createSignal(false);
+
     const [qrData, setQrData] = createSignal("");
     const [isLarge, setIsLarge] = createSignal(false);
     const [fileFormat, setFileFormat] = createSignal("png");
 
     let containerRef: HTMLDivElement | undefined;
     let generateButtonRef: HTMLButtonElement | undefined;
+
+    const escapeWifiStr = (str: string) => {
+        return str.replace(/([\\;,":])/g, "\\$1");
+    };
+
+    const getPayload = () => {
+        if (mode() === "wifi") {
+            const ssid = escapeWifiStr(wifiSsid());
+            const pass = escapeWifiStr(wifiPassword());
+            const auth = wifiAuth();
+            const hidden = wifiHidden() ? "true" : "false";
+            return `WIFI:S:${ssid};T:${auth};P:${pass};H:${hidden};;`;
+        }
+        return text();
+    };
+
+    const isPayloadValid = () => {
+        if (mode() === "wifi") {
+            return wifiSsid().trim().length > 0;
+        }
+        return text().trim().length > 0;
+    };
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
@@ -35,11 +64,12 @@ export default function QrGenerator() {
     };
 
     const generate = async () => {
-        if (!text()) return;
+        const payload = getPayload();
+        if (!payload) return;
         if (generateButtonRef) animatePop(generateButtonRef);
         try {
             const { default: QRCode } = await import("qrcode");
-            const data = await QRCode.toDataURL(text(), {
+            const data = await QRCode.toDataURL(payload, {
                 width: 600,
                 type: getMimeType(fileFormat()),
             });
@@ -61,9 +91,11 @@ export default function QrGenerator() {
     };
 
     const download = async () => {
-        if (!qrData() || !text()) return;
+        const payload = getPayload();
+        if (!qrData() || !payload) return;
 
-        const safeInput = text()
+        const safePrefix = mode() === "wifi" ? `wifi_${wifiSsid()}` : text();
+        const safeInput = safePrefix
             .replace(/[^a-zA-Z0-9ぁ-んァ-ヶー一-龠_-]/g, "_")
             .substring(0, 20);
         const dateTimeStr = getFormattedDateTime();
@@ -77,7 +109,7 @@ export default function QrGenerator() {
         if (fileFormat() === "svg") {
             try {
                 const { default: QRCode } = await import("qrcode");
-                const svgString = await QRCode.toString(text(), {
+                const svgString = await QRCode.toString(payload, {
                     type: "svg",
                     width: 600,
                 });
@@ -91,7 +123,7 @@ export default function QrGenerator() {
         } else {
             try {
                 const { default: QRCode } = await import("qrcode");
-                const data = await QRCode.toDataURL(text(), {
+                const data = await QRCode.toDataURL(payload, {
                     width: 600,
                     type: getMimeType(fileFormat()),
                 });
@@ -139,23 +171,145 @@ export default function QrGenerator() {
                         {/* 左側：設定コントロール */}
                         <div class="lg:col-span-7 flex flex-col justify-between gap-6">
                             <div class="flex flex-col gap-6">
-                                {/* 1. 文字列入力フォーム */}
-                                <div class="form-control w-full">
-                                    <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-base-content/90">
-                                            QRコードに埋め込む文字列・URL
-                                        </span>
-                                    </label>
-                                    <textarea
-                                        value={text()}
-                                        aria-label="QRコードに埋め込む文字列・URL"
-                                        onInput={(e) =>
-                                            setText(e.currentTarget.value)
-                                        }
-                                        class="textarea textarea-bordered w-full h-32 text-sm bg-base-100 border-2 border-base-300 text-base-content font-medium p-3 focus:outline-none shadow-sm"
-                                        placeholder="https://example.com または 任意のテキストを入力してください"
-                                    />
+                                {/* 種別タブ（テキスト・URL / Wi-Fi） */}
+                                <div class="tabs tabs-boxed bg-base-200/80 p-1 rounded-xl">
+                                    <button
+                                        type="button"
+                                        class={`tab flex-1 font-bold text-xs sm:text-sm transition-all rounded-lg ${
+                                            mode() === "text"
+                                                ? "tab-active bg-primary text-white shadow-sm"
+                                                : "text-base-content/80 hover:text-base-content"
+                                        }`}
+                                        onClick={() => setMode("text")}
+                                    >
+                                        テキスト・URL
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class={`tab flex-1 font-bold text-xs sm:text-sm transition-all rounded-lg ${
+                                            mode() === "wifi"
+                                                ? "tab-active bg-primary text-white shadow-sm"
+                                                : "text-base-content/80 hover:text-base-content"
+                                        }`}
+                                        onClick={() => setMode("wifi")}
+                                    >
+                                        Wi-Fi接続設定
+                                    </button>
                                 </div>
+
+                                {/* 1. 文字列入力フォーム or Wi-Fi入力 */}
+                                <Show
+                                    when={mode() === "wifi"}
+                                    fallback={
+                                        <div class="form-control w-full">
+                                            <label class="label py-1">
+                                                <span class="label-text font-bold text-sm text-base-content/90">
+                                                    QRコードに埋め込む文字列・URL
+                                                </span>
+                                            </label>
+                                            <textarea
+                                                value={text()}
+                                                aria-label="QRコードに埋め込む文字列・URL"
+                                                onInput={(e) =>
+                                                    setText(e.currentTarget.value)
+                                                }
+                                                class="textarea textarea-bordered w-full h-32 text-sm bg-base-100 border-2 border-base-300 text-base-content font-medium p-3 focus:outline-none shadow-sm"
+                                                placeholder="https://example.com または 任意のテキストを入力してください"
+                                            />
+                                        </div>
+                                    }
+                                >
+                                    <div class="space-y-3 bg-base-200/50 p-4 rounded-xl border border-base-300">
+                                        <div class="form-control w-full">
+                                            <label class="label py-1">
+                                                <span class="label-text font-bold text-xs text-base-content/90">
+                                                    ネットワーク名 (SSID) *
+                                                </span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={wifiSsid()}
+                                                onInput={(e) => setWifiSsid(e.currentTarget.value)}
+                                                class="input input-bordered input-sm w-full bg-base-100"
+                                                placeholder="My-Home-WiFi"
+                                                aria-label="SSID (ネットワーク名)"
+                                            />
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div class="form-control w-full">
+                                                <label class="label py-1">
+                                                    <span class="label-text font-bold text-xs text-base-content/90">
+                                                        セキュリティ方式
+                                                    </span>
+                                                </label>
+                                                <select
+                                                    value={wifiAuth()}
+                                                    onChange={(e) => setWifiAuth(e.currentTarget.value as any)}
+                                                    class="select select-bordered select-sm w-full bg-base-100"
+                                                    aria-label="セキュリティ方式"
+                                                >
+                                                    <option value="WPA">WPA / WPA2 / WPA3</option>
+                                                    <option value="WEP">WEP</option>
+                                                    <option value="nopass">パスワードなし (オープン)</option>
+                                                </select>
+                                            </div>
+
+                                            <Show when={wifiAuth() !== "nopass"}>
+                                                <div class="form-control w-full">
+                                                    <label class="label py-1">
+                                                        <span class="label-text font-bold text-xs text-base-content/90">
+                                                            パスワード
+                                                        </span>
+                                                    </label>
+                                                    <div class="relative">
+                                                        <input
+                                                            type={showPassword() ? "text" : "password"}
+                                                            value={wifiPassword()}
+                                                            onInput={(e) => setWifiPassword(e.currentTarget.value)}
+                                                            class="input input-bordered input-sm w-full bg-base-100 pr-9"
+                                                            placeholder="パスワードを入力"
+                                                            aria-label="Wi-Fiパスワード"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowPassword(!showPassword())}
+                                                            class="btn btn-ghost btn-xs btn-square absolute right-1 top-1 text-base-content/60"
+                                                            aria-label={showPassword() ? "パスワードを隠す" : "パスワードを表示"}
+                                                        >
+                                                            <Show
+                                                                when={showPassword()}
+                                                                fallback={
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    </svg>
+                                                                }
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                                                </svg>
+                                                            </Show>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </Show>
+                                        </div>
+
+                                        <label class="label cursor-pointer justify-start gap-2 py-0">
+                                            <input
+                                                type="checkbox"
+                                                checked={wifiHidden()}
+                                                onChange={(e) => setWifiHidden(e.currentTarget.checked)}
+                                                class="checkbox checkbox-xs checkbox-primary"
+                                                aria-label="非公開ネットワーク (ステルスSSID)"
+                                            />
+                                            <span class="label-text text-xs text-base-content/80 font-medium">
+                                                非公開ネットワーク (ステルスSSID)
+                                            </span>
+                                        </label>
+                                    </div>
+                                </Show>
 
                                 {/* 2. 保存フォーマットの選択 */}
                                 <div class="form-control w-full">
@@ -197,7 +351,7 @@ export default function QrGenerator() {
                                 <button
                                     ref={generateButtonRef}
                                     onClick={generate}
-                                    disabled={!text()}
+                                    disabled={!isPayloadValid()}
                                     class="btn btn-primary text-white w-full text-lg h-16 font-black transition-all shadow-md"
                                 >
                                     QRコードを作成する

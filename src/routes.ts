@@ -184,6 +184,38 @@ export const routes: Route[] = [
         ],
     },
     {
+        path: "/timelapse-calculator",
+        title: "タイムラプス撮影計算機",
+        description:
+            "完成動画の長さや撮影間隔、実撮影時間から、タイムラプスに必要な総撮影枚数とSDカード容量を相互シミュレーションできる無料Web計算ツールです。",
+        applicationCategory: "MultimediaApplication",
+        keywords: ["タイムラプス計算", "インターバル撮影", "撮影間隔", "SDカード容量", "タイムラプス動画"],
+    },
+    {
+        path: "/bpm-calculator",
+        title: "BPMディレイ換算機",
+        description:
+            "テンポ（BPM）から音符ごとのディレイタイム（ms）やLFO周波数（Hz）を瞬時に算出。タップテンポ機能も備えたDTMや音響制作に役立つ無料Webツールです。",
+        applicationCategory: "UtilityApplication",
+        keywords: ["BPM計算", "ディレイタイム", "タップテンポ", "DTMツール", "LFO周波数"],
+    },
+    {
+        path: "/json-formatter",
+        title: "JSON整形・検証ツール",
+        description:
+            "JSONデータの構文エラー検証やインデント整形、1行圧縮（Minify）、データ統計をブラウザ内で安全に行える無料ツールです。サーバー通信なしの完全ローカル処理。",
+        applicationCategory: "DeveloperApplication",
+        keywords: ["JSON整形", "JSONバリデーター", "JSON検証", "JSONミニファイ", "JSONフォーマッター"],
+    },
+    {
+        path: "/word-counter",
+        title: "文字数カウント・原稿用紙換算",
+        description:
+            "入力テキストの文字数（空白除外）、行数、原稿用紙枚数、読了時間、文字種別（ひらがな・漢字等）の割合をリアルタイムに集計・分析できる無料Webツールです。",
+        applicationCategory: "UtilityApplication",
+        keywords: ["文字数カウント", "原稿用紙換算", "文字数チェッカー", "読了時間", "文章分析"],
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",

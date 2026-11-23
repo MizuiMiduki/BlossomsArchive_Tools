@@ -28,6 +28,10 @@
 - [イヤホン・ヘッドホンの鳴らしやすさ](https://tools.blossomsarchive.com/headphone-driveability/): インピーダンス（Ω）と音圧感度（dB/mWまたはdB/Vrms）から、目標音圧（110dB SPL / 115dB SPL / 120dB SPL）に必要な出力電圧、電流、電力を計算し、アンプやポタアンの駆動難易度を判定。
 - [テキスト・マークアップ変換](https://tools.blossomsarchive.com/text-converter/): HTMLからMarkdown、MarkdownからHTML、プレーンテキスト抽出、特殊文字HTMLエンティティエスケープ・アンエスケープ、URLエンコード・デコードを瞬時に相互変換。
 - [カメラ露出計算機](https://tools.blossomsarchive.com/exposure-calculator/): スマホカメラでのリアルタイム露出計（スポット・中央重点・平均測光）からND長秒露光（水流・夜景）、星空撮影（500ルール/NPFルール）まで、絞り(F値)・シャッタースピード・ISO感度・NDフィルターの適正露出を即座にシミュレーション・換算しバルブタイマーも実行可能。
+- [タイムラプス撮影計算機](https://tools.blossomsarchive.com/timelapse-calculator/): 完成動画の長さや撮影間隔、実撮影時間から、タイムラプスに必要な総撮影枚数とSDカード容量を相互シミュレーションできる無料Web計算ツール。
+- [BPMディレイ換算機](https://tools.blossomsarchive.com/bpm-calculator/): テンポ（BPM）から音符ごとのディレイタイム（ms）やLFO周波数（Hz）を瞬時に算出。タップテンポ機能も備えたDTMや音響制作に役立つ無料Webツール。
+- [JSON整形・検証ツール](https://tools.blossomsarchive.com/json-formatter/): JSONデータの構文エラー検証やインデント整形、1行圧縮（Minify）、データ統計をブラウザ内で安全に行える無料ツール。完全ローカル処理。
+- [文字数カウント・原稿用紙換算](https://tools.blossomsarchive.com/word-counter/): 入力テキストの文字数（空白除外）、行数、原稿用紙枚数、読了時間、文字種別（ひらがな・漢字等）の割合をリアルタイムに集計・分析できる無料Webツール。
 
 ## 開発・運営情報
 - 運営元: BlossomsArchive (https://blossomsarchive.com)

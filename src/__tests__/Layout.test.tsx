@@ -248,4 +248,47 @@ describe("Layout Component", () => {
         const qrLink = screen.getByRole("link", { name: "QRコード生成" });
         expect(qrLink.className).toContain("dark:text-gray-100");
     });
+
+    it("ヘッダーの検索ボタンクリックでコマンドパレットが開くこと", () => {
+        const PaletteRouter = createRouter({
+            history: memoryHistory(),
+            routes: [{ path: "/", component: () => <div>パレットテスト</div> }],
+        });
+
+        render(() => (
+            <PaletteRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </PaletteRouter>
+        ));
+
+        const searchBtn = screen.getByLabelText(/ツールをクイック検索/i);
+        expect(searchBtn).toBeInTheDocument();
+        fireEvent.click(searchBtn);
+
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/ツール名、キーワード、機能で検索/i)).toBeInTheDocument();
+    });
+
+    it("サイドバーが通常時にカテゴリ別セクションにグループ化され、各リンクに絵文字アイコンが表示されること", () => {
+        const CategorySidebarRouter = createRouter({
+            history: memoryHistory(),
+            routes: [{ path: "/", component: () => <div>カテゴリサイドバーテスト</div> }],
+        });
+
+        render(() => (
+            <CategorySidebarRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </CategorySidebarRouter>
+        ));
+
+        // 各カテゴリ見出しが表示されていること
+        expect(screen.getByText("写真・カメラ")).toBeInTheDocument();
+        expect(screen.getByText("日常・便利")).toBeInTheDocument();
+        expect(screen.getByText("開発者・Web")).toBeInTheDocument();
+        expect(screen.getByText("音響・オーディオ")).toBeInTheDocument();
+
+        // リンク内にアイコンが含まれていること
+        const qrLink = screen.getByRole("link", { name: "QRコード生成" });
+        expect(qrLink.textContent).toContain("📱");
+    });
 });

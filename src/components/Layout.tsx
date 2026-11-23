@@ -15,8 +15,11 @@ import {
     PUBLISHER_NAME,
 } from "../routes";
 import ThemeToggle from "./ThemeToggle";
+import CommandPalette from "./CommandPalette";
 import { delayedCall } from "../utils/animations";
 import { filterRoutesByQuery } from "../utils/search";
+import { getFavorites } from "../utils/favorites";
+import { CATEGORIES, TOOL_CATEGORIES_CONFIG, getToolIcon } from "../utils/categories";
 
 interface LayoutProps {
     children?: JSX.Element;
@@ -30,6 +33,12 @@ export default function Layout(props: LayoutProps) {
     );
     const [isPcMenuHovered, setIsPcMenuHovered] = createSignal(false);
     const [sidebarSearchQuery, setSidebarSearchQuery] = createSignal("");
+    const [isPaletteOpen, setIsPaletteOpen] = createSignal(false);
+
+    const favoriteRoutes = createMemo(() => {
+        const favs = getFavorites();
+        return routes.filter((r) => !r.hidden && favs.includes(r.path));
+    });
 
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
@@ -95,11 +104,19 @@ export default function Layout(props: LayoutProps) {
             }
         };
 
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                setIsPaletteOpen((prev) => !prev);
+            }
+        };
+
         window.addEventListener("pointerdown", triggerLoad, { passive: true, once: true });
         window.addEventListener("touchstart", triggerLoad, { passive: true, once: true });
         window.addEventListener("keydown", triggerLoad, { passive: true, once: true });
         window.addEventListener("wheel", triggerLoad, { passive: true, once: true });
         window.addEventListener("click", triggerLoad, { passive: true, once: true });
+        window.addEventListener("keydown", handleGlobalKeyDown);
 
         return () => {
             if (hoverTween !== undefined) window.clearTimeout(hoverTween);
@@ -108,6 +125,7 @@ export default function Layout(props: LayoutProps) {
             window.removeEventListener("keydown", triggerLoad);
             window.removeEventListener("wheel", triggerLoad);
             window.removeEventListener("click", triggerLoad);
+            window.removeEventListener("keydown", handleGlobalKeyDown);
         };
     });
 
@@ -420,36 +438,118 @@ export default function Layout(props: LayoutProps) {
                 <div class="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
                     <nav class="flex flex-col min-h-full justify-between gap-6">
                         <div class="space-y-2">
-                            <For
-                                each={filterRoutesByQuery(
-                                    routes.filter((r) => !r.hidden),
-                                    sidebarSearchQuery()
-                                )}
-                            >
-                                {(route) => (
-                                    <a
-                                        href={route.path}
-                                        class={`block py-2 px-4 rounded-lg font-medium transition-colors ${
-                                            currentPath() === route.path
-                                                ? "bg-primary text-white font-bold"
-                                                : "text-base-content dark:text-gray-100 hover:text-base-content hover:dark:text-white hover:bg-base-200"
-                                        }`}
-                                    >
-                                        {route.title}
-                                    </a>
-                                )}
-                            </For>
+                            {/* お気に入りピン留めセクション */}
+                            <Show when={!sidebarSearchQuery().trim() && favoriteRoutes().length > 0}>
+                                <div class="mb-4 pb-3 border-b border-base-300">
+                                    <div class="flex items-center gap-1.5 px-3 mb-2 text-xs font-semibold text-amber-500">
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 24 24"
+                                            class="w-3.5 h-3.5 fill-current"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                                        </svg>
+                                        <span>お気に入り</span>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <For each={favoriteRoutes()}>
+                                            {(route) => (
+                                                <a
+                                                    href={route.path}
+                                                    class={`flex items-center gap-2 py-1.5 px-3 rounded-lg text-sm font-medium transition-colors ${
+                                                        currentPath() === route.path
+                                                            ? "bg-primary text-white font-bold"
+                                                            : "text-base-content dark:text-gray-100 hover:text-base-content hover:dark:text-white hover:bg-base-200"
+                                                    }`}
+                                                >
+                                                    <span aria-hidden="true" class="text-sm shrink-0">{getToolIcon(route.path)}</span>
+                                                    <span class="truncate">{route.title}</span>
+                                                </a>
+                                            )}
+                                        </For>
+                                    </div>
+                                </div>
+                            </Show>
+
+                            {/* 検索時: マッチしたツール一覧 */}
                             <Show
-                                when={
-                                    filterRoutesByQuery(
-                                        routes.filter((r) => !r.hidden),
-                                        sidebarSearchQuery()
-                                    ).length === 0
+                                when={!sidebarSearchQuery().trim()}
+                                fallback={
+                                    <>
+                                        <For
+                                            each={filterRoutesByQuery(
+                                                routes.filter((r) => !r.hidden),
+                                                sidebarSearchQuery()
+                                            )}
+                                        >
+                                            {(route) => (
+                                                <a
+                                                    href={route.path}
+                                                    class={`flex items-center gap-2 py-2 px-3 rounded-lg font-medium transition-colors ${
+                                                        currentPath() === route.path
+                                                            ? "bg-primary text-white font-bold"
+                                                            : "text-base-content dark:text-gray-100 hover:text-base-content hover:dark:text-white hover:bg-base-200"
+                                                    }`}
+                                                >
+                                                    <span aria-hidden="true" class="text-base shrink-0">{getToolIcon(route.path)}</span>
+                                                    <span class="truncate">{route.title}</span>
+                                                </a>
+                                            )}
+                                        </For>
+                                        <Show
+                                            when={
+                                                filterRoutesByQuery(
+                                                    routes.filter((r) => !r.hidden),
+                                                    sidebarSearchQuery()
+                                                ).length === 0
+                                            }
+                                        >
+                                            <div class="py-6 px-2 text-center text-xs text-base-content/70 dark:text-gray-300">
+                                                一致するメニューがありません
+                                            </div>
+                                        </Show>
+                                    </>
                                 }
                             >
-                                <div class="py-6 px-2 text-center text-xs text-base-content/70 dark:text-gray-300">
-                                    一致するメニューがありません
-                                </div>
+                                {/* 通常時: カテゴリ別グループ表示 */}
+                                <For each={CATEGORIES.filter((c) => c.id !== "all")}>
+                                    {(cat) => {
+                                        const catRoutes = routes.filter(
+                                            (r) => !r.hidden && TOOL_CATEGORIES_CONFIG[r.path]?.category === cat.id
+                                        );
+                                        return (
+                                            <Show when={catRoutes.length > 0}>
+                                                <div class="mb-3">
+                                                    <div class="flex items-center gap-1.5 px-3 py-1 mb-1 text-[11px] font-bold text-base-content/75 dark:text-gray-300 uppercase tracking-wider">
+                                                        <span aria-hidden="true">{cat.icon}</span>
+                                                        <span>{cat.name}</span>
+                                                        <span class="ml-auto text-[10px] text-base-content/60 dark:text-gray-300 font-normal">
+                                                            {catRoutes.length}
+                                                        </span>
+                                                    </div>
+                                                    <div class="space-y-0.5">
+                                                        <For each={catRoutes}>
+                                                            {(route) => (
+                                                                <a
+                                                                    href={route.path}
+                                                                    class={`flex items-center gap-2 py-1.5 px-3 rounded-lg text-sm font-medium transition-colors ${
+                                                                        currentPath() === route.path
+                                                                            ? "bg-primary text-white font-bold"
+                                                                            : "text-base-content dark:text-gray-100 hover:text-base-content hover:dark:text-white hover:bg-base-200"
+                                                                    }`}
+                                                                >
+                                                                    <span aria-hidden="true" class="text-sm shrink-0">{getToolIcon(route.path)}</span>
+                                                                    <span class="truncate">{route.title}</span>
+                                                                </a>
+                                                            )}
+                                                        </For>
+                                                    </div>
+                                                </div>
+                                            </Show>
+                                        );
+                                    }}
+                                </For>
                             </Show>
                         </div>
 
@@ -633,7 +733,31 @@ export default function Layout(props: LayoutProps) {
                             {getHeaderTitle()}
                         </span>
                     </div>
-                    <div class="shrink-0">
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-xs sm:btn-sm gap-1.5 sm:gap-2 text-base-content/80 hover:text-base-content border border-base-300 rounded-lg px-2 sm:px-3 bg-base-200/50 hover:bg-base-200"
+                            onClick={() => setIsPaletteOpen(true)}
+                            aria-label="ツールをクイック検索 (Cmd+K)"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-base-content/70"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
+                            </svg>
+                            <span class="hidden sm:inline text-xs">検索...</span>
+                            <kbd class="kbd kbd-xs font-mono text-[10px] hidden sm:inline-flex">⌘K</kbd>
+                        </button>
                         <ThemeToggle />
                     </div>
                 </header>
@@ -642,6 +766,9 @@ export default function Layout(props: LayoutProps) {
                     <div class="p-3 sm:p-4 lg:p-8 w-full max-w-full min-w-0 google-anno-skip">{props.children}</div>
                 </main>
             </div>
+
+            {/* クイック検索コマンドパレット */}
+            <CommandPalette isOpen={isPaletteOpen()} onClose={() => setIsPaletteOpen(false)} />
         </div>
     );
 }

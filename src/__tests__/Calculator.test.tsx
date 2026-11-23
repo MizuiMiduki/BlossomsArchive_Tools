@@ -124,4 +124,26 @@ describe("Calculator", () => {
         fireEvent.click(screen.getByRole("button", { name: "3" }));
         expect(display.value).toBe("3");
     });
+
+    it("関数電卓モードの切替および平方根や二乗・符号反転が正しく計算されること", () => {
+        render(() => <Calculator />);
+        const display = screen.getByRole("textbox") as HTMLInputElement;
+
+        // モード切替
+        const modeBtn = screen.getByRole("button", { name: "関数モードへ切替" });
+        fireEvent.click(modeBtn);
+
+        // 9の平方根 = 3
+        fireEvent.click(screen.getByRole("button", { name: "9" }));
+        fireEvent.click(screen.getByRole("button", { name: "√" }));
+        expect(display.value).toBe("3");
+
+        // 3の二乗 = 9
+        fireEvent.click(screen.getByRole("button", { name: "x²" }));
+        expect(display.value).toBe("9");
+
+        // 符号反転 = -9
+        fireEvent.click(screen.getByRole("button", { name: "±" }));
+        expect(display.value).toBe("-9");
+    });
 });

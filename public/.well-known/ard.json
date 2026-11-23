@@ -457,6 +457,112 @@
         "露出を保ったまま絞りを変えたときの等価露出シャッター速度を求めたい",
         "星景写真で星が流れない限界シャッター速度（500ルール・NPFルール）を調べたい"
       ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:timelapse-calculator",
+      "displayName": "タイムラプス撮影計算機 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/timelapse-calculator",
+      "description": "完成動画の長さや撮影間隔、実撮影時間から、タイムラプスに必要な総撮影枚数とSDカード容量を相互シミュレーションできる無料Web計算ツール。",
+      "capabilities": [
+        "TimelapseCalculation",
+        "IntervalShootingEstimation",
+        "StorageCapacityPlanning"
+      ],
+      "tags": [
+        "タイムラプス",
+        "インターバル撮影",
+        "撮影間隔",
+        "SDカード容量",
+        "動画尺計算"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-23T00:00:00Z",
+      "representativeQueries": [
+        "タイムラプスで30秒の動画を作るのに何枚撮影が必要か計算したい",
+        "星空や雲のタイムラプスの適切なシャッター間隔を知りたい",
+        "タイムラプス撮影に必要なSDカード容量を調べたい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:bpm-calculator",
+      "displayName": "BPMディレイ換算機 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/bpm-calculator",
+      "description": "テンポ（BPM）から音符ごとのディレイタイム（ms）やLFO周波数（Hz）を瞬時に算出。タップテンポ機能も備えたDTMや音響制作に役立つ無料Webツール。",
+      "capabilities": [
+        "BpmToDelayTime",
+        "LfoFrequencyCalculation",
+        "TapTempoMeasurement"
+      ],
+      "tags": [
+        "BPM計算",
+        "ディレイタイム",
+        "タップテンポ",
+        "DTMツール",
+        "音響計算"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-23T00:00:00Z",
+      "representativeQueries": [
+        "BPM120のときの1/4音符や付点8分音符のディレイタイム（ms）を求めたい",
+        "曲のテンポに合わせたLFOのHz周波数を計算したい",
+        "曲を聴きながらタップしてBPMを計測したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:json-formatter",
+      "displayName": "JSON整形・検証ツール | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/json-formatter",
+      "description": "JSONデータの構文エラー検証やインデント整形、1行圧縮（Minify）、データ統計をブラウザ内で安全に行える無料ツール。サーバー通信なしの完全ローカル処理。",
+      "capabilities": [
+        "JsonValidation",
+        "JsonBeautify",
+        "JsonMinify",
+        "ClientSideProcessing"
+      ],
+      "tags": [
+        "JSON整形",
+        "JSON検証",
+        "JSONミニファイ",
+        "構文チェック",
+        "ローカル処理"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-23T00:00:00Z",
+      "representativeQueries": [
+        "JSONのエラー箇所をブラウザで安全にチェックしたい",
+        "機密データを含むJSONを外部サーバーに送らず整形したい",
+        "JSONを1行にミニファイ（圧縮）してファイルサイズを確認したい"
+      ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:word-counter",
+      "displayName": "文字数カウント・原稿用紙換算 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/word-counter",
+      "description": "入力テキストの文字数（空白除外）、行数、原稿用紙枚数、読了時間、文字種別（ひらがな・漢字等）の割合をリアルタイムに集計・分析できる無料Webツール。",
+      "capabilities": [
+        "WordAndCharacterCount",
+        "ManuscriptPageEstimation",
+        "ReadingTimeEstimation",
+        "CharacterTypeDistribution"
+      ],
+      "tags": [
+        "文字数カウント",
+        "原稿用紙換算",
+        "文字数チェッカー",
+        "読了時間",
+        "文章分析"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-23T00:00:00Z",
+      "representativeQueries": [
+        "空白を除いた正確な文字数を数えたい",
+        "文章が400字詰め原稿用紙で何枚分になるか調べたい",
+        "ブログ記事の読了目安時間とひらがな・漢字の比率を分析したい"
+      ]
     }
   ]
 }

@@ -64,4 +64,33 @@ describe("Home page", () => {
         fireEvent.click(resetBtn);
         expect(screen.getByText("電卓ツール")).toBeInTheDocument();
     });
+
+    it("カテゴリタブでツールを切り替えて絞り込めること", () => {
+        render(() => <Home />);
+
+        // 写真・カメラ カテゴリを選択
+        const cameraTab = screen.getByRole("tab", { name: /写真・カメラ/ });
+        expect(cameraTab).toBeInTheDocument();
+        fireEvent.click(cameraTab);
+
+        // 写真系ツールが表示され、日常ツールは非表示になること
+        expect(screen.getByText("カメラ露出計算機")).toBeInTheDocument();
+        expect(screen.queryByText("電卓ツール")).not.toBeInTheDocument();
+
+        // すべてタブで全件表示に戻ること
+        const allTab = screen.getByRole("tab", { name: /すべて/ });
+        fireEvent.click(allTab);
+        expect(screen.getByText("電卓ツール")).toBeInTheDocument();
+    });
+
+    it("各ツールカードにアイコンとカテゴリバッジが表示されていること", () => {
+        render(() => <Home />);
+
+        // 電卓ツールのカード内に日常・便利バッジが存在すること
+        const calcTitle = screen.getByText("電卓ツール");
+        const cardBody = calcTitle.closest(".card-body");
+        expect(cardBody).not.toBeNull();
+        expect(cardBody?.textContent).toContain("日常・便利");
+        expect(cardBody?.textContent).toContain("🔢");
+    });
 });
