@@ -298,13 +298,15 @@ export default function TimelapseCalculator() {
                                                     type="button"
                                                     class={`p-2 rounded-lg text-left border text-xs transition-all ${
                                                         intervalSec() === p.interval
-                                                            ? "border-primary bg-primary/20 text-primary font-bold"
+                                                            ? "border-primary bg-primary/20 text-primary font-bold shadow-xs"
                                                             : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content"
                                                     }`}
                                                     onClick={() => setIntervalSec(p.interval)}
                                                 >
                                                     <div class="font-bold truncate">{p.name}</div>
-                                                    <div class="text-[10px] text-base-content/60 font-mono">{p.interval}秒間隔</div>
+                                                    <div class={`text-[10px] font-mono ${intervalSec() === p.interval ? "text-primary font-bold" : "text-base-content/75"}`}>
+                                                        {p.interval}秒間隔
+                                                    </div>
                                                 </button>
                                             )}
                                         </For>
@@ -369,10 +371,13 @@ export default function TimelapseCalculator() {
                                                         : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content"
                                                 }`}
                                                 onClick={() => handleResolutionChange(item.id as ResolutionPreset)}
-                                                aria-label={item.label}
                                             >
                                                 <div class="text-xs font-bold truncate">{item.label}</div>
-                                                <div class="text-[10px] text-base-content/60 truncate">{item.sub}</div>
+                                                <div class={`text-[10px] truncate ${
+                                                    resolution() === item.id
+                                                        ? "text-primary font-bold"
+                                                        : "text-base-content/75"
+                                                }`}>{item.sub}</div>
                                             </button>
                                         ))}
                                     </div>
@@ -399,7 +404,6 @@ export default function TimelapseCalculator() {
                                                             : "btn-outline border-base-300"
                                                     }`}
                                                     onClick={() => handleFormatChange(fmt.id as FormatType)}
-                                                    aria-label={fmt.label}
                                                 >
                                                     {fmt.label}
                                                 </button>

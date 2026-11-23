@@ -65,7 +65,7 @@ describe("TimelapseCalculator Component", () => {
         expect(screen.getAllByText(/2400万画素/).length).toBeGreaterThanOrEqual(1);
 
         // 6000万画素（超高画素機）に変更
-        const res60Btn = screen.getByRole("button", { name: "約6000万画素" });
+        const res60Btn = screen.getByRole("button", { name: /約6000万画素/ });
         fireEvent.click(res60Btn);
 
         // 60MP × 圧縮RAW = 65MB/枚。450 * 65MB = 29250MB = 約28.56GB (推奨: 64 GB)
@@ -73,7 +73,7 @@ describe("TimelapseCalculator Component", () => {
         expect(screen.getByText("推奨: 64 GB")).toBeInTheDocument();
 
         // フォーマットを「非圧縮RAW」に変更
-        const uncompressedBtn = screen.getByRole("button", { name: "非圧縮RAW" });
+        const uncompressedBtn = screen.getByRole("button", { name: /非圧縮RAW/ });
         fireEvent.click(uncompressedBtn);
 
         // 60MP × 非圧縮RAW = 120MB/枚。450 * 120MB = 54000MB = 約52.73GB (推奨: 128 GB)
