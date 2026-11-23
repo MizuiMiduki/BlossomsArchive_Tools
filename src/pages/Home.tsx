@@ -166,10 +166,10 @@ export default function Home() {
                                 <span aria-hidden="true">{cat.icon}</span>
                                 <span>{cat.name}</span>
                                 <span
-                                    class={`badge badge-xs px-1.5 py-0.5 font-mono font-bold ${
+                                    class={`badge badge-xs px-1.5 py-0.5 font-mono font-bold border-0 ${
                                         isSelected()
-                                            ? "bg-transparent border border-current text-inherit"
-                                            : "bg-base-300 text-base-content border-transparent"
+                                            ? "bg-white text-slate-900 shadow-xs"
+                                            : "bg-base-300 text-base-content"
                                     }`}
                                 >
                                     {categoryCounts()[cat.id]}
