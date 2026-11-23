@@ -190,7 +190,6 @@ export default function BpmCalculator() {
                                     type="button"
                                     onClick={handleTap}
                                     class="btn btn-primary btn-block h-20 text-xl font-black shadow-md rounded-xl"
-                                    aria-label="リズムに合わせてタップ"
                                 >
                                     TAP HERE
                                 </button>
@@ -250,10 +249,10 @@ export default function BpmCalculator() {
                                                         <span
                                                             class={`badge badge-xs text-[10px] ${
                                                                 timing.type === "dotted"
-                                                                    ? "badge-warning"
+                                                                    ? "badge-warning badge-outline font-bold text-amber-800 dark:text-amber-300"
                                                                     : timing.type === "triplet"
-                                                                      ? "badge-info"
-                                                                      : "badge-ghost"
+                                                                      ? "badge-info badge-outline font-bold text-sky-800 dark:text-sky-300"
+                                                                      : "badge-ghost border-base-300 text-base-content/80 font-medium"
                                                             }`}
                                                         >
                                                             {timing.type === "dotted"

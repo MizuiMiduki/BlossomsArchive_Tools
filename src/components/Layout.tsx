@@ -738,7 +738,6 @@ export default function Layout(props: LayoutProps) {
                             type="button"
                             class="btn btn-ghost btn-xs sm:btn-sm gap-1.5 sm:gap-2 text-base-content/80 hover:text-base-content border border-base-300 rounded-lg px-2 sm:px-3 bg-base-200/50 hover:bg-base-200"
                             onClick={() => setIsPaletteOpen(true)}
-                            aria-label="ツールをクイック検索 (Cmd+K)"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -755,7 +754,7 @@ export default function Layout(props: LayoutProps) {
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                                 />
                             </svg>
-                            <span class="hidden sm:inline text-xs">検索...</span>
+                            <span class="text-xs">検索...</span>
                             <kbd class="kbd kbd-xs font-mono text-[10px] hidden sm:inline-flex">⌘K</kbd>
                         </button>
                         <ThemeToggle />

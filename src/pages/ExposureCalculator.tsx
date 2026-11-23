@@ -629,7 +629,7 @@ export default function ExposureCalculator() {
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <button
                                         type="button"
-                                        class="btn btn-xs sm:btn-sm btn-outline btn-secondary font-bold"
+                                        class="btn btn-sm btn-outline btn-secondary font-bold"
                                         onClick={() => switchToScenePresets()}
                                     >
                                         ☀️ 選択式(シーン)に戻る
@@ -724,14 +724,14 @@ export default function ExposureCalculator() {
                                 <div class="flex flex-wrap justify-center gap-2">
                                     <button
                                         type="button"
-                                        class="btn btn-error btn-xs sm:btn-sm px-3"
+                                        class="btn btn-error btn-sm px-3"
                                         onClick={() => stopCamera()}
                                     >
                                         🛑 カメラを停止
                                     </button>
                                     <button
                                         type="button"
-                                        class="btn btn-outline btn-xs sm:btn-sm"
+                                        class="btn btn-outline btn-sm"
                                         onClick={() => {
                                             setCameraFacing((prev) =>
                                                 prev === "environment"
@@ -745,7 +745,7 @@ export default function ExposureCalculator() {
                                     </button>
                                     <button
                                         type="button"
-                                        class="btn btn-outline btn-secondary btn-xs sm:btn-sm font-bold"
+                                        class="btn btn-outline btn-secondary btn-sm font-bold"
                                         onClick={() => switchToScenePresets()}
                                     >
                                         ☀️ 選択式(シーン)に戻る
@@ -759,20 +759,20 @@ export default function ExposureCalculator() {
                                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                         <div>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-xs uppercase tracking-wider opacity-85 font-semibold">
+                                                <span class="text-xs uppercase tracking-wider text-white font-bold">
                                                     現在測定中の露出値 (EV 100)
                                                 </span>
                                                 <Show when={isHardwareMode()}>
-                                                    <span class="badge badge-xs badge-accent font-mono text-[10px]">
+                                                    <span class="badge badge-xs bg-black/40 text-white border border-white/30 font-mono text-[10px]">
                                                         カメラAE連動中
                                                     </span>
                                                 </Show>
                                             </div>
                                             <div class="flex items-baseline gap-3 mt-0.5">
-                                                <h3 class="text-3xl sm:text-4xl font-black">
+                                                <div class="text-3xl sm:text-4xl font-black font-mono">
                                                     EV {measuredEv().toFixed(1)}
-                                                </h3>
-                                                <span class="text-xs opacity-90">
+                                                </div>
+                                                <span class="text-xs text-white/90">
                                                     約 {measuredLux().toLocaleString()} Lux
                                                 </span>
                                             </div>
@@ -921,22 +921,22 @@ export default function ExposureCalculator() {
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-xs uppercase tracking-wider opacity-90 font-bold">
+                                        <span class="text-xs uppercase tracking-wider text-white font-bold">
                                             🎯 計算された最適露出設定
                                         </span>
-                                        <span class="badge badge-xs badge-accent font-mono text-[10px]">
+                                        <span class="badge badge-xs bg-black/40 text-white border border-white/30 font-mono text-[10px]">
                                             目標 EV {currentTargetEv().toFixed(1)}
                                         </span>
                                     </div>
-                                    <h3 class="text-3xl sm:text-4xl font-extrabold mt-0.5">
+                                    <div class="text-3xl sm:text-4xl font-extrabold mt-0.5 text-white font-mono">
                                         {simResult().standardLabel}
-                                    </h3>
-                                    <div class="text-xs sm:text-sm opacity-90 mt-0.5">
+                                    </div>
+                                    <div class="text-xs sm:text-sm text-white/90 mt-0.5">
                                         理論値: {simResult().displayExact}
                                     </div>
                                 </div>
                                 <div class="bg-primary-content/15 px-3 py-2 rounded-xl border border-primary-content/20 text-xs space-y-0.5 self-stretch sm:self-auto">
-                                    <div class="font-medium">
+                                    <div class="font-medium text-white">
                                         前提設定:{" "}
                                         {simResult().type === "shutter"
                                             ? `f/${simAperture()} / ISO ${simIso()}`
@@ -944,7 +944,7 @@ export default function ExposureCalculator() {
                                               ? `${formatShutterSpeed(simShutter())} / ISO ${simIso()}`
                                               : `f/${simAperture()} / ${formatShutterSpeed(simShutter())}`}
                                     </div>
-                                    <div class="opacity-90">
+                                    <div class="text-white font-medium">
                                         {simNdStops() > 0
                                             ? `ND -${simNdStops()}段 装着中`
                                             : "NDなし (標準適正)"}
@@ -960,12 +960,12 @@ export default function ExposureCalculator() {
                                 }
                             >
                                 <div class="mt-2 pt-2 border-t border-primary-content/20 flex flex-wrap items-center justify-between gap-2">
-                                    <span class="text-xs sm:text-sm">
+                                    <span class="text-xs sm:text-sm text-white">
                                         ⏱️ 1秒以上の露光時間です。バルブタイマーにセットしますか？
                                     </span>
                                     <button
                                         type="button"
-                                        class="btn btn-xs sm:btn-sm btn-secondary font-bold"
+                                        class="btn btn-sm btn-secondary font-bold"
                                         onClick={() => {
                                             const sec = Math.max(
                                                 1,
@@ -991,7 +991,7 @@ export default function ExposureCalculator() {
                                 </h2>
                                 <button
                                     type="button"
-                                    class="btn btn-xs btn-outline btn-primary gap-1"
+                                    class="btn btn-sm btn-outline btn-primary gap-1"
                                     onClick={() => {
                                         setActiveTab("meter");
                                         startCamera();
@@ -1006,7 +1006,7 @@ export default function ExposureCalculator() {
                                 <div class="join">
                                     <button
                                         type="button"
-                                        class={`join-item btn btn-xs sm:btn-sm font-bold ${
+                                        class={`join-item btn btn-sm font-bold min-h-[38px] ${
                                             !isManualEv()
                                                 ? "btn-primary text-white"
                                                 : "btn-ghost bg-base-200 text-base-content/75"
@@ -1017,7 +1017,7 @@ export default function ExposureCalculator() {
                                     </button>
                                     <button
                                         type="button"
-                                        class={`join-item btn btn-xs sm:btn-sm font-bold ${
+                                        class={`join-item btn btn-sm font-bold min-h-[38px] ${
                                             isManualEv()
                                                 ? "btn-primary text-white"
                                                 : "btn-ghost bg-base-200 text-base-content/75"
@@ -1030,7 +1030,7 @@ export default function ExposureCalculator() {
                                 <Show when={isManualEv()}>
                                     <button
                                         type="button"
-                                        class="btn btn-xs btn-outline btn-secondary font-bold"
+                                        class="btn btn-sm btn-outline btn-secondary font-bold min-h-[38px]"
                                         onClick={() => setIsManualEv(false)}
                                     >
                                         ☀️ シーン選択式に戻る

@@ -261,7 +261,7 @@ describe("Layout Component", () => {
             </PaletteRouter>
         ));
 
-        const searchBtn = screen.getByLabelText(/ツールをクイック検索/i);
+        const searchBtn = screen.getByRole("button", { name: /検索/ });
         expect(searchBtn).toBeInTheDocument();
         fireEvent.click(searchBtn);
 

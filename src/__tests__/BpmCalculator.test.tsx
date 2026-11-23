@@ -40,7 +40,7 @@ describe("BpmCalculator Component", () => {
     it("タップボタンをクリックしてタップ計測が動作すること", () => {
         render(() => <BpmCalculator />);
 
-        const tapBtn = screen.getByRole("button", { name: "リズムに合わせてタップ" });
+        const tapBtn = screen.getByRole("button", { name: /TAP HERE/i });
         fireEvent.click(tapBtn);
         expect(screen.getByText(/リズムに合わせて続けてタップ/)).toBeInTheDocument();
     });
