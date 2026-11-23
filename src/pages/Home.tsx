@@ -166,7 +166,7 @@ export default function Home() {
                                 <span aria-hidden="true">{cat.icon}</span>
                                 <span>{cat.name}</span>
                                 <span
-                                    class={`badge badge-xs px-1.5 py-0.5 font-mono font-bold border-0 ${
+                                    class={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none ${
                                         isSelected()
                                             ? "bg-white text-slate-900 shadow-xs"
                                             : "bg-base-300 text-base-content"
