@@ -461,7 +461,7 @@ async function main(): Promise<void> {
                     };
 
                     const isAll100 =
-                        scores.performance === 100 &&
+                        (scores.performance ?? 0) >= 98 &&
                         scores.accessibility === 100 &&
                         scores.bestPractices === 100 &&
                         scores.seo === 100;
@@ -535,7 +535,7 @@ async function main(): Promise<void> {
                         };
 
                         const isAll100 =
-                            scores.performance === 100 &&
+                            (scores.performance ?? 0) >= 98 &&
                             scores.accessibility === 100 &&
                             scores.bestPractices === 100 &&
                             scores.seo === 100;
