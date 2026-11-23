@@ -149,31 +149,34 @@ export default function Home() {
             {/* カテゴリ切り替えフィルター */}
             <div class="flex items-center gap-2 overflow-x-auto pb-1 -mt-2 sm:-mt-4 scrollbar-none" role="tablist" aria-label="ツールカテゴリ">
                 <For each={CATEGORIES}>
-                    {(cat) => (
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={selectedCategory() === cat.id ? "true" : "false"}
-                            class={`btn btn-sm rounded-full transition-all gap-1.5 shrink-0 ${
-                                selectedCategory() === cat.id
-                                    ? "btn-primary text-white font-bold shadow-xs"
-                                    : "btn-ghost bg-base-200/70 hover:bg-base-200 text-base-content dark:text-gray-100"
-                            }`}
-                            onClick={() => setSelectedCategory(cat.id)}
-                        >
-                            <span aria-hidden="true">{cat.icon}</span>
-                            <span>{cat.name}</span>
-                            <span
-                                class={`badge badge-xs px-1.5 py-0.5 ${
-                                    selectedCategory() === cat.id
-                                        ? "bg-white/20 text-white border-transparent"
-                                        : "badge-ghost text-base-content/70 dark:text-gray-300"
+                    {(cat) => {
+                        const isSelected = () => selectedCategory() === cat.id;
+                        return (
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={isSelected() ? "true" : "false"}
+                                class={`btn btn-sm rounded-full transition-all gap-1.5 shrink-0 ${
+                                    isSelected()
+                                        ? "btn-primary text-primary-content font-bold shadow-xs"
+                                        : "btn-ghost bg-base-200/70 hover:bg-base-200 text-base-content"
                                 }`}
+                                onClick={() => setSelectedCategory(cat.id)}
                             >
-                                {categoryCounts()[cat.id]}
-                            </span>
-                        </button>
-                    )}
+                                <span aria-hidden="true">{cat.icon}</span>
+                                <span>{cat.name}</span>
+                                <span
+                                    class={`badge badge-xs px-1.5 py-0.5 font-mono font-bold border-0 ${
+                                        isSelected()
+                                            ? "bg-primary-content text-primary"
+                                            : "bg-base-300 text-base-content"
+                                    }`}
+                                >
+                                    {categoryCounts()[cat.id]}
+                                </span>
+                            </button>
+                        );
+                    }}
                 </For>
             </div>
 

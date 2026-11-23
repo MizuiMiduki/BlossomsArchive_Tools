@@ -247,12 +247,12 @@ export default function BpmCalculator() {
                                                     </td>
                                                     <td class="text-right">
                                                         <span
-                                                            class={`badge badge-xs text-[10px] ${
+                                                            class={`badge badge-xs text-[10px] font-bold ${
                                                                 timing.type === "dotted"
-                                                                    ? "badge-warning badge-outline font-bold text-amber-800 dark:text-amber-300"
+                                                                    ? "bg-amber-100 dark:bg-amber-950/80 text-amber-950 dark:text-amber-200 border border-amber-400 dark:border-amber-700"
                                                                     : timing.type === "triplet"
-                                                                      ? "badge-info badge-outline font-bold text-sky-800 dark:text-sky-300"
-                                                                      : "badge-ghost border-base-300 text-base-content/80 font-medium"
+                                                                      ? "bg-sky-100 dark:bg-sky-950/80 text-sky-950 dark:text-sky-100 border border-sky-400 dark:border-sky-700"
+                                                                      : "bg-base-200 text-base-content/85 border border-base-300"
                                                             }`}
                                                         >
                                                             {timing.type === "dotted"

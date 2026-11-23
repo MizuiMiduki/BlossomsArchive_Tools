@@ -550,7 +550,7 @@ export default function ExposureCalculator() {
                     <div class="tabs tabs-box bg-base-200/60 p-1 rounded-xl flex flex-wrap gap-1 mt-3">
                         <button
                             type="button"
-                            class={`tab flex-1 min-w-[120px] rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                            class={`tab flex-1 min-w-[120px] min-h-[42px] h-auto py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                                 activeTab() === "meter"
                                     ? "tab-active bg-primary text-primary-content shadow-sm"
                                     : "hover:bg-base-300/60 text-base-content/80"
@@ -561,7 +561,7 @@ export default function ExposureCalculator() {
                         </button>
                         <button
                             type="button"
-                            class={`tab flex-1 min-w-[120px] rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                            class={`tab flex-1 min-w-[120px] min-h-[42px] h-auto py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                                 activeTab() === "simulator"
                                     ? "tab-active bg-primary text-primary-content shadow-sm"
                                     : "hover:bg-base-300/60 text-base-content/80"
@@ -572,7 +572,7 @@ export default function ExposureCalculator() {
                         </button>
                         <button
                             type="button"
-                            class={`tab flex-1 min-w-[120px] rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                            class={`tab flex-1 min-w-[120px] min-h-[42px] h-auto py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                                 activeTab() === "nd-bulb"
                                     ? "tab-active bg-primary text-primary-content shadow-sm"
                                     : "hover:bg-base-300/60 text-base-content/80"
@@ -583,7 +583,7 @@ export default function ExposureCalculator() {
                         </button>
                         <button
                             type="button"
-                            class={`tab flex-1 min-w-[120px] rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                            class={`tab flex-1 min-w-[120px] min-h-[42px] h-auto py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                                 activeTab() === "equivalent"
                                     ? "tab-active bg-primary text-primary-content shadow-sm"
                                     : "hover:bg-base-300/60 text-base-content/80"
@@ -594,7 +594,7 @@ export default function ExposureCalculator() {
                         </button>
                         <button
                             type="button"
-                            class={`tab flex-1 min-w-[120px] rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                            class={`tab flex-1 min-w-[120px] min-h-[42px] h-auto py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                                 activeTab() === "astro"
                                     ? "tab-active bg-primary text-primary-content shadow-sm"
                                     : "hover:bg-base-300/60 text-base-content/80"
@@ -754,25 +754,25 @@ export default function ExposureCalculator() {
                             </Show>
 
                             {/* 測定結果表示カード（プレビューの真下に配置してファーストビュー内に露出を収める） */}
-                            <div class="card bg-primary text-primary-content shadow-lg border border-primary/20">
+                            <div class="card bg-slate-900 text-white shadow-lg border border-slate-800">
                                 <div class="card-body p-4 sm:p-5">
                                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                         <div>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-xs uppercase tracking-wider text-white font-bold">
+                                                <span class="text-xs uppercase tracking-wider text-slate-200 font-bold">
                                                     現在測定中の露出値 (EV 100)
                                                 </span>
                                                 <Show when={isHardwareMode()}>
-                                                    <span class="badge badge-xs bg-black/40 text-white border border-white/30 font-mono text-[10px]">
+                                                    <span class="badge badge-xs bg-black/60 text-white border border-white/30 font-mono text-[10px]">
                                                         カメラAE連動中
                                                     </span>
                                                 </Show>
                                             </div>
                                             <div class="flex items-baseline gap-3 mt-0.5">
-                                                <div class="text-3xl sm:text-4xl font-black font-mono">
+                                                <div class="text-3xl sm:text-4xl font-black font-mono text-white">
                                                     EV {measuredEv().toFixed(1)}
                                                 </div>
-                                                <span class="text-xs text-white/90">
+                                                <span class="text-xs text-slate-300">
                                                     約 {measuredLux().toLocaleString()} Lux
                                                 </span>
                                             </div>
@@ -780,14 +780,14 @@ export default function ExposureCalculator() {
                                         <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                                             <button
                                                 type="button"
-                                                class="btn btn-secondary btn-sm flex-1 sm:flex-none font-bold shadow-md"
+                                                class="btn btn-primary btn-sm flex-1 sm:flex-none font-bold text-white shadow-md"
                                                 onClick={() => applyMeasuredEvToSimulator()}
                                             >
                                                 ☀️ この露出値で計算する
                                             </button>
                                             <button
                                                 type="button"
-                                                class="btn btn-ghost btn-sm border border-primary-content/30 flex-1 sm:flex-none font-medium text-white"
+                                                class="btn btn-ghost btn-sm border border-white/30 flex-1 sm:flex-none font-medium text-white hover:bg-white/10"
                                                 onClick={() => switchToScenePresets()}
                                             >
                                                 選択式に戻る
@@ -916,26 +916,26 @@ export default function ExposureCalculator() {
                     onSubmit={(e) => e.preventDefault()}
                 >
                     {/* 計算結果カード（ファーストビュー最上部に配置しスクロール不要で露出を確認可能に） */}
-                    <div class="card bg-primary text-primary-content shadow-xl border border-primary/20">
+                    <div class="card bg-slate-900 text-white shadow-xl border border-slate-800">
                         <div class="card-body p-4 sm:p-5">
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-xs uppercase tracking-wider text-white font-bold">
+                                        <span class="text-xs uppercase tracking-wider text-slate-200 font-bold">
                                             🎯 計算された最適露出設定
                                         </span>
-                                        <span class="badge badge-xs bg-black/40 text-white border border-white/30 font-mono text-[10px]">
+                                        <span class="badge badge-xs bg-black/60 text-white border border-white/30 font-mono text-[10px]">
                                             目標 EV {currentTargetEv().toFixed(1)}
                                         </span>
                                     </div>
                                     <div class="text-3xl sm:text-4xl font-extrabold mt-0.5 text-white font-mono">
                                         {simResult().standardLabel}
                                     </div>
-                                    <div class="text-xs sm:text-sm text-white/90 mt-0.5">
+                                    <div class="text-xs sm:text-sm text-slate-300 mt-0.5">
                                         理論値: {simResult().displayExact}
                                     </div>
                                 </div>
-                                <div class="bg-primary-content/15 px-3 py-2 rounded-xl border border-primary-content/20 text-xs space-y-0.5 self-stretch sm:self-auto">
+                                <div class="bg-white/10 px-3 py-2 rounded-xl border border-white/20 text-xs space-y-0.5 self-stretch sm:self-auto">
                                     <div class="font-medium text-white">
                                         前提設定:{" "}
                                         {simResult().type === "shutter"
@@ -959,13 +959,13 @@ export default function ExposureCalculator() {
                                     simResult().exactValue >= 1
                                 }
                             >
-                                <div class="mt-2 pt-2 border-t border-primary-content/20 flex flex-wrap items-center justify-between gap-2">
+                                <div class="mt-2 pt-2 border-t border-white/20 flex flex-wrap items-center justify-between gap-2">
                                     <span class="text-xs sm:text-sm text-white">
                                         ⏱️ 1秒以上の露光時間です。バルブタイマーにセットしますか？
                                     </span>
                                     <button
                                         type="button"
-                                        class="btn btn-sm btn-secondary font-bold"
+                                        class="btn btn-sm btn-secondary font-bold text-white shadow-sm"
                                         onClick={() => {
                                             const sec = Math.max(
                                                 1,
