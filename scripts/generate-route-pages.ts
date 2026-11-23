@@ -228,13 +228,16 @@ for (const route of routes) {
         initialShell,
     );
 
-    // FCP/LCP最優先化: modulepreloadはメインバンドルとランタイムのみに絞り、<script type="module">の直前に配置
+    // FCP/LCP最優先化: ランタイム、メインバンドル、および該当ルート固有チャンクを即座に事前取得
     const modulePreloadList = [
         runtimeJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
             : "",
         mainJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(mainJsFile)}" />`
+            : "",
+        routeChunk
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
             : "",
     ].filter(Boolean);
 
