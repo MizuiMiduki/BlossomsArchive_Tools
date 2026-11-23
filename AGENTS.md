@@ -84,3 +84,16 @@ pnpm run type-check && pnpm test && pnpm run build
    - XSS、多段サニタイズ（CodeQL `js/incomplete-multi-character-sanitization`）、ReDoS、URLスキーム、CSPRNG乱数、クエリパラメータ注入耐性を検証する。
 7. **コード品質・アーキテクチャガード**: `src/__tests__/codeQualityGuard.test.ts`
    - 全ページのテストファイル存在確認、静的規約（Solid 1.x非推奨フック禁止、212KB budoux直接import禁止、低コントラスト禁止、`target="_blank"` の `noopener noreferrer` 必須等）の自動検査をパスすること。
+
+---
+
+## 6. プッシュ後デプロイ監視 & Lighthouse Issue 再帰修正規約
+
+1. **プッシュ後の監視責務**:
+   - `origin/main` へのプッシュを実行した後は、そこで作業を終了せず、**GitHub Actions のデプロイ・Lighthouse 監査ワークフロー（`Build and Deploy to FTP`）の完了を必ず追跡・監視してください**。
+2. **Issue 検知と再帰修正**:
+   - ワークフロー完了後、GitHub API 等を用いて `[PageSpeed Alert]` Issue が起票されていないか確認すること。
+   - もし減点やスコア退行により Issue が起票された場合は、Issue 本文に記載された減点要因（FCP/LCP/CLS、アクセシビリティ、コントラスト比、`label-content-name-mismatch` 等）を特定し、**Issue が自動クローズされる（Open な Issue が 0 件になる）まで再帰的にコード修正・コミット・プッシュ・追跡を繰り返してください**。
+3. **作業完了基準**:
+   - 最新の CI 監査で全76パターン（ライト/ダーク × モバイル/デスクトップ）において Lighthouse 100/100 満点の回復が確認され、関連する Issue がすべて自動クローズ（Open Issue が 0 件）されたことをもって作業完了とします。
+
