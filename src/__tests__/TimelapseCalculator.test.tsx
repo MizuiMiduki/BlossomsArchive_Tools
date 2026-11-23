@@ -55,4 +55,41 @@ describe("TimelapseCalculator Component", () => {
         expect(screen.getByText("2,400")).toBeInTheDocument();
         expect(screen.getByText(/80/)).toBeInTheDocument();
     });
+
+    it("センサー解像度と記録フォーマットを変更するとデータサイズと推奨SDカードが再計算されること", () => {
+        render(() => <TimelapseCalculator />);
+
+        // 初期状態: 24MP × 圧縮RAW = 25MB/枚。総枚数450枚 => 450 * 25MB = 11250MB = 約10.99GB (推奨: 32 GB)
+        expect(screen.getByText(/約 10.99/)).toBeInTheDocument();
+        expect(screen.getByText("推奨: 32 GB")).toBeInTheDocument();
+        expect(screen.getAllByText(/2400万画素/).length).toBeGreaterThanOrEqual(1);
+
+        // 6000万画素（超高画素機）に変更
+        const res60Btn = screen.getByRole("button", { name: "約6000万画素" });
+        fireEvent.click(res60Btn);
+
+        // 60MP × 圧縮RAW = 65MB/枚。450 * 65MB = 29250MB = 約28.56GB (推奨: 64 GB)
+        expect(screen.getByText(/約 28.56/)).toBeInTheDocument();
+        expect(screen.getByText("推奨: 64 GB")).toBeInTheDocument();
+
+        // フォーマットを「非圧縮RAW」に変更
+        const uncompressedBtn = screen.getByRole("button", { name: "非圧縮RAW" });
+        fireEvent.click(uncompressedBtn);
+
+        // 60MP × 非圧縮RAW = 120MB/枚。450 * 120MB = 54000MB = 約52.73GB (推奨: 128 GB)
+        expect(screen.getByText(/約 52.73/)).toBeInTheDocument();
+        expect(screen.getByText("推奨: 128 GB")).toBeInTheDocument();
+    });
+
+    it("手動カスタム入力で任意のデータ容量を指定できること", () => {
+        render(() => <TimelapseCalculator />);
+
+        const customNumberInput = screen.getByLabelText("1枚あたりの容量数値入力");
+        fireEvent.input(customNumberInput, { target: { value: "100" } });
+
+        // 100MB/枚。450枚 * 100MB = 45000MB = 約43.95GB (推奨: 64 GB)
+        expect(screen.getByText(/約 43.95/)).toBeInTheDocument();
+        expect(screen.getByText("推奨: 64 GB")).toBeInTheDocument();
+        expect(screen.getByText(/手動入力されたカスタム容量（100 MB\/枚）で計算中/)).toBeInTheDocument();
+    });
 });

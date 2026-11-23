@@ -15,7 +15,43 @@ export default function TimelapseCalculator() {
     const [clipDurationSec, setClipDurationSec] = createSignal<number>(15); // 動画の長さ（秒）
     const [shootingHours, setShootingHours] = createSignal<number>(1); // 実撮影時間（時間）
     const [shootingMinutes, setShootingMinutes] = createSignal<number>(0); // 実撮影時間（分）
-    const [fileSizeMb, setFileSizeMb] = createSignal<number>(25); // 1枚あたりの容量 (MB: RAWなら30~45MB, JPEGなら8~15MB)
+    // 撮影機材・解像度 & フォーマット設定
+    type ResolutionPreset = "12" | "24" | "33" | "45" | "60" | "custom";
+    type FormatType = "jpeg" | "raw_compressed" | "raw_uncompressed" | "raw_jpeg";
+
+    const [resolution, setResolution] = createSignal<ResolutionPreset>("24");
+    const [formatType, setFormatType] = createSignal<FormatType>("raw_compressed");
+    const [fileSizeMb, setFileSizeMb] = createSignal<number>(25); // 1枚あたりの容量 (MB)
+
+    // 解像度とフォーマットごとの推定ファイルサイズテーブル (MB)
+    const sizeTable: Record<string, Record<FormatType, number>> = {
+        "12": { jpeg: 4, raw_compressed: 14, raw_uncompressed: 24, raw_jpeg: 18 },
+        "24": { jpeg: 8, raw_compressed: 25, raw_uncompressed: 48, raw_jpeg: 33 },
+        "33": { jpeg: 12, raw_compressed: 35, raw_uncompressed: 66, raw_jpeg: 47 },
+        "45": { jpeg: 16, raw_compressed: 48, raw_uncompressed: 90, raw_jpeg: 64 },
+        "60": { jpeg: 22, raw_compressed: 65, raw_uncompressed: 120, raw_jpeg: 87 },
+    };
+
+    // 解像度やフォーマットが変更された時にファイルサイズを同期
+    const updateSizeFromPreset = (res: ResolutionPreset, fmt: FormatType) => {
+        if (res !== "custom" && sizeTable[res]) {
+            setFileSizeMb(sizeTable[res][fmt]);
+        }
+    };
+
+    const handleResolutionChange = (res: ResolutionPreset) => {
+        setResolution(res);
+        if (res !== "custom") {
+            updateSizeFromPreset(res, formatType());
+        }
+    };
+
+    const handleFormatChange = (fmt: FormatType) => {
+        setFormatType(fmt);
+        if (resolution() !== "custom") {
+            updateSizeFromPreset(resolution(), fmt);
+        }
+    };
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
@@ -64,6 +100,38 @@ export default function TimelapseCalculator() {
         const mb = Math.max(1, Number.isFinite(fileSizeMb()) ? fileSizeMb() : 25);
         const totalMb = totalShots() * mb;
         return Math.round((totalMb / 1024) * 100) / 100;
+    });
+
+    // 推奨SDカード容量の算出
+    const recommendedSdCard = createMemo(() => {
+        const req = requiredStorageGb();
+        // カード容量の80%程度までに収まる安全マージンを考慮
+        if (req <= 24) return { size: "32 GB", note: "32GB以上のカードで余裕を持って撮影可能" };
+        if (req <= 50) return { size: "64 GB", note: "64GB以上のカードを推奨" };
+        if (req <= 100) return { size: "128 GB", note: "128GB以上の大容量カードを推奨" };
+        if (req <= 200) return { size: "256 GB", note: "256GB以上のカード、または途中でカード交換が必要" };
+        return { size: "512 GB〜", note: "512GBカードまたは複数枚のメディア交換を強く推奨" };
+    });
+
+    // 容量推定の根拠テキスト
+    const sizeRationale = createMemo(() => {
+        if (resolution() === "custom") {
+            return "手動入力されたカスタム容量（" + fileSizeMb() + " MB/枚）で計算中";
+        }
+        const resLabels: Record<string, string> = {
+            "12": "約1200万画素（スマホ・アクションカム・α7S等）",
+            "24": "約2400万画素（標準フルサイズ・APS-C等）",
+            "33": "約3300万画素（中高画素機・α7 IV等）",
+            "45": "約4500万画素（高画素機・Z8/Z9/EOS R5等）",
+            "60": "約6000万画素（超高画素機・α7R V等）",
+        };
+        const fmtLabels: Record<FormatType, string> = {
+            jpeg: "JPEG（標準ファイン圧縮）",
+            raw_compressed: "ロスレス圧縮RAW（高効率RAW）",
+            raw_uncompressed: "非圧縮RAW（14bit/16bit非圧縮）",
+            raw_jpeg: "RAW + JPEG同時記録",
+        };
+        return `${resLabels[resolution()] || ""} × ${fmtLabels[formatType()] || ""} の平均実効ファイルサイズに基づいています。`;
     });
 
     // 秒を「〇時間〇分〇秒」にフォーマット
@@ -244,59 +312,145 @@ export default function TimelapseCalculator() {
                                 </div>
                             </div>
 
-                            {/* フレームレート & 容量設定 */}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="form-control bg-base-200/50 p-3 rounded-xl border border-base-300">
-                                    <label class="label py-1">
-                                        <span class="label-text font-bold text-xs text-base-content/90">
-                                            フレームレート (FPS)
-                                        </span>
+                            {/* フレームレート設定 */}
+                            <div class="form-control bg-base-200/50 p-4 rounded-xl border border-base-300">
+                                <label class="label py-1">
+                                    <span class="label-text font-bold text-sm text-base-content/90">
+                                        完成動画のフレームレート (FPS)
+                                    </span>
+                                    <span class="label-text-alt font-mono font-bold text-primary">
+                                        {fps()} fps
+                                    </span>
+                                </label>
+                                <div class="grid grid-cols-3 gap-2 mt-1">
+                                    {[24, 30, 60].map((f) => (
+                                        <button
+                                            type="button"
+                                            class={`btn btn-sm ${fps() === f ? "btn-primary text-white" : "btn-outline border-base-300"}`}
+                                            onClick={() => setFps(f)}
+                                            aria-label={`${f} fps`}
+                                        >
+                                            {f} fps {f === 24 ? "(映画風)" : f === 30 ? "(標準)" : "(なめらか)"}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 写真1枚のデータ容量・機材解像度設定 */}
+                            <div class="form-control bg-base-200/50 p-4 rounded-xl border border-base-300">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-base-content/90">
+                                        写真1枚のデータサイズ設定
+                                    </span>
+                                    <span class="font-mono text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                                        1枚 約 {fileSizeMb()} MB
+                                    </span>
+                                </div>
+
+                                {/* カメラ解像度（画素数）選択 */}
+                                <div class="mb-3">
+                                    <label class="label py-0.5 text-xs font-bold text-base-content/70">
+                                        ① カメラのセンサー解像度（有効画素数）
                                     </label>
-                                    <div class="grid grid-cols-3 gap-2 mt-1">
-                                        {[24, 30, 60].map((f) => (
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-1">
+                                        {[
+                                            { id: "12", label: "約1200万画素", sub: "スマホ・GoPro・α7S" },
+                                            { id: "24", label: "約2400万画素", sub: "標準機 (α7III/R6/Z6)" },
+                                            { id: "33", label: "約3300万画素", sub: "中高画素 (α7IV等)" },
+                                            { id: "45", label: "約4500万画素", sub: "高画素 (α1/Z8/R5)" },
+                                            { id: "60", label: "約6000万画素", sub: "超高画素 (α7RV等)" },
+                                            { id: "custom", label: "カスタム指定", sub: "手動でMB直接入力" },
+                                        ].map((item) => (
                                             <button
                                                 type="button"
-                                                class={`btn btn-sm ${fps() === f ? "btn-primary" : "btn-outline border-base-300"}`}
-                                                onClick={() => setFps(f)}
+                                                class={`p-2 rounded-lg text-left border transition-all ${
+                                                    resolution() === item.id
+                                                        ? "border-primary bg-primary/15 text-primary font-bold shadow-xs"
+                                                        : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content"
+                                                }`}
+                                                onClick={() => handleResolutionChange(item.id as ResolutionPreset)}
+                                                aria-label={item.label}
                                             >
-                                                {f} fps
+                                                <div class="text-xs font-bold truncate">{item.label}</div>
+                                                <div class="text-[10px] text-base-content/60 truncate">{item.sub}</div>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div class="form-control bg-base-200/50 p-3 rounded-xl border border-base-300">
-                                    <label class="label py-1">
-                                        <span class="label-text font-bold text-xs text-base-content/90">
-                                            写真1枚のデータサイズ
-                                        </span>
-                                        <span class="label-text-alt font-mono text-[11px] font-bold text-primary">
-                                            {fileSizeMb()} MB
-                                        </span>
-                                    </label>
-                                    <div class="grid grid-cols-3 gap-1.5 mt-1">
-                                        <button
-                                            type="button"
-                                            class={`btn btn-xs ${fileSizeMb() === 8 ? "btn-primary" : "btn-outline border-base-300"}`}
-                                            onClick={() => setFileSizeMb(8)}
-                                        >
-                                            JPEG (8MB)
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class={`btn btn-xs ${fileSizeMb() === 25 ? "btn-primary" : "btn-outline border-base-300"}`}
-                                            onClick={() => setFileSizeMb(25)}
-                                        >
-                                            RAW (25MB)
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class={`btn btn-xs ${fileSizeMb() === 50 ? "btn-primary" : "btn-outline border-base-300"}`}
-                                            onClick={() => setFileSizeMb(50)}
-                                        >
-                                            高画素 (50MB)
-                                        </button>
+                                {/* 記録フォーマット選択（カスタム時は非活性または非表示） */}
+                                {resolution() !== "custom" && (
+                                    <div class="mb-3">
+                                        <label class="label py-0.5 text-xs font-bold text-base-content/70">
+                                            ② 記録フォーマット
+                                        </label>
+                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-1">
+                                            {[
+                                                { id: "jpeg", label: "JPEG (ファイン)" },
+                                                { id: "raw_compressed", label: "圧縮RAW" },
+                                                { id: "raw_uncompressed", label: "非圧縮RAW" },
+                                                { id: "raw_jpeg", label: "RAW + JPEG" },
+                                            ].map((fmt) => (
+                                                <button
+                                                    type="button"
+                                                    class={`btn btn-xs h-auto min-h-[32px] py-1 text-xs ${
+                                                        formatType() === fmt.id
+                                                            ? "btn-primary text-white"
+                                                            : "btn-outline border-base-300"
+                                                    }`}
+                                                    onClick={() => handleFormatChange(fmt.id as FormatType)}
+                                                    aria-label={fmt.label}
+                                                >
+                                                    {fmt.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
+                                )}
+
+                                {/* 手動微調整スライダー/数値入力 */}
+                                <div class="bg-base-100 p-2.5 rounded-lg border border-base-300 mt-1">
+                                    <div class="flex items-center justify-between text-xs mb-1">
+                                        <span class="font-semibold text-base-content/80">
+                                            {resolution() === "custom" ? "1枚あたりの容量を手動入力" : "容量の微調整"}
+                                        </span>
+                                        <div class="flex items-center gap-1 font-mono">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="200"
+                                                value={fileSizeMb()}
+                                                onInput={(e) => {
+                                                    const val = Math.max(1, Math.min(300, Number(e.currentTarget.value) || 1));
+                                                    setFileSizeMb(val);
+                                                    setResolution("custom");
+                                                }}
+                                                class="input input-bordered input-xs w-16 text-right font-mono"
+                                                aria-label="1枚あたりの容量数値入力"
+                                            />
+                                            <span class="text-xs text-base-content/70">MB</span>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="150"
+                                        step="1"
+                                        value={fileSizeMb()}
+                                        onInput={(e) => {
+                                            const val = Math.max(1, Number(e.currentTarget.value) || 1);
+                                            setFileSizeMb(val);
+                                            setResolution("custom");
+                                        }}
+                                        class="range range-primary range-xs"
+                                        aria-label="1枚あたりの容量スライダー"
+                                    />
+                                </div>
+
+                                {/* 選択根拠の説明 */}
+                                <div class="mt-2.5 p-2 bg-base-200/60 rounded-lg text-[11px] text-base-content/70 leading-relaxed border border-base-300/50">
+                                    <span class="font-bold text-base-content/90 mr-1">【推定根拠】</span>
+                                    {sizeRationale()}
                                 </div>
                             </div>
                         </div>
@@ -305,7 +459,7 @@ export default function TimelapseCalculator() {
                         <div class="lg:col-span-5 flex flex-col gap-4 bg-base-200/70 p-5 rounded-2xl border border-base-300">
                             <h2 class="text-sm font-black text-base-content border-b border-base-300 pb-2 flex items-center justify-between">
                                 <span>撮影シミュレーション結果</span>
-                                <span class="badge badge-primary badge-sm font-mono">{fps()} FPS</span>
+                                <span class="inline-flex items-center text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-blue-700 text-white">{fps()} FPS</span>
                             </h2>
 
                             <div class="space-y-4">
@@ -342,16 +496,21 @@ export default function TimelapseCalculator() {
                                     </div>
                                 </div>
 
-                                {/* 必要SDカード容量 */}
+                                {/* 必要SDカード容量 & 推奨カード */}
                                 <div class="bg-base-100 p-4 rounded-xl border border-base-300 shadow-xs">
-                                    <span class="text-xs text-base-content/70 font-semibold block mb-1">
-                                        推定データ容量
-                                    </span>
-                                    <div class="text-xl font-black text-base-content font-mono">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-base-content/70 font-semibold">
+                                            推定総データ容量
+                                        </span>
+                                        <span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-700 text-white">
+                                            推奨: {recommendedSdCard().size}
+                                        </span>
+                                    </div>
+                                    <div class="text-2xl font-black text-base-content font-mono">
                                         約 {requiredStorageGb()} <span class="text-sm font-normal">GB</span>
                                     </div>
                                     <span class="text-[10px] text-base-content/60 mt-1 block">
-                                        ※32GB / 64GB / 128GBのSDカード残量を確認してください
+                                        ※{recommendedSdCard().note}
                                     </span>
                                 </div>
                             </div>
