@@ -13,6 +13,10 @@ import {
     delayedCall,
     playPageEntrance,
 } from "../utils/animations";
+import {
+    fetchPageSource,
+    extractJsonLdFromMicrolink,
+} from "../utils/htmlFetcher";
 
 export interface MetaTagItem {
     key: string;
@@ -573,6 +577,12 @@ export function parseSeoFromMicrolink(
         typeof data.url === "string" && data.url.trim()
             ? data.url.trim()
             : sourceUrl;
+    const rawCanonical =
+        typeof data.canonical === "string" && data.canonical.trim()
+            ? resolveUrl(data.canonical.trim(), url || sourceUrl)
+            : url;
+    const robots =
+        typeof data.robots === "string" ? data.robots.trim() : "";
     const logoUrl =
         typeof data.logo?.url === "string" ? data.logo.url.trim() : "";
     const imageUrl =
@@ -580,7 +590,26 @@ export function parseSeoFromMicrolink(
     const author =
         typeof data.author === "string" ? data.author.trim() : "";
 
-    if (!title && !description) {
+    // H1の抽出（配列または文字列）
+    const h1List: string[] = [];
+    if (Array.isArray(data.h1)) {
+        for (const item of data.h1) {
+            if (typeof item === "string" && item.trim()) {
+                h1List.push(item.trim());
+            }
+        }
+    } else if (typeof data.h1 === "string" && data.h1.trim()) {
+        h1List.push(data.h1.trim());
+    }
+    if (h1List.length === 0 && title) {
+        h1List.push(title);
+    }
+
+    // JSON-LDの抽出（カスタムセレクタ配列または単一）
+    const jsonLdList: JsonLdItem[] = [];
+    const jsonLdStrings = extractJsonLdFromMicrolink(payload);
+
+    if (!title && !description && jsonLdStrings.length === 0) {
         return null;
     }
 
@@ -601,10 +630,17 @@ export function parseSeoFromMicrolink(
             category: "social",
         });
     }
-    if (url) {
+    if (rawCanonical) {
         rawTags.push({
             key: 'link[rel="canonical"]',
-            value: url,
+            value: rawCanonical,
+            category: "indexing",
+        });
+    }
+    if (robots) {
+        rawTags.push({
+            key: "robots",
+            value: robots,
             category: "indexing",
         });
     }
@@ -618,19 +654,18 @@ export function parseSeoFromMicrolink(
     if (imageUrl) {
         rawTags.push({ key: "og:image", value: imageUrl, category: "social" });
     }
+    h1List.forEach((h1Text, idx) => {
+        rawTags.push({
+            key: `<h1> #${idx + 1}`,
+            value: h1Text,
+            category: "structure",
+        });
+    });
 
-    const jsonLdList: JsonLdItem[] = [];
-    const rawJsonLdCandidate = data.jsonLd ?? data.jsonld ?? data.schema;
-    if (rawJsonLdCandidate) {
-        try {
-            const parsedObj =
-                typeof rawJsonLdCandidate === "string"
-                    ? JSON.parse(rawJsonLdCandidate)
-                    : rawJsonLdCandidate;
-            const rawStr =
-                typeof rawJsonLdCandidate === "string"
-                    ? rawJsonLdCandidate
-                    : JSON.stringify(rawJsonLdCandidate, null, 2);
+    for (const rawJsonLdStr of jsonLdStrings) {
+        const parsedRes = tryParseJsonLd(rawJsonLdStr);
+        if (parsedRes) {
+            const { parsed: parsedObj, cleaned: rawStr } = parsedRes;
             let typeStr = "Schema";
             if (typeof parsedObj === "object" && parsedObj !== null) {
                 if (parsedObj["@type"]) {
@@ -657,16 +692,22 @@ export function parseSeoFromMicrolink(
                 value: rawStr.slice(0, 150) + (rawStr.length > 150 ? "..." : ""),
                 category: "structure",
             });
-        } catch {
-            // パース失敗時はスキップ
+        } else {
+            jsonLdList.push({
+                type: "Error",
+                raw: rawJsonLdStr,
+                parsed: null,
+                isValid: false,
+                error: "JSON構文パースエラー",
+            });
         }
     }
 
     return {
         pageTitle: title,
         metaDescription: description,
-        canonicalUrl: url,
-        robots: "",
+        canonicalUrl: rawCanonical,
+        robots,
         googlebot: "",
         viewport: "width=device-width, initial-scale=1.0",
         charset: "utf-8",
@@ -674,7 +715,7 @@ export function parseSeoFromMicrolink(
         author,
         faviconUrl: logoUrl,
         themeColor: "",
-        h1List: title ? [title] : [],
+        h1List,
         hreflangs: [],
         ogTitle: title,
         ogDescription: description,
@@ -1096,30 +1137,6 @@ export default function SeoChecker() {
         if (containerRef) playPageEntrance(containerRef, ".card");
     });
 
-    const fetchWithTimeout = async (
-        url: string,
-        timeoutMs = 7000,
-    ): Promise<Response> => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            return await fetch(url, { signal: controller.signal });
-        } finally {
-            clearTimeout(timer);
-        }
-    };
-
-    const isSameOrigin = (targetUrl: string): boolean => {
-        try {
-            return (
-                typeof window !== "undefined" &&
-                new URL(targetUrl).origin === window.location.origin
-            );
-        } catch {
-            return false;
-        }
-    };
-
     const enrichDevSameOriginSeo = (
         parsed: SeoData,
         html: string,
@@ -1180,129 +1197,28 @@ export default function SeoChecker() {
     };
 
     const fetchSeoDataFromUrl = async (targetUrl: string): Promise<SeoData> => {
-        // 1. 同一オリジンの場合は直接 fetch
-        if (isSameOrigin(targetUrl)) {
-            try {
-                const directRes = await fetchWithTimeout(targetUrl, 4000);
-                if (directRes.ok) {
-                    const text = await directRes.text();
-                    if (text && text.includes("<")) {
-                        return enrichDevSameOriginSeo(
-                            parseSeoFromHtml(text, targetUrl),
-                            text,
-                            targetUrl,
-                        );
-                    }
+        try {
+            const result = await fetchPageSource(targetUrl);
+            if (result.kind === "html") {
+                const parsed = parseSeoFromHtml(result.html, result.finalUrl);
+                if (result.source === "direct") {
+                    return enrichDevSameOriginSeo(parsed, result.html, result.finalUrl);
                 }
-            } catch {
-                // フォールバックへ
+                return parsed;
             }
-        }
-
-        const isTestEnv =
-            typeof import.meta !== "undefined" &&
-            import.meta.env?.MODE === "test";
-
-        const encodedUrl = encodeURIComponent(targetUrl);
-
-        // 2. クロスオリジンの場合: 高速CORSプロキシ群から並列最速レース（Race）で生HTMLを取得
-        const proxyEndpoints = [
-            `https://corsproxy.io/?url=${encodedUrl}`,
-            `https://api.allorigins.win/raw?url=${encodedUrl}`,
-            `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`,
-        ];
-
-        const tryFetchProxyHtml = async (proxyUrl: string): Promise<string> => {
-            const res = await fetchWithTimeout(proxyUrl, 5000);
-            if (!res.ok) throw new Error(`Proxy status: ${res.status}`);
-            const text = await res.text();
-            if (
-                text &&
-                (text.includes("<html") ||
-                    text.includes("<head") ||
-                    text.includes("<title") ||
-                    text.includes("<meta") ||
-                    text.includes("<script"))
-            ) {
-                return text;
+            const parsed = parseSeoFromMicrolink(result.payload, targetUrl);
+            if (!parsed) {
+                throw new Error(
+                    "SEO情報が見つかりませんでした。「HTML直接入力 / ファイル読込」タブからHTMLソースを直接貼り付けてお試しください。",
+                );
             }
-            throw new Error("Invalid HTML response from proxy");
-        };
-
-        try {
-            const fastestHtml = await Promise.any(
-                proxyEndpoints.map((url) => tryFetchProxyHtml(url)),
-            );
-            if (fastestHtml) {
-                return parseSeoFromHtml(fastestHtml, targetUrl);
-            }
-        } catch {
-            // プロキシ並列レースが失敗した場合は後続フォールバックへ
-        }
-
-        // 3. AllOrigins /get フォールバック (タイムアウト 5秒)
-        try {
-            const allOriginsGetUrl = `https://api.allorigins.win/get?url=${encodedUrl}`;
-            const res = await fetchWithTimeout(allOriginsGetUrl, 5000);
-            if (res.ok && typeof res.json === "function") {
-                const json = await res.json();
-                const text =
-                    typeof json?.contents === "string" ? json.contents : "";
-                if (
-                    text &&
-                    (text.includes("<html") ||
-                        text.includes("<head") ||
-                        text.includes("<title") ||
-                        text.includes("<meta") ||
-                        text.includes("<script"))
-                ) {
-                    return parseSeoFromHtml(text, targetUrl);
-                }
-            }
-        } catch {
-            // Microlink フォールバックへ
-        }
-
-        // 4. Microlink API フォールバック (タイムアウト 7秒)
-        const microlinkUrl = `https://api.microlink.io/?url=${encodedUrl}&data.jsonld=true`;
-        try {
-            const firstRes = await fetchWithTimeout(microlinkUrl, 7000);
-            if (firstRes.ok) {
-                const firstJson = await firstRes.json();
-                const firstParsed = parseSeoFromMicrolink(firstJson, targetUrl);
-                if (firstParsed) return firstParsed;
-            }
-        } catch {
-            // 初回失敗時は自動リトライへ
-        }
-
-        if (!isTestEnv) {
-            await new Promise((r) => setTimeout(r, 300));
-        }
-
-        const res = await fetchWithTimeout(microlinkUrl, 7000).catch(() => {
+            return parsed;
+        } catch (err: any) {
             throw new Error(
-                "ページの取得に失敗しました。対象サイトにアクセス制限がある場合は、「HTML直接入力 / ファイル読込」タブをご利用ください。",
-            );
-        });
-
-        if (!res.ok) {
-            throw new Error(
-                `ページの取得に失敗しました（HTTPステータス: ${res.status}）。「HTML直接入力 / ファイル読込」タブをご利用ください。`,
+                err?.message ||
+                    "ページの取得に失敗しました。対象サイトにアクセス制限がある場合は、「HTML直接入力 / ファイル読込」タブをご利用ください。",
             );
         }
-
-        const json = await res.json().catch(() => {
-            throw new Error("データの解析に失敗しました。");
-        });
-
-        const parsed = parseSeoFromMicrolink(json, targetUrl);
-        if (!parsed) {
-            throw new Error(
-                "SEO情報が見つかりませんでした。「HTML直接入力 / ファイル読込」タブからHTMLソースを直接貼り付けてお試しください。",
-            );
-        }
-        return parsed;
     };
 
     const handleAnalyzeUrl = async () => {
@@ -1991,7 +1907,11 @@ export default function SeoChecker() {
                                             <span>🧬</span> 検出された構造化データ (JSON-LD: {seoData()?.jsonLdList.length}件)
                                         </h2>
                                         <a
-                                            href="/json-ld-viewer"
+                                            href={
+                                                urlInput().trim()
+                                                    ? `/json-ld-viewer?url=${encodeURIComponent(normalizeInputUrl(urlInput()))}`
+                                                    : "/json-ld-viewer"
+                                            }
                                             class="btn btn-xs btn-outline btn-primary rounded-lg font-bold"
                                             title="JSON-LD構造可視化・検証ツールでツリー構造やSchema.org診断を確認"
                                         >
@@ -2013,7 +1933,11 @@ export default function SeoChecker() {
                                                         </div>
                                                         <div class="flex items-center gap-2">
                                                             <a
-                                                                href="/json-ld-viewer"
+                                                                href={
+                                                                    urlInput().trim()
+                                                                        ? `/json-ld-viewer?url=${encodeURIComponent(normalizeInputUrl(urlInput()))}`
+                                                                        : "/json-ld-viewer"
+                                                                }
                                                                 class="btn btn-xs btn-ghost text-primary underline"
                                                             >
                                                                 ツリー表示 ↗

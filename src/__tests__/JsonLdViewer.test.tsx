@@ -1,30 +1,121 @@
 import { render, screen, fireEvent } from "@solidjs/testing-library";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import JsonLdViewer from "../pages/JsonLdViewer";
 
 describe("JsonLdViewer Component", () => {
-    it("初期描画で見出し、入力欄、サンプルボタン、外部リンクが表示されること", () => {
+    const originalFetch = globalThis.fetch;
+
+    afterEach(() => {
+        globalThis.fetch = originalFetch;
+        vi.restoreAllMocks();
+    });
+
+    it("初期描画で見出し、URL取得フォーム、モード切替タブ、外部リンクが表示されること", () => {
         render(() => <JsonLdViewer />);
 
         expect(
             screen.getByRole("heading", { level: 1, name: "JSON-LD 構造可視化・検証ツール" }),
         ).toBeInTheDocument();
         expect(
-            screen.getByLabelText("JSON-LD入力テキストエリア"),
+            screen.getByRole("button", { name: /URLから取得/ }),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: "記事" }),
+            screen.getByRole("button", { name: /直接入力/ }),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: "商品" }),
+            screen.getByLabelText("確認するページのURL"),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "JSON-LDを取得・解析" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "サンプルで試す" }),
         ).toBeInTheDocument();
         expect(
             screen.getByTitle("Google リッチリザルト テストを別タブで開く"),
         ).toBeInTheDocument();
     });
 
-    it("サンプルを切り替えると対応するSchema.orgタイプが解析結果に反映されること", () => {
+    it("URLを指定してMicrolinkから複数JSON-LDを取得し階層ツリーおよびエンティティを表示できること", async () => {
+        globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+            if (url.startsWith("https://api.microlink.io/")) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        data: {
+                            url: "https://example.com/shop",
+                            title: "サンプルショップ",
+                            jsonld: [
+                                JSON.stringify({
+                                    "@context": "https://schema.org",
+                                    "@type": "WebSite",
+                                    name: "サンプルショップサイト",
+                                    url: "https://example.com/shop",
+                                }),
+                                JSON.stringify({
+                                    "@context": "https://schema.org",
+                                    "@type": "Product",
+                                    name: "特製メカニカルキーボード",
+                                }),
+                            ],
+                        },
+                    }),
+                };
+            }
+            return { ok: false, status: 500 };
+        });
+
         render(() => <JsonLdViewer />);
+
+        const urlInput = screen.getByLabelText("確認するページのURL");
+        fireEvent.input(urlInput, { target: { value: "https://example.com/shop" } });
+
+        const submitBtn = screen.getByRole("button", { name: "JSON-LDを取得・解析" });
+        fireEvent.click(submitBtn);
+
+        expect(await screen.findByText(/2 エンティティ検出/)).toBeInTheDocument();
+
+        const cardsTab = screen.getByRole("button", { name: /エンティティ一覧/ });
+        fireEvent.click(cardsTab);
+
+        expect(screen.getByText("WebSite")).toBeInTheDocument();
+        expect(screen.getByText("Product")).toBeInTheDocument();
+        expect(screen.getByText(/特製メカニカルキーボード/)).toBeInTheDocument();
+    });
+
+    it("URLから取得したHTMLにJSON-LDが含まれない場合に未検出メッセージが表示されること", async () => {
+        globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+            if (url.startsWith("https://api.allorigins.win/raw")) {
+                return {
+                    ok: true,
+                    text: async () => "<!doctype html><html><head><title>Plain Page</title></head><body>No Schema</body></html>",
+                };
+            }
+            return { ok: false, status: 404 };
+        });
+
+        render(() => <JsonLdViewer />);
+
+        const urlInput = screen.getByLabelText("確認するページのURL");
+        fireEvent.input(urlInput, { target: { value: "https://example.com/plain" } });
+
+        const submitBtn = screen.getByRole("button", { name: "JSON-LDを取得・解析" });
+        fireEvent.click(submitBtn);
+
+        expect(
+            await screen.findByText("指定されたページに JSON-LD 構造化データは検出されませんでした。"),
+        ).toBeInTheDocument();
+    });
+
+    it("直接入力モードへ切り替えるとサンプルボタンやテキストエリアが表示され、サンプルを切り替えられること", () => {
+        render(() => <JsonLdViewer />);
+
+        const directTab = screen.getByRole("button", { name: /直接入力/ });
+        fireEvent.click(directTab);
+
+        expect(
+            screen.getByLabelText("JSON-LD入力テキストエリア"),
+        ).toBeInTheDocument();
 
         // 商品サンプルを読み込み
         const productBtn = screen.getByRole("button", { name: "商品" });
@@ -43,18 +134,24 @@ describe("JsonLdViewer Component", () => {
     it("クリアボタンを押すと入力欄が空になり入力待ちメッセージが表示されること", () => {
         render(() => <JsonLdViewer />);
 
+        const directTab = screen.getByRole("button", { name: /直接入力/ });
+        fireEvent.click(directTab);
+
         const clearBtn = screen.getByRole("button", { name: "クリア" });
         fireEvent.click(clearBtn);
 
         const textarea = screen.getByLabelText("JSON-LD入力テキストエリア") as HTMLTextAreaElement;
         expect(textarea.value).toBe("");
         expect(
-            screen.getByText("JSON-LDまたはHTMLコードを入力してください"),
+            screen.getByText("URLを指定するか、JSON-LD / HTMLコードを入力してください"),
         ).toBeInTheDocument();
     });
 
     it("HTMLスニペットを入力した場合にスクリプトタグから自動抽出して解析されること", () => {
         render(() => <JsonLdViewer />);
+
+        const directTab = screen.getByRole("button", { name: /直接入力/ });
+        fireEvent.click(directTab);
 
         const textarea = screen.getByLabelText("JSON-LD入力テキストエリア") as HTMLTextAreaElement;
         const html = `
@@ -87,6 +184,9 @@ describe("JsonLdViewer Component", () => {
     it("構文エラーのJSONを入力した場合に構文エラーのアラートが表示されること", () => {
         render(() => <JsonLdViewer />);
 
+        const directTab = screen.getByRole("button", { name: /直接入力/ });
+        fireEvent.click(directTab);
+
         const textarea = screen.getByLabelText("JSON-LD入力テキストエリア") as HTMLTextAreaElement;
         fireEvent.input(textarea, { target: { value: "{ invalid json format :" } });
 
@@ -95,6 +195,9 @@ describe("JsonLdViewer Component", () => {
 
     it("タブ切り替え（ツリー、エンティティ一覧、診断、整形コード）が機能すること", () => {
         render(() => <JsonLdViewer />);
+
+        const directTab = screen.getByRole("button", { name: /直接入力/ });
+        fireEvent.click(directTab);
 
         // 初期サンプルのArticleを読み込み
         const articleBtn = screen.getByRole("button", { name: "記事" });

@@ -115,27 +115,38 @@ export function extractJsonLdBlocks(input: string): string[] {
     const trimmed = input.trim();
     if (!trimmed) return [];
 
-    // HTMLスニペット判定（<script または <html または <!DOCTYPE を含む場合）
-    if (trimmed.includes("<script") || trimmed.includes("<html") || trimmed.includes("<!DOCTYPE")) {
+    const lower = trimmed.toLowerCase();
+    const looksLikeHtml =
+        lower.includes("<script") ||
+        lower.includes("<html") ||
+        lower.includes("<!doctype") ||
+        lower.includes("<head");
+
+    if (looksLikeHtml) {
         if (typeof DOMParser !== "undefined") {
             try {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(trimmed, "text/html");
-                const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                const scripts = doc.querySelectorAll("script");
                 const results: string[] = [];
                 scripts.forEach((script) => {
-                    const text = script.textContent?.trim();
-                    if (text) {
-                        results.push(text);
+                    const typeAttr = script.getAttribute("type");
+                    if (
+                        typeAttr &&
+                        typeAttr.toLowerCase().includes("application/ld+json")
+                    ) {
+                        const text = script.textContent?.trim();
+                        if (text) {
+                            results.push(text);
+                        }
                     }
                 });
-                if (results.length > 0) {
-                    return results;
-                }
+                return results;
             } catch {
-                // DOMParserが失敗した場合はフォールバック
+                // DOMParser失敗時は空配列
             }
         }
+        return [];
     }
 
     // 単一のJSON文字列として返す

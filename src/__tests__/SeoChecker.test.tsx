@@ -455,5 +455,30 @@ describe("SeoChecker Component", () => {
             expect(parsed?.jsonLdList[0].type).toBe("BlogPosting");
             expect(parsed?.jsonLdList[0].parsed.headline).toBe("ブログ投稿");
         });
+
+        it("parseSeoFromMicrolink がカスタムセレクタの jsonld配列・canonical・robots・h1配列を抽出できること", () => {
+            const payload = {
+                data: {
+                    title: "拡張Microlinkテスト",
+                    description: "説明文テスト",
+                    url: "https://example.com/page",
+                    canonical: "/canonical-page",
+                    robots: "index, follow",
+                    h1: ["見出し1", "見出し2"],
+                    jsonld: [
+                        '{"@context":"https://schema.org","@type":"WebSite","name":"Site"}',
+                        '/* <![CDATA[ */ {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[]} /* ]]> */',
+                    ],
+                },
+            };
+            const parsed = parseSeoFromMicrolink(payload, "https://example.com/page");
+            expect(parsed).not.toBeNull();
+            expect(parsed?.canonicalUrl).toBe("https://example.com/canonical-page");
+            expect(parsed?.robots).toBe("index, follow");
+            expect(parsed?.h1List).toEqual(["見出し1", "見出し2"]);
+            expect(parsed?.jsonLdList.length).toBe(2);
+            expect(parsed?.jsonLdList[0].type).toBe("WebSite");
+            expect(parsed?.jsonLdList[1].type).toBe("BreadcrumbList");
+        });
     });
 });

@@ -13,6 +13,7 @@ import {
     delayedCall,
     playPageEntrance,
 } from "../utils/animations";
+import { fetchPageSource } from "../utils/htmlFetcher";
 
 export interface MetaTagItem {
     key: string;
@@ -419,19 +420,6 @@ export default function OgpChecker() {
         };
     });
 
-    const fetchWithTimeout = async (
-        url: string,
-        timeoutMs = 6000,
-    ): Promise<Response> => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            return await fetch(url, { signal: controller.signal });
-        } finally {
-            clearTimeout(timer);
-        }
-    };
-
     const enrichDevSameOriginOgp = (
         parsed: OgpData,
         html: string,
@@ -507,159 +495,36 @@ export default function OgpChecker() {
         }
     };
 
-    const isSameOrigin = (targetUrl: string): boolean => {
-        try {
-            return (
-                typeof window !== "undefined" &&
-                new URL(targetUrl).origin === window.location.origin
-            );
-        } catch {
-            return false;
-        }
-    };
-
     const fetchOgpDataFromUrl = async (targetUrl: string): Promise<OgpData> => {
-        // 1. 同一オリジンの場合のみ直接 fetch を試行（不要なCORSエラーのコンソール出力を防止）
-        if (isSameOrigin(targetUrl)) {
-            try {
-                const directRes = await fetchWithTimeout(targetUrl, 5000);
-                if (directRes.ok) {
-                    const text = await directRes.text();
-                    if (text && text.includes("<")) {
-                        return enrichDevSameOriginOgp(
-                            parseOgpFromHtml(text, targetUrl),
-                            text,
-                            targetUrl,
-                        );
-                    }
-                }
-            } catch {
-                // 同一オリジンでの取得が失敗した場合は後続のAPIへフォールバック
-            }
-        }
-
-        const isTestEnv =
-            typeof import.meta !== "undefined" &&
-            import.meta.env?.MODE === "test";
-
-        // Microlink API 呼び出しヘルパー
-        const tryMicrolink = async (timeoutMs: number): Promise<OgpData | null> => {
-            const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
-            const res = await fetchWithTimeout(microlinkUrl, timeoutMs);
-            if (!res.ok) return null;
-            const json = await res.json();
-            return parseOgpFromMicrolink(json, targetUrl);
-        };
-
-        // 高速CORSプロキシ並列レース生HTML取得ヘルパー
-        const tryFastProxyHtml = async (): Promise<OgpData | null> => {
-            const encoded = encodeURIComponent(targetUrl);
-            const proxyUrls = [
-                `https://corsproxy.io/?url=${encoded}`,
-                `https://api.allorigins.win/raw?url=${encoded}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encoded}`,
-            ];
-
-            const fetchCandidate = async (url: string): Promise<OgpData> => {
-                const res = await fetchWithTimeout(url, 5000);
-                if (!res.ok) throw new Error("Proxy error");
-                const text = await res.text();
-                if (
-                    text &&
-                    (text.includes("<meta") ||
-                        text.includes("<title") ||
-                        text.includes("<head"))
-                ) {
-                    const parsed = parseOgpFromHtml(text, targetUrl);
-                    if (
-                        parsed.ogTitle ||
-                        parsed.pageTitle ||
-                        parsed.ogDescription ||
-                        parsed.ogImage
-                    ) {
-                        return parsed;
-                    }
-                }
-                throw new Error("No OGP found");
-            };
-
-            try {
-                return await Promise.any(proxyUrls.map((p) => fetchCandidate(p)));
-            } catch {
-                // /get へフォールバック
-            }
-
-            try {
-                const getUrl = `https://api.allorigins.win/get?url=${encoded}`;
-                const res = await fetchWithTimeout(getUrl, 6000);
-                if (res.ok && typeof res.json === "function") {
-                    const json = await res.json();
-                    const text =
-                        typeof json?.contents === "string" ? json.contents : "";
-                    if (
-                        text &&
-                        (text.includes("<meta") ||
-                            text.includes("<title") ||
-                            text.includes("<head"))
-                    ) {
-                        const parsed = parseOgpFromHtml(text, targetUrl);
-                        if (
-                            parsed.ogTitle ||
-                            parsed.pageTitle ||
-                            parsed.ogDescription ||
-                            parsed.ogImage
-                        ) {
-                            return parsed;
-                        }
-                    }
-                }
-            } catch {
-                // ignore
-            }
-            return null;
-        };
-
-        // 2. 初回 Microlink API 試行（コールドキャッシュでのタイムアウトを防ぐため14秒確保）
         try {
-            const firstAttempt = await tryMicrolink(14000);
-            if (firstAttempt) return firstAttempt;
-        } catch {
-            // 初回失敗時は後続のフォールバックおよび自動リトライへ
-        }
-
-        // 3. 高速CORSプロキシ経由での生HTML直接解析へフォールバック
-        const htmlAttempt = await tryFastProxyHtml();
-        if (htmlAttempt) return htmlAttempt;
-
-        // 4. 初回リクエストによってプロキシ側のキャッシュ生成が完了しているケースが多いため、自動リトライを実行
-        if (!isTestEnv) {
-            await new Promise((r) => setTimeout(r, 400));
-        }
-
-        const retryMicrolinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
-        const res = await fetchWithTimeout(retryMicrolinkUrl, 14000).catch(() => {
+            const result = await fetchPageSource(targetUrl);
+            if (result.kind === "html") {
+                const parsed = parseOgpFromHtml(result.html, result.finalUrl);
+                if (result.source === "direct") {
+                    return enrichDevSameOriginOgp(parsed, result.html, result.finalUrl);
+                }
+                if (
+                    parsed.ogTitle ||
+                    parsed.pageTitle ||
+                    parsed.ogDescription ||
+                    parsed.ogImage
+                ) {
+                    return parsed;
+                }
+            }
+            if (result.kind === "microlink") {
+                const parsed = parseOgpFromMicrolink(result.payload, targetUrl);
+                if (parsed) return parsed;
+            }
+        } catch (err: any) {
             throw new Error(
-                "ページの取得に失敗しました。対象サイトへのアクセス制限がある場合は、「HTML直接入力 / ファイル読込」タブをご利用ください。",
-            );
-        });
-
-        if (!res.ok) {
-            throw new Error(
-                `ページの取得に失敗しました（HTTPステータス: ${res.status}）。「HTML直接入力 / ファイル読込」タブをご利用ください。`,
+                err?.message ||
+                    "ページの取得に失敗しました。対象サイトへのアクセス制限がある場合は、「HTML直接入力 / ファイル読込」タブをご利用ください。",
             );
         }
-
-        const json = await res.json().catch(() => {
-            throw new Error("データの解析に失敗しました。");
-        });
-
-        const parsed = parseOgpFromMicrolink(json, targetUrl);
-        if (!parsed) {
-            throw new Error(
-                "OGP情報が見つかりませんでした。「HTML直接入力 / ファイル読込」タブからHTMLソースを貼り付けてお試しください。",
-            );
-        }
-        return parsed;
+        throw new Error(
+            "OGP情報が見つかりませんでした。「HTML直接入力 / ファイル読込」タブからHTMLソースを貼り付けてお試しください。",
+        );
     };
 
     const handleAnalyzeUrl = async () => {

@@ -10,6 +10,11 @@ import {
     type JsonLdValidationIssue,
 } from "../utils/jsonLd";
 import { createSafeObjectUrl } from "../utils/videoCompressor";
+import {
+    fetchPageSource,
+    normalizeFetchUrl,
+    extractJsonLdFromMicrolink,
+} from "../utils/htmlFetcher";
 
 type ViewTab = "tree" | "cards" | "diagnostics" | "code";
 
@@ -146,6 +151,12 @@ function TreeNodeView(props: {
 
 export default function JsonLdViewer() {
     let containerRef: HTMLDivElement | undefined;
+    const [inputMode, setInputMode] = createSignal<"url" | "direct">("url");
+    const [urlInput, setUrlInput] = createSignal("");
+    const [loading, setLoading] = createSignal(false);
+    const [fetchError, setFetchError] = createSignal("");
+    const [fetchedUrl, setFetchedUrl] = createSignal("");
+    const [noJsonLdNotice, setNoJsonLdNotice] = createSignal("");
     const [rawInput, setRawInput] = createSignal(
         JSON.stringify(JSON_LD_SAMPLES.article.data, null, 2),
     );
@@ -154,12 +165,83 @@ export default function JsonLdViewer() {
     const [searchTerm, setSearchTerm] = createSignal("");
     const [copyMessage, setCopyMessage] = createSignal("");
 
+    const handleFetchUrl = async (targetOverride?: string) => {
+        if (loading()) return;
+        const rawTarget = (targetOverride ?? urlInput()).trim();
+        if (!rawTarget) {
+            setFetchError("確認したいWebページのURLを入力してください。");
+            return;
+        }
+        const normalized = normalizeFetchUrl(rawTarget);
+        try {
+            new URL(normalized);
+        } catch {
+            setFetchError("有効なURL形式（例: https://example.com）で入力してください。");
+            return;
+        }
+
+        setLoading(true);
+        setFetchError("");
+        setNoJsonLdNotice("");
+        setUrlInput(normalized);
+
+        try {
+            const result = await fetchPageSource(normalized);
+            setFetchedUrl(result.finalUrl);
+
+            if (result.kind === "html") {
+                const parsed = parseJsonLd(result.html);
+                if (parsed.entities.length === 0) {
+                    setRawInput("");
+                    setNoJsonLdNotice("指定されたページに JSON-LD 構造化データは検出されませんでした。");
+                } else {
+                    setRawInput(result.html);
+                }
+            } else {
+                const blocks = extractJsonLdFromMicrolink(result.payload);
+                if (blocks.length === 0) {
+                    setRawInput("");
+                    setNoJsonLdNotice("指定されたページに JSON-LD 構造化データは検出されませんでした。");
+                } else if (blocks.length === 1) {
+                    try {
+                        setRawInput(JSON.stringify(JSON.parse(blocks[0]), null, 2));
+                    } catch {
+                        setRawInput(blocks[0]);
+                    }
+                } else {
+                    const wrappedHtml = blocks
+                        .map((b) => `<script type="application/ld+json">\n${b}\n</script>`)
+                        .join("\n");
+                    setRawInput(wrappedHtml);
+                }
+            }
+        } catch (err: any) {
+            setFetchError(
+                (err?.message || "ページの取得に失敗しました。") +
+                    " 直接入力タブからHTMLを貼り付けてお試しください。",
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
+        if (typeof window !== "undefined") {
+            const paramUrl = new URLSearchParams(window.location.search).get("url");
+            if (paramUrl && paramUrl.trim()) {
+                setInputMode("url");
+                setUrlInput(paramUrl.trim());
+                void handleFetchUrl(paramUrl.trim());
+            }
+        }
     });
 
     const handleLoadSample = (key: string) => {
         setSelectedSample(key);
+        setFetchError("");
+        setNoJsonLdNotice("");
+        setFetchedUrl("");
         const sample = JSON_LD_SAMPLES[key];
         if (sample) {
             setRawInput(JSON.stringify(sample.data, null, 2));
@@ -168,7 +250,11 @@ export default function JsonLdViewer() {
 
     const handleClear = () => {
         setRawInput("");
+        setUrlInput("");
         setSearchTerm("");
+        setFetchError("");
+        setNoJsonLdNotice("");
+        setFetchedUrl("");
     };
 
     // パース結果
@@ -260,7 +346,7 @@ export default function JsonLdViewer() {
                                 JSON-LD 構造可視化・検証ツール
                             </h1>
                             <p class="text-base-content/70 text-sm mt-1">
-                                <BudouX text="Schema.orgやJSON-LD構造化データのツリー構造・プロパティ・ネストを視覚的に表示・検証できる無料Webツールです。HTMLからの抽出、構文エラー診断、Googleリッチリザルト連携、整形・コピーに完全ローカルで対応します。" />
+                                <BudouX text="WebページのURLを指定するだけでJSON-LD構造化データを自動取得し、ツリー構造・プロパティ・ネストを視覚的に表示・検証できる無料ツールです。HTML直接貼り付け、構文診断、Googleリッチリザルト連携にブラウザ完結で対応します。" />
                             </p>
                         </div>
                     </div>
@@ -269,117 +355,218 @@ export default function JsonLdViewer() {
 
             {/* 入力フォームカード */}
             <div class="card bg-base-100 shadow-xl border border-base-200">
-                <div class="card-body">
-                    <h2 class="card-title text-lg font-bold flex items-center justify-between">
-                        <span>JSON-LD または HTML の入力</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-base-content/70">
-                                サンプル:
-                            </span>
-                            <div class="join">
-                                <For each={Object.entries(JSON_LD_SAMPLES)}>
-                                    {([key, sample]) => (
-                                        <button
-                                            type="button"
-                                            class={`btn btn-xs join-item ${
-                                                selectedSample() === key && rawInput().length > 0
-                                                    ? "btn-primary"
-                                                    : "btn-outline"
-                                            }`}
-                                            onClick={() => handleLoadSample(key)}
-                                        >
-                                            {sample.label.split(" ")[0]}
-                                        </button>
-                                    )}
-                                </For>
-                            </div>
-                        </div>
-                    </h2>
-
-                    <form
-                        {...({
-                            toolname: "json-ld-viewer",
-                            tooldescription:
-                                "JSON-LD構造化データやHTMLスニペットをパースし、型や階層ツリー、プロパティを可視化・検証します",
-                        } as Record<string, string>)}
-                        class="space-y-4"
-                        onSubmit={(e) => e.preventDefault()}
-                    >
-                        <div>
-                            <label
-                                for="json-ld-input"
-                                class="label text-sm font-semibold text-base-content"
+                <div class="card-body space-y-4">
+                    {/* 入力モード切替タブ */}
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="tabs tabs-boxed">
+                            <button
+                                type="button"
+                                class={`tab tab-sm ${inputMode() === "url" ? "tab-active font-bold" : ""}`}
+                                onClick={() => setInputMode("url")}
                             >
-                                JSON-LDコード または &lt;script
-                                type="application/ld+json"&gt; を含むHTML
-                            </label>
-                            <textarea
-                                id="json-ld-input"
-                                class="textarea textarea-bordered w-full font-mono text-sm h-48 focus:textarea-primary"
-                                placeholder='{"@context": "https://schema.org", "@type": "Article", ...} または HTMLコードを貼り付け'
-                                value={rawInput()}
-                                onInput={(e) => setRawInput(e.currentTarget.value)}
-                                aria-label="JSON-LD入力テキストエリア"
-                            />
+                                🌐 URLから取得
+                            </button>
+                            <button
+                                type="button"
+                                class={`tab tab-sm ${inputMode() === "direct" ? "tab-active font-bold" : ""}`}
+                                onClick={() => setInputMode("direct")}
+                            >
+                                📝 JSON-LD / HTML 直接入力
+                            </button>
                         </div>
 
-                        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-                            <div class="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    class="btn btn-outline btn-sm"
-                                    onClick={handleClear}
-                                    disabled={!rawInput()}
-                                >
-                                    クリア
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-outline btn-primary btn-sm"
-                                    onClick={() => handleCopy(formattedJson(), "JSON-LD")}
-                                    disabled={!rawInput()}
-                                >
-                                    整形コピー
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-outline btn-sm"
-                                    onClick={handleDownload}
-                                    disabled={!rawInput()}
-                                >
-                                    .jsonld 保存
-                                </button>
-                            </div>
-
-                            {/* Google / Schema.org テストへの外部リンク */}
-                            <div class="flex items-center gap-2">
-                                <a
-                                    href="https://search.google.com/test/rich-results"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="btn btn-ghost btn-xs text-primary underline"
-                                    title="Google リッチリザルト テストを別タブで開く"
-                                >
-                                    Google リッチリザルト テスト ↗
-                                </a>
-                                <a
-                                    href="https://validator.schema.org/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="btn btn-ghost btn-xs text-primary underline"
-                                    title="Schema.org Validator を別タブで開く"
-                                >
-                                    Schema.org Validator ↗
-                                </a>
-                            </div>
-                        </div>
-
-                        <Show when={copyMessage()}>
-                            <div class="alert alert-success py-2 text-sm shadow">
-                                <span>{copyMessage()}</span>
-                            </div>
+                        <Show when={fetchedUrl()}>
+                            <span class="text-xs text-base-content/70 font-mono truncate max-w-md">
+                                取得元: {fetchedUrl()}
+                            </span>
                         </Show>
-                    </form>
+                    </div>
+
+                    {/* 1. URLから取得モード */}
+                    <Show when={inputMode() === "url"}>
+                        <form
+                            {...({
+                                toolname: "json-ld-url-viewer",
+                                tooldescription:
+                                    "指定したURLのWebページからJSON-LD構造化データを取得し、階層ツリーやSchema.org診断を表示します",
+                            } as Record<string, string>)}
+                            class="space-y-4"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                void handleFetchUrl();
+                            }}
+                        >
+                            <div>
+                                <label
+                                    for="json-ld-url-input"
+                                    class="label text-sm font-semibold text-base-content"
+                                >
+                                    JSON-LDを確認したいWebページのURL
+                                </label>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <input
+                                        id="json-ld-url-input"
+                                        type="url"
+                                        class="input input-bordered flex-1 font-mono text-sm focus:input-primary"
+                                        placeholder="https://example.com"
+                                        value={urlInput()}
+                                        onInput={(e) => setUrlInput(e.currentTarget.value)}
+                                        aria-label="確認するページのURL"
+                                    />
+                                    <button
+                                        type="submit"
+                                        class="btn btn-primary font-bold"
+                                        disabled={loading()}
+                                    >
+                                        <Show
+                                            when={!loading()}
+                                            fallback={
+                                                <>
+                                                    <span class="loading loading-spinner loading-xs" />
+                                                    <span>取得中...</span>
+                                                </>
+                                            }
+                                        >
+                                            JSON-LDを取得・解析
+                                        </Show>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline"
+                                        onClick={() => handleLoadSample("article")}
+                                    >
+                                        サンプルで試す
+                                    </button>
+                                </div>
+                            </div>
+
+                            <Show when={fetchError()}>
+                                <div class="alert alert-error text-sm shadow-sm">
+                                    <span>{fetchError()}</span>
+                                </div>
+                            </Show>
+                        </form>
+                    </Show>
+
+                    {/* 2. 直接入力モード */}
+                    <Show when={inputMode() === "direct"}>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <h2 class="text-base font-bold text-base-content">
+                                JSON-LD または HTML の直接入力
+                            </h2>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-base-content/70">
+                                    サンプル:
+                                </span>
+                                <div class="join">
+                                    <For each={Object.entries(JSON_LD_SAMPLES)}>
+                                        {([key, sample]) => (
+                                            <button
+                                                type="button"
+                                                class={`btn btn-xs join-item ${
+                                                    selectedSample() === key && rawInput().length > 0
+                                                        ? "btn-primary"
+                                                        : "btn-outline"
+                                                }`}
+                                                onClick={() => handleLoadSample(key)}
+                                            >
+                                                {sample.label.split(" ")[0]}
+                                            </button>
+                                        )}
+                                    </For>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form
+                            {...({
+                                toolname: "json-ld-viewer",
+                                tooldescription:
+                                    "JSON-LD構造化データやHTMLスニペットをパースし、型や階層ツリー、プロパティを可視化・検証します",
+                            } as Record<string, string>)}
+                            class="space-y-4"
+                            onSubmit={(e) => e.preventDefault()}
+                        >
+                            <div>
+                                <label
+                                    for="json-ld-input"
+                                    class="label text-sm font-semibold text-base-content"
+                                >
+                                    JSON-LDコード または &lt;script
+                                    type="application/ld+json"&gt; を含むHTML
+                                </label>
+                                <textarea
+                                    id="json-ld-input"
+                                    class="textarea textarea-bordered w-full font-mono text-sm h-48 focus:textarea-primary"
+                                    placeholder='{"@context": "https://schema.org", "@type": "Article", ...} または HTMLコードを貼り付け'
+                                    value={rawInput()}
+                                    onInput={(e) => {
+                                        setNoJsonLdNotice("");
+                                        setRawInput(e.currentTarget.value);
+                                    }}
+                                    aria-label="JSON-LD入力テキストエリア"
+                                />
+                            </div>
+                        </form>
+                    </Show>
+
+                    {/* 共通アクションバー */}
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-base-200">
+                        <div class="flex items-center gap-2 pt-2">
+                            <button
+                                type="button"
+                                class="btn btn-outline btn-sm"
+                                onClick={handleClear}
+                                disabled={!rawInput() && !urlInput()}
+                            >
+                                クリア
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-outline btn-primary btn-sm"
+                                onClick={() => handleCopy(formattedJson(), "JSON-LD")}
+                                disabled={!rawInput() || parseResult().entities.length === 0}
+                            >
+                                整形コピー
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-outline btn-sm"
+                                onClick={handleDownload}
+                                disabled={!rawInput() || parseResult().entities.length === 0}
+                            >
+                                .jsonld 保存
+                            </button>
+                        </div>
+
+                        {/* Google / Schema.org テストへの外部リンク */}
+                        <div class="flex items-center gap-2 pt-2">
+                            <a
+                                href="https://search.google.com/test/rich-results"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn btn-ghost btn-xs text-primary underline"
+                                title="Google リッチリザルト テストを別タブで開く"
+                            >
+                                Google リッチリザルト テスト ↗
+                            </a>
+                            <a
+                                href="https://validator.schema.org/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn btn-ghost btn-xs text-primary underline"
+                                title="Schema.org Validator を別タブで開く"
+                            >
+                                Schema.org Validator ↗
+                            </a>
+                        </div>
+                    </div>
+
+                    <Show when={copyMessage()}>
+                        <div class="alert alert-success py-2 text-sm shadow">
+                            <span>{copyMessage()}</span>
+                        </div>
+                    </Show>
                 </div>
             </div>
 
@@ -444,6 +631,13 @@ export default function JsonLdViewer() {
                         </div>
                     </div>
 
+                    {/* 未検出通知 */}
+                    <Show when={noJsonLdNotice()}>
+                        <div class="alert alert-warning my-4 text-sm font-medium">
+                            <span>{noJsonLdNotice()}</span>
+                        </div>
+                    </Show>
+
                     {/* エラー表示 */}
                     <Show when={parseResult().error}>
                         <div class="alert alert-error my-4">
@@ -453,11 +647,11 @@ export default function JsonLdViewer() {
                     </Show>
 
                     {/* 入力待ち */}
-                    <Show when={!rawInput().trim()}>
+                    <Show when={!rawInput().trim() && !noJsonLdNotice()}>
                         <div class="py-12 text-center text-base-content/70">
-                            <p class="text-lg">JSON-LDまたはHTMLコードを入力してください</p>
+                            <p class="text-lg">URLを指定するか、JSON-LD / HTMLコードを入力してください</p>
                             <p class="text-sm mt-1">
-                                上部のサンプルボタンを押すと、代表的なSchema.orgデータを即座にお試しいただけます。
+                                「サンプルで試す」ボタンを押すと、代表的なSchema.orgデータを即座にお試しいただけます。
                             </p>
                         </div>
                     </Show>
