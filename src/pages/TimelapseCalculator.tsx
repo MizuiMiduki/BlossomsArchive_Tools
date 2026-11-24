@@ -54,7 +54,7 @@ export default function TimelapseCalculator() {
     };
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".card");
+        if (containerRef) playPageEntrance(containerRef, ".ba-card");
     });
 
     // 総撮影枚数
@@ -157,39 +157,34 @@ export default function TimelapseCalculator() {
     ];
 
     return (
-        <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0">
-            <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
-                <div class="card bg-base-100 shadow-xl p-4 sm:p-6 md:p-8 w-full border border-base-300 min-w-0">
+        <div ref={containerRef} class="ba-page ba-page--wide">
+            <div class="ba-stack-6 ba-w-full ba-min-w-0">
+                <div class="ba-card ba-stack-6 ba-w-full">
                     {/* ヘッダー */}
-                    <div class="mb-6 border-b border-base-300 pb-4">
-                        <h1 class="text-2xl md:text-3xl font-black text-base-content">
+                    <div style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "1rem" }}>
+                        <h1 class="ba-title">
                             <BudouX text="タイムラプス撮影計算機" />
                         </h1>
-                        <p class="text-xs font-semibold text-base-content/70 mt-1.5 leading-relaxed">
+                        <p
+                            class="ba-text-xs ba-text-muted ba-font-bold"
+                            style={{ "margin-top": "0.375rem", "margin-bottom": 0, "line-height": 1.65 }}
+                        >
                             完成動画の長さ、撮影間隔（インターバル）、実撮影時間から、総撮影枚数と必要なSDカード容量を相互シミュレーションします。
                         </p>
                     </div>
 
                     {/* モード切替タブ */}
-                    <div class="tabs tabs-boxed bg-base-200/80 p-1 rounded-xl mb-6">
+                    <div class="ba-tabs ba-w-full">
                         <button
                             type="button"
-                            class={`tab flex-1 font-bold text-xs sm:text-sm rounded-lg transition-all ${
-                                calcMode() === "fromClip"
-                                    ? "tab-active bg-primary text-white shadow-sm"
-                                    : "text-base-content/80 hover:text-base-content"
-                            }`}
+                            class={`ba-tab ba-flex-1 ${calcMode() === "fromClip" ? "is-active" : ""}`}
                             onClick={() => setCalcMode("fromClip")}
                         >
                             動画の長さから逆算（おすすめ）
                         </button>
                         <button
                             type="button"
-                            class={`tab flex-1 font-bold text-xs sm:text-sm rounded-lg transition-all ${
-                                calcMode() === "fromShooting"
-                                    ? "tab-active bg-primary text-white shadow-sm"
-                                    : "text-base-content/80 hover:text-base-content"
-                            }`}
+                            class={`ba-tab ba-flex-1 ${calcMode() === "fromShooting" ? "is-active" : ""}`}
                             onClick={() => setCalcMode("fromShooting")}
                         >
                             実撮影時間から計算
@@ -197,17 +192,15 @@ export default function TimelapseCalculator() {
                     </div>
 
                     {/* メインレイアウト */}
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div class="ba-grid-2" style={{ gap: "1.5rem", "align-items": "start" }}>
                         {/* 設定コントロール */}
-                        <div class="lg:col-span-7 flex flex-col gap-5">
+                        <div class="ba-stack-4 ba-min-w-0">
                             {/* モード別入力 */}
                             {calcMode() === "fromClip" ? (
-                                <div class="form-control bg-base-200/50 p-4 rounded-xl border border-base-300">
-                                    <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-base-content/90">
-                                            作りたい動画の長さ（秒）
-                                        </span>
-                                        <span class="label-text-alt font-mono font-bold text-primary">
+                                <div class="ba-panel ba-field">
+                                    <label class="ba-label">
+                                        <span>作りたい動画の長さ（秒）</span>
+                                        <span class="ba-mono ba-text-primary">
                                             {clipDurationSec()} 秒
                                         </span>
                                     </label>
@@ -218,10 +211,13 @@ export default function TimelapseCalculator() {
                                         step="1"
                                         value={clipDurationSec()}
                                         onInput={(e) => setClipDurationSec(Math.max(1, Number(e.currentTarget.value) || 1))}
-                                        class="range range-primary range-sm"
+                                        class="ba-range"
                                         aria-label="作りたい動画の長さ（秒）"
                                     />
-                                    <div class="flex justify-between text-[10px] text-base-content/60 px-1 mt-1 font-mono">
+                                    <div
+                                        class="ba-flex ba-justify-between ba-text-muted ba-mono"
+                                        style={{ "font-size": "0.625rem", "margin-top": "0.25rem", "padding-inline": "0.25rem" }}
+                                    >
                                         <span>5秒 (SNS用)</span>
                                         <span>15秒 (Shorts/Reels)</span>
                                         <span>30秒</span>
@@ -230,34 +226,35 @@ export default function TimelapseCalculator() {
                                     </div>
                                 </div>
                             ) : (
-                                <div class="form-control bg-base-200/50 p-4 rounded-xl border border-base-300">
-                                    <label class="label py-1">
-                                        <span class="label-text font-bold text-sm text-base-content/90">
-                                            実際の撮影時間（待機時間）
-                                        </span>
+                                <div class="ba-panel ba-field">
+                                    <label class="ba-label">
+                                        <span>実際の撮影時間（待機時間）</span>
                                     </label>
-                                    <div class="grid grid-cols-2 gap-3 mt-1">
-                                        <div>
-                                            <label class="label py-0.5 text-xs text-base-content/70">時間</label>
+                                    <div
+                                        class="ba-grid"
+                                        style={{ "grid-template-columns": "repeat(2, minmax(0, 1fr))", gap: "0.75rem", "margin-top": "0.25rem" }}
+                                    >
+                                        <div class="ba-field">
+                                            <label class="ba-text-xs ba-text-muted">時間</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 max="48"
                                                 value={shootingHours()}
                                                 onInput={(e) => setShootingHours(Math.max(0, Number(e.currentTarget.value) || 0))}
-                                                class="input input-bordered input-sm w-full bg-base-100 font-mono"
+                                                class="ba-input ba-input--sm ba-mono"
                                                 aria-label="撮影時間（時間）"
                                             />
                                         </div>
-                                        <div>
-                                            <label class="label py-0.5 text-xs text-base-content/70">分</label>
+                                        <div class="ba-field">
+                                            <label class="ba-text-xs ba-text-muted">分</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 max="59"
                                                 value={shootingMinutes()}
                                                 onInput={(e) => setShootingMinutes(Math.max(0, Math.min(59, Number(e.currentTarget.value) || 0)))}
-                                                class="input input-bordered input-sm w-full bg-base-100 font-mono"
+                                                class="ba-input ba-input--sm ba-mono"
                                                 aria-label="撮影時間（分）"
                                             />
                                         </div>
@@ -266,12 +263,10 @@ export default function TimelapseCalculator() {
                             )}
 
                             {/* 撮影間隔（インターバル） */}
-                            <div class="form-control bg-base-200/50 p-4 rounded-xl border border-base-300">
-                                <label class="label py-1">
-                                    <span class="label-text font-bold text-sm text-base-content/90">
-                                        シャッター間隔（インターバル）
-                                    </span>
-                                    <span class="label-text-alt font-mono font-bold text-primary">
+                            <div class="ba-panel ba-field">
+                                <label class="ba-label">
+                                    <span>シャッター間隔（インターバル）</span>
+                                    <span class="ba-mono ba-text-primary">
                                         {intervalSec()} 秒ごと
                                     </span>
                                 </label>
@@ -282,29 +277,51 @@ export default function TimelapseCalculator() {
                                     step="0.5"
                                     value={intervalSec()}
                                     onInput={(e) => setIntervalSec(Math.max(0.1, Number(e.currentTarget.value) || 1))}
-                                    class="input input-bordered input-sm w-full bg-base-100 font-mono"
+                                    class="ba-input ba-input--sm ba-mono"
                                     aria-label="シャッター間隔（インターバル秒）"
                                 />
 
                                 {/* プリセット選択ボタン */}
-                                <div class="mt-3">
-                                    <span class="text-[11px] font-bold text-base-content/70 block mb-1.5">
+                                <div style={{ "margin-top": "0.75rem" }}>
+                                    <span
+                                        class="ba-font-bold ba-text-muted"
+                                        style={{ "font-size": "0.6875rem", display: "block", "margin-bottom": "0.375rem" }}
+                                    >
                                         被写体別プリセット
                                     </span>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    <div
+                                        class="ba-grid"
+                                        style={{ "grid-template-columns": "repeat(auto-fill, minmax(120px, 1fr))", gap: "0.5rem" }}
+                                    >
                                         <For each={presets}>
                                             {(p) => (
                                                 <button
                                                     type="button"
-                                                    class={`p-2 rounded-lg text-left border text-xs transition-all ${
-                                                        intervalSec() === p.interval
-                                                            ? "border-primary bg-primary/20 text-primary font-bold shadow-xs"
-                                                            : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content"
-                                                    }`}
+                                                    class="ba-text-xs"
+                                                    style={{
+                                                        padding: "0.5rem",
+                                                        "border-radius": "var(--ba-radius-sm)",
+                                                        "text-align": "left",
+                                                        cursor: "pointer",
+                                                        border: intervalSec() === p.interval
+                                                            ? "1.5px solid var(--ba-primary)"
+                                                            : "1px solid var(--ba-border)",
+                                                        background: intervalSec() === p.interval
+                                                            ? "var(--ba-primary-soft)"
+                                                            : "var(--ba-surface)",
+                                                        color: intervalSec() === p.interval
+                                                            ? "var(--ba-primary)"
+                                                            : "var(--ba-text)",
+                                                        "font-weight": intervalSec() === p.interval ? 700 : 500,
+                                                        transition: "all 0.15s ease",
+                                                    }}
                                                     onClick={() => setIntervalSec(p.interval)}
                                                 >
-                                                    <div class="font-bold truncate">{p.name}</div>
-                                                    <div class={`text-[10px] font-mono ${intervalSec() === p.interval ? "text-primary font-bold" : "text-base-content/75"}`}>
+                                                    <div class="ba-font-bold ba-truncate">{p.name}</div>
+                                                    <div
+                                                        class={`ba-mono ${intervalSec() === p.interval ? "ba-text-primary ba-font-bold" : "ba-text-muted"}`}
+                                                        style={{ "font-size": "0.625rem" }}
+                                                    >
                                                         {p.interval}秒間隔
                                                     </div>
                                                 </button>
@@ -315,20 +332,21 @@ export default function TimelapseCalculator() {
                             </div>
 
                             {/* フレームレート設定 */}
-                            <div class="form-control bg-base-200/50 p-4 rounded-xl border border-base-300">
-                                <label class="label py-1">
-                                    <span class="label-text font-bold text-sm text-base-content/90">
-                                        完成動画のフレームレート (FPS)
-                                    </span>
-                                    <span class="label-text-alt font-mono font-bold text-primary">
+                            <div class="ba-panel ba-field">
+                                <label class="ba-label">
+                                    <span>完成動画のフレームレート (FPS)</span>
+                                    <span class="ba-mono ba-text-primary">
                                         {fps()} fps
                                     </span>
                                 </label>
-                                <div class="grid grid-cols-3 gap-2 mt-1">
+                                <div
+                                    class="ba-grid"
+                                    style={{ "grid-template-columns": "repeat(3, minmax(0, 1fr))", gap: "0.5rem", "margin-top": "0.25rem" }}
+                                >
                                     {[24, 30, 60].map((f) => (
                                         <button
                                             type="button"
-                                            class={`btn btn-sm ${fps() === f ? "btn-primary text-white" : "btn-outline border-base-300"}`}
+                                            class={`ba-btn ba-btn--sm ${fps() === f ? "ba-btn--primary" : "ba-btn--outline"}`}
                                             onClick={() => setFps(f)}
                                             aria-label={`${f} fps`}
                                         >
@@ -339,22 +357,32 @@ export default function TimelapseCalculator() {
                             </div>
 
                             {/* 写真1枚のデータ容量・機材解像度設定 */}
-                            <div class="form-control bg-base-200/50 p-4 rounded-xl border border-base-300">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="font-bold text-sm text-base-content/90">
+                            <div class="ba-panel ba-stack-3">
+                                <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                    <span class="ba-font-bold ba-text-sm">
                                         写真1枚のデータサイズ設定
                                     </span>
-                                    <span class="font-mono text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                                    <span
+                                        class="ba-mono ba-text-sm ba-font-bold ba-text-primary"
+                                        style={{
+                                            background: "var(--ba-primary-soft)",
+                                            padding: "0.15rem 0.5rem",
+                                            "border-radius": "var(--ba-radius-sm)",
+                                        }}
+                                    >
                                         1枚 約 {fileSizeMb()} MB
                                     </span>
                                 </div>
 
                                 {/* カメラ解像度（画素数）選択 */}
-                                <div class="mb-3">
-                                    <label class="label py-0.5 text-xs font-bold text-base-content/70">
+                                <div class="ba-stack-1">
+                                    <label class="ba-text-xs ba-font-bold ba-text-muted">
                                         ① カメラのセンサー解像度（有効画素数）
                                     </label>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-1">
+                                    <div
+                                        class="ba-grid"
+                                        style={{ "grid-template-columns": "repeat(auto-fill, minmax(130px, 1fr))", gap: "0.375rem", "margin-top": "0.25rem" }}
+                                    >
                                         {[
                                             { id: "12", label: "約1200万画素", sub: "スマホ・GoPro・α7S" },
                                             { id: "24", label: "約2400万画素", sub: "標準機 (α7III/R6/Z6)" },
@@ -365,31 +393,46 @@ export default function TimelapseCalculator() {
                                         ].map((item) => (
                                             <button
                                                 type="button"
-                                                class={`p-2 rounded-lg text-left border transition-all ${
-                                                    resolution() === item.id
-                                                        ? "border-primary bg-primary/15 text-primary font-bold shadow-xs"
-                                                        : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content"
-                                                }`}
+                                                style={{
+                                                    padding: "0.5rem",
+                                                    "border-radius": "var(--ba-radius-sm)",
+                                                    "text-align": "left",
+                                                    cursor: "pointer",
+                                                    border: resolution() === item.id
+                                                        ? "1.5px solid var(--ba-primary)"
+                                                        : "1px solid var(--ba-border)",
+                                                    background: resolution() === item.id
+                                                        ? "var(--ba-primary-soft)"
+                                                        : "var(--ba-surface)",
+                                                    color: resolution() === item.id
+                                                        ? "var(--ba-primary)"
+                                                        : "var(--ba-text)",
+                                                    transition: "all 0.15s ease",
+                                                }}
                                                 onClick={() => handleResolutionChange(item.id as ResolutionPreset)}
                                             >
-                                                <div class="text-xs font-bold truncate">{item.label}</div>
-                                                <div class={`text-[10px] truncate ${
-                                                    resolution() === item.id
-                                                        ? "text-primary font-bold"
-                                                        : "text-base-content/75"
-                                                }`}>{item.sub}</div>
+                                                <div class="ba-text-xs ba-font-bold ba-truncate">{item.label}</div>
+                                                <div
+                                                    class={`ba-truncate ${resolution() === item.id ? "ba-text-primary ba-font-bold" : "ba-text-muted"}`}
+                                                    style={{ "font-size": "0.625rem" }}
+                                                >
+                                                    {item.sub}
+                                                </div>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
-                                {/* 記録フォーマット選択（カスタム時は非活性または非表示） */}
+                                {/* 記録フォーマット選択（カスタム時は非表示） */}
                                 {resolution() !== "custom" && (
-                                    <div class="mb-3">
-                                        <label class="label py-0.5 text-xs font-bold text-base-content/70">
+                                    <div class="ba-stack-1">
+                                        <label class="ba-text-xs ba-font-bold ba-text-muted">
                                             ② 記録フォーマット
                                         </label>
-                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-1">
+                                        <div
+                                            class="ba-grid"
+                                            style={{ "grid-template-columns": "repeat(auto-fill, minmax(105px, 1fr))", gap: "0.375rem", "margin-top": "0.25rem" }}
+                                        >
                                             {[
                                                 { id: "jpeg", label: "JPEG (ファイン)" },
                                                 { id: "raw_compressed", label: "圧縮RAW" },
@@ -398,11 +441,8 @@ export default function TimelapseCalculator() {
                                             ].map((fmt) => (
                                                 <button
                                                     type="button"
-                                                    class={`btn btn-xs h-auto min-h-[32px] py-1 text-xs ${
-                                                        formatType() === fmt.id
-                                                            ? "btn-primary text-white"
-                                                            : "btn-outline border-base-300"
-                                                    }`}
+                                                    class={`ba-btn ba-btn--xs ${formatType() === fmt.id ? "ba-btn--primary" : "ba-btn--outline"}`}
+                                                    style={{ "min-height": "2rem" }}
                                                     onClick={() => handleFormatChange(fmt.id as FormatType)}
                                                 >
                                                     {fmt.label}
@@ -413,12 +453,20 @@ export default function TimelapseCalculator() {
                                 )}
 
                                 {/* 手動微調整スライダー/数値入力 */}
-                                <div class="bg-base-100 p-2.5 rounded-lg border border-base-300 mt-1">
-                                    <div class="flex items-center justify-between text-xs mb-1">
-                                        <span class="font-semibold text-base-content/80">
+                                <div
+                                    class="ba-stack-1"
+                                    style={{
+                                        background: "var(--ba-surface)",
+                                        padding: "0.625rem",
+                                        "border-radius": "var(--ba-radius-sm)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <div class="ba-flex ba-items-center ba-justify-between ba-text-xs">
+                                        <span class="ba-font-bold ba-text-muted">
                                             {resolution() === "custom" ? "1枚あたりの容量を手動入力" : "容量の微調整"}
                                         </span>
-                                        <div class="flex items-center gap-1 font-mono">
+                                        <div class="ba-flex ba-items-center ba-gap-1 ba-mono">
                                             <input
                                                 type="number"
                                                 min="1"
@@ -429,10 +477,11 @@ export default function TimelapseCalculator() {
                                                     setFileSizeMb(val);
                                                     setResolution("custom");
                                                 }}
-                                                class="input input-bordered input-xs w-16 text-right font-mono"
+                                                class="ba-input ba-input--sm ba-text-right ba-mono"
+                                                style={{ width: "4.5rem", padding: "0.2rem 0.4rem" }}
                                                 aria-label="1枚あたりの容量数値入力"
                                             />
-                                            <span class="text-xs text-base-content/70">MB</span>
+                                            <span class="ba-text-xs ba-text-muted">MB</span>
                                         </div>
                                     </div>
                                     <input
@@ -446,74 +495,122 @@ export default function TimelapseCalculator() {
                                             setFileSizeMb(val);
                                             setResolution("custom");
                                         }}
-                                        class="range range-primary range-xs"
+                                        class="ba-range"
                                         aria-label="1枚あたりの容量スライダー"
                                     />
                                 </div>
 
                                 {/* 選択根拠の説明 */}
-                                <div class="mt-2.5 p-2 bg-base-200/60 rounded-lg text-[11px] text-base-content/70 leading-relaxed border border-base-300/50">
-                                    <span class="font-bold text-base-content/90 mr-1">【推定根拠】</span>
+                                <div
+                                    class="ba-text-muted"
+                                    style={{
+                                        padding: "0.5rem 0.625rem",
+                                        background: "var(--ba-surface)",
+                                        "border-radius": "var(--ba-radius-sm)",
+                                        "font-size": "0.6875rem",
+                                        "line-height": 1.6,
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <span class="ba-font-bold" style={{ color: "var(--ba-text)", "margin-right": "0.25rem" }}>【推定根拠】</span>
                                     {sizeRationale()}
                                 </div>
                             </div>
                         </div>
 
                         {/* 計算結果ダッシュボード */}
-                        <div class="lg:col-span-5 flex flex-col gap-4 bg-base-200/70 p-5 rounded-2xl border border-base-300">
-                            <h2 class="text-sm font-black text-base-content border-b border-base-300 pb-2 flex items-center justify-between">
+                        <div
+                            class="ba-panel ba-stack-4 ba-min-w-0"
+                            style={{ padding: "1.25rem", "border-radius": "var(--ba-radius-lg)" }}
+                        >
+                            <h2
+                                class="ba-section-title ba-flex ba-items-center ba-justify-between"
+                                style={{
+                                    "font-size": "0.9375rem",
+                                    "border-bottom": "1px solid var(--ba-border)",
+                                    "padding-bottom": "0.5rem",
+                                }}
+                            >
                                 <span>撮影シミュレーション結果</span>
-                                <span class="inline-flex items-center text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-blue-700 text-white">{fps()} FPS</span>
+                                <span class="ba-badge ba-badge--camera ba-mono">{fps()} FPS</span>
                             </h2>
 
-                            <div class="space-y-4">
+                            <div class="ba-stack-4">
                                 {/* 実撮影時間 */}
-                                <div class="bg-base-100 p-4 rounded-xl border border-base-300 shadow-xs">
-                                    <span class="text-xs text-base-content/70 font-semibold block mb-1">
+                                <div
+                                    style={{
+                                        background: "var(--ba-surface)",
+                                        padding: "1rem",
+                                        "border-radius": "var(--ba-radius)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <span class="ba-text-xs ba-text-muted ba-font-bold" style={{ display: "block", "margin-bottom": "0.25rem" }}>
                                         必要な実撮影時間（カメラ待機時間）
                                     </span>
-                                    <div class="text-2xl font-black text-primary font-mono">
+                                    <div class="ba-text-2xl ba-font-black ba-text-primary ba-mono">
                                         {formatDuration(totalShootingTimeSec())}
                                     </div>
-                                    <span class="text-[10px] text-base-content/60 mt-1 block">
+                                    <span class="ba-text-muted" style={{ "font-size": "0.6875rem", "margin-top": "0.25rem", display: "block" }}>
                                         ※カメラを設置・固定してシャッターを切り続ける時間です
                                     </span>
                                 </div>
 
                                 {/* 総撮影枚数 */}
-                                <div class="bg-base-100 p-4 rounded-xl border border-base-300 shadow-xs">
-                                    <span class="text-xs text-base-content/70 font-semibold block mb-1">
+                                <div
+                                    style={{
+                                        background: "var(--ba-surface)",
+                                        padding: "1rem",
+                                        "border-radius": "var(--ba-radius)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <span class="ba-text-xs ba-text-muted ba-font-bold" style={{ display: "block", "margin-bottom": "0.25rem" }}>
                                         総撮影枚数
                                     </span>
-                                    <div class="text-2xl font-black text-base-content font-mono">
-                                        {totalShots().toLocaleString()} <span class="text-sm font-normal">枚</span>
+                                    <div class="ba-text-2xl ba-font-black ba-mono">
+                                        {totalShots().toLocaleString()} <span class="ba-text-sm" style={{ "font-weight": 400 }}>枚</span>
                                     </div>
                                 </div>
 
                                 {/* 完成動画の長さ */}
-                                <div class="bg-base-100 p-4 rounded-xl border border-base-300 shadow-xs">
-                                    <span class="text-xs text-base-content/70 font-semibold block mb-1">
+                                <div
+                                    style={{
+                                        background: "var(--ba-surface)",
+                                        padding: "1rem",
+                                        "border-radius": "var(--ba-radius)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <span class="ba-text-xs ba-text-muted ba-font-bold" style={{ display: "block", "margin-bottom": "0.25rem" }}>
                                         完成タイムラプス動画の長さ
                                     </span>
-                                    <div class="text-xl font-black text-base-content font-mono">
-                                        {actualClipDurationSec()} <span class="text-sm font-normal">秒</span>
+                                    <div class="ba-text-xl ba-font-black ba-mono">
+                                        {actualClipDurationSec()} <span class="ba-text-sm" style={{ "font-weight": 400 }}>秒</span>
                                     </div>
                                 </div>
 
                                 {/* 必要SDカード容量 & 推奨カード */}
-                                <div class="bg-base-100 p-4 rounded-xl border border-base-300 shadow-xs">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <span class="text-xs text-base-content/70 font-semibold">
+                                <div
+                                    style={{
+                                        background: "var(--ba-surface)",
+                                        padding: "1rem",
+                                        "border-radius": "var(--ba-radius)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <div class="ba-flex ba-items-center ba-justify-between ba-gap-2" style={{ "margin-bottom": "0.25rem" }}>
+                                        <span class="ba-text-xs ba-text-muted ba-font-bold">
                                             推定総データ容量
                                         </span>
-                                        <span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-700 text-white">
+                                        <span class="ba-badge ba-badge--camera">
                                             推奨: {recommendedSdCard().size}
                                         </span>
                                     </div>
-                                    <div class="text-2xl font-black text-base-content font-mono">
-                                        約 {requiredStorageGb()} <span class="text-sm font-normal">GB</span>
+                                    <div class="ba-text-2xl ba-font-black ba-mono">
+                                        約 {requiredStorageGb()} <span class="ba-text-sm" style={{ "font-weight": 400 }}>GB</span>
                                     </div>
-                                    <span class="text-[10px] text-base-content/60 mt-1 block">
+                                    <span class="ba-text-muted" style={{ "font-size": "0.6875rem", "margin-top": "0.25rem", display: "block" }}>
                                         ※{recommendedSdCard().note}
                                     </span>
                                 </div>

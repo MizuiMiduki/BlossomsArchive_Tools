@@ -412,7 +412,7 @@ export default function OgpChecker() {
     const [localPreviewImage, setLocalPreviewImage] = createSignal("");
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".card");
+        if (containerRef) playPageEntrance(containerRef, ".ba-card");
 
         return () => {
             if (localPreviewImage()) {
@@ -755,67 +755,64 @@ export default function OgpChecker() {
     const statusBadge = (status: DiagnosticItem["status"]) => {
         if (status === "ok") {
             return (
-                <span class="badge badge-success badge-sm text-white font-bold">
+                <span class="ba-badge ba-badge--success">
                     設定済み
                 </span>
             );
         }
         if (status === "warn") {
             return (
-                <span class="badge badge-warning badge-sm font-bold">
+                <span class="ba-badge ba-badge--warning">
                     要確認
                 </span>
             );
         }
         return (
-            <span class="badge badge-error badge-sm text-white font-bold">
+            <span class="ba-badge ba-badge--danger">
                 未設定
             </span>
         );
     };
 
     return (
-        <div
-            ref={containerRef}
-            class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0"
-        >
-            <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
-                {/* メインカード */}
-                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-base-300 min-w-0">
-                    {/* ヘッダー */}
-                    <div class="mb-4 sm:mb-6 border-b border-base-300 pb-4 sm:pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                        <div>
-                            <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-base-content">
-                                <BudouX text="OGP確認・SNSシェアプレビューツール" />
-                            </h1>
-                            <BudouX
-                                as="p"
-                                class="text-xs font-semibold text-base-content/70 mt-2 leading-relaxed"
-                                text="WebページのURLまたはHTMLソースコード（ファイル読込対応）からOGP（Open Graph Protocol）とTwitterカードのメタタグをブラウザ上で解析し、X（旧Twitter）やFacebook・LINE・Discordなどでシェアされた際の表示をプレビューします。"
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            onClick={loadSample}
-                            class="btn btn-outline btn-sm shrink-0 self-start sm:self-auto font-bold"
-                        >
-                            サンプルで試す
-                        </button>
+        <div ref={containerRef} class="ba-page ba-page--wide">
+            {/* メインカード */}
+            <div class="ba-card ba-stack-6">
+                {/* ヘッダー */}
+                <div
+                    class="ba-home-header"
+                    style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "1.25rem" }}
+                >
+                    <div class="ba-min-w-0">
+                        <h1 class="ba-title">
+                            <BudouX text="OGP確認・SNSシェアプレビューツール" />
+                        </h1>
+                        <BudouX
+                            as="p"
+                            class="ba-text-xs ba-text-muted"
+                            style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.6, "font-weight": 600 }}
+                            text="WebページのURLまたはHTMLソースコード（ファイル読込対応）からOGP（Open Graph Protocol）とTwitterカードのメタタグをブラウザ上で解析し、X（旧Twitter）やFacebook・LINE・Discordなどでシェアされた際の表示をプレビューします。"
+                        />
                     </div>
+                    <button
+                        type="button"
+                        onClick={loadSample}
+                        class="ba-btn ba-btn--outline ba-btn--sm ba-shrink-0"
+                    >
+                        サンプルで試す
+                    </button>
+                </div>
 
-                    {/* 入力モード切替タブ */}
-                    <div class="grid grid-cols-2 gap-1.5 sm:gap-2 p-1.5 bg-base-200 rounded-xl mb-6 max-w-lg w-full">
+                {/* 入力モード切替タブ */}
+                <div>
+                    <div class="ba-tabs">
                         <button
                             type="button"
                             onClick={() => {
                                 setInputMode("url");
                                 setError("");
                             }}
-                            class={`py-2 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-all truncate text-center ${
-                                inputMode() === "url"
-                                    ? "bg-primary text-white shadow-sm"
-                                    : "text-base-content/70 hover:bg-base-300/50"
-                            }`}
+                            class={`ba-tab ${inputMode() === "url" ? "is-active" : ""}`}
                         >
                             URLから取得
                         </button>
@@ -825,309 +822,298 @@ export default function OgpChecker() {
                                 setInputMode("html");
                                 setError("");
                             }}
-                            class={`py-2 px-4 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
-                                inputMode() === "html"
-                                    ? "bg-primary text-white shadow-sm"
-                                    : "text-base-content/70 hover:bg-base-300/50"
-                            }`}
+                            class={`ba-tab ${inputMode() === "html" ? "is-active" : ""}`}
                         >
                             HTML直接入力 / ファイル読込
                         </button>
                     </div>
+                </div>
 
-                    {/* URL入力フォーム */}
-                    <Show when={inputMode() === "url"}>
-                        <form
-                            {...({
-                                toolname: "analyze_ogp_url",
-                                tooldescription:
-                                    "指定したURLのWebページからOGPタグとTwitterカードを解析してSNSシェアプレビューを表示します",
-                            } as Record<string, string>)}
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                handleAnalyzeUrl();
-                            }}
-                            class="flex flex-col sm:flex-row gap-3 w-full"
+                {/* URL入力フォーム */}
+                <Show when={inputMode() === "url"}>
+                    <form
+                        {...({
+                            toolname: "analyze_ogp_url",
+                            tooldescription:
+                                "指定したURLのWebページからOGPタグとTwitterカードを解析してSNSシェアプレビューを表示します",
+                        } as Record<string, string>)}
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleAnalyzeUrl();
+                        }}
+                        class="ba-flex ba-flex-wrap ba-gap-3 ba-w-full"
+                    >
+                        <input
+                            type="text"
+                            name="url"
+                            title="確認するページのURL"
+                            value={urlInput()}
+                            onInput={(e) =>
+                                setUrlInput(e.currentTarget.value)
+                            }
+                            placeholder="https://tools.blossomsarchive.com"
+                            aria-label="確認するページのURL"
+                            class="ba-input ba-flex-1"
+                            style={{ "min-width": "14rem", height: "3rem" }}
+                        />
+                        <button
+                            ref={actionButtonRef}
+                            type="submit"
+                            disabled={loading() || !urlInput().trim()}
+                            class="ba-btn ba-btn--primary ba-btn--lg ba-shrink-0"
+                            style={{ height: "3rem", "padding-inline": "1.75rem" }}
                         >
-                            <input
-                                type="text"
-                                name="url"
-                                title="確認するページのURL"
-                                value={urlInput()}
+                            {loading() ? (
+                                <>
+                                    <span class="ba-spinner"></span>
+                                    解析中...
+                                </>
+                            ) : (
+                                "OGPを取得・解析"
+                            )}
+                        </button>
+                    </form>
+                </Show>
+
+                {/* HTML直接入力・ローカルファイル読込フォーム */}
+                <Show when={inputMode() === "html"}>
+                    <div class="ba-stack-4 ba-w-full">
+                        <div class="ba-field">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
+                                <span class="ba-label">
+                                    HTMLソースコード（&lt;head&gt;内のメタタグまたはページ全体のHTML）
+                                </span>
+                                <label class="ba-btn ba-btn--outline ba-btn--xs" style={{ cursor: "pointer" }}>
+                                    HTMLファイルを読み込む
+                                    <input
+                                        type="file"
+                                        accept=".html,.htm,text/html"
+                                        aria-label="HTMLファイルを選択"
+                                        onChange={handleHtmlFileUpload}
+                                        hidden
+                                    />
+                                </label>
+                            </div>
+                            <textarea
+                                value={htmlInput()}
                                 onInput={(e) =>
-                                    setUrlInput(e.currentTarget.value)
+                                    setHtmlInput(e.currentTarget.value)
                                 }
-                                placeholder="https://tools.blossomsarchive.com"
-                                aria-label="確認するページのURL"
-                                class="input input-bordered flex-1 h-12 text-sm font-medium bg-base-100 border-2 border-base-300 focus:border-primary"
+                                placeholder={'<meta property="og:title" content="ページタイトル" />\n<meta property="og:description" content="ページの説明文" />\n<meta property="og:image" content="https://example.com/ogp.png" />'}
+                                aria-label="解析するHTMLソースコード"
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "11rem", "line-height": 1.6 }}
                             />
+                        </div>
+                        <div class="ba-flex ba-justify-end ba-gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setHtmlInput("");
+                                    setOgpData(null);
+                                    setError("");
+                                }}
+                                class="ba-btn ba-btn--outline ba-btn--sm"
+                            >
+                                クリア
+                            </button>
                             <button
                                 ref={actionButtonRef}
-                                type="submit"
-                                disabled={loading() || !urlInput().trim()}
-                                class="btn btn-primary text-white h-12 px-8 text-sm sm:text-base font-black shadow-md shrink-0"
+                                type="button"
+                                onClick={handleAnalyzeHtml}
+                                disabled={!htmlInput().trim()}
+                                class="ba-btn ba-btn--primary ba-btn--sm"
+                                style={{ "padding-inline": "1.5rem" }}
                             >
-                                {loading() ? (
-                                    <>
-                                        <span class="loading loading-spinner loading-sm"></span>
-                                        解析中...
-                                    </>
-                                ) : (
-                                    "OGPを取得・解析"
-                                )}
+                                HTMLを解析する
                             </button>
-                        </form>
-                    </Show>
+                        </div>
+                    </div>
+                </Show>
 
-                    {/* HTML直接入力・ローカルファイル読込フォーム */}
-                    <Show when={inputMode() === "html"}>
-                        <div class="flex flex-col gap-4 w-full">
-                            <div class="form-control w-full">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1 mb-1">
-                                    <span class="label-text font-bold text-xs sm:text-sm text-base-content/80">
-                                        HTMLソースコード（&lt;head&gt;内のメタタグまたはページ全体のHTML）
-                                    </span>
-                                    <label class="btn btn-outline btn-xs h-8 px-3 font-bold cursor-pointer self-start sm:self-auto">
-                                        HTMLファイルを読み込む
+                {/* エラー表示 */}
+                <Show when={error()}>
+                    <div class="ba-alert ba-alert--error ba-flex-wrap ba-justify-between">
+                        <div class="ba-flex ba-items-center ba-gap-2 ba-text-sm">
+                            <ToolIcon name="alert" class="ba-icon-md ba-shrink-0" />
+                            <span>{error()}</span>
+                        </div>
+                        <Show when={inputMode() === "url"}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setInputMode("html");
+                                    setError("");
+                                }}
+                                class="ba-btn ba-btn--xs ba-shrink-0"
+                            >
+                                HTML直接入力へ切替
+                            </button>
+                        </Show>
+                    </div>
+                </Show>
+
+                {/* 未解析時の初期ガイド */}
+                <Show when={!ogpData() && !loading()}>
+                    <div
+                        class="ba-dropzone ba-flex-col ba-items-center ba-gap-3"
+                        style={{ cursor: "default", padding: "2rem" }}
+                    >
+                        <div class="ba-flex ba-justify-center ba-text-muted">
+                            <ToolIcon name="search" class="ba-icon-xl" />
+                        </div>
+                        <p class="ba-text-sm ba-font-bold ba-text-muted" style={{ margin: 0 }}>
+                            URLを入力して「OGPを取得・解析」を押すか、HTMLソース・HTMLファイルを読み込んで解析してください。
+                        </p>
+                        <p
+                            class="ba-text-xs ba-text-muted"
+                            style={{ "max-width": "36rem", "line-height": 1.6, margin: 0 }}
+                        >
+                            ローカル開発中のファイルや公開前のページを確認したい場合は、「HTML直接入力 / ファイル読込」タブからブラウザ内完結（外部通信なし）で即座にプレビューできます。
+                        </p>
+                    </div>
+                </Show>
+
+                {/* 解析結果エリア */}
+                <Show when={ogpData() && !loading()}>
+                    <div
+                        class="ba-stack-6"
+                        style={{ "border-top": "1px solid var(--ba-border)", "padding-top": "1.75rem" }}
+                    >
+                        {/* 1. SNSカード表示プレビュー */}
+                        <div class="ba-stack-4">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3">
+                                <h2 class="ba-section-title">
+                                    SNSシェア表示プレビュー
+                                </h2>
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-2">
+                                    <label class="ba-btn ba-btn--outline ba-btn--xs" style={{ cursor: "pointer" }}>
+                                        ローカル画像で試す
                                         <input
                                             type="file"
-                                            accept=".html,.htm,text/html"
-                                            aria-label="HTMLファイルを選択"
-                                            onChange={handleHtmlFileUpload}
-                                            class="hidden"
+                                            accept="image/*"
+                                            aria-label="ローカル画像ファイルを選択"
+                                            onChange={
+                                                handleLocalImageUpload
+                                            }
+                                            hidden
                                         />
                                     </label>
-                                </div>
-                                <textarea
-                                    value={htmlInput()}
-                                    onInput={(e) =>
-                                        setHtmlInput(e.currentTarget.value)
-                                    }
-                                    placeholder={'<meta property="og:title" content="ページタイトル" />\n<meta property="og:description" content="ページの説明文" />\n<meta property="og:image" content="https://example.com/ogp.png" />'}
-                                    aria-label="解析するHTMLソースコード"
-                                    class="textarea textarea-bordered w-full h-44 font-mono text-xs sm:text-sm bg-base-100 border-2 border-base-300 focus:border-primary p-3 leading-relaxed"
-                                />
-                            </div>
-                            <div class="flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setHtmlInput("");
-                                        setOgpData(null);
-                                        setError("");
-                                    }}
-                                    class="btn btn-outline btn-sm h-11 px-5 font-bold"
-                                >
-                                    クリア
-                                </button>
-                                <button
-                                    ref={actionButtonRef}
-                                    type="button"
-                                    onClick={handleAnalyzeHtml}
-                                    disabled={!htmlInput().trim()}
-                                    class="btn btn-primary text-white h-11 px-8 text-sm font-black shadow-md"
-                                >
-                                    HTMLを解析する
-                                </button>
-                            </div>
-                        </div>
-                    </Show>
-
-                    {/* エラー表示 */}
-                    <Show when={error()}>
-                        <div class="alert alert-error text-white font-bold mt-6 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div class="flex items-center gap-2 text-xs sm:text-sm">
-                                <ToolIcon name="alert" class="w-5 h-5 shrink-0" />
-                                <span>{error()}</span>
-                            </div>
-                            <Show when={inputMode() === "url"}>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setInputMode("html");
-                                        setError("");
-                                    }}
-                                    class="btn btn-xs bg-base-100 text-base-content border-none hover:bg-base-200 shrink-0"
-                                >
-                                    HTML直接入力へ切替
-                                </button>
-                            </Show>
-                        </div>
-                    </Show>
-
-                    {/* 未解析時の初期ガイド */}
-                    <Show when={!ogpData() && !loading()}>
-                        <div class="mt-8 border-2 border-dashed border-base-300 bg-base-200/40 rounded-2xl p-8 text-center flex flex-col items-center gap-3">
-                            <div class="flex justify-center text-base-content/60">
-                                <ToolIcon name="search" class="w-10 h-10" />
-                            </div>
-                            <p class="text-sm font-bold text-base-content/80">
-                                URLを入力して「OGPを取得・解析」を押すか、HTMLソース・HTMLファイルを読み込んで解析してください。
-                            </p>
-                            <p class="text-xs text-base-content/60 max-w-xl leading-relaxed">
-                                ローカル開発中のファイルや公開前のページを確認したい場合は、「HTML直接入力 / ファイル読込」タブからブラウザ内完結（外部通信なし）で即座にプレビューできます。
-                            </p>
-                        </div>
-                    </Show>
-
-                    {/* 解析結果エリア */}
-                    <Show when={ogpData() && !loading()}>
-                        <div
-                            class="mt-8 flex flex-col gap-8 border-t border-base-300 pt-8"
-                        >
-                            {/* 1. SNSカード表示プレビュー */}
-                            <div>
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                                    <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                        SNSシェア表示プレビュー
-                                    </h2>
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <label class="btn btn-outline btn-xs h-7 px-2.5 font-bold cursor-pointer">
-                                            ローカル画像で試す
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                aria-label="ローカル画像ファイルを選択"
-                                                onChange={
-                                                    handleLocalImageUpload
-                                                }
-                                                class="hidden"
-                                            />
-                                        </label>
-                                        {/* Xカード表示切替 */}
-                                        <div class="flex items-center gap-1.5 bg-base-200 p-1 rounded-lg">
-                                            <span class="text-[11px] font-bold text-base-content/70 px-2">
-                                                Xカード形式:
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setTwitterPreviewStyle(
-                                                        "auto",
-                                                    )
-                                                }
-                                                class={`btn btn-xs rounded-md ${
-                                                    twitterPreviewStyle() ===
-                                                    "auto"
-                                                        ? "btn-primary text-white"
-                                                        : "btn-ghost"
-                                                }`}
-                                            >
-                                                自動
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setTwitterPreviewStyle(
-                                                        "summary_large_image",
-                                                    )
-                                                }
-                                                class={`btn btn-xs rounded-md ${
-                                                    twitterPreviewStyle() ===
-                                                    "summary_large_image"
-                                                        ? "btn-primary text-white"
-                                                        : "btn-ghost"
-                                                }`}
-                                            >
-                                                大画像
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setTwitterPreviewStyle(
-                                                        "summary",
-                                                    )
-                                                }
-                                                class={`btn btn-xs rounded-md ${
-                                                    twitterPreviewStyle() ===
-                                                    "summary"
-                                                        ? "btn-primary text-white"
-                                                        : "btn-ghost"
-                                                }`}
-                                            >
-                                                小画像
-                                            </button>
-                                        </div>
+                                    {/* Xカード表示切替 */}
+                                    <div class="ba-tabs" style={{ padding: "0.2rem", "align-items": "center" }}>
+                                        <span
+                                            class="ba-font-bold ba-text-muted"
+                                            style={{ "font-size": "0.6875rem", "padding-inline": "0.5rem" }}
+                                        >
+                                            Xカード形式:
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setTwitterPreviewStyle(
+                                                    "auto",
+                                                )
+                                            }
+                                            class={`ba-tab ${
+                                                twitterPreviewStyle() === "auto"
+                                                    ? "is-active"
+                                                    : ""
+                                            }`}
+                                            style={{ padding: "0.25rem 0.55rem", "font-size": "0.75rem" }}
+                                        >
+                                            自動
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setTwitterPreviewStyle(
+                                                    "summary_large_image",
+                                                )
+                                            }
+                                            class={`ba-tab ${
+                                                twitterPreviewStyle() === "summary_large_image"
+                                                    ? "is-active"
+                                                    : ""
+                                            }`}
+                                            style={{ padding: "0.25rem 0.55rem", "font-size": "0.75rem" }}
+                                        >
+                                            大画像
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setTwitterPreviewStyle(
+                                                    "summary",
+                                                )
+                                            }
+                                            class={`ba-tab ${
+                                                twitterPreviewStyle() === "summary"
+                                                    ? "is-active"
+                                                    : ""
+                                            }`}
+                                            style={{ padding: "0.25rem 0.55rem", "font-size": "0.75rem" }}
+                                        >
+                                            小画像
+                                        </button>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* X (Twitter) プレビュー */}
-                                    <div class="bg-base-200/60 border border-base-300 rounded-2xl p-5 flex flex-col gap-3">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-xs font-black text-base-content/80 flex items-center gap-1.5">
-                                                <span>𝕏</span> X (Twitter) プレビュー
-                                            </span>
-                                            <span class="badge badge-neutral badge-sm font-mono text-[10px]">
-                                                {effectiveTwitterCardType()}
-                                            </span>
-                                        </div>
+                            <div class="ba-grid-2">
+                                {/* X (Twitter) プレビュー */}
+                                <div class="ba-panel ba-stack-3" style={{ padding: "1.25rem" }}>
+                                    <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                        <span class="ba-text-xs ba-font-black ba-text-muted ba-flex ba-items-center ba-gap-1">
+                                            <span>𝕏</span> X (Twitter) プレビュー
+                                        </span>
+                                        <span class="ba-badge ba-badge--neutral ba-mono">
+                                            {effectiveTwitterCardType()}
+                                        </span>
+                                    </div>
 
-                                        <Show
-                                            when={
-                                                effectiveTwitterCardType() ===
-                                                "summary_large_image"
-                                            }
-                                            fallback={
-                                                /* summary (横並び小型カード) */
-                                                <div class="bg-base-100 border border-base-300 rounded-2xl overflow-hidden flex items-stretch shadow-xs min-h-[116px]">
-                                                    <div class="w-28 sm:w-32 bg-base-200 shrink-0 flex items-center justify-center border-r border-base-300 overflow-hidden">
-                                                        <Show
-                                                            when={
-                                                                displayTwitterImage() &&
-                                                                !imageError()
-                                                            }
-                                                            fallback={
-                                                                <span class="text-xs text-base-content/75 font-bold text-center px-2">
-                                                                    No Image
-                                                                </span>
-                                                            }
-                                                        >
-                                                            <img
-                                                                src={displayTwitterImage()}
-                                                                alt={
-                                                                    ogpData()
-                                                                        ?.ogImageAlt ||
-                                                                    "Twitter Card Preview"
-                                                                }
-                                                                onError={() =>
-                                                                    setImageError(
-                                                                        true,
-                                                                    )
-                                                                }
-                                                                class="w-full h-full object-cover"
-                                                            />
-                                                        </Show>
-                                                    </div>
-                                                    <div class="p-3.5 flex flex-col justify-center gap-1 min-w-0 flex-1">
-                                                        <span class="text-[11px] text-base-content/60 truncate">
-                                                            {displayDomain()}
-                                                        </span>
-                                                        <p class="text-sm font-bold text-base-content line-clamp-1 break-all">
-                                                            {displayTwitterTitle()}
-                                                        </p>
-                                                        <p class="text-xs text-base-content/70 line-clamp-2 break-all leading-snug">
-                                                            {displayTwitterDescription()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            }
-                                        >
-                                            {/* summary_large_image (大型画像カード) */}
-                                            <div class="bg-base-100 border border-base-300 rounded-2xl overflow-hidden shadow-xs flex flex-col">
-                                                <div class="w-full aspect-[1.91/1] bg-base-200 flex items-center justify-center border-b border-base-300 overflow-hidden relative">
+                                    <Show
+                                        when={
+                                            effectiveTwitterCardType() ===
+                                            "summary_large_image"
+                                        }
+                                        fallback={
+                                            /* summary (横並び小型カード) */
+                                            <div
+                                                style={{
+                                                    "background-color": "var(--ba-surface)",
+                                                    border: "1px solid var(--ba-border)",
+                                                    "border-radius": "var(--ba-radius-lg)",
+                                                    overflow: "hidden",
+                                                    display: "flex",
+                                                    "align-items": "stretch",
+                                                    "box-shadow": "var(--ba-shadow-xs)",
+                                                    "min-height": "116px",
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        width: "7.5rem",
+                                                        "background-color": "var(--ba-surface-2)",
+                                                        "flex-shrink": 0,
+                                                        display: "flex",
+                                                        "align-items": "center",
+                                                        "justify-content": "center",
+                                                        "border-right": "1px solid var(--ba-border)",
+                                                        overflow: "hidden",
+                                                    }}
+                                                >
                                                     <Show
                                                         when={
                                                             displayTwitterImage() &&
                                                             !imageError()
                                                         }
                                                         fallback={
-                                                            <div class="flex flex-col items-center gap-1 text-base-content/75">
-                                                                <ToolIcon name="image" class="w-8 h-8 text-base-content/60" />
-                                                                <span class="text-xs font-bold">
-                                                                    OGP画像未設定
-                                                                </span>
-                                                            </div>
+                                                            <span
+                                                                class="ba-text-xs ba-text-muted ba-font-bold ba-text-center"
+                                                                style={{ "padding-inline": "0.5rem" }}
+                                                            >
+                                                                No Image
+                                                            </span>
                                                         }
                                                     >
                                                         <img
@@ -1135,135 +1121,411 @@ export default function OgpChecker() {
                                                             alt={
                                                                 ogpData()
                                                                     ?.ogImageAlt ||
-                                                                "Twitter Large Card Preview"
+                                                                "Twitter Card Preview"
                                                             }
                                                             onError={() =>
                                                                 setImageError(
                                                                     true,
                                                                 )
                                                             }
-                                                            class="w-full h-full object-cover"
+                                                            style={{ width: "100%", height: "100%", "object-fit": "cover" }}
                                                         />
                                                     </Show>
                                                 </div>
-                                                <div class="p-3.5 flex flex-col gap-1">
-                                                    <span class="text-[11px] text-base-content/60 truncate">
+                                                <div
+                                                    class="ba-flex-col ba-justify-center ba-gap-1 ba-min-w-0 ba-flex-1"
+                                                    style={{ padding: "0.875rem" }}
+                                                >
+                                                    <span class="ba-text-muted ba-truncate" style={{ "font-size": "0.6875rem" }}>
                                                         {displayDomain()}
                                                     </span>
-                                                    <p class="text-sm font-bold text-base-content line-clamp-1 break-all">
+                                                    <p
+                                                        class="ba-text-sm ba-font-bold ba-break-all"
+                                                        style={{
+                                                            margin: 0,
+                                                            display: "-webkit-box",
+                                                            "-webkit-line-clamp": 1,
+                                                            "-webkit-box-orient": "vertical",
+                                                            overflow: "hidden",
+                                                        }}
+                                                    >
                                                         {displayTwitterTitle()}
                                                     </p>
-                                                    <p class="text-xs text-base-content/70 line-clamp-2 break-all leading-snug">
+                                                    <p
+                                                        class="ba-text-xs ba-text-muted ba-break-all"
+                                                        style={{
+                                                            margin: 0,
+                                                            "line-height": 1.4,
+                                                            display: "-webkit-box",
+                                                            "-webkit-line-clamp": 2,
+                                                            "-webkit-box-orient": "vertical",
+                                                            overflow: "hidden",
+                                                        }}
+                                                    >
                                                         {displayTwitterDescription()}
                                                     </p>
                                                 </div>
                                             </div>
-                                        </Show>
-                                    </div>
-
-                                    {/* Facebook / LINE / Discord 汎用OGPプレビュー */}
-                                    <div class="bg-base-200/60 border border-base-300 rounded-2xl p-5 flex flex-col gap-3">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-xs font-black text-base-content/80 flex items-center gap-1.5">
-                                                Facebook / LINE / Discord プレビュー
-                                            </span>
-                                            <span class="badge badge-neutral badge-sm font-mono text-[10px]">
-                                                Open Graph (1.91:1)
-                                            </span>
-                                        </div>
-
-                                        <div class="bg-base-100 border border-base-300 rounded-xl overflow-hidden shadow-xs flex flex-col">
-                                            <div class="w-full aspect-[1.91/1] bg-base-200 flex items-center justify-center border-b border-base-300 overflow-hidden">
+                                        }
+                                    >
+                                        {/* summary_large_image (大型画像カード) */}
+                                        <div
+                                            style={{
+                                                "background-color": "var(--ba-surface)",
+                                                border: "1px solid var(--ba-border)",
+                                                "border-radius": "var(--ba-radius-lg)",
+                                                overflow: "hidden",
+                                                "box-shadow": "var(--ba-shadow-xs)",
+                                                display: "flex",
+                                                "flex-direction": "column",
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    width: "100%",
+                                                    "aspect-ratio": "1.91 / 1",
+                                                    "background-color": "var(--ba-surface-2)",
+                                                    display: "flex",
+                                                    "align-items": "center",
+                                                    "justify-content": "center",
+                                                    "border-bottom": "1px solid var(--ba-border)",
+                                                    overflow: "hidden",
+                                                    position: "relative",
+                                                }}
+                                            >
                                                 <Show
                                                     when={
-                                                        displayImage() &&
+                                                        displayTwitterImage() &&
                                                         !imageError()
                                                     }
                                                     fallback={
-                                                        <div class="flex flex-col items-center gap-1 text-base-content/75">
-                                                            <ToolIcon name="image" class="w-8 h-8 text-base-content/60" />
-                                                            <span class="text-xs font-bold">
-                                                                og:image 未設定
+                                                        <div class="ba-flex-col ba-items-center ba-gap-1 ba-text-muted">
+                                                            <ToolIcon name="image" class="ba-icon-lg" />
+                                                            <span class="ba-text-xs ba-font-bold">
+                                                                OGP画像未設定
                                                             </span>
                                                         </div>
                                                     }
                                                 >
                                                     <img
-                                                        src={displayImage()}
+                                                        src={displayTwitterImage()}
                                                         alt={
                                                             ogpData()
                                                                 ?.ogImageAlt ||
-                                                            "OGP Image Preview"
+                                                            "Twitter Large Card Preview"
                                                         }
                                                         onError={() =>
-                                                            setImageError(true)
+                                                            setImageError(
+                                                                true,
+                                                            )
                                                         }
-                                                        class="w-full h-full object-cover"
+                                                        style={{ width: "100%", height: "100%", "object-fit": "cover" }}
                                                     />
                                                 </Show>
                                             </div>
-                                            <div class="p-3.5 bg-base-200/30 flex flex-col gap-1">
-                                                <span class="text-[11px] uppercase tracking-wider text-base-content/60 font-semibold truncate">
-                                                    {ogpData()?.ogSiteName ||
-                                                        displayDomain()}
+                                            <div class="ba-stack-1" style={{ padding: "0.875rem" }}>
+                                                <span class="ba-text-muted ba-truncate" style={{ "font-size": "0.6875rem" }}>
+                                                    {displayDomain()}
                                                 </span>
-                                                <p class="text-sm font-bold text-primary line-clamp-1 break-all">
-                                                    {displayTitle()}
+                                                <p
+                                                    class="ba-text-sm ba-font-bold ba-break-all"
+                                                    style={{
+                                                        margin: 0,
+                                                        display: "-webkit-box",
+                                                        "-webkit-line-clamp": 1,
+                                                        "-webkit-box-orient": "vertical",
+                                                        overflow: "hidden",
+                                                    }}
+                                                >
+                                                    {displayTwitterTitle()}
                                                 </p>
-                                                <p class="text-xs text-base-content/70 line-clamp-2 break-all leading-snug">
-                                                    {displayDescription()}
+                                                <p
+                                                    class="ba-text-xs ba-text-muted ba-break-all"
+                                                    style={{
+                                                        margin: 0,
+                                                        "line-height": 1.4,
+                                                        display: "-webkit-box",
+                                                        "-webkit-line-clamp": 2,
+                                                        "-webkit-box-orient": "vertical",
+                                                        overflow: "hidden",
+                                                    }}
+                                                >
+                                                    {displayTwitterDescription()}
                                                 </p>
                                             </div>
+                                        </div>
+                                    </Show>
+                                </div>
+
+                                {/* Facebook / LINE / Discord 汎用OGPプレビュー */}
+                                <div class="ba-panel ba-stack-3" style={{ padding: "1.25rem" }}>
+                                    <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                        <span class="ba-text-xs ba-font-black ba-text-muted">
+                                            Facebook / LINE / Discord プレビュー
+                                        </span>
+                                        <span class="ba-badge ba-badge--neutral ba-mono">
+                                            Open Graph (1.91:1)
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            "background-color": "var(--ba-surface)",
+                                            border: "1px solid var(--ba-border)",
+                                            "border-radius": "var(--ba-radius)",
+                                            overflow: "hidden",
+                                            "box-shadow": "var(--ba-shadow-xs)",
+                                            display: "flex",
+                                            "flex-direction": "column",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                width: "100%",
+                                                "aspect-ratio": "1.91 / 1",
+                                                "background-color": "var(--ba-surface-2)",
+                                                display: "flex",
+                                                "align-items": "center",
+                                                "justify-content": "center",
+                                                "border-bottom": "1px solid var(--ba-border)",
+                                                overflow: "hidden",
+                                            }}
+                                        >
+                                            <Show
+                                                when={
+                                                    displayImage() &&
+                                                    !imageError()
+                                                }
+                                                fallback={
+                                                    <div class="ba-flex-col ba-items-center ba-gap-1 ba-text-muted">
+                                                        <ToolIcon name="image" class="ba-icon-lg" />
+                                                        <span class="ba-text-xs ba-font-bold">
+                                                            og:image 未設定
+                                                        </span>
+                                                    </div>
+                                                }
+                                            >
+                                                <img
+                                                    src={displayImage()}
+                                                    alt={
+                                                        ogpData()
+                                                            ?.ogImageAlt ||
+                                                        "OGP Image Preview"
+                                                    }
+                                                    onError={() =>
+                                                        setImageError(true)
+                                                    }
+                                                    style={{ width: "100%", height: "100%", "object-fit": "cover" }}
+                                                />
+                                            </Show>
+                                        </div>
+                                        <div
+                                            class="ba-stack-1"
+                                            style={{ padding: "0.875rem", "background-color": "var(--ba-surface-2)" }}
+                                        >
+                                            <span
+                                                class="ba-text-muted ba-truncate ba-font-bold"
+                                                style={{
+                                                    "font-size": "0.6875rem",
+                                                    "text-transform": "uppercase",
+                                                    "letter-spacing": "0.04em",
+                                                }}
+                                            >
+                                                {ogpData()?.ogSiteName ||
+                                                    displayDomain()}
+                                            </span>
+                                            <p
+                                                class="ba-text-sm ba-font-bold ba-text-primary ba-break-all"
+                                                style={{
+                                                    margin: 0,
+                                                    display: "-webkit-box",
+                                                    "-webkit-line-clamp": 1,
+                                                    "-webkit-box-orient": "vertical",
+                                                    overflow: "hidden",
+                                                }}
+                                            >
+                                                {displayTitle()}
+                                            </p>
+                                            <p
+                                                class="ba-text-xs ba-text-muted ba-break-all"
+                                                style={{
+                                                    margin: 0,
+                                                    "line-height": 1.4,
+                                                    display: "-webkit-box",
+                                                    "-webkit-line-clamp": 2,
+                                                    "-webkit-box-orient": "vertical",
+                                                    overflow: "hidden",
+                                                }}
+                                            >
+                                                {displayDescription()}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* 2. 主要OGPタグ診断チェックリスト */}
-                            <div>
-                                <h2 class="text-lg sm:text-xl font-black text-base-content mb-4 flex items-center gap-2">
-                                    OGP設定診断チェック
+                        {/* 2. 主要OGPタグ診断チェックリスト */}
+                        <div class="ba-stack-3">
+                            <h2 class="ba-section-title">
+                                OGP設定診断チェック
+                            </h2>
+                            <div
+                                style={{
+                                    border: "1px solid var(--ba-border)",
+                                    "border-radius": "var(--ba-radius-lg)",
+                                    "background-color": "var(--ba-surface)",
+                                    overflow: "hidden",
+                                    "box-shadow": "var(--ba-shadow-xs)",
+                                }}
+                            >
+                                <For each={diagnostics()}>
+                                    {(item) => (
+                                        <div
+                                            class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3"
+                                            style={{
+                                                padding: "1rem",
+                                                "border-bottom": "1px solid var(--ba-border)",
+                                            }}
+                                        >
+                                            <div
+                                                class="ba-flex ba-items-center ba-gap-3 ba-shrink-0"
+                                                style={{ "min-width": "13rem" }}
+                                            >
+                                                {statusBadge(item.status)}
+                                                <span class="ba-mono ba-font-bold ba-text-sm">
+                                                    {item.label}
+                                                </span>
+                                            </div>
+                                            <div class="ba-flex-1 ba-min-w-0 ba-stack-1" style={{ "min-width": "14rem" }}>
+                                                <p class="ba-text-sm ba-font-bold ba-break-all" style={{ margin: 0 }}>
+                                                    {item.value}
+                                                </p>
+                                                <p class="ba-text-muted" style={{ "font-size": "0.6875rem", margin: 0 }}>
+                                                    {item.message}
+                                                </p>
+                                            </div>
+                                            <div class="ba-shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={
+                                                        item.value ===
+                                                        "未設定"
+                                                    }
+                                                    onClick={() =>
+                                                        copyText(
+                                                            item.value,
+                                                            `diag-${item.key}`,
+                                                        )
+                                                    }
+                                                    class={`ba-btn ba-btn--xs ${
+                                                        copiedKey() ===
+                                                        `diag-${item.key}`
+                                                            ? "ba-btn--success"
+                                                            : "ba-btn--secondary"
+                                                    }`}
+                                                >
+                                                    {copiedKey() ===
+                                                    `diag-${item.key}`
+                                                        ? "完了"
+                                                        : "コピー"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </For>
+                            </div>
+                        </div>
+
+                        {/* 3. 検出されたメタタグ一覧 */}
+                        <div class="ba-stack-3">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3">
+                                <h2 class="ba-section-title">
+                                    検出されたメタタグ一覧 (
+                                    {ogpData()?.rawTags.length ?? 0}件)
                                 </h2>
-                                <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
-                                    <For each={diagnostics()}>
-                                        {(item) => (
-                                            <div class="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-base-200/40 transition-colors">
-                                                <div class="flex items-center gap-3 md:w-52 shrink-0">
-                                                    {statusBadge(item.status)}
-                                                    <span class="font-mono font-bold text-xs sm:text-sm text-base-content">
-                                                        {item.label}
+                                <button
+                                    type="button"
+                                    onClick={copyAllSummary}
+                                    class={`ba-btn ba-btn--sm ${
+                                        allCopied()
+                                            ? "ba-btn--success"
+                                            : "ba-btn--secondary"
+                                    }`}
+                                >
+                                    {allCopied()
+                                        ? "すべてコピー完了！"
+                                        : "すべての情報をコピー"}
+                                </button>
+                            </div>
+
+                            <Show
+                                when={
+                                    (ogpData()?.rawTags.length ?? 0) > 0
+                                }
+                                fallback={
+                                    <div class="ba-panel ba-text-center ba-text-xs ba-text-muted ba-font-bold" style={{ padding: "1.5rem" }}>
+                                        OGP・Twitterカード関連のメタタグは検出されませんでした。
+                                    </div>
+                                }
+                            >
+                                <div
+                                    style={{
+                                        border: "1px solid var(--ba-border)",
+                                        "border-radius": "var(--ba-radius-lg)",
+                                        "background-color": "var(--ba-surface)",
+                                        overflow: "hidden",
+                                        "box-shadow": "var(--ba-shadow-xs)",
+                                    }}
+                                >
+                                    <For each={ogpData()?.rawTags}>
+                                        {(tag, idx) => (
+                                            <div
+                                                class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2"
+                                                style={{
+                                                    padding: "0.875rem 1rem",
+                                                    "border-bottom": "1px solid var(--ba-border)",
+                                                }}
+                                            >
+                                                <div
+                                                    class="ba-flex ba-items-center ba-gap-2 ba-shrink-0"
+                                                    style={{ "min-width": "14rem" }}
+                                                >
+                                                    <span
+                                                        class="ba-badge ba-badge--neutral ba-mono"
+                                                        style={{ "text-transform": "uppercase" }}
+                                                    >
+                                                        {tag.category}
+                                                    </span>
+                                                    <span class="ba-mono ba-font-bold ba-text-xs ba-text-primary ba-break-all">
+                                                        {tag.key}
                                                     </span>
                                                 </div>
-                                                <div class="flex-1 min-w-0 flex flex-col gap-1">
-                                                    <p class="text-xs sm:text-sm font-semibold text-base-content break-all">
-                                                        {item.value}
-                                                    </p>
-                                                    <p class="text-[11px] text-base-content/60">
-                                                        {item.message}
-                                                    </p>
+                                                <div
+                                                    class="ba-flex-1 ba-text-xs ba-break-all"
+                                                    style={{ "min-width": "12rem", "font-weight": 500 }}
+                                                >
+                                                    {tag.value || "（空）"}
                                                 </div>
-                                                <div class="shrink-0 self-end md:self-center">
+                                                <div class="ba-shrink-0">
                                                     <button
                                                         type="button"
-                                                        disabled={
-                                                            item.value ===
-                                                            "未設定"
-                                                        }
+                                                        disabled={!tag.value}
                                                         onClick={() =>
                                                             copyText(
-                                                                item.value,
-                                                                `diag-${item.key}`,
+                                                                tag.value,
+                                                                `raw-${idx()}`,
                                                             )
                                                         }
-                                                        class={`btn btn-xs h-7 px-3 rounded-lg text-white font-medium ${
+                                                        class={`ba-btn ba-btn--xs ${
                                                             copiedKey() ===
-                                                            `diag-${item.key}`
-                                                                ? "btn-success"
-                                                                : "btn-neutral"
+                                                            `raw-${idx()}`
+                                                                ? "ba-btn--success"
+                                                                : "ba-btn--secondary"
                                                         }`}
                                                     >
                                                         {copiedKey() ===
-                                                        `diag-${item.key}`
+                                                        `raw-${idx()}`
                                                             ? "完了"
                                                             : "コピー"}
                                                     </button>
@@ -1272,87 +1534,10 @@ export default function OgpChecker() {
                                         )}
                                     </For>
                                 </div>
-                            </div>
-
-                            {/* 3. 検出されたメタタグ一覧 */}
-                            <div>
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                                    <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                        検出されたメタタグ一覧 (
-                                        {ogpData()?.rawTags.length ?? 0}件)
-                                    </h2>
-                                    <button
-                                        type="button"
-                                        onClick={copyAllSummary}
-                                        class={`btn btn-sm text-white rounded-xl font-bold ${
-                                            allCopied()
-                                                ? "btn-success"
-                                                : "btn-neutral"
-                                        }`}
-                                    >
-                                        {allCopied()
-                                            ? "すべてコピー完了！"
-                                            : "すべての情報をコピー"}
-                                    </button>
-                                </div>
-
-                                <Show
-                                    when={
-                                        (ogpData()?.rawTags.length ?? 0) > 0
-                                    }
-                                    fallback={
-                                        <div class="p-6 text-center bg-base-200/50 rounded-2xl border border-base-300 text-xs text-base-content/60 font-semibold">
-                                            OGP・Twitterカード関連のメタタグは検出されませんでした。
-                                        </div>
-                                    }
-                                >
-                                    <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
-                                        <For each={ogpData()?.rawTags}>
-                                            {(tag, idx) => (
-                                                <div class="p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-2 hover:bg-base-200/40 transition-colors">
-                                                    <div class="flex items-center gap-2 md:w-56 shrink-0">
-                                                        <span class="badge badge-ghost badge-xs font-mono uppercase">
-                                                            {tag.category}
-                                                        </span>
-                                                        <span class="font-mono font-bold text-xs sm:text-sm text-primary break-all">
-                                                            {tag.key}
-                                                        </span>
-                                                    </div>
-                                                    <div class="flex-1 text-xs sm:text-sm text-base-content break-all font-medium md:px-4">
-                                                        {tag.value || "（空）"}
-                                                    </div>
-                                                    <div class="shrink-0 self-end md:self-center">
-                                                        <button
-                                                            type="button"
-                                                            disabled={!tag.value}
-                                                            onClick={() =>
-                                                                copyText(
-                                                                    tag.value,
-                                                                    `raw-${idx()}`,
-                                                                )
-                                                            }
-                                                            class={`btn btn-xs h-7 px-3 rounded-lg text-white font-medium ${
-                                                                copiedKey() ===
-                                                                `raw-${idx()}`
-                                                                    ? "btn-success"
-                                                                    : "btn-neutral"
-                                                            }`}
-                                                        >
-                                                            {copiedKey() ===
-                                                            `raw-${idx()}`
-                                                                ? "完了"
-                                                                : "コピー"}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </For>
-                                    </div>
-                                </Show>
-                            </div>
+                            </Show>
                         </div>
-                    </Show>
-                </div>
+                    </div>
+                </Show>
             </div>
 
             <AdSense />

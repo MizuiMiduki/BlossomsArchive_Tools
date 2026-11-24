@@ -16,7 +16,31 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const distDirectory = path.resolve(scriptDirectory, "../dist");
 const assetsDirectory = path.join(distDirectory, "assets");
 const templatePath = path.join(distDirectory, "index.html");
+const criticalCssPath = path.resolve(scriptDirectory, "../src/styles/critical.css");
 const template = fs.readFileSync(templatePath, "utf8");
+
+/**
+ * CSSコメントを文字単位走査で安全に除去し、余白を圧縮する（CodeQL準拠・単一パス正規表現不使用）
+ */
+function minifyCssSafely(rawCss: string): string {
+    let out = "";
+    let i = 0;
+    while (i < rawCss.length) {
+        if (rawCss[i] === "/" && rawCss[i + 1] === "*") {
+            const end = rawCss.indexOf("*/", i + 2);
+            if (end === -1) break;
+            i = end + 2;
+            continue;
+        }
+        out += rawCss[i];
+        i++;
+    }
+    return out
+        .replace(/\r?\n/g, " ")
+        .replace(/\s+/g, " ")
+        .replace(/\s*([{:;,}])\s*/g, "$1")
+        .trim();
+}
 
 const assetFiles = fs.existsSync(assetsDirectory)
     ? fs.readdirSync(assetsDirectory)
@@ -37,6 +61,24 @@ const budouxJsFile = assetFiles.find(
 );
 
 let baseTemplate = template;
+
+// src/styles/critical.css を全ルートHTMLの <style id="ba-tools-critical-css"> へ自動共通インライン埋め込み
+if (fs.existsSync(criticalCssPath)) {
+    const minifiedCritical = minifyCssSafely(fs.readFileSync(criticalCssPath, "utf8"));
+    const styleStart = '<style id="ba-tools-critical-css">';
+    const styleEnd = "</style>";
+    const startIdx = baseTemplate.indexOf(styleStart);
+    if (startIdx !== -1) {
+        const endIdx = baseTemplate.indexOf(styleEnd, startIdx + styleStart.length);
+        if (endIdx !== -1) {
+            baseTemplate =
+                baseTemplate.slice(0, startIdx) +
+                `${styleStart}${minifiedCritical}${styleEnd}` +
+                baseTemplate.slice(endIdx + styleEnd.length);
+        }
+    }
+}
+
 if (mainCssFile) {
     const originalLinkVariants = [
         `<link rel="stylesheet" crossorigin href="/assets/${mainCssFile}">`,
@@ -222,7 +264,7 @@ for (const route of routes) {
         ? metadata.title.slice(0, -suffix.length)
         : metadata.title;
 
-    const initialShell = `<div id="root"><div style="min-height:100dvh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"><header style="height:4rem;border-bottom:1px solid rgba(128,128,128,0.2);display:flex;align-items:center;padding:0 1rem;gap:0.75rem"><span style="font-size:1.25rem">🌸</span><span style="font-weight:700;font-size:1.125rem">BlossomsArchive Tools</span></header><main style="flex:1;max-width:64rem;width:100%;margin:0 auto;padding:1.5rem 1rem"><h1 class="sr-only">${escapeAttribute(metadata.title)}</h1><div style="background:rgba(128,128,128,0.08);border:1px solid rgba(128,128,128,0.15);border-radius:1.25rem;padding:1.5rem;display:flex;flex-direction:column;gap:1rem"><h2 style="font-size:1.75rem;font-weight:800;margin:0;line-height:1.35;contain:layout style">${escapeAttribute(cleanTitle)}</h2><p style="font-size:1.05rem;opacity:0.95;margin:0;line-height:1.75;contain:layout style">${escapeAttribute(metadata.description)} 完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。</p><div style="height:140px;background:rgba(128,128,128,0.05);border-radius:0.75rem;border:1px dashed rgba(128,128,128,0.2)"></div></div></main></div></div>`;
+    const initialShell = `<div id="root"><div style="min-height:100dvh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"><header style="height:4rem;border-bottom:1px solid rgba(128,128,128,0.2);display:flex;align-items:center;padding:0 1rem;gap:0.75rem"><span style="font-weight:800;font-size:1.125rem">BlossomsArchive Tools</span></header><main style="flex:1;max-width:64rem;width:100%;margin:0 auto;padding:1.5rem 1rem"><h1 class="ba-sr-only">${escapeAttribute(metadata.title)}</h1><div style="background:rgba(128,128,128,0.08);border:1px solid rgba(128,128,128,0.15);border-radius:1rem;padding:1.5rem;display:flex;flex-direction:column;gap:1rem"><h2 style="font-size:1.75rem;font-weight:800;margin:0;line-height:1.35;contain:layout style">${escapeAttribute(cleanTitle)}</h2><p style="font-size:1rem;opacity:0.95;margin:0;line-height:1.75;contain:layout style">${escapeAttribute(metadata.description)} 完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。</p><div style="height:140px;background:rgba(128,128,128,0.05);border-radius:0.75rem;border:1px dashed rgba(128,128,128,0.2)"></div></div></main></div></div>`;
 
     let html = replaceExact(
         withSeo,

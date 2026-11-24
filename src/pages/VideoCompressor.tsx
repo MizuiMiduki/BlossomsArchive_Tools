@@ -64,7 +64,7 @@ export default function VideoCompressor() {
         }
 
         if (containerRef) {
-            playPageEntrance(containerRef, ".card");
+            playPageEntrance(containerRef, ".ba-card");
         }
 
         return () => {
@@ -226,29 +226,38 @@ export default function VideoCompressor() {
     };
 
     return (
-        <div ref={containerRef} class="w-full max-w-4xl mx-auto space-y-6 sm:space-y-8 min-w-0">
+        <div ref={containerRef} class="ba-page ba-page--narrow">
             {/* タイトルヘッダー */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm p-4 sm:p-6 text-center min-w-0">
-                <h1 class="text-3xl font-black text-base-content dark:text-white mb-2 flex items-center justify-center gap-2">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="ba-card ba-text-center">
+                <h1
+                    class="ba-title ba-flex ba-items-center ba-justify-center ba-gap-2"
+                    style={{ "margin-bottom": "0.5rem" }}
+                >
+                    <svg class="ba-icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                     <BudouX text="動画圧縮・軽量化ツール" />
                 </h1>
-                <p class="text-base-content/70 max-w-2xl mx-auto text-sm leading-relaxed">
+                <p
+                    class="ba-text-sm ba-text-muted"
+                    style={{ "max-width": "42rem", margin: "0 auto", "line-height": 1.65 }}
+                >
                     <BudouX text="動画の解像度やビットレートをブラウザ上で最適化し、ファイルサイズを削減します。サーバーにアップロードせず端末内で安全に完結します。" />
                 </p>
-                <div class="flex flex-wrap justify-center gap-2 mt-3">
-                    <span class="badge badge-outline text-xs font-semibold">完全ブラウザ完結</span>
-                    <span class="badge badge-outline text-xs font-semibold">サーバー送信ゼロで安心</span>
-                    <span class="badge badge-outline text-xs font-semibold">解像度・音声を自由調整</span>
+                <div
+                    class="ba-flex ba-flex-wrap ba-justify-center ba-gap-2"
+                    style={{ "margin-top": "0.75rem" }}
+                >
+                    <span class="ba-badge ba-badge--outline">完全ブラウザ完結</span>
+                    <span class="ba-badge ba-badge--outline">サーバー送信ゼロで安心</span>
+                    <span class="ba-badge ba-badge--outline">解像度・音声を自由調整</span>
                 </div>
             </div>
 
             {/* エラーメッセージ */}
             <Show when={errorMessage()}>
-                <div class="alert alert-error shadow-sm text-sm">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="ba-alert ba-alert--error">
+                    <svg class="ba-icon-md ba-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span>{errorMessage()}</span>
@@ -258,9 +267,14 @@ export default function VideoCompressor() {
             {/* ファイル未選択時のドロップゾーン */}
             <Show when={!selectedFile()}>
                 <div
-                    class={`card border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all cursor-pointer bg-base-100 ${
-                        isDragging() ? "border-primary bg-primary/5 scale-[1.01]" : "border-base-300 hover:border-primary/50"
-                    }`}
+                    class="ba-card ba-dropzone"
+                    style={{
+                        padding: "2.5rem 1.5rem",
+                        background: isDragging() ? "var(--ba-primary-soft)" : "var(--ba-surface)",
+                        "border-color": isDragging() ? "var(--ba-primary)" : "var(--ba-border-strong)",
+                        transform: isDragging() ? "scale(1.01)" : "none",
+                        transition: "all 0.15s ease",
+                    }}
                     onDragOver={(e) => {
                         e.preventDefault();
                         setIsDragging(true);
@@ -278,24 +292,32 @@ export default function VideoCompressor() {
                         type="file"
                         accept="video/*,.mp4,.webm,.mov,.mkv,.avi"
                         aria-label="動画ファイルを選択"
-                        class="hidden"
+                        style={{ display: "none" }}
                         onChange={(e) => handleFiles((e.target as HTMLInputElement).files)}
                     />
-                    <div class="flex flex-col items-center justify-center space-y-4">
-                        <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="ba-flex-col ba-items-center ba-justify-center ba-gap-4">
+                        <div
+                            class="ba-flex ba-items-center ba-justify-center ba-text-primary"
+                            style={{
+                                width: "4rem",
+                                height: "4rem",
+                                "border-radius": "9999px",
+                                background: "var(--ba-primary-soft)",
+                            }}
+                        >
+                            <svg class="ba-icon-lg" style={{ width: "2rem", height: "2rem" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                         </div>
                         <div>
-                            <p class="font-bold text-lg text-base-content">
+                            <p class="ba-font-bold ba-text-lg" style={{ margin: 0 }}>
                                 動画ファイルをドラッグ＆ドロップ
                             </p>
-                            <p class="text-sm text-base-content/60 mt-1">
+                            <p class="ba-text-sm ba-text-muted" style={{ "margin-top": "0.25rem", "margin-bottom": 0 }}>
                                 またはクリックしてファイルを選択（MP4, WebM, MOV等に対応）
                             </p>
                         </div>
-                        <button type="button" class="btn btn-primary btn-sm px-6">
+                        <button type="button" class="ba-btn ba-btn--primary ba-btn--sm" style={{ "padding-inline": "1.5rem" }}>
                             ファイルを選択
                         </button>
                     </div>
@@ -305,15 +327,24 @@ export default function VideoCompressor() {
             {/* ファイル選択後のエリア */}
             <Show when={selectedFile() && metadata()}>
                 {(meta) => (
-                    <div class="space-y-6">
+                    <div class="ba-stack-6">
                         {/* 元動画情報 & プレビュー */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm p-6">
-                            <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-base-200">
-                                <div>
-                                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <div class="ba-card ba-stack-4">
+                            <div
+                                class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-4"
+                                style={{
+                                    "padding-bottom": "0.75rem",
+                                    "border-bottom": "1px solid var(--ba-border)",
+                                }}
+                            >
+                                <div class="ba-min-w-0">
+                                    <h2 class="ba-section-title ba-flex ba-items-center ba-gap-2">
                                         元の動画ファイル
                                     </h2>
-                                    <p class="text-xs text-base-content/60 truncate max-w-md mt-0.5 font-mono">
+                                    <p
+                                        class="ba-text-xs ba-text-muted ba-truncate ba-mono"
+                                        style={{ "max-width": "28rem", "margin-top": "0.2rem", "margin-bottom": 0 }}
+                                    >
                                         {meta().name}
                                     </p>
                                 </div>
@@ -321,46 +352,57 @@ export default function VideoCompressor() {
                                     type="button"
                                     onClick={resetAll}
                                     disabled={isCompressing()}
-                                    class="btn btn-ghost btn-sm text-error"
+                                    class="ba-btn ba-btn--ghost ba-btn--sm ba-text-danger"
                                 >
                                     別の動画に変更
                                 </button>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <div class="ba-grid-2 ba-items-center" style={{ gap: "1.5rem" }}>
                                 {/* プレビュー動画 */}
-                                <div class="rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+                                <div
+                                    class="ba-flex ba-items-center ba-justify-center"
+                                    style={{
+                                        "border-radius": "var(--ba-radius)",
+                                        overflow: "hidden",
+                                        background: "#000000",
+                                        "aspect-ratio": "16 / 9",
+                                    }}
+                                >
                                     <video
                                         src={previewUrl()}
                                         controls
                                         playsinline
-                                        class="w-full h-full object-contain"
+                                        style={{ width: "100%", height: "100%", "object-fit": "contain" }}
                                     />
                                 </div>
 
                                 {/* メタデータ詳細 */}
-                                <div class="grid grid-cols-2 gap-3 text-sm">
-                                    <div class="bg-base-200/50 p-3 rounded-lg">
-                                        <div class="text-xs text-base-content/60">ファイルサイズ</div>
-                                        <div class="text-base font-bold text-primary mt-1">
+                                <div
+                                    class="ba-grid ba-text-sm"
+                                    style={{ "grid-template-columns": "repeat(2, minmax(0, 1fr))", gap: "0.75rem" }}
+                                >
+                                    <div class="ba-panel" style={{ padding: "0.75rem" }}>
+                                        <div class="ba-text-xs ba-text-muted">ファイルサイズ</div>
+                                        <div class="ba-text-base ba-font-bold ba-text-primary" style={{ "margin-top": "0.25rem" }}>
                                             {formatBytes(meta().size)}
                                         </div>
                                     </div>
-                                    <div class="bg-base-200/50 p-3 rounded-lg">
-                                        <div class="text-xs text-base-content/60">解像度</div>
-                                        <div class="text-base font-bold mt-1">
+                                    <div class="ba-panel" style={{ padding: "0.75rem" }}>
+                                        <div class="ba-text-xs ba-text-muted">解像度</div>
+                                        <div class="ba-text-base ba-font-bold" style={{ "margin-top": "0.25rem" }}>
                                             {meta().width} × {meta().height}
                                         </div>
                                     </div>
-                                    <div class="bg-base-200/50 p-3 rounded-lg">
-                                        <div class="text-xs text-base-content/60">再生時間</div>
-                                        <div class="text-base font-bold mt-1">
+                                    <div class="ba-panel" style={{ padding: "0.75rem" }}>
+                                        <div class="ba-text-xs ba-text-muted">再生時間</div>
+                                        <div class="ba-text-base ba-font-bold" style={{ "margin-top": "0.25rem" }}>
                                             {formatDuration(meta().duration)}
                                         </div>
                                     </div>
-                                    <div class="bg-base-200/50 p-3 rounded-lg">
-                                        <div class="text-xs text-base-content/60">形式</div>
-                                        <div class="text-base font-bold mt-1 truncate" title={meta().type}>
+                                    <div class="ba-panel" style={{ padding: "0.75rem" }}>
+                                        <div class="ba-text-xs ba-text-muted">形式</div>
+                                        <div class="ba-text-base ba-font-bold ba-truncate" style={{ "margin-top": "0.25rem" }} title={meta().type}>
                                             {meta().type.replace("video/", "").toUpperCase() || "MP4"}
                                         </div>
                                     </div>
@@ -369,38 +411,50 @@ export default function VideoCompressor() {
                         </div>
 
                         {/* 圧縮設定 */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm p-6 space-y-6">
+                        <div class="ba-card ba-stack-6">
                             <div>
-                                <h2 class="text-lg font-bold flex items-center gap-2 mb-1">
+                                <h2 class="ba-section-title ba-flex ba-items-center ba-gap-2" style={{ "margin-bottom": "0.25rem" }}>
                                     圧縮設定
                                 </h2>
-                                <p class="text-xs text-base-content/60">
+                                <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
                                     目的に合わせたプリセットを選択するか、自由に数値をカスタマイズできます。
                                 </p>
                             </div>
 
                             {/* プリセット選択タブ */}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="ba-grid-4">
                                 <For each={COMPRESS_PRESETS}>
                                     {(preset) => (
                                         <button
                                             type="button"
                                             onClick={() => handlePresetChange(preset.id)}
                                             disabled={isCompressing()}
-                                            class={`p-4 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                                                selectedPresetId() === preset.id
-                                                    ? "border-primary bg-primary/10 shadow-sm"
-                                                    : "border-base-300 hover:border-base-content/20 bg-base-100"
-                                            }`}
+                                            class="ba-flex-col ba-justify-between"
+                                            style={{
+                                                padding: "1rem",
+                                                "border-radius": "var(--ba-radius)",
+                                                border: selectedPresetId() === preset.id
+                                                    ? "1.5px solid var(--ba-primary)"
+                                                    : "1px solid var(--ba-border)",
+                                                background: selectedPresetId() === preset.id
+                                                    ? "var(--ba-primary-soft)"
+                                                    : "var(--ba-surface)",
+                                                "text-align": "left",
+                                                cursor: isCompressing() ? "not-allowed" : "pointer",
+                                                transition: "all 0.15s ease",
+                                            }}
                                         >
                                             <div>
-                                                <div class="font-bold text-sm text-base-content flex items-center justify-between">
+                                                <div class="ba-font-bold ba-text-sm ba-flex ba-items-center ba-justify-between">
                                                     <span>{preset.label}</span>
                                                     <Show when={selectedPresetId() === preset.id}>
-                                                        <span class="text-primary font-bold">✓</span>
+                                                        <span class="ba-text-primary ba-font-bold">✓</span>
                                                     </Show>
                                                 </div>
-                                                <p class="text-xs text-base-content/60 mt-1 leading-relaxed">
+                                                <p
+                                                    class="ba-text-xs ba-text-muted"
+                                                    style={{ "margin-top": "0.25rem", "margin-bottom": 0, "line-height": 1.6 }}
+                                                >
                                                     {preset.description}
                                                 </p>
                                             </div>
@@ -410,13 +464,16 @@ export default function VideoCompressor() {
                             </div>
 
                             {/* 詳細設定（カスタムまたは調整時） */}
-                            <div class="bg-base-200/40 rounded-xl p-4 space-y-4 border border-base-200">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="ba-panel ba-stack-4">
+                                <div class="ba-grid-2">
                                     {/* 解像度スケーリング */}
                                     <div>
-                                        <div class="flex justify-between items-center text-xs font-semibold mb-1">
+                                        <div
+                                            class="ba-flex ba-justify-between ba-items-center ba-text-xs ba-font-bold"
+                                            style={{ "margin-bottom": "0.25rem" }}
+                                        >
                                             <span>解像度スケーリング: {scalePercent()}%</span>
-                                            <span class="text-primary">
+                                            <span class="ba-text-primary">
                                                 {targetDimensions().width} × {targetDimensions().height}
                                             </span>
                                         </div>
@@ -432,9 +489,12 @@ export default function VideoCompressor() {
                                                 setSelectedPresetId("custom");
                                             }}
                                             disabled={isCompressing()}
-                                            class="range range-xs range-primary w-full"
+                                            class="ba-range"
                                         />
-                                        <div class="flex justify-between text-[10px] text-base-content/75 mt-1">
+                                        <div
+                                            class="ba-flex ba-justify-between ba-text-muted"
+                                            style={{ "font-size": "0.625rem", "margin-top": "0.25rem" }}
+                                        >
                                             <span>25%（超小型）</span>
                                             <span>50%</span>
                                             <span>75%</span>
@@ -444,9 +504,12 @@ export default function VideoCompressor() {
 
                                     {/* ビットレート調整 */}
                                     <div>
-                                        <div class="flex justify-between items-center text-xs font-semibold mb-1">
+                                        <div
+                                            class="ba-flex ba-justify-between ba-items-center ba-text-xs ba-font-bold"
+                                            style={{ "margin-bottom": "0.25rem" }}
+                                        >
                                             <span>映像ビットレート</span>
-                                            <span class="text-primary font-bold">
+                                            <span class="ba-text-primary ba-font-bold">
                                                 {videoBitrateKbps() >= 1000
                                                     ? `${(videoBitrateKbps() / 1000).toFixed(1)} Mbps`
                                                     : `${videoBitrateKbps()} kbps`}
@@ -464,9 +527,12 @@ export default function VideoCompressor() {
                                                 setSelectedPresetId("custom");
                                             }}
                                             disabled={isCompressing()}
-                                            class="range range-xs range-primary w-full"
+                                            class="ba-range"
                                         />
-                                        <div class="flex justify-between text-[10px] text-base-content/75 mt-1">
+                                        <div
+                                            class="ba-flex ba-justify-between ba-text-muted"
+                                            style={{ "font-size": "0.625rem", "margin-top": "0.25rem" }}
+                                        >
                                             <span>300 kbps (高圧縮)</span>
                                             <span>1.5 Mbps</span>
                                             <span>3.5 Mbps</span>
@@ -475,14 +541,20 @@ export default function VideoCompressor() {
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-base-200">
+                                <div
+                                    class="ba-grid-3"
+                                    style={{
+                                        "padding-top": "0.75rem",
+                                        "border-top": "1px solid var(--ba-border)",
+                                    }}
+                                >
                                     {/* フレームレート */}
-                                    <div>
-                                        <label class="label py-1">
-                                            <span class="label-text text-xs font-semibold">フレームレート (FPS)</span>
+                                    <div class="ba-field">
+                                        <label class="ba-label">
+                                            <span>フレームレート (FPS)</span>
                                         </label>
                                         <select
-                                            class="select select-bordered select-sm w-full"
+                                            class="ba-select ba-select--sm"
                                             value={fps()}
                                             aria-label="フレームレート (FPS)"
                                             onChange={(e) => {
@@ -499,12 +571,12 @@ export default function VideoCompressor() {
                                     </div>
 
                                     {/* 音声トラック */}
-                                    <div>
-                                        <label class="label py-1">
-                                            <span class="label-text text-xs font-semibold">音声設定</span>
+                                    <div class="ba-field">
+                                        <label class="ba-label">
+                                            <span>音声設定</span>
                                         </label>
                                         <select
-                                            class="select select-bordered select-sm w-full"
+                                            class="ba-select ba-select--sm"
                                             value={includeAudio() ? "include" : "mute"}
                                             aria-label="音声設定"
                                             onChange={(e) => {
@@ -519,12 +591,12 @@ export default function VideoCompressor() {
                                     </div>
 
                                     {/* 出力形式（コーデック） */}
-                                    <div>
-                                        <label class="label py-1">
-                                            <span class="label-text text-xs font-semibold">出力フォーマット</span>
+                                    <div class="ba-field">
+                                        <label class="ba-label">
+                                            <span>出力フォーマット</span>
                                         </label>
                                         <select
-                                            class="select select-bordered select-sm w-full"
+                                            class="ba-select ba-select--sm"
                                             value={selectedMimeType()}
                                             aria-label="出力フォーマット"
                                             onChange={(e) => setSelectedMimeType(e.currentTarget.value)}
@@ -543,15 +615,26 @@ export default function VideoCompressor() {
                             </div>
 
                             {/* 予想サイズ & 実行ボタン */}
-                            <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                            <div
+                                class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-4"
+                                style={{
+                                    padding: "1rem",
+                                    "border-radius": "var(--ba-radius)",
+                                    background: "var(--ba-primary-soft)",
+                                    border: "1px solid var(--ba-border)",
+                                }}
+                            >
                                 <div>
-                                    <div class="text-xs text-base-content/60">予想圧縮後サイズ（目安）</div>
-                                    <div class="flex items-baseline gap-2 mt-0.5">
-                                        <span class="text-xl font-extrabold text-primary">
+                                    <div class="ba-text-xs ba-text-muted">予想圧縮後サイズ（目安）</div>
+                                    <div
+                                        class="ba-flex ba-items-center ba-gap-2"
+                                        style={{ "margin-top": "0.2rem" }}
+                                    >
+                                        <span class="ba-text-xl ba-font-black ba-text-primary">
                                             {formatBytes(estimatedSize())}
                                         </span>
                                         <Show when={estimatedReduction() > 0}>
-                                            <span class="badge badge-sm badge-success font-bold">
+                                            <span class="ba-badge ba-badge--success">
                                                 約 {estimatedReduction()}% 削減
                                             </span>
                                         </Show>
@@ -561,12 +644,12 @@ export default function VideoCompressor() {
                                 <Show
                                     when={!isCompressing()}
                                     fallback={
-                                        <div class="flex items-center gap-3">
-                                            <span class="loading loading-spinner text-primary"></span>
+                                        <div class="ba-flex ba-items-center ba-gap-3">
+                                            <span class="ba-spinner ba-text-primary"></span>
                                             <button
                                                 type="button"
                                                 onClick={cancelCompression}
-                                                class="btn btn-outline btn-error btn-sm"
+                                                class="ba-btn ba-btn--outline ba-btn--sm ba-text-danger"
                                             >
                                                 キャンセル
                                             </button>
@@ -576,7 +659,8 @@ export default function VideoCompressor() {
                                     <button
                                         type="button"
                                         onClick={startCompression}
-                                        class="btn btn-primary px-8"
+                                        class="ba-btn ba-btn--primary"
+                                        style={{ "padding-inline": "2rem" }}
                                     >
                                         圧縮を開始する
                                     </button>
@@ -585,20 +669,23 @@ export default function VideoCompressor() {
 
                             {/* 圧縮進捗表示 */}
                             <Show when={isCompressing()}>
-                                <div class="bg-base-200/70 p-4 rounded-xl space-y-2 border border-base-300">
-                                    <div class="flex justify-between items-center text-xs font-semibold">
-                                        <span class="flex items-center gap-2">
-                                            <span class="loading loading-ring loading-xs text-primary"></span>
+                                <div class="ba-panel ba-stack-2">
+                                    <div class="ba-flex ba-justify-between ba-items-center ba-text-xs ba-font-bold">
+                                        <span class="ba-flex ba-items-center ba-gap-2">
+                                            <span class="ba-spinner ba-text-primary" style={{ width: "0.9rem", height: "0.9rem" }}></span>
                                             動画をエンコード中...
                                         </span>
-                                        <span class="text-primary font-bold">{progressPercent()}%</span>
+                                        <span class="ba-text-primary ba-font-bold">{progressPercent()}%</span>
                                     </div>
                                     <progress
-                                        class="progress progress-primary w-full"
+                                        class="ba-progress"
                                         value={progressPercent()}
                                         max="100"
                                     ></progress>
-                                    <div class="flex justify-between text-[11px] text-base-content/60">
+                                    <div
+                                        class="ba-flex ba-justify-between ba-text-muted"
+                                        style={{ "font-size": "0.6875rem" }}
+                                    >
                                         <span>処理時間: {formatDuration(progressTime())} / {formatDuration(meta().duration)}</span>
                                         <span>ブラウザ内で処理中（通信は発生しません）</span>
                                     </div>
@@ -608,59 +695,89 @@ export default function VideoCompressor() {
 
                         {/* 圧縮結果カード */}
                         <Show when={compressedBlob() && compressedUrl()}>
-                            <div class="card bg-base-100 border border-success shadow-md p-6 space-y-6">
-                                <div class="flex items-center justify-between border-b border-base-200 pb-3">
-                                    <div class="flex items-center gap-2 text-success font-bold text-lg">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div
+                                class="ba-card ba-stack-6"
+                                style={{ "border-color": "var(--ba-success)" }}
+                            >
+                                <div
+                                    class="ba-flex ba-items-center ba-justify-between ba-gap-2 ba-flex-wrap"
+                                    style={{
+                                        "border-bottom": "1px solid var(--ba-border)",
+                                        "padding-bottom": "0.75rem",
+                                    }}
+                                >
+                                    <div class="ba-flex ba-items-center ba-gap-2 ba-text-success ba-font-bold ba-text-lg">
+                                        <svg class="ba-icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <span>圧縮が完了しました！</span>
                                     </div>
-                                    <span class="badge badge-success font-bold text-xs p-3">
+                                    <span class="ba-badge ba-badge--success" style={{ padding: "0.35rem 0.75rem" }}>
                                         {calculateReductionPercent(meta().size, compressedBlob()!.size)}% 削減
                                     </span>
                                 </div>
 
                                 {/* 前後比較 */}
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                                    <div class="p-3 bg-base-200/50 rounded-lg">
-                                        <div class="text-xs text-base-content/60">元のサイズ</div>
-                                        <div class="text-lg font-bold mt-1 text-base-content/70 line-through">
+                                <div class="ba-grid-3 ba-text-center">
+                                    <div class="ba-panel" style={{ padding: "0.75rem" }}>
+                                        <div class="ba-text-xs ba-text-muted">元のサイズ</div>
+                                        <div
+                                            class="ba-text-lg ba-font-bold ba-text-muted"
+                                            style={{ "margin-top": "0.25rem", "text-decoration": "line-through" }}
+                                        >
                                             {formatBytes(meta().size)}
                                         </div>
                                     </div>
-                                    <div class="p-3 bg-success/10 border border-success/30 rounded-lg">
-                                        <div class="text-xs text-success font-semibold">圧縮後サイズ</div>
-                                        <div class="text-xl font-extrabold text-success mt-1">
+                                    <div
+                                        style={{
+                                            padding: "0.75rem",
+                                            background: "var(--ba-success-soft)",
+                                            border: "1px solid var(--ba-success)",
+                                            "border-radius": "var(--ba-radius)",
+                                        }}
+                                    >
+                                        <div class="ba-text-xs ba-text-success ba-font-bold">圧縮後サイズ</div>
+                                        <div class="ba-text-xl ba-font-black ba-text-success" style={{ "margin-top": "0.25rem" }}>
                                             {formatBytes(compressedBlob()!.size)}
                                         </div>
                                     </div>
-                                    <div class="p-3 bg-base-200/50 rounded-lg">
-                                        <div class="text-xs text-base-content/60">削減容量</div>
-                                        <div class="text-lg font-bold text-primary mt-1">
+                                    <div class="ba-panel" style={{ padding: "0.75rem" }}>
+                                        <div class="ba-text-xs ba-text-muted">削減容量</div>
+                                        <div class="ba-text-lg ba-font-bold ba-text-primary" style={{ "margin-top": "0.25rem" }}>
                                             -{formatBytes(meta().size - compressedBlob()!.size)}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* プレビュープレイヤー */}
-                                <div class="rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center max-w-xl mx-auto w-full">
+                                <div
+                                    class="ba-flex ba-items-center ba-justify-center ba-w-full"
+                                    style={{
+                                        "border-radius": "var(--ba-radius)",
+                                        overflow: "hidden",
+                                        background: "#000000",
+                                        "aspect-ratio": "16 / 9",
+                                        "max-width": "36rem",
+                                        margin: "0 auto",
+                                    }}
+                                >
                                     <video
                                         src={compressedUrl()}
                                         controls
                                         playsinline
-                                        class="w-full h-full object-contain"
+                                        style={{ width: "100%", height: "100%", "object-fit": "contain" }}
                                     />
                                 </div>
 
                                 {/* アクションボタン */}
-                                <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-center ba-gap-4" style={{ "padding-top": "0.5rem" }}>
                                     <a
                                         href={compressedUrl()}
                                         download={getDownloadFilename()}
-                                        class="btn btn-success px-8 text-white shadow-sm"
+                                        class="ba-btn ba-btn--success"
+                                        style={{ "padding-inline": "2rem" }}
                                     >
-                                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="ba-icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                         </svg>
                                         圧縮動画をダウンロード
@@ -668,7 +785,7 @@ export default function VideoCompressor() {
                                     <button
                                         type="button"
                                         onClick={resetAll}
-                                        class="btn btn-outline"
+                                        class="ba-btn ba-btn--outline"
                                     >
                                         別の動画を圧縮する
                                     </button>
@@ -680,57 +797,61 @@ export default function VideoCompressor() {
             </Show>
 
             {/* 解説・FAQセクション */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm p-6 space-y-6">
+            <div class="ba-card ba-stack-6">
                 <div>
-                    <h2 class="text-lg font-bold text-base-content flex items-center gap-2">
+                    <h2 class="ba-section-title ba-flex ba-items-center ba-gap-2">
                         <BudouX text="動画圧縮ツールの特徴と使い方" />
                     </h2>
-                    <p class="text-xs text-base-content/60 mt-1">
+                    <p class="ba-text-xs ba-text-muted" style={{ "margin-top": "0.25rem", "margin-bottom": 0 }}>
                         安心してご利用いただける完全クライアントサイド設計です。
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-base-200/40 p-4 rounded-xl border border-base-200">
-                        <div class="font-bold text-sm text-primary mb-1">完全ローカル処理</div>
-                        <p class="text-xs text-base-content/70 leading-relaxed">
+                <div class="ba-grid-3">
+                    <div class="ba-panel">
+                        <div class="ba-font-bold ba-text-sm ba-text-primary" style={{ "margin-bottom": "0.25rem" }}>完全ローカル処理</div>
+                        <p class="ba-text-xs ba-text-muted" style={{ "line-height": 1.65, margin: 0 }}>
                             動画ファイルは外部サーバーに一切送信されません。すべてお使いのブラウザ内部でエンコードされるため、プライベートな動画や機密動画も安心です。
                         </p>
                     </div>
-                    <div class="bg-base-200/40 p-4 rounded-xl border border-base-200">
-                        <div class="font-bold text-sm text-pink-700 dark:text-pink-300 mb-1">柔軟なカスタマイズ</div>
-                        <p class="text-xs text-base-content/70 leading-relaxed">
+                    <div class="ba-panel">
+                        <div class="ba-font-bold ba-text-sm ba-text-primary" style={{ "margin-bottom": "0.25rem" }}>柔軟なカスタマイズ</div>
+                        <p class="ba-text-xs ba-text-muted" style={{ "line-height": 1.65, margin: 0 }}>
                             バランス重視、SNS向けの超高圧縮、画質重視のプリセットに加え、ビットレートや解像度、フレームレート、音声ミュートを自由に指定可能です。
                         </p>
                     </div>
-                    <div class="bg-base-200/40 p-4 rounded-xl border border-base-200">
-                        <div class="font-bold text-sm text-teal-800 dark:text-teal-300 mb-1">スマホ・PC両対応</div>
-                        <p class="text-xs text-base-content/70 leading-relaxed">
+                    <div class="ba-panel">
+                        <div class="ba-font-bold ba-text-sm ba-text-success" style={{ "margin-bottom": "0.25rem" }}>スマホ・PC両対応</div>
+                        <p class="ba-text-xs ba-text-muted" style={{ "line-height": 1.65, margin: 0 }}>
                             HTML5 CanvasおよびMediaRecorder APIに対応した最新のブラウザ（Chrome, Edge, Safari, Firefoxなど）でそのまま動作します。
                         </p>
                     </div>
                 </div>
 
-                <div class="space-y-3 pt-2 border-t border-base-200">
-                    <h2 class="font-bold text-sm text-base-content">よくある質問 (FAQ)</h2>
-                    <div class="collapse collapse-plus bg-base-200/30 rounded-lg">
-                        <input type="checkbox" aria-label="動画圧縮時の画質についての質問を開閉" />
-                        <div class="collapse-title text-xs font-semibold">
+                <div
+                    class="ba-stack-3"
+                    style={{
+                        "padding-top": "0.75rem",
+                        "border-top": "1px solid var(--ba-border)",
+                    }}
+                >
+                    <h2 class="ba-section-title" style={{ "font-size": "0.9375rem" }}>よくある質問 (FAQ)</h2>
+                    <details class="ba-accordion">
+                        <summary>
                             Q. 動画を圧縮すると画質は落ちますか？
-                        </div>
-                        <div class="collapse-content text-xs text-base-content/70 leading-relaxed">
+                        </summary>
+                        <div class="ba-accordion-body">
                             ファイルサイズを削減するために解像度やビットレートを調整するため、設定によっては多少の画質変化が生じます。「おすすめ（バランス重視）」プリセットをご利用いただくと、人の目には画質の劣化がほとんど気にならない範囲で大幅に容量を抑えられます。
                         </div>
-                    </div>
-                    <div class="collapse collapse-plus bg-base-200/30 rounded-lg">
-                        <input type="checkbox" aria-label="音声を消す設定についての質問を開閉" />
-                        <div class="collapse-title text-xs font-semibold">
+                    </details>
+                    <details class="ba-accordion">
+                        <summary>
                             Q. 音声を消してさらにファイルサイズを減らすことはできますか？
-                        </div>
-                        <div class="collapse-content text-xs text-base-content/70 leading-relaxed">
+                        </summary>
+                        <div class="ba-accordion-body">
                             はい、可能です。詳細設定の「音声設定」から「音声を削除（無音で軽量化）」を選択していただくと、音声トラック分のデータがカットされ、さらに容量を削減できます。
                         </div>
-                    </div>
+                    </details>
                 </div>
             </div>
 

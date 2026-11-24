@@ -221,7 +221,7 @@ describe("ExposureCalculator Page Component", () => {
         // フォーム内の最初のカードが計算結果カードであること
         const form = container.querySelector("form");
         expect(form).not.toBeNull();
-        const firstCard = form?.querySelector(".card");
+        const firstCard = form?.querySelector(".ba-card");
         expect(firstCard?.textContent).toContain("計算された最適露出設定");
         expect(firstCard?.textContent).toContain("目標 EV");
     });

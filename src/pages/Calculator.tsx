@@ -199,95 +199,145 @@ export default function Calculator() {
     };
 
     const getButtonClass = (btn: string) => {
-        if (["÷", "×", "-", "+"].includes(btn))
-            return "bg-sky-700 hover:bg-sky-800 text-white font-bold border-2 border-sky-900";
-        if (btn === "=")
-            return "bg-indigo-600 hover:bg-indigo-700 text-white font-bold border-2 border-indigo-900";
-        return "bg-base-100 text-base-content dark:text-white border-2 border-base-300 hover:bg-base-200 font-bold shadow-xs";
+        if (btn === "=") return "ba-btn ba-btn--primary ba-w-full";
+        return "ba-btn ba-w-full";
+    };
+
+    const getButtonStyle = (btn: string) => {
+        if (["÷", "×", "-", "+"].includes(btn)) {
+            return {
+                height: "4rem",
+                "font-size": "1.5rem",
+                "background-color": "var(--ba-info)",
+                "border-color": "var(--ba-info)",
+                color: "var(--ba-info-fg)",
+            };
+        }
+        return {
+            height: "4rem",
+            "font-size": "1.5rem",
+        };
     };
 
     return (
-        <div ref={containerRef} class="h-full w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-4 lg:gap-6">
-            <h1 class="sr-only">シンプル計算機</h1>
-            <div class="w-full lg:w-3/4 flex flex-col gap-4 sm:gap-6 max-w-xl mx-auto lg:order-2">
-                {/* モード切替とディスプレイ */}
-                <div class="flex items-center justify-between px-1">
-                    <span class="text-xs font-semibold text-base-content/70">
-                        {isScientific() ? "関数電卓モード" : "基本電卓モード"}
-                    </span>
-                    <button
-                        type="button"
-                        onClick={() => setIsScientific(!isScientific())}
-                        class="btn btn-ghost btn-xs text-xs font-bold text-primary hover:bg-primary/10"
-                        aria-label={isScientific() ? "基本モードへ切替" : "関数モードへ切替"}
+        <div ref={containerRef} class="ba-page">
+            <h1 class="ba-sr-only">シンプル計算機</h1>
+            <div class="ba-flex ba-flex-wrap ba-gap-6 ba-items-start">
+                <div
+                    class="ba-card ba-stack-3"
+                    style={{
+                        flex: "1 1 14rem",
+                        "max-height": "32rem",
+                        "overflow-y": "auto",
+                    }}
+                >
+                    <h2
+                        class="ba-section-title ba-text-base"
+                        style={{ "padding-bottom": "0.5rem", "border-bottom": "1px solid var(--ba-border)" }}
                     >
-                        {isScientific() ? "基本モード" : "関数電卓"}
-                    </button>
+                        計算履歴
+                    </h2>
+                    <ul class="ba-stack-2" style={{ "list-style": "none", margin: 0, padding: 0 }}>
+                        <For each={history()}>
+                            {(item) => (
+                                <li
+                                    onClick={() => loadFromHistory(item)}
+                                    class="ba-panel ba-mono ba-text-xs ba-break-all"
+                                    style={{ padding: "0.6rem 0.75rem", cursor: "pointer" }}
+                                >
+                                    {item}
+                                </li>
+                            )}
+                        </For>
+                    </ul>
                 </div>
 
-                <input
-                    ref={displayInputRef}
-                    type="text"
-                    value={display()}
-                    aria-label="計算結果・入力表示"
-                    class="input input-bordered w-full text-right text-3xl sm:text-4xl lg:text-6xl font-mono h-16 sm:h-20 lg:h-24 bg-base-100 border-2 sm:border-4 border-base-300 text-base-content dark:text-white shadow-sm"
-                    disabled
-                />
+                <div
+                    class="ba-card ba-stack-4 ba-min-w-0"
+                    style={{ flex: "3 1 22rem", "max-width": "36rem", margin: "0 auto" }}
+                >
+                    {/* モード切替とディスプレイ */}
+                    <div class="ba-flex ba-items-center ba-justify-between">
+                        <span class="ba-text-xs ba-font-bold ba-text-muted">
+                            {isScientific() ? "関数電卓モード" : "基本電卓モード"}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setIsScientific(!isScientific())}
+                            class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                            aria-label={isScientific() ? "基本モードへ切替" : "関数モードへ切替"}
+                        >
+                            {isScientific() ? "基本モード" : "関数電卓"}
+                        </button>
+                    </div>
 
-                {/* 関数電卓用ボタングリッド */}
-                <div class={`grid grid-cols-6 gap-1.5 sm:gap-2 transition-all ${isScientific() ? "block" : "hidden"}`}>
-                    <For each={scientificButtons}>
-                        {(op) => (
-                            <button
-                                type="button"
-                                class="btn btn-neutral btn-sm sm:btn-md font-mono text-sm sm:text-base font-bold shadow-sm"
-                                onClick={(e) => handleScientificOp(op, e.currentTarget)}
-                                aria-label={op}
-                            >
-                                {op}
-                            </button>
-                        )}
-                    </For>
-                </div>
+                    <input
+                        ref={displayInputRef}
+                        type="text"
+                        value={display()}
+                        aria-label="計算結果・入力表示"
+                        class="ba-input ba-text-right ba-mono ba-font-bold"
+                        style={{
+                            "font-size": "clamp(1.75rem, 4vw, 3rem)",
+                            height: "4.75rem",
+                            "border-width": "2px",
+                        }}
+                        disabled
+                    />
 
-                <div class="grid grid-cols-4 gap-1.5 sm:gap-2 lg:gap-4">
-                    <For each={standardButtons}>
-                        {(btn) => (
-                            <button
-                                class={`btn text-xl sm:text-2xl lg:text-3xl shadow-md h-14 sm:h-16 lg:h-20 min-h-0 w-full ${getButtonClass(btn)}`}
-                                onClick={(e) => handleButtonClick(btn, e.currentTarget)}
-                                aria-label={btn}
-                            >
-                                {btn}
-                            </button>
-                        )}
-                    </For>
-                    <button
-                        onClick={(e) => clear(e.currentTarget)}
-                        class="btn bg-red-600 hover:bg-red-700 border-red-800 btn-lg text-lg sm:text-xl lg:text-2xl !text-white font-bold col-span-4 h-12 sm:h-14 lg:h-16 min-h-0"
-                        aria-label="クリア"
+                    {/* 関数電卓用ボタングリッド */}
+                    <div
+                        style={{
+                            display: isScientific() ? "grid" : "none",
+                            "grid-template-columns": "repeat(6, minmax(0, 1fr))",
+                            gap: "0.5rem",
+                        }}
                     >
-                        クリア
-                    </button>
-                </div>
-            </div>
+                        <For each={scientificButtons}>
+                            {(op) => (
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--secondary ba-btn--sm ba-mono ba-font-bold"
+                                    onClick={(e) => handleScientificOp(op, e.currentTarget)}
+                                    aria-label={op}
+                                >
+                                    {op}
+                                </button>
+                            )}
+                        </For>
+                    </div>
 
-            <div class="w-full lg:w-1/4 max-h-60 lg:max-h-none lg:h-auto bg-base-100 p-3 sm:p-4 rounded-xl border border-base-200 shadow-sm overflow-y-auto lg:order-1">
-                <h2 class="font-bold mb-3 sm:mb-4 border-b border-base-200 pb-2 text-sm sm:text-base dark:text-white">
-                    計算履歴
-                </h2>
-                <ul class="space-y-2">
-                    <For each={history()}>
-                        {(item) => (
-                            <li
-                                onClick={() => loadFromHistory(item)}
-                                class="p-2 sm:p-3 bg-base-200 rounded-lg cursor-pointer hover:bg-primary hover:text-white dark:hover:text-gray-900 transition-all text-xs sm:text-sm font-mono break-all text-base-content dark:text-gray-100"
-                            >
-                                {item}
-                            </li>
-                        )}
-                    </For>
-                </ul>
+                    <div
+                        style={{
+                            display: "grid",
+                            "grid-template-columns": "repeat(4, minmax(0, 1fr))",
+                            gap: "0.625rem",
+                        }}
+                    >
+                        <For each={standardButtons}>
+                            {(btn) => (
+                                <button
+                                    type="button"
+                                    class={getButtonClass(btn)}
+                                    style={getButtonStyle(btn)}
+                                    onClick={(e) => handleButtonClick(btn, e.currentTarget)}
+                                    aria-label={btn}
+                                >
+                                    {btn}
+                                </button>
+                            )}
+                        </For>
+                        <button
+                            type="button"
+                            onClick={(e) => clear(e.currentTarget)}
+                            class="ba-btn ba-btn--danger ba-btn--lg ba-w-full"
+                            style={{ "grid-column": "span 4 / span 4", height: "3.5rem", "font-size": "1.2rem" }}
+                            aria-label="クリア"
+                        >
+                            クリア
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

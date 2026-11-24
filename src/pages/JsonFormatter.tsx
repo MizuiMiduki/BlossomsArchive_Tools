@@ -10,7 +10,7 @@ export default function JsonFormatter() {
     const [copyMessage, setCopyMessage] = createSignal("");
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".card");
+        if (containerRef) playPageEntrance(containerRef, ".ba-card");
     });
 
     // パース・検証結果
@@ -129,199 +129,260 @@ export default function JsonFormatter() {
     };
 
     return (
-        <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0">
-            <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
-                <div class="card bg-base-100 shadow-xl p-4 sm:p-6 md:p-8 w-full border border-base-300 min-w-0">
-                    {/* ヘッダー */}
-                    <div class="mb-6 border-b border-base-300 pb-4">
-                        <h1 class="text-2xl md:text-3xl font-black text-base-content">
-                            <BudouX text="JSON整形・検証・ミニファイ" />
-                        </h1>
-                        <p class="text-xs font-semibold text-base-content/70 mt-1.5 leading-relaxed">
-                            JSONデータの構文エラー検証、インデント整形、1行ミニファイ、サイズ統計をブラウザ内で完全ローカルに実行します。データは外部に送信されません。
-                        </p>
-                    </div>
-
-                    {/* コントロールツールバー */}
-                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 bg-base-200/60 p-3 rounded-xl border border-base-300">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs font-bold text-base-content/80">インデント:</span>
-                            <div class="join">
-                                <button
-                                    type="button"
-                                    class={`join-item btn btn-xs ${indentSize() === 2 ? "btn-primary font-bold" : "btn-ghost"}`}
-                                    onClick={() => setIndentSize(2)}
-                                >
-                                    2スペース
-                                </button>
-                                <button
-                                    type="button"
-                                    class={`join-item btn btn-xs ${indentSize() === 4 ? "btn-primary font-bold" : "btn-ghost"}`}
-                                    onClick={() => setIndentSize(4)}
-                                >
-                                    4スペース
-                                </button>
-                                <button
-                                    type="button"
-                                    class={`join-item btn btn-xs ${indentSize() === "tab" ? "btn-primary font-bold" : "btn-ghost"}`}
-                                    onClick={() => setIndentSize("tab")}
-                                >
-                                    Tab
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <button
-                                type="button"
-                                class="btn btn-xs btn-outline"
-                                onClick={loadSample}
-                            >
-                                サンプル読込
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-xs btn-primary text-white"
-                                onClick={handleFormatInPlace}
-                                disabled={!parseResult().isValid}
-                            >
-                                整形 (Beautify)
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-xs btn-neutral"
-                                onClick={handleMinifyInPlace}
-                                disabled={!parseResult().isValid}
-                            >
-                                圧縮 (Minify)
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-xs btn-error btn-outline"
-                                onClick={() => setRawJson("")}
-                                disabled={!rawJson()}
-                            >
-                                クリア
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* 入力エディタ領域 */}
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-                        {/* 左：入力 */}
-                        <div class="flex flex-col gap-2">
-                            <div class="flex items-center justify-between px-1">
-                                <label class="text-xs font-bold text-base-content/80" for="json-input-textarea">
-                                    JSON入力
-                                </label>
-                                <span class="text-[11px] font-mono text-base-content/60">
-                                    {rawJson().length} 文字
-                                </span>
-                            </div>
-                            <textarea
-                                id="json-input-textarea"
-                                value={rawJson()}
-                                onInput={(e) => setRawJson(e.currentTarget.value)}
-                                class="textarea textarea-bordered w-full h-80 sm:h-96 font-mono text-xs leading-relaxed bg-base-100 p-3 shadow-inner"
-                                placeholder='{"example": "ここにJSONを貼り付けてください"}'
-                                aria-label="JSON入力欄"
-                            />
-                        </div>
-
-                        {/* 右：プレビュー・検証結果 */}
-                        <div class="flex flex-col gap-2">
-                            <div class="flex items-center justify-between px-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-base-content/80">プレビュー / 出力</span>
-                                    <Show when={parseResult().isValid === true}>
-                                        <span class="badge badge-success badge-xs font-bold text-white">構文OK</span>
-                                    </Show>
-                                    <Show when={parseResult().isValid === false}>
-                                        <span class="badge badge-error badge-xs font-bold text-white">構文エラー</span>
-                                    </Show>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <Show when={copyMessage()}>
-                                        <span class="text-xs text-success font-bold animate-pulse">
-                                            {copyMessage()}
-                                        </span>
-                                    </Show>
-                                    <button
-                                        type="button"
-                                        class="btn btn-ghost btn-xs text-primary font-bold"
-                                        onClick={() => copyToClipboard(formattedJson() || rawJson(), "結果")}
-                                        disabled={!rawJson().trim()}
-                                        aria-label="結果をコピー"
-                                    >
-                                        コピー
-                                    </button>
-                                </div>
-                            </div>
-
-                            <Show
-                                when={parseResult().isValid === false}
-                                fallback={
-                                    <textarea
-                                        readonly
-                                        value={formattedJson() || rawJson()}
-                                        class="textarea textarea-bordered w-full h-80 sm:h-96 font-mono text-xs leading-relaxed bg-base-200/50 p-3"
-                                        placeholder="整形されたJSONがここに表示されます"
-                                        aria-label="整形済みJSONプレビュー"
-                                    />
-                                }
-                            >
-                                <div class="w-full h-80 sm:h-96 bg-red-500/10 border-2 border-red-500/30 rounded-xl p-4 flex flex-col justify-between">
-                                    <div class="space-y-2">
-                                        <div class="flex items-center gap-2 text-red-500 font-bold text-sm">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <span>JSON構文エラー</span>
-                                        </div>
-                                        <p class="font-mono text-xs text-red-600 dark:text-red-400 break-all bg-base-100 p-3 rounded-lg border border-red-500/20">
-                                            {parseResult().error}
-                                        </p>
-                                    </div>
-                                    <p class="text-[11px] text-base-content/70">
-                                        クォートの閉じ忘れ、末尾の不要なカンマ（Trailing comma）、シングルクォート（ダブルクォート必須）などを確認してください。
-                                    </p>
-                                </div>
-                            </Show>
-                        </div>
-                    </div>
-
-                    {/* 統計情報カード */}
-                    <Show when={jsonStats()}>
-                        {(stats) => (
-                            <div class="mt-6 bg-base-200/60 p-4 rounded-xl border border-base-300">
-                                <h2 class="text-xs font-bold text-base-content/80 mb-3">
-                                    データ統計情報
-                                </h2>
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                                    <div class="bg-base-100 p-2.5 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">プロパティ数</span>
-                                        <span class="font-mono font-bold text-sm text-base-content">{stats().keyCount}</span>
-                                    </div>
-                                    <div class="bg-base-100 p-2.5 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">最大ネスト階層</span>
-                                        <span class="font-mono font-bold text-sm text-base-content">{stats().maxDepth}</span>
-                                    </div>
-                                    <div class="bg-base-100 p-2.5 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">圧縮後サイズ</span>
-                                        <span class="font-mono font-bold text-sm text-primary">{stats().minBytes} bytes</span>
-                                    </div>
-                                    <div class="bg-base-100 p-2.5 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">圧縮削減率</span>
-                                        <span class="font-mono font-bold text-sm text-success">{stats().savedPercent}%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </Show>
+        <div ref={containerRef} class="ba-page ba-page--wide">
+            <div class="ba-card ba-stack-4">
+                {/* ヘッダー */}
+                <div style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "1rem" }}>
+                    <h1 class="ba-title">
+                        <BudouX text="JSON整形・検証・ミニファイ" />
+                    </h1>
+                    <p
+                        class="ba-text-xs ba-text-muted"
+                        style={{ "margin-top": "0.375rem", "margin-bottom": 0, "line-height": 1.6, "font-weight": 600 }}
+                    >
+                        JSONデータの構文エラー検証、インデント整形、1行ミニファイ、サイズ統計をブラウザ内で完全ローカルに実行します。データは外部に送信されません。
+                    </p>
                 </div>
 
-                <AdSense />
+                {/* コントロールツールバー */}
+                <div
+                    class="ba-panel ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3"
+                    style={{ padding: "0.75rem" }}
+                >
+                    <div class="ba-flex ba-items-center ba-gap-2 ba-flex-wrap">
+                        <span class="ba-text-xs ba-font-bold ba-text-muted">インデント:</span>
+                        <div class="ba-tabs" style={{ padding: "0.2rem" }}>
+                            <button
+                                type="button"
+                                class={`ba-tab ${indentSize() === 2 ? "is-active" : ""}`}
+                                style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                onClick={() => setIndentSize(2)}
+                            >
+                                2スペース
+                            </button>
+                            <button
+                                type="button"
+                                class={`ba-tab ${indentSize() === 4 ? "is-active" : ""}`}
+                                style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                onClick={() => setIndentSize(4)}
+                            >
+                                4スペース
+                            </button>
+                            <button
+                                type="button"
+                                class={`ba-tab ${indentSize() === "tab" ? "is-active" : ""}`}
+                                style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                onClick={() => setIndentSize("tab")}
+                            >
+                                Tab
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="ba-flex ba-items-center ba-gap-2 ba-flex-wrap">
+                        <button
+                            type="button"
+                            class="ba-btn ba-btn--xs ba-btn--outline"
+                            onClick={loadSample}
+                        >
+                            サンプル読込
+                        </button>
+                        <button
+                            type="button"
+                            class="ba-btn ba-btn--xs ba-btn--primary"
+                            onClick={handleFormatInPlace}
+                            disabled={!parseResult().isValid}
+                        >
+                            整形 (Beautify)
+                        </button>
+                        <button
+                            type="button"
+                            class="ba-btn ba-btn--xs ba-btn--secondary"
+                            onClick={handleMinifyInPlace}
+                            disabled={!parseResult().isValid}
+                        >
+                            圧縮 (Minify)
+                        </button>
+                        <button
+                            type="button"
+                            class="ba-btn ba-btn--xs ba-btn--danger"
+                            onClick={() => setRawJson("")}
+                            disabled={!rawJson()}
+                        >
+                            クリア
+                        </button>
+                    </div>
+                </div>
+
+                {/* 入力エディタ領域 */}
+                <div class="ba-grid-2">
+                    {/* 左：入力 */}
+                    <div class="ba-stack-2 ba-min-w-0">
+                        <div class="ba-flex ba-items-center ba-justify-between" style={{ "padding-inline": "0.25rem" }}>
+                            <label class="ba-label" style={{ "font-size": "0.75rem" }} for="json-input-textarea">
+                                JSON入力
+                            </label>
+                            <span class="ba-mono ba-text-muted" style={{ "font-size": "0.6875rem" }}>
+                                {rawJson().length} 文字
+                            </span>
+                        </div>
+                        <textarea
+                            id="json-input-textarea"
+                            value={rawJson()}
+                            onInput={(e) => setRawJson(e.currentTarget.value)}
+                            class="ba-textarea ba-mono ba-text-xs"
+                            style={{ height: "22rem", "line-height": 1.6 }}
+                            placeholder='{"example": "ここにJSONを貼り付けてください"}'
+                            aria-label="JSON入力欄"
+                        />
+                    </div>
+
+                    {/* 右：プレビュー・検証結果 */}
+                    <div class="ba-stack-2 ba-min-w-0">
+                        <div class="ba-flex ba-items-center ba-justify-between" style={{ "padding-inline": "0.25rem" }}>
+                            <div class="ba-flex ba-items-center ba-gap-2">
+                                <span class="ba-text-xs ba-font-bold ba-text-muted">プレビュー / 出力</span>
+                                <Show when={parseResult().isValid === true}>
+                                    <span class="ba-badge ba-badge--success">構文OK</span>
+                                </Show>
+                                <Show when={parseResult().isValid === false}>
+                                    <span class="ba-badge ba-badge--danger">構文エラー</span>
+                                </Show>
+                            </div>
+                            <div class="ba-flex ba-items-center ba-gap-2">
+                                <Show when={copyMessage()}>
+                                    <span class="ba-text-xs ba-text-success ba-font-bold">
+                                        {copyMessage()}
+                                    </span>
+                                </Show>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                    onClick={() => copyToClipboard(formattedJson() || rawJson(), "結果")}
+                                    disabled={!rawJson().trim()}
+                                    aria-label="結果をコピー"
+                                >
+                                    コピー
+                                </button>
+                            </div>
+                        </div>
+
+                        <Show
+                            when={parseResult().isValid === false}
+                            fallback={
+                                <textarea
+                                    readonly
+                                    value={formattedJson() || rawJson()}
+                                    class="ba-textarea ba-mono ba-text-xs"
+                                    style={{
+                                        height: "22rem",
+                                        "line-height": 1.6,
+                                        "background-color": "var(--ba-surface-2)",
+                                    }}
+                                    placeholder="整形されたJSONがここに表示されます"
+                                    aria-label="整形済みJSONプレビュー"
+                                />
+                            }
+                        >
+                            <div
+                                class="ba-flex-col ba-justify-between"
+                                style={{
+                                    width: "100%",
+                                    height: "22rem",
+                                    "background-color": "var(--ba-danger-soft)",
+                                    border: "2px solid var(--ba-danger)",
+                                    "border-radius": "var(--ba-radius)",
+                                    padding: "1rem",
+                                }}
+                            >
+                                <div class="ba-stack-2">
+                                    <div class="ba-flex ba-items-center ba-gap-2 ba-text-danger ba-font-bold ba-text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="ba-icon-sm ba-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>JSON構文エラー</span>
+                                    </div>
+                                    <p
+                                        class="ba-mono ba-text-xs ba-break-all"
+                                        style={{
+                                            color: "var(--ba-danger-soft-fg)",
+                                            "background-color": "var(--ba-surface)",
+                                            padding: "0.75rem",
+                                            "border-radius": "var(--ba-radius-sm)",
+                                            border: "1px solid var(--ba-danger)",
+                                            margin: 0,
+                                        }}
+                                    >
+                                        {parseResult().error}
+                                    </p>
+                                </div>
+                                <p class="ba-text-muted" style={{ "font-size": "0.6875rem", margin: 0 }}>
+                                    クォートの閉じ忘れ、末尾の不要なカンマ（Trailing comma）、シングルクォート（ダブルクォート必須）などを確認してください。
+                                </p>
+                            </div>
+                        </Show>
+                    </div>
+                </div>
+
+                {/* 統計情報カード */}
+                <Show when={jsonStats()}>
+                    {(stats) => (
+                        <div class="ba-panel ba-stack-3" style={{ "margin-top": "0.5rem" }}>
+                            <h2 class="ba-text-xs ba-font-bold ba-text-muted" style={{ margin: 0 }}>
+                                データ統計情報
+                            </h2>
+                            <div class="ba-grid-4 ba-text-center">
+                                <div
+                                    style={{
+                                        "background-color": "var(--ba-surface)",
+                                        padding: "0.625rem",
+                                        "border-radius": "var(--ba-radius-sm)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <span class="ba-text-muted" style={{ "font-size": "0.625rem", display: "block" }}>プロパティ数</span>
+                                    <span class="ba-mono ba-font-bold ba-text-sm">{stats().keyCount}</span>
+                                </div>
+                                <div
+                                    style={{
+                                        "background-color": "var(--ba-surface)",
+                                        padding: "0.625rem",
+                                        "border-radius": "var(--ba-radius-sm)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <span class="ba-text-muted" style={{ "font-size": "0.625rem", display: "block" }}>最大ネスト階層</span>
+                                    <span class="ba-mono ba-font-bold ba-text-sm">{stats().maxDepth}</span>
+                                </div>
+                                <div
+                                    style={{
+                                        "background-color": "var(--ba-surface)",
+                                        padding: "0.625rem",
+                                        "border-radius": "var(--ba-radius-sm)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <span class="ba-text-muted" style={{ "font-size": "0.625rem", display: "block" }}>圧縮後サイズ</span>
+                                    <span class="ba-mono ba-font-bold ba-text-sm ba-text-primary">{stats().minBytes} bytes</span>
+                                </div>
+                                <div
+                                    style={{
+                                        "background-color": "var(--ba-surface)",
+                                        padding: "0.625rem",
+                                        "border-radius": "var(--ba-radius-sm)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <span class="ba-text-muted" style={{ "font-size": "0.625rem", display: "block" }}>圧縮削減率</span>
+                                    <span class="ba-mono ba-font-bold ba-text-sm ba-text-success">{stats().savedPercent}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </Show>
             </div>
+
+            <AdSense />
         </div>
     );
 }

@@ -242,11 +242,11 @@ describe("Layout Component", () => {
 
         // タイトル
         const brandTitle = screen.getByText("BA Tools");
-        expect(brandTitle.className).toContain("dark:text-white");
+        expect(brandTitle.className).toContain("ba-font-black");
 
         // 非アクティブリンク（例: QRコード生成）
         const qrLink = screen.getByRole("link", { name: "QRコード生成" });
-        expect(qrLink.className).toContain("dark:text-gray-100");
+        expect(qrLink.className).toContain("ba-nav-link");
     });
 
     it("ヘッダーの検索ボタンクリックでコマンドパレットが開くこと", () => {

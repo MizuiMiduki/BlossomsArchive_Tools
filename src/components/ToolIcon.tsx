@@ -44,7 +44,7 @@ export interface ToolIconProps {
 }
 
 export default function ToolIcon(props: ToolIconProps) {
-    const iconClass = () => props.class || "w-4 h-4 shrink-0";
+    const iconClass = () => props.class || "ba-icon-sm ba-shrink-0";
 
     return (
         <svg

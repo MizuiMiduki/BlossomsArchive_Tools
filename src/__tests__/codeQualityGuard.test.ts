@@ -170,17 +170,33 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         expect(fs.existsSync(path.join(ROOT_DIR, "public", "icon-192.png"))).toBe(true);
     });
 
-    it("ダークモード視認性ガード: src/index.css に全見出し・タイトルの純白化ルールおよび非活性ボタン・サイドバーリンクの明瞭化ルールが存在すること", () => {
-        const indexCss = fs.readFileSync(
-            path.join(ROOT_DIR, "src", "index.css"),
+    it("ダークモード視認性 & 自作ピュアCSSガード: critical.css / app.css に見出し純白化・非活性ボタン・サイドバーリンク明瞭化ルールが存在し、外部CSSフレームワークに依存していないこと", () => {
+        const criticalCss = fs.readFileSync(
+            path.join(ROOT_DIR, "src", "styles", "critical.css"),
             "utf8",
         );
-        expect(indexCss).toContain("html[data-theme='dark'] h1");
-        expect(indexCss).toContain("color: #ffffff !important;");
-        expect(indexCss).toContain("html[data-theme='dark'] .btn:disabled");
-        expect(indexCss).toContain("rgba(255, 255, 255, 0.65)");
-        expect(indexCss).toContain("html[data-theme='dark'] aside nav a:not(.bg-primary)");
-        expect(indexCss).toContain("#f3f4f6");
+        const appCss = fs.readFileSync(
+            path.join(ROOT_DIR, "src", "styles", "app.css"),
+            "utf8",
+        );
+        expect(criticalCss).toContain('html[data-theme="dark"] h1');
+        expect(criticalCss).toContain("color: #ffffff;");
+        expect(appCss).toContain('html[data-theme="dark"] .ba-btn:disabled');
+        expect(appCss).toContain("rgba(255, 255, 255, 0.65)");
+        expect(appCss).toContain('html[data-theme="dark"] aside nav a:not(.is-active)');
+        expect(appCss).toContain("#f3f4f6");
+
+        const pkgJson = JSON.parse(
+            fs.readFileSync(path.join(ROOT_DIR, "package.json"), "utf8"),
+        );
+        const allDeps = {
+            ...(pkgJson.dependencies || {}),
+            ...(pkgJson.devDependencies || {}),
+        };
+        expect(allDeps).not.toHaveProperty("tailwindcss");
+        expect(allDeps).not.toHaveProperty("daisyui");
+        expect(allDeps).not.toHaveProperty("bulma");
+        expect(allDeps).not.toHaveProperty("beercss");
     });
 
     it("テスト網羅ガード: src/pages 内の全ページコンポーネントに対応するテストコードが存在し、visualRegression に登録されていること", () => {

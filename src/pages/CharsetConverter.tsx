@@ -158,7 +158,7 @@ export default function CharsetConverter() {
     };
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".card");
+        if (containerRef) playPageEntrance(containerRef, ".ba-card");
         if (isTestEnv || cachedConverterMod) {
             ensureConverterLoaded();
             return;
@@ -421,87 +421,83 @@ export default function CharsetConverter() {
     };
 
     return (
-        <div ref={containerRef} class="w-full max-w-5xl mx-auto space-y-6 sm:space-y-8 min-w-0">
+        <div ref={containerRef} class="ba-page">
             {/* ヘッダー */}
-            <div class="text-center space-y-3">
-                <h1 class="text-3xl md:text-4xl font-black text-base-content dark:text-white">
+            <div class="ba-text-center ba-stack-3">
+                <h1 class="ba-title">
                     <BudouX text="文字コード総合変換ツール" />
                 </h1>
-                <p class="text-base-content/80 max-w-2xl mx-auto text-sm md:text-base">
+                <p
+                    class="ba-text-muted ba-text-sm"
+                    style={{ "max-width": "42rem", "margin-inline": "auto", "margin-block": 0 }}
+                >
                     <BudouX text="UTF-8、Shift_JIS、EUC-JP、JIS、UTF-16/32、Latin-1の文字コード・改行コード相互変換、16進数(HEX)・進数・Unicode表記・HTML数値文字参照・Base64・URLエンコード・Unicode正規化・文字化け復元まで完全対応。" />
                 </p>
-                <div class="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-600"></span>
+                <div class="ba-flex ba-items-center ba-justify-center ba-gap-2 ba-text-xs ba-font-bold ba-text-success">
+                    <span
+                        style={{
+                            display: "inline-block",
+                            width: "0.5rem",
+                            height: "0.5rem",
+                            "border-radius": "9999px",
+                            "background-color": "var(--ba-success)",
+                        }}
+                    ></span>
                     <span>ブラウザ完全ローカル処理（外部通信なしで機密情報も安全・高速変換）</span>
                 </div>
             </div>
 
             {/* ナビゲーションタブ */}
-            <div class="w-full overflow-x-auto border-b border-base-300 pb-2 [-webkit-overflow-scrolling:touch]">
-                <div class="flex justify-start md:justify-center items-center min-w-max px-2">
-                    <div class="flex bg-base-200 p-1 rounded-xl flex-nowrap shadow-sm gap-1">
+            <div
+                class="ba-w-full ba-scroll-x"
+                style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "0.75rem" }}
+            >
+                <div class="ba-flex ba-justify-center" style={{ "min-width": "max-content", "padding-inline": "0.25rem" }}>
+                    <div class="ba-tabs" style={{ "flex-wrap": "nowrap" }}>
                         <button
                             type="button"
-                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
-                                activeTab() === "text"
-                                    ? "btn-primary font-bold shadow-sm"
-                                    : "btn-ghost text-base-content font-medium hover:text-primary"
-                            }`}
+                            class={`ba-tab ${activeTab() === "text" ? "is-active" : ""}`}
+                            style={{ "white-space": "nowrap" }}
                             onClick={() => setActiveTab("text")}
                         >
                             テキスト文字コード変換
                         </button>
                         <button
                             type="button"
-                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
-                                activeTab() === "code-formats"
-                                    ? "btn-primary font-bold shadow-sm"
-                                    : "btn-ghost text-base-content font-medium hover:text-primary"
-                            }`}
+                            class={`ba-tab ${activeTab() === "code-formats" ? "is-active" : ""}`}
+                            style={{ "white-space": "nowrap" }}
                             onClick={() => setActiveTab("code-formats")}
                         >
                             進数・コード表記変換
                         </button>
                         <button
                             type="button"
-                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
-                                activeTab() === "inspector"
-                                    ? "btn-primary font-bold shadow-sm"
-                                    : "btn-ghost text-base-content font-medium hover:text-primary"
-                            }`}
+                            class={`ba-tab ${activeTab() === "inspector" ? "is-active" : ""}`}
+                            style={{ "white-space": "nowrap" }}
                             onClick={() => setActiveTab("inspector")}
                         >
                             1文字コード解析
                         </button>
                         <button
                             type="button"
-                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
-                                activeTab() === "file"
-                                    ? "btn-primary font-bold shadow-sm"
-                                    : "btn-ghost text-base-content font-medium hover:text-primary"
-                            }`}
+                            class={`ba-tab ${activeTab() === "file" ? "is-active" : ""}`}
+                            style={{ "white-space": "nowrap" }}
                             onClick={() => setActiveTab("file")}
                         >
                             ファイル変換
                         </button>
                         <button
                             type="button"
-                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
-                                activeTab() === "normalize"
-                                    ? "btn-primary font-bold shadow-sm"
-                                    : "btn-ghost text-base-content font-medium hover:text-primary"
-                            }`}
+                            class={`ba-tab ${activeTab() === "normalize" ? "is-active" : ""}`}
+                            style={{ "white-space": "nowrap" }}
                             onClick={() => setActiveTab("normalize")}
                         >
                             Unicode正規化 (NFC/NFD)
                         </button>
                         <button
                             type="button"
-                            class={`btn btn-sm whitespace-nowrap transition-all text-xs md:text-sm ${
-                                activeTab() === "mojibake"
-                                    ? "btn-primary font-bold shadow-sm"
-                                    : "btn-ghost text-base-content font-medium hover:text-primary"
-                            }`}
+                            class={`ba-tab ${activeTab() === "mojibake" ? "is-active" : ""}`}
+                            style={{ "white-space": "nowrap" }}
                             onClick={() => setActiveTab("mojibake")}
                         >
                             文字化け修復
@@ -512,204 +508,210 @@ export default function CharsetConverter() {
 
             {/* TAB 1: テキスト文字コード変換 */}
             <Show when={activeTab() === "text"}>
-                <div class="space-y-6">
+                <div class="ba-stack-6">
                     {/* 文字コード設定パネル */}
-                    <div class="card bg-base-100 border border-base-300 shadow-sm">
-                        <div class="card-body p-4 md:p-6 space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                                <div class="form-control">
-                                    <label class="label py-1">
-                                        <span class="label-text font-semibold">変換元文字コード</span>
-                                    </label>
-                                    <select
-                                        class="select select-bordered w-full select-sm md:select-md"
-                                        aria-label="変換元文字コード"
-                                        value={fromEncoding()}
-                                        onChange={(e) =>
-                                            setFromEncoding(e.currentTarget.value as InputEncodingOption)
-                                        }
-                                    >
-                                        <option value="AUTO">自動判別 (Auto Detect)</option>
-                                        <For each={ENCODING_OPTIONS}>
-                                            {(opt) => <option value={opt.value}>{opt.label}</option>}
-                                        </For>
-                                    </select>
-                                </div>
-
-                                <div class="flex items-center gap-2 md:pt-6 justify-center">
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline btn-circle btn-sm"
-                                        title="文字コードとテキストを入れ替え"
-                                        aria-label="文字コードとテキストを入れ替え"
-                                        onClick={handleSwapEncoding}
-                                    >
-                                        ⇄
-                                    </button>
-                                </div>
-
-                                <div class="form-control">
-                                    <label class="label py-1">
-                                        <span class="label-text font-semibold">変換先文字コード</span>
-                                    </label>
-                                    <select
-                                        class="select select-bordered select-primary w-full select-sm md:select-md"
-                                        aria-label="変換先文字コード"
-                                        value={toEncoding()}
-                                        onChange={(e) =>
-                                            setToEncoding(e.currentTarget.value as SupportedEncoding)
-                                        }
-                                    >
-                                        <For each={ENCODING_OPTIONS}>
-                                            {(opt) => (
-                                                <option value={opt.value}>
-                                                    {opt.label} - {opt.description}
-                                                </option>
-                                            )}
-                                        </For>
-                                    </select>
-                                </div>
+                    <div class="ba-card ba-stack-4">
+                        <div class="ba-grid-3 ba-items-end">
+                            <div class="ba-field">
+                                <label class="ba-label">
+                                    <span>変換元文字コード</span>
+                                </label>
+                                <select
+                                    class="ba-select"
+                                    aria-label="変換元文字コード"
+                                    value={fromEncoding()}
+                                    onChange={(e) =>
+                                        setFromEncoding(e.currentTarget.value as InputEncodingOption)
+                                    }
+                                >
+                                    <option value="AUTO">自動判別 (Auto Detect)</option>
+                                    <For each={ENCODING_OPTIONS}>
+                                        {(opt) => <option value={opt.value}>{opt.label}</option>}
+                                    </For>
+                                </select>
                             </div>
 
-                            {/* 改行コード変換設定 */}
-                            <div class="flex flex-wrap items-center gap-4 pt-2 border-t border-base-200 text-sm">
-                                <span class="font-semibold text-base-content/80">改行コード変換:</span>
-                                <label class="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="newline"
-                                        class="radio radio-primary radio-sm"
-                                        checked={newlineOption() === "none"}
-                                        onChange={() => setNewlineOption("none")}
-                                    />
-                                    <span>変換しない（維持）</span>
-                                </label>
-                                <label class="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="newline"
-                                        class="radio radio-primary radio-sm"
-                                        checked={newlineOption() === "LF"}
-                                        onChange={() => setNewlineOption("LF")}
-                                    />
-                                    <span>LF (Unix / macOS)</span>
-                                </label>
-                                <label class="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="newline"
-                                        class="radio radio-primary radio-sm"
-                                        checked={newlineOption() === "CRLF"}
-                                        onChange={() => setNewlineOption("CRLF")}
-                                    />
-                                    <span>CRLF (Windows)</span>
-                                </label>
-                                <label class="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="newline"
-                                        class="radio radio-primary radio-sm"
-                                        checked={newlineOption() === "CR"}
-                                        onChange={() => setNewlineOption("CR")}
-                                    />
-                                    <span>CR (Classic Mac)</span>
-                                </label>
+                            <div class="ba-flex ba-items-center ba-justify-center" style={{ "padding-bottom": "0.15rem" }}>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--outline ba-btn--circle"
+                                    title="文字コードとテキストを入れ替え"
+                                    aria-label="文字コードとテキストを入れ替え"
+                                    onClick={handleSwapEncoding}
+                                >
+                                    ⇄
+                                </button>
                             </div>
+
+                            <div class="ba-field">
+                                <label class="ba-label">
+                                    <span>変換先文字コード</span>
+                                </label>
+                                <select
+                                    class="ba-select"
+                                    style={{ "border-color": "var(--ba-primary)" }}
+                                    aria-label="変換先文字コード"
+                                    value={toEncoding()}
+                                    onChange={(e) =>
+                                        setToEncoding(e.currentTarget.value as SupportedEncoding)
+                                    }
+                                >
+                                    <For each={ENCODING_OPTIONS}>
+                                        {(opt) => (
+                                            <option value={opt.value}>
+                                                {opt.label} - {opt.description}
+                                            </option>
+                                        )}
+                                    </For>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* 改行コード変換設定 */}
+                        <div
+                            class="ba-flex ba-flex-wrap ba-items-center ba-gap-4 ba-text-sm"
+                            style={{ "padding-top": "0.75rem", "border-top": "1px solid var(--ba-border)" }}
+                        >
+                            <span class="ba-font-bold ba-text-muted">改行コード変換:</span>
+                            <label class="ba-flex ba-items-center ba-gap-2" style={{ cursor: "pointer" }}>
+                                <input
+                                    type="radio"
+                                    name="newline"
+                                    class="ba-radio"
+                                    checked={newlineOption() === "none"}
+                                    onChange={() => setNewlineOption("none")}
+                                />
+                                <span>変換しない（維持）</span>
+                            </label>
+                            <label class="ba-flex ba-items-center ba-gap-2" style={{ cursor: "pointer" }}>
+                                <input
+                                    type="radio"
+                                    name="newline"
+                                    class="ba-radio"
+                                    checked={newlineOption() === "LF"}
+                                    onChange={() => setNewlineOption("LF")}
+                                />
+                                <span>LF (Unix / macOS)</span>
+                            </label>
+                            <label class="ba-flex ba-items-center ba-gap-2" style={{ cursor: "pointer" }}>
+                                <input
+                                    type="radio"
+                                    name="newline"
+                                    class="ba-radio"
+                                    checked={newlineOption() === "CRLF"}
+                                    onChange={() => setNewlineOption("CRLF")}
+                                />
+                                <span>CRLF (Windows)</span>
+                            </label>
+                            <label class="ba-flex ba-items-center ba-gap-2" style={{ cursor: "pointer" }}>
+                                <input
+                                    type="radio"
+                                    name="newline"
+                                    class="ba-radio"
+                                    checked={newlineOption() === "CR"}
+                                    onChange={() => setNewlineOption("CR")}
+                                />
+                                <span>CR (Classic Mac)</span>
+                            </label>
                         </div>
                     </div>
 
                     {/* 入力と出力のテキストエリア */}
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="card bg-base-100 border border-base-300 shadow-sm flex flex-col">
-                            <div class="card-body p-4 md:p-6 flex-1 flex flex-col space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <h2 class="card-title text-base font-bold">入力テキスト</h2>
-                                    <button
-                                        type="button"
-                                        class="btn btn-ghost btn-xs text-red-700 dark:text-red-400 font-bold"
-                                        onClick={() => setInputText("")}
-                                    >
-                                        クリア
-                                    </button>
-                                </div>
+                    <div class="ba-grid-2">
+                        <div class="ba-card ba-stack-3">
+                            <div class="ba-flex ba-items-center ba-justify-between">
+                                <h2 class="ba-text-base ba-font-bold" style={{ margin: 0 }}>入力テキスト</h2>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--ghost ba-btn--xs ba-text-danger"
+                                    onClick={() => setInputText("")}
+                                >
+                                    クリア
+                                </button>
+                            </div>
 
-                                <textarea
-                                    class="textarea textarea-bordered w-full flex-1 font-mono text-sm leading-relaxed min-h-[260px]"
-                                    placeholder="変換したいテキストをここに入力または貼り付け..."
-                                    aria-label="変換したいテキストの入力"
-                                    value={inputText()}
-                                    onInput={(e) => setInputText(e.currentTarget.value)}
-                                />
+                            <textarea
+                                class="ba-textarea ba-mono ba-text-sm ba-flex-1"
+                                style={{ "min-height": "16rem", "line-height": 1.6 }}
+                                placeholder="変換したいテキストをここに入力または貼り付け..."
+                                aria-label="変換したいテキストの入力"
+                                value={inputText()}
+                                onInput={(e) => setInputText(e.currentTarget.value)}
+                            />
 
-                                <div class="flex justify-between items-center text-xs text-base-content/80">
-                                    <span>文字数: {Array.from(inputText()).length} 文字</span>
-                                    <span>
-                                        行数: {inputText() ? inputText().split(/\r\n|\r|\n/).length : 0} 行
-                                    </span>
-                                </div>
+                            <div class="ba-flex ba-justify-between ba-items-center ba-text-xs ba-text-muted">
+                                <span>文字数: {Array.from(inputText()).length} 文字</span>
+                                <span>
+                                    行数: {inputText() ? inputText().split(/\r\n|\r|\n/).length : 0} 行
+                                </span>
                             </div>
                         </div>
 
-                        <div class="card bg-base-100 border border-base-300 shadow-sm flex flex-col">
-                            <div class="card-body p-4 md:p-6 flex-1 flex flex-col space-y-3">
-                                <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <h2 class="card-title text-base font-bold flex items-center gap-2">
-                                        <span>変換結果プレビュー</span>
-                                        <span class="badge badge-primary badge-sm">
-                                            {toEncoding()}
-                                        </span>
-                                    </h2>
-                                    <div class="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline btn-primary btn-xs"
-                                            onClick={() =>
-                                                handleCopyText(textConversionResult().text, () => {
-                                                    setCopied(true);
-                                                    setTimeout(() => setCopied(false), 2000);
-                                                })
-                                            }
-                                            disabled={!textConversionResult().text}
-                                        >
-                                            {copied() ? "コピー完了！" : "テキストをコピー"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-primary btn-xs"
-                                            onClick={handleDownloadText}
-                                            disabled={textConversionResult().bytes.length === 0}
-                                        >
-                                            ファイル保存
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full flex-1 font-mono text-sm leading-relaxed min-h-[260px] bg-base-200/50"
-                                    placeholder="変換後のテキストがここに表示されます..."
-                                    aria-label="変換後のテキスト結果プレビュー"
-                                    value={textConversionResult().text}
-                                />
-
-                                <div class="flex justify-between items-center text-xs text-base-content/80">
-                                    <span>出力文字数: {textConversionResult().charCount} 文字</span>
-                                    <span class="font-semibold text-primary">
-                                        出力サイズ: {textConversionResult().byteCount} バイト
+                        <div class="ba-card ba-stack-3">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
+                                <h2 class="ba-text-base ba-font-bold ba-flex ba-items-center ba-gap-2" style={{ margin: 0 }}>
+                                    <span>変換結果プレビュー</span>
+                                    <span class="ba-badge ba-badge--primary">
+                                        {toEncoding()}
                                     </span>
+                                </h2>
+                                <div class="ba-flex ba-items-center ba-gap-2">
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs ba-text-primary"
+                                        style={{ "border-color": "var(--ba-primary)" }}
+                                        onClick={() =>
+                                            handleCopyText(textConversionResult().text, () => {
+                                                setCopied(true);
+                                                setTimeout(() => setCopied(false), 2000);
+                                            })
+                                        }
+                                        disabled={!textConversionResult().text}
+                                    >
+                                        {copied() ? "コピー完了！" : "テキストをコピー"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--primary ba-btn--xs"
+                                        onClick={handleDownloadText}
+                                        disabled={textConversionResult().bytes.length === 0}
+                                    >
+                                        ファイル保存
+                                    </button>
                                 </div>
+                            </div>
+
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-sm ba-flex-1"
+                                style={{
+                                    "min-height": "16rem",
+                                    "line-height": 1.6,
+                                    "background-color": "var(--ba-surface-2)",
+                                }}
+                                placeholder="変換後のテキストがここに表示されます..."
+                                aria-label="変換後のテキスト結果プレビュー"
+                                value={textConversionResult().text}
+                            />
+
+                            <div class="ba-flex ba-justify-between ba-items-center ba-text-xs ba-text-muted">
+                                <span>出力文字数: {textConversionResult().charCount} 文字</span>
+                                <span class="ba-font-bold ba-text-primary">
+                                    出力サイズ: {textConversionResult().byteCount} バイト
+                                </span>
                             </div>
                         </div>
                     </div>
 
                     {/* 未対応文字警告 */}
                     <Show when={textConversionResult().hasUnsupportedChars}>
-                        <div class="alert alert-warning shadow-sm">
+                        <div class="ba-alert ba-alert--warning" style={{ "align-items": "flex-start" }}>
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                class="stroke-current shrink-0 h-6 w-6"
+                                class="ba-icon-lg ba-shrink-0"
                                 fill="none"
                                 viewBox="0 0 24 24"
+                                stroke="currentColor"
                             >
                                 <path
                                     stroke-linecap="round"
@@ -718,11 +720,11 @@ export default function CharsetConverter() {
                                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                                 />
                             </svg>
-                            <div>
-                                <h3 class="font-bold text-sm">文字コード未対応の文字が含まれています</h3>
-                                <div class="text-xs">
+                            <div class="ba-stack-1">
+                                <h3 class="ba-font-bold ba-text-sm" style={{ margin: 0 }}>文字コード未対応の文字が含まれています</h3>
+                                <div class="ba-text-xs" style={{ "font-weight": 500 }}>
                                     選択された「{toEncoding()}」では表現できない文字（絵文字や一部の機種固有文字など）が含まれているため、変換時に置換文字や「?」に変換される場合があります。
-                                    <div class="mt-1 font-mono text-xs font-semibold">
+                                    <div class="ba-mono ba-text-xs ba-font-bold" style={{ "margin-top": "0.25rem" }}>
                                         該当文字: {textConversionResult().unsupportedChars.slice(0, 10).join(" ")}
                                         {textConversionResult().unsupportedChars.length > 10 ? " ほか" : ""}
                                     </div>
@@ -733,29 +735,27 @@ export default function CharsetConverter() {
 
                     {/* 16進バイナリダンプ */}
                     <Show when={textConversionResult().bytes.length > 0}>
-                        <div class="card bg-base-100 border border-base-300 shadow-sm">
-                            <div class="card-body p-4 md:p-6 space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <h3 class="text-sm font-bold flex items-center gap-2">
-                                        <span>バイナリ16進ダンプ（Hex Dump）</span>
-                                        <span class="text-xs text-base-content/75 font-normal">
-                                            （先頭最大512バイト）
-                                        </span>
-                                    </h3>
-                                    <button
-                                        type="button"
-                                        class="btn btn-ghost btn-xs text-primary"
-                                        onClick={() => setShowHexDump(!showHexDump())}
-                                    >
-                                        {showHexDump() ? "閉じる ▲" : "表示する ▼"}
-                                    </button>
-                                </div>
-                                <Show when={showHexDump()}>
-                                    <pre class="bg-base-200 p-4 rounded-lg font-mono text-xs overflow-x-auto text-base-content leading-tight">
-                                        {hexDumpString()}
-                                    </pre>
-                                </Show>
+                        <div class="ba-card ba-stack-3">
+                            <div class="ba-flex ba-items-center ba-justify-between">
+                                <h3 class="ba-text-sm ba-font-bold ba-flex ba-items-center ba-gap-2" style={{ margin: 0 }}>
+                                    <span>バイナリ16進ダンプ（Hex Dump）</span>
+                                    <span class="ba-text-xs ba-text-muted" style={{ "font-weight": 400 }}>
+                                        （先頭最大512バイト）
+                                    </span>
+                                </h3>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                    onClick={() => setShowHexDump(!showHexDump())}
+                                >
+                                    {showHexDump() ? "閉じる ▲" : "表示する ▼"}
+                                </button>
                             </div>
+                            <Show when={showHexDump()}>
+                                <pre class="ba-code" style={{ "line-height": 1.35 }}>
+                                    {hexDumpString()}
+                                </pre>
+                            </Show>
                         </div>
                     </Show>
                 </div>
@@ -763,399 +763,395 @@ export default function CharsetConverter() {
 
             {/* TAB 2: 進数・コード表記変換（競合DenCode/AHREF対抗） */}
             <Show when={activeTab() === "code-formats"}>
-                <div class="space-y-6">
-                    <div class="card bg-base-100 border border-base-300 shadow-sm">
-                        <div class="card-body p-6 space-y-4">
-                            <div class="flex flex-wrap items-center justify-between gap-4">
-                                <div>
-                                    <h2 class="card-title text-lg font-bold">
-                                        進数・コード表記・エスケープ相互変換
-                                    </h2>
-                                    <p class="text-xs text-base-content/70">
-                                        テキストを16進数(HEX)・10進数(DEC)・2進数(BIN)・Unicodeコードポイント・HTML数値文字参照・Base64・URLエンコードに一括変換します。
-                                    </p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-semibold">基準文字コード:</span>
-                                    <select
-                                        class="select select-bordered select-sm font-mono"
-                                        aria-label="基準文字コード"
-                                        value={cfEncoding()}
-                                        onChange={(e) =>
-                                            setCfEncoding(e.currentTarget.value as SupportedEncoding)
-                                        }
-                                    >
-                                        <option value="UTF8">UTF-8</option>
-                                        <option value="SJIS">Shift_JIS (CP932)</option>
-                                        <option value="EUCJP">EUC-JP</option>
-                                        <option value="JIS">JIS (ISO-2022-JP)</option>
-                                        <option value="UTF16LE">UTF-16LE</option>
-                                        <option value="ASCII">ASCII</option>
-                                    </select>
-                                </div>
+                <div class="ba-stack-6">
+                    <div class="ba-card ba-stack-4">
+                        <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-4">
+                            <div>
+                                <h2 class="ba-section-title">
+                                    進数・コード表記・エスケープ相互変換
+                                </h2>
+                                <p class="ba-text-xs ba-text-muted" style={{ "margin-top": "0.25rem", "margin-bottom": 0 }}>
+                                    テキストを16進数(HEX)・10進数(DEC)・2進数(BIN)・Unicodeコードポイント・HTML数値文字参照・Base64・URLエンコードに一括変換します。
+                                </p>
                             </div>
+                            <div class="ba-flex ba-items-center ba-gap-2">
+                                <span class="ba-text-xs ba-font-bold">基準文字コード:</span>
+                                <select
+                                    class="ba-select ba-select--sm ba-mono"
+                                    style={{ width: "auto" }}
+                                    aria-label="基準文字コード"
+                                    value={cfEncoding()}
+                                    onChange={(e) =>
+                                        setCfEncoding(e.currentTarget.value as SupportedEncoding)
+                                    }
+                                >
+                                    <option value="UTF8">UTF-8</option>
+                                    <option value="SJIS">Shift_JIS (CP932)</option>
+                                    <option value="EUCJP">EUC-JP</option>
+                                    <option value="JIS">JIS (ISO-2022-JP)</option>
+                                    <option value="UTF16LE">UTF-16LE</option>
+                                    <option value="ASCII">ASCII</option>
+                                </select>
+                            </div>
+                        </div>
 
-                            <div class="form-control">
-                                <label class="label py-1">
-                                    <span class="label-text font-semibold">入力テキスト</span>
-                                </label>
-                                <textarea
-                                    class="textarea textarea-bordered w-full font-mono text-sm min-h-[90px]"
-                                    placeholder="変換したいテキストを入力..."
-                                    aria-label="変換したい入力テキスト"
-                                    value={cfInput()}
-                                    onInput={(e) => setCfInput(e.currentTarget.value)}
-                                />
-                                <div class="text-xs text-base-content/80 mt-1">
-                                    バイト数 ({cfEncoding()}): {cfOutputs().byteLength} bytes
-                                </div>
+                        <div class="ba-field">
+                            <label class="ba-label">
+                                <span>入力テキスト</span>
+                            </label>
+                            <textarea
+                                class="ba-textarea ba-mono ba-text-sm"
+                                style={{ "min-height": "5.5rem" }}
+                                placeholder="変換したいテキストを入力..."
+                                aria-label="変換したい入力テキスト"
+                                value={cfInput()}
+                                onInput={(e) => setCfInput(e.currentTarget.value)}
+                            />
+                            <div class="ba-text-xs ba-text-muted">
+                                バイト数 ({cfEncoding()}): {cfOutputs().byteLength} bytes
                             </div>
                         </div>
                     </div>
 
                     {/* 各フォーマットの出力カード群 */}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="ba-grid-2">
                         {/* 16進数 (HEX) */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm">
-                            <div class="card-body p-4 space-y-2">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <span class="font-bold text-sm text-primary">16進数バイト列 (HEX)</span>
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <select
-                                            class="select select-bordered select-xs"
-                                            aria-label="16進数バイト列の表記フォーマット"
-                                            value={cfHexFormat()}
-                                            onChange={(e) =>
-                                                setCfHexFormat(e.currentTarget.value as any)
-                                            }
-                                        >
-                                            <option value="space">スペース (E3 81 82)</option>
-                                            <option value="comma">カンマ (E3, 81)</option>
-                                            <option value="0x-comma">0xカンマ (0xE3, 0x81)</option>
-                                            <option value="percent">パーセント (%E3%81%82)</option>
-                                        </select>
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline btn-xs"
-                                            onClick={() =>
-                                                handleCopyText(cfOutputs().hex, () => {
-                                                    setCfCopiedKey("hex");
-                                                    setTimeout(() => setCfCopiedKey(null), 1500);
-                                                })
-                                            }
-                                        >
-                                            {cfCopiedKey() === "hex" ? "コピー完了！" : "コピー"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-primary"
-                                            title="16進数からテキストへ逆変換"
-                                            onClick={() => {
-                                                const mod = converterMod();
-                                                if (!mod) return;
-                                                const bytes = mod.parseHexToBytes(cfOutputs().hex);
-                                                const text = mod.decodeBytes(bytes, cfEncoding()).text;
-                                                setCfInput(text);
-                                            }}
-                                        >
-                                            逆変換 ↩
-                                        </button>
-                                    </div>
+                        <div class="ba-card ba-stack-2" style={{ padding: "1rem" }}>
+                            <div class="ba-flex ba-flex-wrap ba-justify-between ba-items-center ba-gap-2">
+                                <span class="ba-font-bold ba-text-sm ba-text-primary">16進数バイト列 (HEX)</span>
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-1">
+                                    <select
+                                        class="ba-select ba-select--sm"
+                                        style={{ width: "auto", "font-size": "0.75rem", padding: "0.2rem 0.5rem" }}
+                                        aria-label="16進数バイト列の表記フォーマット"
+                                        value={cfHexFormat()}
+                                        onChange={(e) =>
+                                            setCfHexFormat(e.currentTarget.value as any)
+                                        }
+                                    >
+                                        <option value="space">スペース (E3 81 82)</option>
+                                        <option value="comma">カンマ (E3, 81)</option>
+                                        <option value="0x-comma">0xカンマ (0xE3, 0x81)</option>
+                                        <option value="percent">パーセント (%E3%81%82)</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        onClick={() =>
+                                            handleCopyText(cfOutputs().hex, () => {
+                                                setCfCopiedKey("hex");
+                                                setTimeout(() => setCfCopiedKey(null), 1500);
+                                            })
+                                        }
+                                    >
+                                        {cfCopiedKey() === "hex" ? "コピー完了！" : "コピー"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                        title="16進数からテキストへ逆変換"
+                                        onClick={() => {
+                                            const mod = converterMod();
+                                            if (!mod) return;
+                                            const bytes = mod.parseHexToBytes(cfOutputs().hex);
+                                            const text = mod.decodeBytes(bytes, cfEncoding()).text;
+                                            setCfInput(text);
+                                        }}
+                                    >
+                                        逆変換 ↩
+                                    </button>
                                 </div>
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
-                                    aria-label="16進数バイト列 (HEX) 出力"
-                                    value={cfOutputs().hex}
-                                />
                             </div>
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "5rem", "min-height": "5rem", "background-color": "var(--ba-surface-2)" }}
+                                aria-label="16進数バイト列 (HEX) 出力"
+                                value={cfOutputs().hex}
+                            />
                         </div>
 
                         {/* 10進数 (DEC) */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm">
-                            <div class="card-body p-4 space-y-2">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <span class="font-bold text-sm text-primary">10進数バイト列 (DEC)</span>
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline btn-xs"
-                                            onClick={() =>
-                                                handleCopyText(cfOutputs().dec, () => {
-                                                    setCfCopiedKey("dec");
-                                                    setTimeout(() => setCfCopiedKey(null), 1500);
-                                                })
-                                            }
-                                        >
-                                            {cfCopiedKey() === "dec" ? "コピー完了！" : "コピー"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-primary"
-                                            title="10進数からテキストへ逆変換"
-                                            onClick={() => {
-                                                const mod = converterMod();
-                                                if (!mod) return;
-                                                const bytes = mod.parseDecToBytes(cfOutputs().dec);
-                                                const text = mod.decodeBytes(bytes, cfEncoding()).text;
-                                                setCfInput(text);
-                                            }}
-                                        >
-                                            逆変換 ↩
-                                        </button>
-                                    </div>
+                        <div class="ba-card ba-stack-2" style={{ padding: "1rem" }}>
+                            <div class="ba-flex ba-flex-wrap ba-justify-between ba-items-center ba-gap-2">
+                                <span class="ba-font-bold ba-text-sm ba-text-primary">10進数バイト列 (DEC)</span>
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-1">
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        onClick={() =>
+                                            handleCopyText(cfOutputs().dec, () => {
+                                                setCfCopiedKey("dec");
+                                                setTimeout(() => setCfCopiedKey(null), 1500);
+                                            })
+                                        }
+                                    >
+                                        {cfCopiedKey() === "dec" ? "コピー完了！" : "コピー"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                        title="10進数からテキストへ逆変換"
+                                        onClick={() => {
+                                            const mod = converterMod();
+                                            if (!mod) return;
+                                            const bytes = mod.parseDecToBytes(cfOutputs().dec);
+                                            const text = mod.decodeBytes(bytes, cfEncoding()).text;
+                                            setCfInput(text);
+                                        }}
+                                    >
+                                        逆変換 ↩
+                                    </button>
                                 </div>
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
-                                    aria-label="10進数バイト列 (DEC) 出力"
-                                    value={cfOutputs().dec}
-                                />
                             </div>
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "5rem", "min-height": "5rem", "background-color": "var(--ba-surface-2)" }}
+                                aria-label="10進数バイト列 (DEC) 出力"
+                                value={cfOutputs().dec}
+                            />
                         </div>
 
                         {/* 2進数 (BIN) */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm">
-                            <div class="card-body p-4 space-y-2">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <span class="font-bold text-sm text-primary">2進数ビット列 (BIN)</span>
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline btn-xs"
-                                            onClick={() =>
-                                                handleCopyText(cfOutputs().bin, () => {
-                                                    setCfCopiedKey("bin");
-                                                    setTimeout(() => setCfCopiedKey(null), 1500);
-                                                })
-                                            }
-                                        >
-                                            {cfCopiedKey() === "bin" ? "コピー完了！" : "コピー"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-primary"
-                                            title="2進数からテキストへ逆変換"
-                                            onClick={() => {
-                                                const mod = converterMod();
-                                                if (!mod) return;
-                                                const bytes = mod.parseBinToBytes(cfOutputs().bin);
-                                                const text = mod.decodeBytes(bytes, cfEncoding()).text;
-                                                setCfInput(text);
-                                            }}
-                                        >
-                                            逆変換 ↩
-                                        </button>
-                                    </div>
+                        <div class="ba-card ba-stack-2" style={{ padding: "1rem" }}>
+                            <div class="ba-flex ba-flex-wrap ba-justify-between ba-items-center ba-gap-2">
+                                <span class="ba-font-bold ba-text-sm ba-text-primary">2進数ビット列 (BIN)</span>
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-1">
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        onClick={() =>
+                                            handleCopyText(cfOutputs().bin, () => {
+                                                setCfCopiedKey("bin");
+                                                setTimeout(() => setCfCopiedKey(null), 1500);
+                                            })
+                                        }
+                                    >
+                                        {cfCopiedKey() === "bin" ? "コピー完了！" : "コピー"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                        title="2進数からテキストへ逆変換"
+                                        onClick={() => {
+                                            const mod = converterMod();
+                                            if (!mod) return;
+                                            const bytes = mod.parseBinToBytes(cfOutputs().bin);
+                                            const text = mod.decodeBytes(bytes, cfEncoding()).text;
+                                            setCfInput(text);
+                                        }}
+                                    >
+                                        逆変換 ↩
+                                    </button>
                                 </div>
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
-                                    aria-label="2進数ビット列 (BIN) 出力"
-                                    value={cfOutputs().bin}
-                                />
                             </div>
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "5rem", "min-height": "5rem", "background-color": "var(--ba-surface-2)" }}
+                                aria-label="2進数ビット列 (BIN) 出力"
+                                value={cfOutputs().bin}
+                            />
                         </div>
 
                         {/* Unicodeコードポイント */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm">
-                            <div class="card-body p-4 space-y-2">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <span class="font-bold text-sm text-primary">Unicode表記</span>
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <select
-                                            class="select select-bordered select-xs"
-                                            aria-label="Unicode表記フォーマット"
-                                            value={cfUnicodeFormat()}
-                                            onChange={(e) =>
-                                                setCfUnicodeFormat(e.currentTarget.value as any)
-                                            }
-                                        >
-                                            <option value="u-plus">U+XXXX</option>
-                                            <option value="backslash-u">\uXXXX</option>
-                                            <option value="backslash-u-bracket">\u&#123;XXXX&#125;</option>
-                                        </select>
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline btn-xs"
-                                            onClick={() =>
-                                                handleCopyText(cfOutputs().unicodeEscape, () => {
-                                                    setCfCopiedKey("unicode");
-                                                    setTimeout(() => setCfCopiedKey(null), 1500);
-                                                })
-                                            }
-                                        >
-                                            {cfCopiedKey() === "unicode" ? "コピー完了！" : "コピー"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-primary"
-                                            title="Unicodeエスケープからテキストへ復元"
-                                            onClick={() => {
-                                                const mod = converterMod();
-                                                if (!mod) return;
-                                                const text = mod.parseUnicodeEscapesToText(cfOutputs().unicodeEscape);
-                                                setCfInput(text);
-                                            }}
-                                        >
-                                            復元 ↩
-                                        </button>
-                                    </div>
+                        <div class="ba-card ba-stack-2" style={{ padding: "1rem" }}>
+                            <div class="ba-flex ba-flex-wrap ba-justify-between ba-items-center ba-gap-2">
+                                <span class="ba-font-bold ba-text-sm ba-text-primary">Unicode表記</span>
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-1">
+                                    <select
+                                        class="ba-select ba-select--sm"
+                                        style={{ width: "auto", "font-size": "0.75rem", padding: "0.2rem 0.5rem" }}
+                                        aria-label="Unicode表記フォーマット"
+                                        value={cfUnicodeFormat()}
+                                        onChange={(e) =>
+                                            setCfUnicodeFormat(e.currentTarget.value as any)
+                                        }
+                                    >
+                                        <option value="u-plus">U+XXXX</option>
+                                        <option value="backslash-u">\uXXXX</option>
+                                        <option value="backslash-u-bracket">\u&#123;XXXX&#125;</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        onClick={() =>
+                                            handleCopyText(cfOutputs().unicodeEscape, () => {
+                                                setCfCopiedKey("unicode");
+                                                setTimeout(() => setCfCopiedKey(null), 1500);
+                                            })
+                                        }
+                                    >
+                                        {cfCopiedKey() === "unicode" ? "コピー完了！" : "コピー"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                        title="Unicodeエスケープからテキストへ復元"
+                                        onClick={() => {
+                                            const mod = converterMod();
+                                            if (!mod) return;
+                                            const text = mod.parseUnicodeEscapesToText(cfOutputs().unicodeEscape);
+                                            setCfInput(text);
+                                        }}
+                                    >
+                                        復元 ↩
+                                    </button>
                                 </div>
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
-                                    aria-label="Unicode表記出力"
-                                    value={cfOutputs().unicodeEscape}
-                                />
                             </div>
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "5rem", "min-height": "5rem", "background-color": "var(--ba-surface-2)" }}
+                                aria-label="Unicode表記出力"
+                                value={cfOutputs().unicodeEscape}
+                            />
                         </div>
 
                         {/* HTML数値文字参照 (NCR) */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm">
-                            <div class="card-body p-4 space-y-2">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <span class="font-bold text-sm text-primary">HTML数値文字参照 (NCR)</span>
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <select
-                                            class="select select-bordered select-xs"
-                                            aria-label="HTML数値文字参照フォーマット"
-                                            value={cfHtmlFormat()}
-                                            onChange={(e) =>
-                                                setCfHtmlFormat(e.currentTarget.value as any)
-                                            }
-                                        >
-                                            <option value="dec">10進 (&#12354;)</option>
-                                            <option value="hex">16進 (&#x3042;)</option>
-                                        </select>
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline btn-xs"
-                                            onClick={() =>
-                                                handleCopyText(cfOutputs().htmlEntity, () => {
-                                                    setCfCopiedKey("html");
-                                                    setTimeout(() => setCfCopiedKey(null), 1500);
-                                                })
-                                            }
-                                        >
-                                            {cfCopiedKey() === "html" ? "コピー完了！" : "コピー"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-primary"
-                                            title="数値文字参照からテキストへ復元"
-                                            onClick={() => {
-                                                const mod = converterMod();
-                                                if (!mod) return;
-                                                const text = mod.parseHtmlEntitiesToText(cfOutputs().htmlEntity);
-                                                setCfInput(text);
-                                            }}
-                                        >
-                                            復元 ↩
-                                        </button>
-                                    </div>
+                        <div class="ba-card ba-stack-2" style={{ padding: "1rem" }}>
+                            <div class="ba-flex ba-flex-wrap ba-justify-between ba-items-center ba-gap-2">
+                                <span class="ba-font-bold ba-text-sm ba-text-primary">HTML数値文字参照 (NCR)</span>
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-1">
+                                    <select
+                                        class="ba-select ba-select--sm"
+                                        style={{ width: "auto", "font-size": "0.75rem", padding: "0.2rem 0.5rem" }}
+                                        aria-label="HTML数値文字参照フォーマット"
+                                        value={cfHtmlFormat()}
+                                        onChange={(e) =>
+                                            setCfHtmlFormat(e.currentTarget.value as any)
+                                        }
+                                    >
+                                        <option value="dec">10進 (&#12354;)</option>
+                                        <option value="hex">16進 (&#x3042;)</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        onClick={() =>
+                                            handleCopyText(cfOutputs().htmlEntity, () => {
+                                                setCfCopiedKey("html");
+                                                setTimeout(() => setCfCopiedKey(null), 1500);
+                                            })
+                                        }
+                                    >
+                                        {cfCopiedKey() === "html" ? "コピー完了！" : "コピー"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                        title="数値文字参照からテキストへ復元"
+                                        onClick={() => {
+                                            const mod = converterMod();
+                                            if (!mod) return;
+                                            const text = mod.parseHtmlEntitiesToText(cfOutputs().htmlEntity);
+                                            setCfInput(text);
+                                        }}
+                                    >
+                                        復元 ↩
+                                    </button>
                                 </div>
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
-                                    aria-label="HTML数値文字参照 (NCR) 出力"
-                                    value={cfOutputs().htmlEntity}
-                                />
                             </div>
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "5rem", "min-height": "5rem", "background-color": "var(--ba-surface-2)" }}
+                                aria-label="HTML数値文字参照 (NCR) 出力"
+                                value={cfOutputs().htmlEntity}
+                            />
                         </div>
 
                         {/* Base64 */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm">
-                            <div class="card-body p-4 space-y-2">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <span class="font-bold text-sm text-primary">Base64</span>
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline btn-xs"
-                                            onClick={() =>
-                                                handleCopyText(cfOutputs().base64, () => {
-                                                    setCfCopiedKey("b64");
-                                                    setTimeout(() => setCfCopiedKey(null), 1500);
-                                                })
+                        <div class="ba-card ba-stack-2" style={{ padding: "1rem" }}>
+                            <div class="ba-flex ba-flex-wrap ba-justify-between ba-items-center ba-gap-2">
+                                <span class="ba-font-bold ba-text-sm ba-text-primary">Base64</span>
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-1">
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        onClick={() =>
+                                            handleCopyText(cfOutputs().base64, () => {
+                                                setCfCopiedKey("b64");
+                                                setTimeout(() => setCfCopiedKey(null), 1500);
+                                            })
+                                        }
+                                    >
+                                        {cfCopiedKey() === "b64" ? "コピー完了！" : "コピー"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                        title="Base64からテキストへ復元"
+                                        onClick={() => {
+                                            try {
+                                                const mod = converterMod();
+                                                if (!mod) return;
+                                                const bytes = mod.base64ToBytes(cfOutputs().base64);
+                                                const text = mod.decodeBytes(bytes, cfEncoding()).text;
+                                                setCfInput(text);
+                                            } catch {
+                                                // ignore
                                             }
-                                        >
-                                            {cfCopiedKey() === "b64" ? "コピー完了！" : "コピー"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-primary"
-                                            title="Base64からテキストへ復元"
-                                            onClick={() => {
-                                                try {
-                                                    const mod = converterMod();
-                                                    if (!mod) return;
-                                                    const bytes = mod.base64ToBytes(cfOutputs().base64);
-                                                    const text = mod.decodeBytes(bytes, cfEncoding()).text;
-                                                    setCfInput(text);
-                                                } catch {
-                                                    // ignore
-                                                }
-                                            }}
-                                        >
-                                            復元 ↩
-                                        </button>
-                                    </div>
+                                        }}
+                                    >
+                                        復元 ↩
+                                    </button>
                                 </div>
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full font-mono text-xs h-20 bg-base-200/50"
-                                    aria-label="Base64 出力"
-                                    value={cfOutputs().base64}
-                                />
                             </div>
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "5rem", "min-height": "5rem", "background-color": "var(--ba-surface-2)" }}
+                                aria-label="Base64 出力"
+                                value={cfOutputs().base64}
+                            />
                         </div>
 
                         {/* URLエンコード */}
-                        <div class="card bg-base-100 border border-base-300 shadow-sm md:col-span-2">
-                            <div class="card-body p-4 space-y-2">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <span class="font-bold text-sm text-primary">
-                                        URLパーセントエンコード ({cfEncoding()})
-                                    </span>
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline btn-xs"
-                                            onClick={() =>
-                                                handleCopyText(cfOutputs().urlEncoded, () => {
-                                                    setCfCopiedKey("url");
-                                                    setTimeout(() => setCfCopiedKey(null), 1500);
-                                                })
-                                            }
-                                        >
-                                            {cfCopiedKey() === "url" ? "コピー完了！" : "コピー"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="btn btn-ghost btn-xs text-primary"
-                                            title="URLエンコード文字列をデコード"
-                                            onClick={() => {
-                                                const mod = converterMod();
-                                                if (!mod) return;
-                                                const text = mod.urlDecodeWithEncoding(
-                                                    cfOutputs().urlEncoded,
-                                                    cfEncoding(),
-                                                );
-                                                setCfInput(text);
-                                            }}
-                                        >
-                                            デコード ↩
-                                        </button>
-                                    </div>
+                        <div class="ba-card ba-stack-2" style={{ padding: "1rem", "grid-column": "1 / -1" }}>
+                            <div class="ba-flex ba-flex-wrap ba-justify-between ba-items-center ba-gap-2">
+                                <span class="ba-font-bold ba-text-sm ba-text-primary">
+                                    URLパーセントエンコード ({cfEncoding()})
+                                </span>
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-1">
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        onClick={() =>
+                                            handleCopyText(cfOutputs().urlEncoded, () => {
+                                                setCfCopiedKey("url");
+                                                setTimeout(() => setCfCopiedKey(null), 1500);
+                                            })
+                                        }
+                                    >
+                                        {cfCopiedKey() === "url" ? "コピー完了！" : "コピー"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
+                                        title="URLエンコード文字列をデコード"
+                                        onClick={() => {
+                                            const mod = converterMod();
+                                            if (!mod) return;
+                                            const text = mod.urlDecodeWithEncoding(
+                                                cfOutputs().urlEncoded,
+                                                cfEncoding(),
+                                            );
+                                            setCfInput(text);
+                                        }}
+                                    >
+                                        デコード ↩
+                                    </button>
                                 </div>
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full font-mono text-xs h-16 bg-base-200/50"
-                                    aria-label="URLパーセントエンコード出力"
-                                    value={cfOutputs().urlEncoded}
-                                />
                             </div>
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "4rem", "min-height": "4rem", "background-color": "var(--ba-surface-2)" }}
+                                aria-label="URLパーセントエンコード出力"
+                                value={cfOutputs().urlEncoded}
+                            />
                         </div>
                     </div>
                 </div>
@@ -1163,272 +1159,316 @@ export default function CharsetConverter() {
 
             {/* TAB 3: 1文字コード解析（文字インスペクター） */}
             <Show when={activeTab() === "inspector"}>
-                <div class="card bg-base-100 border border-base-300 shadow-sm">
-                    <div class="card-body p-6 space-y-4">
-                        <div class="space-y-1">
-                            <h2 class="card-title text-lg font-bold">1文字コード解析インスペクター</h2>
-                            <p class="text-xs text-base-content/70">
-                                入力された文字列の1文字ごとに、Unicodeコードポイント、10進数値、UTF-8・Shift_JIS・EUC-JPバイト列、文字種別を詳細に一覧表示します。
-                            </p>
-                        </div>
+                <div class="ba-card ba-stack-4">
+                    <div class="ba-stack-1">
+                        <h2 class="ba-section-title">1文字コード解析インスペクター</h2>
+                        <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
+                            入力された文字列の1文字ごとに、Unicodeコードポイント、10進数値、UTF-8・Shift_JIS・EUC-JPバイト列、文字種別を詳細に一覧表示します。
+                        </p>
+                    </div>
 
-                        <div class="overflow-x-auto border border-base-300 rounded-lg">
-                            <table class="table table-zebra table-sm w-full font-mono text-xs">
-                                <thead class="bg-base-200 text-base-content font-sans">
-                                    <tr>
-                                        <th>文字</th>
-                                        <th>Unicode</th>
-                                        <th>10進数</th>
-                                        <th>UTF-8 (HEX)</th>
-                                        <th>Shift_JIS (HEX)</th>
-                                        <th>EUC-JP (HEX)</th>
-                                        <th>種別</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <For each={inspectedChars()}>
-                                        {(row) => (
-                                            <tr>
-                                                <td class="font-bold text-base font-sans text-primary">
-                                                    {row.char}
-                                                </td>
-                                                <td>{row.codePoint}</td>
-                                                <td>{row.decimal}</td>
-                                                <td>{row.utf8Hex}</td>
-                                                <td>{row.sjisHex}</td>
-                                                <td>{row.eucHex}</td>
-                                                <td class="font-sans">
-                                                    <span class="badge badge-ghost badge-sm">
-                                                        {row.category}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </For>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="ba-table-wrap">
+                        <table class="ba-table ba-mono ba-text-xs">
+                            <thead style={{ "font-family": "var(--ba-font-sans)" }}>
+                                <tr>
+                                    <th>文字</th>
+                                    <th>Unicode</th>
+                                    <th>10進数</th>
+                                    <th>UTF-8 (HEX)</th>
+                                    <th>Shift_JIS (HEX)</th>
+                                    <th>EUC-JP (HEX)</th>
+                                    <th>種別</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <For each={inspectedChars()}>
+                                    {(row) => (
+                                        <tr>
+                                            <td
+                                                class="ba-font-bold ba-text-base ba-text-primary"
+                                                style={{ "font-family": "var(--ba-font-sans)" }}
+                                            >
+                                                {row.char}
+                                            </td>
+                                            <td>{row.codePoint}</td>
+                                            <td>{row.decimal}</td>
+                                            <td>{row.utf8Hex}</td>
+                                            <td>{row.sjisHex}</td>
+                                            <td>{row.eucHex}</td>
+                                            <td style={{ "font-family": "var(--ba-font-sans)" }}>
+                                                <span class="ba-badge ba-badge--neutral">
+                                                    {row.category}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </For>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </Show>
 
             {/* TAB 4: ファイル一括変換 */}
             <Show when={activeTab() === "file"}>
-                <div class="card bg-base-100 border border-base-300 shadow-sm">
-                    <div class="card-body p-6 space-y-6">
-                        <h2 class="card-title text-lg font-bold">
+                <div class="ba-card ba-stack-6">
+                    <div class="ba-stack-2">
+                        <h2 class="ba-section-title">
                             テキストファイルの一括文字コード変換
                         </h2>
-                        <p class="text-sm text-base-content/70">
+                        <p class="ba-text-sm ba-text-muted" style={{ margin: 0 }}>
                             .txt、.csv、.tsv、.html、.json、.log などのテキストファイルをドラッグ＆ドロップして、指定した文字コード（Shift_JIS、UTF-8等）に変換してダウンロードできます。
                         </p>
+                    </div>
 
-                        <div
-                            class={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-                                isDragging()
-                                    ? "border-primary bg-primary/10"
-                                    : "border-base-300 hover:border-primary/50 bg-base-200/30"
-                            }`}
-                            onDrop={handleDrop}
-                            onDragOver={(e) => {
-                                e.preventDefault();
-                                setIsDragging(true);
-                            }}
-                            onDragLeave={(e) => {
-                                e.preventDefault();
-                                setIsDragging(false);
-                            }}
-                            onClick={() => document.getElementById("file-input-el")?.click()}
-                        >
-                            <input
-                                id="file-input-el"
-                                type="file"
-                                class="hidden"
-                                accept=".txt,.csv,.tsv,.html,.htm,.json,.xml,.log,.sql,.md,.css,.js,.ts"
-                                onChange={handleFileInput}
-                            />
-                            <div class="space-y-2">
-                                <div class="flex justify-center text-base-content/60">
-                                    <ToolIcon name="file" class="w-10 h-10" />
-                                </div>
-                                <div class="font-bold text-base">
-                                    ここにファイルをドラッグ＆ドロップ
-                                </div>
-                                <div class="text-xs text-base-content/80">
-                                    またはクリックしてファイルを選択（.txt, .csv, .log 等）
-                                </div>
+                    <div
+                        class="ba-dropzone"
+                        style={
+                            isDragging()
+                                ? {
+                                      "border-color": "var(--ba-primary)",
+                                      "background-color": "var(--ba-primary-soft)",
+                                      padding: "2rem",
+                                  }
+                                : { padding: "2rem" }
+                        }
+                        onDrop={handleDrop}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            setIsDragging(true);
+                        }}
+                        onDragLeave={(e) => {
+                            e.preventDefault();
+                            setIsDragging(false);
+                        }}
+                        onClick={() => document.getElementById("file-input-el")?.click()}
+                    >
+                        <input
+                            id="file-input-el"
+                            type="file"
+                            hidden
+                            accept=".txt,.csv,.tsv,.html,.htm,.json,.xml,.log,.sql,.md,.css,.js,.ts"
+                            onChange={handleFileInput}
+                        />
+                        <div class="ba-stack-2 ba-items-center">
+                            <div class="ba-flex ba-justify-center ba-text-muted">
+                                <ToolIcon name="file" class="ba-icon-xl" />
+                            </div>
+                            <div class="ba-font-bold ba-text-base">
+                                ここにファイルをドラッグ＆ドロップ
+                            </div>
+                            <div class="ba-text-xs ba-text-muted">
+                                またはクリックしてファイルを選択（.txt, .csv, .log 等）
                             </div>
                         </div>
-
-                        <Show when={selectedFile()}>
-                            <div class="bg-base-200/50 p-4 rounded-lg space-y-4 border border-base-300">
-                                <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <div>
-                                        <div class="font-bold text-sm">{selectedFile()?.name}</div>
-                                        <div class="text-xs text-base-content/80">
-                                            サイズ: {((selectedFile()?.size ?? 0) / 1024).toFixed(2)} KB |
-                                            推定文字コード:{" "}
-                                            <span class="badge badge-sm badge-info font-mono">
-                                                {fileDetectedEncoding()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="btn btn-primary btn-sm"
-                                        onClick={handleDownloadConvertedFile}
-                                        disabled={isConvertingFile()}
-                                    >
-                                        {toEncoding()} に変換してダウンロード
-                                    </button>
-                                </div>
-
-                                <div class="space-y-1">
-                                    <label class="text-xs font-semibold text-base-content/70">
-                                        ファイル内容プレビュー（先頭抜粋）:
-                                    </label>
-                                    <pre class="bg-base-100 p-3 rounded font-mono text-xs max-h-48 overflow-y-auto border border-base-300 whitespace-pre-wrap">
-                                        {fileContentPreview()}
-                                    </pre>
-                                </div>
-                            </div>
-                        </Show>
                     </div>
+
+                    <Show when={selectedFile()}>
+                        <div class="ba-panel ba-stack-4">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
+                                <div>
+                                    <div class="ba-font-bold ba-text-sm">{selectedFile()?.name}</div>
+                                    <div class="ba-text-xs ba-text-muted">
+                                        サイズ: {((selectedFile()?.size ?? 0) / 1024).toFixed(2)} KB |
+                                        推定文字コード:{" "}
+                                        <span class="ba-badge ba-badge--info ba-mono">
+                                            {fileDetectedEncoding()}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--primary ba-btn--sm"
+                                    onClick={handleDownloadConvertedFile}
+                                    disabled={isConvertingFile()}
+                                >
+                                    {toEncoding()} に変換してダウンロード
+                                </button>
+                            </div>
+
+                            <div class="ba-stack-1">
+                                <label class="ba-text-xs ba-font-bold ba-text-muted">
+                                    ファイル内容プレビュー（先頭抜粋）:
+                                </label>
+                                <pre
+                                    class="ba-code"
+                                    style={{ "max-height": "12rem", "background-color": "var(--ba-surface)" }}
+                                >
+                                    {fileContentPreview()}
+                                </pre>
+                            </div>
+                        </div>
+                    </Show>
                 </div>
             </Show>
 
             {/* TAB 5: Unicode正規化 (NFC / NFD / NFKC / NFKD) */}
             <Show when={activeTab() === "normalize"}>
-                <div class="card bg-base-100 border border-base-300 shadow-sm">
-                    <div class="card-body p-6 space-y-6">
-                        <div class="space-y-1">
-                            <h2 class="card-title text-lg font-bold">
-                                Unicode正規化ツール（NFC / NFD / NFKC / NFKD）
-                            </h2>
-                            <p class="text-xs text-base-content/70">
+                <div class="ba-card ba-stack-6">
+                    <div class="ba-stack-1">
+                        <h2 class="ba-section-title">
+                            Unicode正規化ツール（NFC / NFD / NFKC / NFKD）
+                        </h2>
+                        <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
                                 macOSとWindows間でのファイル名濁点分離問題（「が」が「か」＋「゙」になる等）の解消や、半角カナ・全角英数の標準化を行えます。
-                            </p>
+                        </p>
+                    </div>
+
+                    <div class="ba-field">
+                        <label class="ba-label">
+                            <span>入力テキスト</span>
+                        </label>
+                        <textarea
+                            class="ba-textarea ba-mono ba-text-sm"
+                            style={{ "min-height": "5.5rem" }}
+                            aria-label="Unicode正規化する入力テキスト"
+                            value={normalizeInput()}
+                            onInput={(e) => setNormalizeInput(e.currentTarget.value)}
+                        />
+                    </div>
+
+                    <div class="ba-grid-2">
+                        {/* NFC */}
+                        <div class="ba-panel ba-stack-2">
+                            <div class="ba-flex ba-justify-between ba-items-center ba-gap-2">
+                                <div>
+                                    <span class="ba-font-bold ba-text-sm ba-text-primary">NFC (標準合成形式)</span>
+                                    <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
+                                        濁点を結合（Web・Linux・Windows標準）
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--outline ba-btn--xs"
+                                    onClick={() =>
+                                        handleCopyText(normalizeUnicode(normalizeInput(), "NFC"), () => {
+                                            setNormCopiedKey("NFC");
+                                            setTimeout(() => setNormCopiedKey(null), 1500);
+                                        })
+                                    }
+                                >
+                                    {normCopiedKey() === "NFC" ? "コピー完了！" : "コピー"}
+                                </button>
+                            </div>
+                            <div
+                                class="ba-mono ba-text-sm"
+                                style={{
+                                    padding: "0.75rem",
+                                    "background-color": "var(--ba-surface)",
+                                    "border-radius": "var(--ba-radius-sm)",
+                                    border: "1px solid var(--ba-border)",
+                                    "min-height": "2.75rem",
+                                }}
+                            >
+                                {normalizeUnicode(normalizeInput(), "NFC")}
+                            </div>
                         </div>
 
-                        <div class="form-control">
-                            <label class="label py-1">
-                                <span class="label-text font-semibold">入力テキスト</span>
-                            </label>
-                            <textarea
-                                class="textarea textarea-bordered w-full font-mono text-sm min-h-[90px]"
-                                aria-label="Unicode正規化する入力テキスト"
-                                value={normalizeInput()}
-                                onInput={(e) => setNormalizeInput(e.currentTarget.value)}
-                            />
+                        {/* NFD */}
+                        <div class="ba-panel ba-stack-2">
+                            <div class="ba-flex ba-justify-between ba-items-center ba-gap-2">
+                                <div>
+                                    <span class="ba-font-bold ba-text-sm ba-text-primary">NFD (分解形式)</span>
+                                    <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
+                                        文字と濁点を分離（macOS HFS+ファイル名等）
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--outline ba-btn--xs"
+                                    onClick={() =>
+                                        handleCopyText(normalizeUnicode(normalizeInput(), "NFD"), () => {
+                                            setNormCopiedKey("NFD");
+                                            setTimeout(() => setNormCopiedKey(null), 1500);
+                                        })
+                                    }
+                                >
+                                    {normCopiedKey() === "NFD" ? "コピー完了！" : "コピー"}
+                                </button>
+                            </div>
+                            <div
+                                class="ba-mono ba-text-sm"
+                                style={{
+                                    padding: "0.75rem",
+                                    "background-color": "var(--ba-surface)",
+                                    "border-radius": "var(--ba-radius-sm)",
+                                    border: "1px solid var(--ba-border)",
+                                    "min-height": "2.75rem",
+                                }}
+                            >
+                                {normalizeUnicode(normalizeInput(), "NFD")}
+                            </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* NFC */}
-                            <div class="card bg-base-200/50 border border-base-300 p-4 space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="font-bold text-sm text-primary">NFC (標準合成形式)</span>
-                                        <p class="text-xs text-base-content/80">
-                                            濁点を結合（Web・Linux・Windows標準）
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline btn-xs"
-                                        onClick={() =>
-                                            handleCopyText(normalizeUnicode(normalizeInput(), "NFC"), () => {
-                                                setNormCopiedKey("NFC");
-                                                setTimeout(() => setNormCopiedKey(null), 1500);
-                                            })
-                                        }
-                                    >
-                                        {normCopiedKey() === "NFC" ? "コピー完了！" : "コピー"}
-                                    </button>
+                        {/* NFKC */}
+                        <div class="ba-panel ba-stack-2">
+                            <div class="ba-flex ba-justify-between ba-items-center ba-gap-2">
+                                <div>
+                                    <span class="ba-font-bold ba-text-sm ba-text-primary">NFKC (互換合成形式)</span>
+                                    <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
+                                        半角カナを全角に、全角英数を半角に統一
+                                    </p>
                                 </div>
-                                <div class="p-3 bg-base-100 rounded border border-base-300 font-mono text-sm">
-                                    {normalizeUnicode(normalizeInput(), "NFC")}
-                                </div>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--outline ba-btn--xs"
+                                    onClick={() =>
+                                        handleCopyText(normalizeUnicode(normalizeInput(), "NFKC"), () => {
+                                            setNormCopiedKey("NFKC");
+                                            setTimeout(() => setNormCopiedKey(null), 1500);
+                                        })
+                                    }
+                                >
+                                    {normCopiedKey() === "NFKC" ? "コピー完了！" : "コピー"}
+                                </button>
                             </div>
-
-                            {/* NFD */}
-                            <div class="card bg-base-200/50 border border-base-300 p-4 space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="font-bold text-sm text-primary">NFD (分解形式)</span>
-                                        <p class="text-xs text-base-content/80">
-                                            文字と濁点を分離（macOS HFS+ファイル名等）
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline btn-xs"
-                                        onClick={() =>
-                                            handleCopyText(normalizeUnicode(normalizeInput(), "NFD"), () => {
-                                                setNormCopiedKey("NFD");
-                                                setTimeout(() => setNormCopiedKey(null), 1500);
-                                            })
-                                        }
-                                    >
-                                        {normCopiedKey() === "NFD" ? "コピー完了！" : "コピー"}
-                                    </button>
-                                </div>
-                                <div class="p-3 bg-base-100 rounded border border-base-300 font-mono text-sm">
-                                    {normalizeUnicode(normalizeInput(), "NFD")}
-                                </div>
+                            <div
+                                class="ba-mono ba-text-sm"
+                                style={{
+                                    padding: "0.75rem",
+                                    "background-color": "var(--ba-surface)",
+                                    "border-radius": "var(--ba-radius-sm)",
+                                    border: "1px solid var(--ba-border)",
+                                    "min-height": "2.75rem",
+                                }}
+                            >
+                                {normalizeUnicode(normalizeInput(), "NFKC")}
                             </div>
+                        </div>
 
-                            {/* NFKC */}
-                            <div class="card bg-base-200/50 border border-base-300 p-4 space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="font-bold text-sm text-primary">NFKC (互換合成形式)</span>
-                                        <p class="text-xs text-base-content/80">
-                                            半角カナを全角に、全角英数を半角に統一
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline btn-xs"
-                                        onClick={() =>
-                                            handleCopyText(normalizeUnicode(normalizeInput(), "NFKC"), () => {
-                                                setNormCopiedKey("NFKC");
-                                                setTimeout(() => setNormCopiedKey(null), 1500);
-                                            })
-                                        }
-                                    >
-                                        {normCopiedKey() === "NFKC" ? "コピー完了！" : "コピー"}
-                                    </button>
+                        {/* NFKD */}
+                        <div class="ba-panel ba-stack-2">
+                            <div class="ba-flex ba-justify-between ba-items-center ba-gap-2">
+                                <div>
+                                    <span class="ba-font-bold ba-text-sm ba-text-primary">NFKD (互換分解形式)</span>
+                                    <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
+                                        互換文字を展開し分解
+                                    </p>
                                 </div>
-                                <div class="p-3 bg-base-100 rounded border border-base-300 font-mono text-sm">
-                                    {normalizeUnicode(normalizeInput(), "NFKC")}
-                                </div>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--outline ba-btn--xs"
+                                    onClick={() =>
+                                        handleCopyText(normalizeUnicode(normalizeInput(), "NFKD"), () => {
+                                            setNormCopiedKey("NFKD");
+                                            setTimeout(() => setNormCopiedKey(null), 1500);
+                                        })
+                                    }
+                                >
+                                    {normCopiedKey() === "NFKD" ? "コピー完了！" : "コピー"}
+                                </button>
                             </div>
-
-                            {/* NFKD */}
-                            <div class="card bg-base-200/50 border border-base-300 p-4 space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="font-bold text-sm text-primary">NFKD (互換分解形式)</span>
-                                        <p class="text-xs text-base-content/80">
-                                            互換文字を展開し分解
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline btn-xs"
-                                        onClick={() =>
-                                            handleCopyText(normalizeUnicode(normalizeInput(), "NFKD"), () => {
-                                                setNormCopiedKey("NFKD");
-                                                setTimeout(() => setNormCopiedKey(null), 1500);
-                                            })
-                                        }
-                                    >
-                                        {normCopiedKey() === "NFKD" ? "コピー完了！" : "コピー"}
-                                    </button>
-                                </div>
-                                <div class="p-3 bg-base-100 rounded border border-base-300 font-mono text-sm">
-                                    {normalizeUnicode(normalizeInput(), "NFKD")}
-                                </div>
+                            <div
+                                class="ba-mono ba-text-sm"
+                                style={{
+                                    padding: "0.75rem",
+                                    "background-color": "var(--ba-surface)",
+                                    "border-radius": "var(--ba-radius-sm)",
+                                    border: "1px solid var(--ba-border)",
+                                    "min-height": "2.75rem",
+                                }}
+                            >
+                                {normalizeUnicode(normalizeInput(), "NFKD")}
                             </div>
                         </div>
                     </div>
@@ -1437,137 +1477,143 @@ export default function CharsetConverter() {
 
             {/* TAB 6: 文字化け修復 */}
             <Show when={activeTab() === "mojibake"}>
-                <div class="card bg-base-100 border border-base-300 shadow-sm">
-                    <div class="card-body p-6 space-y-6">
-                        <div class="space-y-2">
-                            <h2 class="card-title text-lg font-bold">
-                                文字化け自動復元・修復ツール
-                            </h2>
-                            <p class="text-sm text-base-content/70">
+                <div class="ba-card ba-stack-6">
+                    <div class="ba-stack-2">
+                        <h2 class="ba-section-title">
+                            文字化け自動復元・修復ツール
+                        </h2>
+                        <p class="ba-text-sm ba-text-muted" style={{ margin: 0 }}>
                                 「縺薙ｓ縺ｫ縺｡縺ｯ」や「ã‚ã„ã†」など、UTF-8やShift_JIS、EUC-JP、Latin-1が食い違って文字化けしてしまったテキストを貼り付けると、元の文章を自動推測して復元します。
-                            </p>
-                        </div>
+                        </p>
+                    </div>
 
-                        <div class="form-control">
-                            <div class="mb-1">
-                                <label class="label-text font-semibold">文字化けしたテキスト</label>
-                            </div>
-                            <textarea
-                                class="textarea textarea-bordered w-full font-mono text-sm min-h-[120px]"
-                                placeholder="文字化けした文字列をここに貼り付けてください..."
-                                aria-label="文字化けしたテキスト"
-                                value={mojibakeInput()}
-                                onInput={(e) => setMojibakeInput(e.currentTarget.value)}
-                            />
-                        </div>
+                    <div class="ba-field">
+                        <label class="ba-label">
+                            <span>文字化けしたテキスト</span>
+                        </label>
+                        <textarea
+                            class="ba-textarea ba-mono ba-text-sm"
+                            style={{ "min-height": "7.5rem" }}
+                            placeholder="文字化けした文字列をここに貼り付けてください..."
+                            aria-label="文字化けしたテキスト"
+                            value={mojibakeInput()}
+                            onInput={(e) => setMojibakeInput(e.currentTarget.value)}
+                        />
+                    </div>
 
-                        <div class="space-y-3">
-                            <h3 class="text-sm font-bold">復元候補</h3>
-                            <Show
-                                when={mojibakeCandidates().length > 0}
-                                fallback={
-                                    <div class="p-6 text-center text-sm text-base-content/75 bg-base-200/40 rounded-lg">
-                                        {mojibakeInput()
-                                            ? "該当する典型的な文字化けパターンは見つかりませんでした。テキスト文字コード変換タブでエンコーディングを手動指定してお試しください。"
-                                            : "文字化けしたテキストを入力すると、ここに復元候補が表示されます。"}
-                                    </div>
-                                }
-                            >
-                                <div class="space-y-3">
-                                    <For each={mojibakeCandidates()}>
-                                        {(candidate, idx) => (
-                                            <div class="card bg-base-200/50 border border-base-300 p-4 space-y-2">
-                                                <div class="flex justify-between items-center">
-                                                    <div>
-                                                        <span class="font-bold text-sm text-primary">
-                                                            {candidate.label}
-                                                        </span>
-                                                        <p class="text-xs text-base-content/80">
-                                                            {candidate.description}
-                                                        </p>
-                                                    </div>
-                                                    <div class="flex gap-2">
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-outline btn-xs"
-                                                            onClick={async () => {
-                                                                await handleCopyText(candidate.restoredText);
-                                                                setMojibakeCopiedIndex(idx());
-                                                                setTimeout(() => setMojibakeCopiedIndex(null), 2000);
-                                                            }}
-                                                        >
-                                                            {mojibakeCopiedIndex() === idx()
-                                                                ? "コピー完了！"
-                                                                : "コピー"}
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-primary btn-xs"
-                                                            onClick={() => {
-                                                                setInputText(candidate.restoredText);
-                                                                setActiveTab("text");
-                                                            }}
-                                                        >
-                                                            テキスト変換に送る
-                                                        </button>
-                                                    </div>
+                    <div class="ba-stack-3">
+                        <h3 class="ba-text-sm ba-font-bold" style={{ margin: 0 }}>復元候補</h3>
+                        <Show
+                            when={mojibakeCandidates().length > 0}
+                            fallback={
+                                <div class="ba-panel ba-text-center ba-text-sm ba-text-muted" style={{ padding: "1.5rem" }}>
+                                    {mojibakeInput()
+                                        ? "該当する典型的な文字化けパターンは見つかりませんでした。テキスト文字コード変換タブでエンコーディングを手動指定してお試しください。"
+                                        : "文字化けしたテキストを入力すると、ここに復元候補が表示されます。"}
+                                </div>
+                            }
+                        >
+                            <div class="ba-stack-3">
+                                <For each={mojibakeCandidates()}>
+                                    {(candidate, idx) => (
+                                        <div class="ba-panel ba-stack-2">
+                                            <div class="ba-flex ba-flex-wrap ba-justify-between ba-items-center ba-gap-2">
+                                                <div>
+                                                    <span class="ba-font-bold ba-text-sm ba-text-primary">
+                                                        {candidate.label}
+                                                    </span>
+                                                    <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
+                                                        {candidate.description}
+                                                    </p>
                                                 </div>
-                                                <div class="p-3 bg-base-100 rounded border border-base-300 font-mono text-sm select-all">
-                                                    {candidate.restoredText}
+                                                <div class="ba-flex ba-gap-2">
+                                                    <button
+                                                        type="button"
+                                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                                        onClick={async () => {
+                                                            await handleCopyText(candidate.restoredText);
+                                                            setMojibakeCopiedIndex(idx());
+                                                            setTimeout(() => setMojibakeCopiedIndex(null), 2000);
+                                                        }}
+                                                    >
+                                                        {mojibakeCopiedIndex() === idx()
+                                                            ? "コピー完了！"
+                                                            : "コピー"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="ba-btn ba-btn--primary ba-btn--xs"
+                                                        onClick={() => {
+                                                            setInputText(candidate.restoredText);
+                                                            setActiveTab("text");
+                                                        }}
+                                                    >
+                                                        テキスト変換に送る
+                                                    </button>
                                                 </div>
                                             </div>
-                                        )}
-                                    </For>
-                                </div>
-                            </Show>
-                        </div>
+                                            <div
+                                                class="ba-mono ba-text-sm"
+                                                style={{
+                                                    padding: "0.75rem",
+                                                    "background-color": "var(--ba-surface)",
+                                                    "border-radius": "var(--ba-radius-sm)",
+                                                    border: "1px solid var(--ba-border)",
+                                                    "user-select": "all",
+                                                }}
+                                            >
+                                                {candidate.restoredText}
+                                            </div>
+                                        </div>
+                                    )}
+                                </For>
+                            </div>
+                        </Show>
                     </div>
                 </div>
             </Show>
 
             {/* 解説・FAQセクション */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm">
-                <div class="card-body p-6 space-y-6 text-sm text-base-content/80">
-                    <h2 class="card-title text-lg font-bold text-base-content">
-                        文字コード・進数表記・改行コードに関する技術解説とFAQ
-                    </h2>
+            <div class="ba-card ba-stack-4 ba-text-sm ba-text-muted">
+                <h2 class="ba-section-title">
+                    文字コード・進数表記・改行コードに関する技術解説とFAQ
+                </h2>
 
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="font-bold text-base text-primary mb-1">
-                                Q. UTF-8とShift_JIS（CP932）の違いは何ですか？
-                            </h3>
-                            <p class="leading-relaxed text-sm">
-                                UTF-8は世界標準のUnicode文字コードであり、日本語だけでなく多言語や絵文字を包括しています。一方、Shift_JISはWindowsや従来の日本国内システムで長年使用されてきた日本語専用文字コードです。現代のWeb標準はUTF-8ですが、Windows用CSV（Excel）や古いレガシーシステム連携ではShift_JISが現在も頻繁に利用されます。
-                            </p>
-                        </div>
+                <div class="ba-stack-4">
+                    <div>
+                        <h3 class="ba-font-bold ba-text-base ba-text-primary" style={{ "margin-top": 0, "margin-bottom": "0.25rem" }}>
+                            Q. UTF-8とShift_JIS（CP932）の違いは何ですか？
+                        </h3>
+                        <p class="ba-text-sm" style={{ margin: 0, "line-height": 1.65 }}>
+                            UTF-8は世界標準のUnicode文字コードであり、日本語だけでなく多言語や絵文字を包括しています。一方、Shift_JISはWindowsや従来の日本国内システムで長年使用されてきた日本語専用文字コードです。現代のWeb標準はUTF-8ですが、Windows用CSV（Excel）や古いレガシーシステム連携ではShift_JISが現在も頻繁に利用されます。
+                        </p>
+                    </div>
 
-                        <div>
-                            <h3 class="font-bold text-base text-primary mb-1">
-                                Q. ExcelでCSVを開くと文字化けするのはなぜですか？
-                            </h3>
-                            <p class="leading-relaxed text-sm">
-                                日本語版WindowsのExcelは、CSVファイルをデフォルトでShift_JIS（CP932）として解釈します。そのためUTF-8で保存されたCSVを開くと文字化けします。解決するには、本ツールで文字コードを「Shift_JIS」に変換するか、「UTF-8 (BOM付き)」で保存してください。BOMが付くことでExcelが自動的にUTF-8と識別できるようになります。
-                            </p>
-                        </div>
+                    <div>
+                        <h3 class="ba-font-bold ba-text-base ba-text-primary" style={{ "margin-top": 0, "margin-bottom": "0.25rem" }}>
+                            Q. ExcelでCSVを開くと文字化けするのはなぜですか？
+                        </h3>
+                        <p class="ba-text-sm" style={{ margin: 0, "line-height": 1.65 }}>
+                            日本語版WindowsのExcelは、CSVファイルをデフォルトでShift_JIS（CP932）として解釈します。そのためUTF-8で保存されたCSVを開くと文字化けします。解決するには、本ツールで文字コードを「Shift_JIS」に変換するか、「UTF-8 (BOM付き)」で保存してください。BOMが付くことでExcelが自動的にUTF-8と識別できるようになります。
+                        </p>
+                    </div>
 
-                        <div>
-                            <h3 class="font-bold text-base text-primary mb-1">
-                                Q. 16進数（HEX）やUnicodeエスケープ（\uXXXX）とは？
-                            </h3>
-                            <p class="leading-relaxed text-sm">
-                                コンピュータは文字を直接扱えず、バイト列（数値）として保存・通信します。16進数（HEX）はバイト列を人間が読みやすく表記したものです。また、Unicodeエスケープ（\u3042 等）やHTML数値文字参照（&#12354; 等）は、ASCII文字しか送信できない通信路やHTMLソース上で安全に特殊文字を埋め込むための記法です。
-                            </p>
-                        </div>
+                    <div>
+                        <h3 class="ba-font-bold ba-text-base ba-text-primary" style={{ "margin-top": 0, "margin-bottom": "0.25rem" }}>
+                            Q. 16進数（HEX）やUnicodeエスケープ（\uXXXX）とは？
+                        </h3>
+                        <p class="ba-text-sm" style={{ margin: 0, "line-height": 1.65 }}>
+                            コンピュータは文字を直接扱えず、バイト列（数値）として保存・通信します。16進数（HEX）はバイト列を人間が読みやすく表記したものです。また、Unicodeエスケープ（\u3042 等）やHTML数値文字参照（&#12354; 等）は、ASCII文字しか送信できない通信路やHTMLソース上で安全に特殊文字を埋め込むための記法です。
+                        </p>
+                    </div>
 
-                        <div>
-                            <h3 class="font-bold text-base text-primary mb-1">
-                                Q. Unicode正規化（NFC / NFD）とは何ですか？
-                            </h3>
-                            <p class="leading-relaxed text-sm">
-                                例えば「が」という文字は、1つの文字「が」（U+304C: NFC）として表す方法と、「か」（U+304B）＋結合濁点（U+3099: NFD）の2文字を合体させて表す方法があります。macOSのファイルシステム（HFS+等）ではNFDが使われるため、Windowsにコピーした際にファイル名が文字化けしたり検索に引っかからなくなる原因となります。NFCに正規化することでこれを解決できます。
-                            </p>
-                        </div>
+                    <div>
+                        <h3 class="ba-font-bold ba-text-base ba-text-primary" style={{ "margin-top": 0, "margin-bottom": "0.25rem" }}>
+                            Q. Unicode正規化（NFC / NFD）とは何ですか？
+                        </h3>
+                        <p class="ba-text-sm" style={{ margin: 0, "line-height": 1.65 }}>
+                            例えば「が」という文字は、1つの文字「が」（U+304C: NFC）として表す方法と、「か」（U+304B）＋結合濁点（U+3099: NFD）の2文字を合体させて表す方法があります。macOSのファイルシステム（HFS+等）ではNFDが使われるため、Windowsにコピーした際にファイル名が文字化けしたり検索に引っかからなくなる原因となります。NFCに正規化することでこれを解決できます。
+                        </p>
                     </div>
                 </div>
             </div>

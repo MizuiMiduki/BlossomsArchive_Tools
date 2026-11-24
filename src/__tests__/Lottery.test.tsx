@@ -64,7 +64,7 @@ describe("Lottery", () => {
         fireEvent.input(textarea, { target: { value: "項目1\n項目2" } });
 
         // 除外チェックボックスをONにする
-        const checkbox = container.querySelector("input.checkbox-primary") as HTMLInputElement;
+        const checkbox = container.querySelector("input.ba-checkbox") as HTMLInputElement;
         expect(checkbox).not.toBeNull();
         fireEvent.click(checkbox);
 

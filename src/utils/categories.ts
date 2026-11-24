@@ -11,11 +11,11 @@ export interface CategoryDefinition {
 }
 
 export const CATEGORIES: CategoryDefinition[] = [
-    { id: "all", name: "すべて", icon: "grid", badgeClass: "badge-ghost border-base-300 text-base-content font-bold" },
-    { id: "camera", name: "写真・カメラ", icon: "camera", badgeClass: "bg-blue-700 text-white font-bold border-transparent" },
-    { id: "utility", name: "日常・便利", icon: "wrench", badgeClass: "bg-emerald-700 text-white font-bold border-transparent" },
-    { id: "developer", name: "開発者・Web", icon: "code", badgeClass: "bg-purple-700 text-white font-bold border-transparent" },
-    { id: "audio", name: "音響・オーディオ", icon: "music", badgeClass: "bg-amber-700 text-white font-bold border-transparent" },
+    { id: "all", name: "すべて", icon: "grid", badgeClass: "ba-badge ba-badge--neutral" },
+    { id: "camera", name: "写真・カメラ", icon: "camera", badgeClass: "ba-badge ba-badge--camera" },
+    { id: "utility", name: "日常・便利", icon: "wrench", badgeClass: "ba-badge ba-badge--utility" },
+    { id: "developer", name: "開発者・Web", icon: "code", badgeClass: "ba-badge ba-badge--developer" },
+    { id: "audio", name: "音響・オーディオ", icon: "music", badgeClass: "ba-badge ba-badge--audio" },
 ];
 
 export const TOOL_CATEGORIES_CONFIG: Record<string, { category: ToolCategoryId; icon: ToolIconName }> = {

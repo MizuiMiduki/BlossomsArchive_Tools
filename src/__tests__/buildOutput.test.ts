@@ -58,7 +58,7 @@ describe("Static Build Output & Sitemap Integrity Tests", () => {
             // AIディスカバリ・初期H1・modulepreloadが含まれること
             expect(html).toContain('rel="ard"');
             expect(html).toContain('rel="modulepreload"');
-            expect(html).toContain('<h1 class="sr-only">');
+            expect(html).toContain('<h1 class="ba-sr-only">');
 
             // PageSpeed LCP最適化: 初期App Shellプレレンダリング（ヘッダー・タイトル・説明文）が含まれること
             expect(html).toContain('BlossomsArchive Tools');

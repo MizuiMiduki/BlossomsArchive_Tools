@@ -2,6 +2,7 @@ import { For, Show, createEffect, createMemo, createSignal, onSettled } from "so
 import { routes, type Route } from "../routes";
 import { filterRoutesByQuery } from "../utils/search";
 import { getFavorites, toggleFavorite } from "../utils/favorites";
+import ToolIcon from "./ToolIcon";
 
 interface CommandPaletteProps {
     isOpen: boolean;
@@ -13,14 +14,11 @@ export default function CommandPalette(props: CommandPaletteProps) {
     const [selectedIndex, setSelectedIndex] = createSignal(0);
     let inputRef: HTMLInputElement | undefined;
 
-    // 非表示ルート（hidden）を除外
     const availableRoutes = createMemo(() => routes.filter((r) => !r.hidden));
 
-    // 検索結果
     const filteredRoutes = createMemo(() => {
         const q = query().trim();
         if (!q) {
-            // クエリが空のときはお気に入りがあれば先頭にし、全ルートを表示
             const favs = getFavorites();
             return [...availableRoutes()].sort((a, b) => {
                 const aFav = favs.includes(a.path) ? 1 : 0;
@@ -31,7 +29,6 @@ export default function CommandPalette(props: CommandPaletteProps) {
         return filterRoutesByQuery(availableRoutes(), q);
     });
 
-    // 検索結果が変わったらインデックスをリセット
     createEffect(
         () => filteredRoutes().length,
         () => {
@@ -39,7 +36,6 @@ export default function CommandPalette(props: CommandPaletteProps) {
         }
     );
 
-    // モーダルオープン時に入力欄へフォーカス
     createEffect(
         () => props.isOpen,
         (open) => {
@@ -89,22 +85,22 @@ export default function CommandPalette(props: CommandPaletteProps) {
     const getCategoryBadge = (category?: Route["applicationCategory"]) => {
         switch (category) {
             case "UtilityApplication":
-                return { text: "便利ツール", class: "badge-primary" };
+                return { text: "便利ツール", class: "ba-badge ba-badge--utility" };
             case "DeveloperApplication":
-                return { text: "開発者", class: "badge-secondary" };
+                return { text: "開発者", class: "ba-badge ba-badge--developer" };
             case "DesignApplication":
-                return { text: "デザイン", class: "badge-accent" };
+                return { text: "デザイン", class: "ba-badge ba-badge--camera" };
             case "MultimediaApplication":
-                return { text: "メディア", class: "badge-neutral" };
+                return { text: "メディア", class: "ba-badge ba-badge--audio" };
             default:
-                return { text: "基本", class: "badge-ghost" };
+                return { text: "基本", class: "ba-badge ba-badge--neutral" };
         }
     };
 
     return (
         <Show when={props.isOpen}>
             <div
-                class="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-xs transition-opacity"
+                class="ba-palette-backdrop"
                 onClick={(e) => {
                     if (e.target === e.currentTarget) props.onClose();
                 }}
@@ -112,28 +108,18 @@ export default function CommandPalette(props: CommandPaletteProps) {
                 aria-modal="true"
                 aria-label="コマンドパレット"
             >
-                <div class="w-full max-w-xl bg-base-100 rounded-2xl shadow-2xl border border-base-300 overflow-hidden flex flex-col max-h-[75vh]">
+                <div class="ba-palette-panel">
                     {/* 検索入力ヘッダー */}
-                    <div class="flex items-center px-4 py-3 border-b border-base-300 gap-3">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-5 h-5 text-base-content/60 shrink-0"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                        </svg>
+                    <div
+                        class="ba-flex ba-items-center ba-gap-3"
+                        style={{ padding: "0.75rem 1rem", "border-bottom": "1px solid var(--ba-border)" }}
+                    >
+                        <ToolIcon name="search" class="ba-icon-md ba-shrink-0 ba-text-muted" />
                         <input
                             ref={inputRef}
                             type="search"
-                            class="w-full bg-transparent text-base-content text-base outline-none placeholder:text-base-content/60"
+                            class="ba-flex-1 ba-text-base"
+                            style={{ background: "transparent", border: "none", outline: "none" }}
                             placeholder="ツール名、キーワード、機能で検索..."
                             value={query()}
                             onInput={(e) => setQuery(e.currentTarget.value)}
@@ -142,28 +128,19 @@ export default function CommandPalette(props: CommandPaletteProps) {
                         <button
                             type="button"
                             onClick={props.onClose}
-                            class="btn btn-ghost btn-xs btn-square shrink-0 text-base-content/60"
+                            class="ba-btn ba-btn--ghost ba-btn--xs ba-btn--square"
                             aria-label="検索を閉じる"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                aria-hidden="true"
-                            >
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            ×
                         </button>
                     </div>
 
                     {/* リスト領域 */}
-                    <div class="flex-1 overflow-y-auto p-2 space-y-1">
+                    <div class="ba-flex-1 ba-scroll-y ba-stack-1" style={{ padding: "0.5rem" }}>
                         <Show
                             when={filteredRoutes().length > 0}
                             fallback={
-                                <div class="py-12 text-center text-sm text-base-content/60">
+                                <div class="ba-text-center ba-text-sm ba-text-muted" style={{ padding: "3rem 1rem" }}>
                                     一致するツールが見つかりませんでした
                                 </div>
                             }
@@ -176,29 +153,18 @@ export default function CommandPalette(props: CommandPaletteProps) {
 
                                     return (
                                         <div
-                                            class={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${
-                                                isSelected()
-                                                    ? "bg-primary text-primary-content font-medium"
-                                                    : "hover:bg-base-200 text-base-content"
-                                            }`}
+                                            class={`ba-palette-item ${isSelected() ? "is-selected" : ""}`}
                                             onClick={() => {
                                                 props.onClose();
                                                 window.location.href = route.path;
                                             }}
                                             onMouseEnter={() => setSelectedIndex(idx())}
                                         >
-                                            <div class="flex items-center gap-3 min-w-0">
+                                            <div class="ba-flex ba-items-center ba-gap-2 ba-min-w-0 ba-flex-1">
                                                 <button
                                                     type="button"
-                                                    class={`btn btn-ghost btn-xs btn-square shrink-0 ${
-                                                        isFav()
-                                                            ? isSelected()
-                                                                ? "text-yellow-300"
-                                                                : "text-amber-500"
-                                                            : isSelected()
-                                                              ? "text-primary-content/60"
-                                                              : "text-base-content/60 hover:text-base-content"
-                                                    }`}
+                                                    class="ba-btn ba-btn--ghost ba-btn--xs ba-btn--square ba-shrink-0"
+                                                    style={{ color: isFav() ? "#f59e0b" : undefined }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         toggleFavorite(route.path);
@@ -208,7 +174,7 @@ export default function CommandPalette(props: CommandPaletteProps) {
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         viewBox="0 0 24 24"
-                                                        class="w-4 h-4"
+                                                        class="ba-icon-sm"
                                                         fill={isFav() ? "currentColor" : "none"}
                                                         stroke="currentColor"
                                                         stroke-width="2"
@@ -221,32 +187,17 @@ export default function CommandPalette(props: CommandPaletteProps) {
                                                         />
                                                     </svg>
                                                 </button>
-                                                <div class="truncate">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="font-bold truncate text-sm">{route.title}</span>
-                                                        <span class={`badge badge-xs text-[10px] ${badge.class}`}>
-                                                            {badge.text}
-                                                        </span>
+                                                <div class="ba-min-w-0 ba-flex-1">
+                                                    <div class="ba-flex ba-items-center ba-gap-2">
+                                                        <span class="ba-font-bold ba-text-sm ba-truncate">{route.title}</span>
+                                                        <span class={badge.class}>{badge.text}</span>
                                                     </div>
-                                                    <p
-                                                        class={`text-xs truncate ${
-                                                            isSelected() ? "text-primary-content/80" : "text-base-content/60"
-                                                        }`}
-                                                    >
+                                                    <p class="ba-text-xs ba-truncate ba-text-muted" style={{ margin: 0 }}>
                                                         {route.description}
                                                     </p>
                                                 </div>
                                             </div>
-
-                                            <div class="shrink-0 pl-2">
-                                                <span
-                                                    class={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${
-                                                        isSelected() ? "bg-white/20 text-white" : "bg-base-200 text-base-content/60"
-                                                    }`}
-                                                >
-                                                    Enter
-                                                </span>
-                                            </div>
+                                            <span class="ba-kbd ba-shrink-0">Enter</span>
                                         </div>
                                     );
                                 }}
@@ -255,15 +206,20 @@ export default function CommandPalette(props: CommandPaletteProps) {
                     </div>
 
                     {/* フッターヒント */}
-                    <div class="flex items-center justify-between px-4 py-2 border-t border-base-300 text-[11px] text-base-content/60 bg-base-200/50">
-                        <div class="flex items-center gap-3">
-                            <span><kbd class="kbd kbd-xs">↑</kbd> <kbd class="kbd kbd-xs">↓</kbd> 移動</span>
-                            <span><kbd class="kbd kbd-xs">Enter</kbd> 選択</span>
-                            <span><kbd class="kbd kbd-xs">ESC</kbd> 閉じる</span>
+                    <div
+                        class="ba-flex ba-items-center ba-justify-between ba-text-xs ba-text-muted"
+                        style={{
+                            padding: "0.5rem 1rem",
+                            "border-top": "1px solid var(--ba-border)",
+                            "background-color": "var(--ba-surface-2)",
+                        }}
+                    >
+                        <div class="ba-flex ba-items-center ba-gap-3">
+                            <span><kbd class="ba-kbd">↑</kbd> <kbd class="ba-kbd">↓</kbd> 移動</span>
+                            <span><kbd class="ba-kbd">Enter</kbd> 選択</span>
+                            <span><kbd class="ba-kbd">ESC</kbd> 閉じる</span>
                         </div>
-                        <div>
-                            <span>お気に入りは <kbd class="kbd kbd-xs">★</kbd> で固定</span>
-                        </div>
+                        <span>お気に入りは ★ で固定</span>
                     </div>
                 </div>
             </div>

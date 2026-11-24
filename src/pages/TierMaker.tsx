@@ -85,6 +85,8 @@ export default function TierMaker() {
     const [draggedItemId, setDraggedItemId] = createSignal<string | null>(null);
     const [dragOverTierId, setDragOverTierId] = createSignal<string | null | "pool">(null);
     const [selectedItemId, setSelectedItemId] = createSignal<string | null>(null);
+    const [hoveredItemId, setHoveredItemId] = createSignal<string | null>(null);
+    const [templateMenuOpen, setTemplateMenuOpen] = createSignal(false);
 
     // エクスポート状態
     const [isExporting, setIsExporting] = createSignal(false);
@@ -99,7 +101,7 @@ export default function TierMaker() {
     };
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".card");
+        if (containerRef) playPageEntrance(containerRef, ".ba-card");
         return () => {
             if (notificationTimer !== null) clearTimeout(notificationTimer);
         };
@@ -368,31 +370,42 @@ export default function TierMaker() {
     };
 
     return (
-        <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0 font-sans space-y-6">
+        <div ref={containerRef} class="ba-page ba-page--wide">
             {/* SEO & アクセシビリティ用隠しCanvas */}
-            <canvas ref={exportCanvasRef} class="hidden" />
+            <canvas ref={exportCanvasRef} style={{ display: "none" }} />
 
             {/* 通知トースト */}
             <Show when={notification()}>
-                <div class="toast toast-top toast-center z-50">
-                    <div class="alert alert-info shadow-lg py-2 px-4 text-sm font-medium">
+                <div
+                    style={{
+                        position: "fixed",
+                        top: "1rem",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        "z-index": 50,
+                    }}
+                >
+                    <div class="ba-alert ba-alert--info" style={{ "box-shadow": "var(--ba-shadow-md)" }}>
                         <span>{notification()}</span>
                     </div>
                 </div>
             </Show>
 
             {/* ページタイトル & 概要 */}
-            <div class="w-full card bg-base-100 shadow-sm p-4 sm:p-6 border border-base-300 min-w-0 text-center space-y-2">
-                <h1 class="text-2xl md:text-3xl font-black text-base-content tracking-tight">
+            <div class="ba-card ba-text-center ba-stack-2">
+                <h1 class="ba-title">
                     <BudouX text="ティア表作成ツール (Tier List)" />
                 </h1>
-                <p class="text-xs sm:text-sm font-semibold text-base-content/70 max-w-2xl mx-auto leading-relaxed">
+                <p
+                    class="ba-text-sm ba-text-muted"
+                    style={{ "max-width": "42rem", margin: "0 auto", "font-weight": 600, "line-height": 1.6 }}
+                >
                     画像やテキストを自由に並べてオリジナルのランキング・ティア表を作成。段数の増減や配色変更、アイテムごとのA+・A-上下微調整、高画質PNG画像の保存に対応しています。
                 </p>
             </div>
 
             {/* コントロールヘッダー */}
-            <div class="w-full card bg-base-100 border border-base-300 shadow-sm p-4 space-y-4">
+            <div class="ba-card">
                 <form
                     {...({
                         toolname: "tier-list-maker",
@@ -400,10 +413,10 @@ export default function TierMaker() {
                             "画像やテキストを並べてオリジナルのティア表を作成・画像エクスポートできるツール",
                     } as Record<string, string>)}
                     onSubmit={(e) => e.preventDefault()}
-                    class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3"
+                    class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3"
                 >
-                    <div class="flex-1 flex items-center gap-2">
-                        <label for="tier-title-input" class="text-sm font-semibold whitespace-nowrap">
+                    <div class="ba-flex ba-items-center ba-gap-2 ba-flex-1 ba-min-w-0" style={{ "min-width": "14rem" }}>
+                        <label for="tier-title-input" class="ba-text-sm ba-font-bold ba-shrink-0">
                             表タイトル:
                         </label>
                         <input
@@ -412,63 +425,96 @@ export default function TierMaker() {
                             value={title()}
                             onInput={(e) => setTitle(e.currentTarget.value)}
                             placeholder="ティア表のタイトルを入力"
-                            class="input input-bordered input-sm w-full max-w-md"
+                            class="ba-input ba-input--sm"
+                            style={{ "max-width": "24rem" }}
                             aria-label="ティア表タイトル"
                         />
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-2">
                         <button
                             type="button"
                             onClick={() => addTier("bottom")}
-                            class="btn btn-outline btn-sm"
+                            class="ba-btn ba-btn--outline ba-btn--sm"
                             title="新しいランク段を下に追加"
                         >
                             + ランク追加
                         </button>
-                        <div class="dropdown dropdown-end">
-                            <label
-                                tabindex={0}
-                                class="btn btn-outline btn-sm"
+                        <div style={{ position: "relative" }}>
+                            <button
+                                type="button"
+                                class="ba-btn ba-btn--outline ba-btn--sm"
                                 aria-label="テンプレートを選択"
+                                aria-expanded={templateMenuOpen() ? "true" : "false"}
+                                onClick={() => setTemplateMenuOpen((v) => !v)}
                             >
                                 テンプレート
-                            </label>
-                            <ul
-                                tabindex={0}
-                                class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-48 border border-base-300 z-30"
-                            >
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => applyPresetTemplate("s-d")}
-                                    >
-                                        標準 5段階 (S〜D)
-                                    </button>
-                                </li>
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => applyPresetTemplate("s-f")}
-                                    >
-                                        詳細 6段階 (S〜F)
-                                    </button>
-                                </li>
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => applyPresetTemplate("high-low")}
-                                    >
-                                        シンプル 3段階 (高・中・低)
-                                    </button>
-                                </li>
-                            </ul>
+                            </button>
+                            <Show when={templateMenuOpen()}>
+                                <ul
+                                    class="ba-stack-1"
+                                    style={{
+                                        position: "absolute",
+                                        right: 0,
+                                        top: "calc(100% + 0.35rem)",
+                                        width: "13rem",
+                                        padding: "0.4rem",
+                                        margin: 0,
+                                        "list-style": "none",
+                                        "background-color": "var(--ba-surface)",
+                                        border: "1px solid var(--ba-border)",
+                                        "border-radius": "var(--ba-radius)",
+                                        "box-shadow": "var(--ba-shadow-md)",
+                                        "z-index": 30,
+                                    }}
+                                >
+                                    <li>
+                                        <button
+                                            type="button"
+                                            class="ba-btn ba-btn--ghost ba-btn--sm ba-btn--block"
+                                            style={{ "justify-content": "flex-start" }}
+                                            onClick={() => {
+                                                setTemplateMenuOpen(false);
+                                                applyPresetTemplate("s-d");
+                                            }}
+                                        >
+                                            標準 5段階 (S〜D)
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            class="ba-btn ba-btn--ghost ba-btn--sm ba-btn--block"
+                                            style={{ "justify-content": "flex-start" }}
+                                            onClick={() => {
+                                                setTemplateMenuOpen(false);
+                                                applyPresetTemplate("s-f");
+                                            }}
+                                        >
+                                            詳細 6段階 (S〜F)
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            class="ba-btn ba-btn--ghost ba-btn--sm ba-btn--block"
+                                            style={{ "justify-content": "flex-start" }}
+                                            onClick={() => {
+                                                setTemplateMenuOpen(false);
+                                                applyPresetTemplate("high-low");
+                                            }}
+                                        >
+                                            シンプル 3段階 (高・中・低)
+                                        </button>
+                                    </li>
+                                </ul>
+                            </Show>
                         </div>
                         <button
                             type="button"
                             onClick={handleExportImage}
                             disabled={isExporting()}
-                            class="btn btn-primary btn-sm"
+                            class="ba-btn ba-btn--primary ba-btn--sm"
                         >
                             <Show when={isExporting()} fallback="画像として保存 (PNG)">
                                 生成中...
@@ -477,7 +523,7 @@ export default function TierMaker() {
                         <button
                             type="button"
                             onClick={handleResetAll}
-                            class="btn btn-outline btn-sm text-base-content/80 hover:bg-base-200"
+                            class="ba-btn ba-btn--outline ba-btn--sm"
                             title="ティア表全体をリセット"
                         >
                             リセット
@@ -487,30 +533,45 @@ export default function TierMaker() {
             </div>
 
             {/* ティア表メインビュー */}
-            <div class="w-full card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
-                <div class="divide-y divide-base-300">
+            <div class="ba-card" style={{ padding: 0, overflow: "hidden" }}>
+                <div>
                     <For each={tiers()}>
                         {(tier, index) => (
                             <div
-                                class={`flex flex-col sm:flex-row items-stretch transition-colors min-h-[104px] ${dragOverTierId() === tier.id ? "bg-base-200/50" : ""}`}
+                                class="ba-flex ba-flex-wrap"
+                                style={{
+                                    "align-items": "stretch",
+                                    "min-height": "104px",
+                                    "border-bottom": index() < tiers().length - 1 ? "1px solid var(--ba-border)" : "none",
+                                    "background-color": dragOverTierId() === tier.id ? "var(--ba-surface-2)" : "transparent",
+                                    transition: "background-color 0.15s ease",
+                                }}
                                 onDragOver={(e) => handleDragOver(e, tier.id)}
                                 onDragLeave={() => setDragOverTierId(null)}
                                 onDrop={(e) => handleDrop(e, tier.id)}
                             >
                                 {/* 左側：ティアラベル & 操作 */}
                                 <div
-                                    class="w-full sm:w-36 md:w-44 p-3 flex sm:flex-col items-center justify-between gap-2 shrink-0 select-none"
-                                    style={{ "background-color": tier.color() }}
+                                    class="ba-flex-col ba-items-center ba-justify-between ba-gap-2 ba-shrink-0"
+                                    style={{
+                                        width: "clamp(8.5rem, 20%, 11rem)",
+                                        padding: "0.75rem",
+                                        "background-color": tier.color(),
+                                        "user-select": "none",
+                                    }}
                                 >
-                                    <div class="flex-1 w-full flex items-center justify-center">
+                                    <div class="ba-flex-1 ba-w-full ba-flex ba-items-center ba-justify-center">
                                         <input
                                             type="text"
                                             value={tier.label()}
-                                            onInput={(e) =>
-                                                tier.setLabel(e.currentTarget.value)
-                                            }
-                                            class="w-full font-black text-center bg-transparent border-b border-transparent hover:border-current focus:border-current focus:outline-none text-lg md:text-xl px-1"
+                                            onInput={(e) => tier.setLabel(e.currentTarget.value)}
+                                            class="ba-w-full ba-font-black ba-text-center ba-text-lg"
                                             style={{
+                                                background: "transparent",
+                                                border: "none",
+                                                "border-bottom": "1px solid transparent",
+                                                outline: "none",
+                                                padding: "0 0.25rem",
                                                 color: getContrastTextColor(tier.color()),
                                             }}
                                             aria-label={`${tier.label()} ランクのラベル名`}
@@ -518,13 +579,13 @@ export default function TierMaker() {
                                     </div>
 
                                     {/* ランク操作ボタン群 */}
-                                    <div class="flex items-center gap-1">
+                                    <div class="ba-flex ba-items-center ba-gap-1">
                                         <button
                                             type="button"
                                             onClick={() => moveTier(index(), "up")}
                                             disabled={index() === 0}
-                                            class="btn btn-xs btn-ghost p-1 opacity-75 hover:opacity-100"
-                                            style={{ color: getContrastTextColor(tier.color()) }}
+                                            class="ba-btn ba-btn--xs ba-btn--ghost"
+                                            style={{ padding: "0.2rem 0.35rem", color: getContrastTextColor(tier.color()) }}
                                             aria-label={`${tier.label()} ランクを1つ上に移動`}
                                             title="上へ移動"
                                         >
@@ -534,8 +595,8 @@ export default function TierMaker() {
                                             type="button"
                                             onClick={() => moveTier(index(), "down")}
                                             disabled={index() === tiers().length - 1}
-                                            class="btn btn-xs btn-ghost p-1 opacity-75 hover:opacity-100"
-                                            style={{ color: getContrastTextColor(tier.color()) }}
+                                            class="ba-btn ba-btn--xs ba-btn--ghost"
+                                            style={{ padding: "0.2rem 0.35rem", color: getContrastTextColor(tier.color()) }}
                                             aria-label={`${tier.label()} ランクを1つ下に移動`}
                                             title="下へ移動"
                                         >
@@ -545,10 +606,16 @@ export default function TierMaker() {
                                         <input
                                             type="color"
                                             value={tier.color()}
-                                            onInput={(e) =>
-                                                tier.setColor(e.currentTarget.value)
-                                            }
-                                            class="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
+                                            onInput={(e) => tier.setColor(e.currentTarget.value)}
+                                            style={{
+                                                width: "1.5rem",
+                                                height: "1.5rem",
+                                                "border-radius": "0.25rem",
+                                                cursor: "pointer",
+                                                border: "none",
+                                                padding: 0,
+                                                background: "transparent",
+                                            }}
                                             aria-label={`${tier.label()} ランクの背景色を変更`}
                                             title="色を変更"
                                         />
@@ -556,8 +623,8 @@ export default function TierMaker() {
                                         <button
                                             type="button"
                                             onClick={() => removeTier(tier.id)}
-                                            class="btn btn-xs btn-ghost p-1 text-error opacity-75 hover:opacity-100"
-                                            style={{ color: getContrastTextColor(tier.color()) }}
+                                            class="ba-btn ba-btn--xs ba-btn--ghost"
+                                            style={{ padding: "0.2rem 0.35rem", color: getContrastTextColor(tier.color()) }}
                                             aria-label={`${tier.label()} ランクを削除`}
                                             title="ランクを削除"
                                         >
@@ -567,18 +634,44 @@ export default function TierMaker() {
                                 </div>
 
                                 {/* 右側：アイテム配置ドロップ領域 */}
-                                <div class="flex-1 p-3 flex flex-wrap items-center gap-3 bg-base-200/20">
-                                    <For
-                                        each={items().filter((it) => it.tierId === tier.id)}
-                                    >
+                                <div
+                                    class="ba-flex-1 ba-flex ba-flex-wrap ba-items-center ba-gap-3 ba-min-w-0"
+                                    style={{ padding: "0.75rem", "background-color": "var(--ba-surface-2)" }}
+                                >
+                                    <For each={items().filter((it) => it.tierId === tier.id)}>
                                         {(item) => {
                                             const subInfo = getSubTierInfo(item.subTier);
+                                            const showControls = () =>
+                                                hoveredItemId() === item.id || selectedItemId() === item.id;
                                             return (
                                                 <div
                                                     draggable="true"
                                                     onDragStart={(e) => handleDragStart(item.id, e)}
                                                     onClick={() => setSelectedItemId(item.id)}
-                                                    class={`relative group w-20 h-20 rounded-md border border-base-300 shadow-sm cursor-grab active:cursor-grabbing select-none transition-transform duration-150 flex items-center justify-center p-1 overflow-visible ${subInfo.translateYClass} ${selectedItemId() === item.id ? "ring-2 ring-primary" : ""}`}
+                                                    onMouseEnter={() => setHoveredItemId(item.id)}
+                                                    onMouseLeave={() => setHoveredItemId(null)}
+                                                    class="ba-flex ba-items-center ba-justify-center"
+                                                    style={{
+                                                        position: "relative",
+                                                        width: "5rem",
+                                                        height: "5rem",
+                                                        padding: "0.25rem",
+                                                        "border-radius": "var(--ba-radius-sm)",
+                                                        border: selectedItemId() === item.id
+                                                            ? "2px solid var(--ba-primary)"
+                                                            : "1px solid var(--ba-border)",
+                                                        "background-color": "var(--ba-surface)",
+                                                        "box-shadow": "var(--ba-shadow-xs)",
+                                                        cursor: "grab",
+                                                        "user-select": "none",
+                                                        overflow: "visible",
+                                                        transform: item.subTier === "plus"
+                                                            ? "translateY(-6px)"
+                                                            : item.subTier === "minus"
+                                                              ? "translateY(6px)"
+                                                              : undefined,
+                                                        transition: "transform 0.15s ease",
+                                                    }}
                                                     title={`${item.label} (${subInfo.ariaLabel})`}
                                                 >
                                                     {/* アイテム本体表示（画像 or テキスト） */}
@@ -586,10 +679,14 @@ export default function TierMaker() {
                                                         when={item.type === "image" && item.imageUrl}
                                                         fallback={
                                                             <div
-                                                                class="w-full h-full rounded flex items-center justify-center text-center p-1 text-xs font-bold leading-tight break-words select-none"
+                                                                class="ba-w-full ba-flex ba-items-center ba-justify-center ba-text-center ba-text-xs ba-font-bold"
                                                                 style={{
-                                                                    "background-color":
-                                                                        item.bgColor || "#374151",
+                                                                    height: "100%",
+                                                                    "border-radius": "0.25rem",
+                                                                    padding: "0.25rem",
+                                                                    "line-height": 1.2,
+                                                                    "word-break": "break-word",
+                                                                    "background-color": item.bgColor || "#374151",
                                                                     color: "#ffffff",
                                                                 }}
                                                             >
@@ -600,69 +697,106 @@ export default function TierMaker() {
                                                         <img
                                                             src={item.imageUrl}
                                                             alt={item.label}
-                                                            class="w-full h-full object-cover rounded pointer-events-none"
+                                                            style={{
+                                                                width: "100%",
+                                                                height: "100%",
+                                                                "object-fit": "cover",
+                                                                "border-radius": "0.25rem",
+                                                                "pointer-events": "none",
+                                                            }}
                                                         />
                                                     </Show>
 
                                                     {/* サブティア (+ / -) バッジ表示 */}
                                                     <Show when={subInfo.badgeText}>
                                                         <span
-                                                            class={`absolute z-10 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shadow-md border border-white ${subInfo.badgeBgClass} ${item.subTier === "plus" ? "-top-2 -right-2" : "-bottom-2 -right-2"}`}
+                                                            class="ba-flex ba-items-center ba-justify-center ba-font-black"
+                                                            style={{
+                                                                position: "absolute",
+                                                                "z-index": 10,
+                                                                width: "1.25rem",
+                                                                height: "1.25rem",
+                                                                "border-radius": "9999px",
+                                                                "font-size": "0.625rem",
+                                                                border: "1px solid #ffffff",
+                                                                "box-shadow": "var(--ba-shadow-sm)",
+                                                                "background-color": item.subTier === "plus" ? "var(--ba-success)" : "var(--ba-warning)",
+                                                                color: item.subTier === "plus" ? "var(--ba-success-fg)" : "var(--ba-warning-fg)",
+                                                                right: "-0.5rem",
+                                                                top: item.subTier === "plus" ? "-0.5rem" : undefined,
+                                                                bottom: item.subTier === "minus" ? "-0.5rem" : undefined,
+                                                            }}
                                                         >
                                                             {subInfo.badgeText}
                                                         </span>
                                                     </Show>
 
-                                                    {/* ホバー時クイック操作バー（+ / 通常 / -） */}
-                                                    <div class="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center gap-0.5 bg-base-300 rounded px-1 py-0.5 shadow-md z-20 whitespace-nowrap">
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleToggleSubTier(item.id, "plus");
+                                                    {/* ホバー・選択時クイック操作バー（+ / 通常 / -） */}
+                                                    <Show when={showControls()}>
+                                                        <div
+                                                            class="ba-flex ba-items-center ba-gap-1"
+                                                            style={{
+                                                                position: "absolute",
+                                                                top: "-1.75rem",
+                                                                left: "50%",
+                                                                transform: "translateX(-50%)",
+                                                                "background-color": "var(--ba-surface)",
+                                                                border: "1px solid var(--ba-border)",
+                                                                "border-radius": "var(--ba-radius-sm)",
+                                                                padding: "0.15rem 0.25rem",
+                                                                "box-shadow": "var(--ba-shadow-sm)",
+                                                                "z-index": 20,
+                                                                "white-space": "nowrap",
                                                             }}
-                                                            class={`btn btn-xs px-1 min-h-0 h-5 text-[10px] ${item.subTier === "plus" ? "btn-success text-white" : "btn-ghost"}`}
-                                                            aria-label="上寄りに設定 (A+)"
-                                                            title="上寄り (+)"
                                                         >
-                                                            +
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleToggleSubTier(item.id, "normal");
-                                                            }}
-                                                            class={`btn btn-xs px-1 min-h-0 h-5 text-[10px] ${item.subTier === "normal" ? "btn-neutral text-white" : "btn-ghost"}`}
-                                                            aria-label="中央に設定 (通常)"
-                                                            title="中央 (通常)"
-                                                        >
-                                                            •
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleToggleSubTier(item.id, "minus");
-                                                            }}
-                                                            class={`btn btn-xs px-1 min-h-0 h-5 text-[10px] ${item.subTier === "minus" ? "btn-warning text-white" : "btn-ghost"}`}
-                                                            aria-label="下寄りに設定 (A-)"
-                                                            title="下寄り (-)"
-                                                        >
-                                                            -
-                                                        </button>
-                                                    </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleToggleSubTier(item.id, "plus");
+                                                                }}
+                                                                class={`ba-btn ba-btn--xs ${item.subTier === "plus" ? "ba-btn--success" : "ba-btn--ghost"}`}
+                                                                style={{ "min-height": "1.25rem", padding: "0 0.35rem" }}
+                                                                aria-label="上寄りに設定 (A+)"
+                                                                title="上寄り (+)"
+                                                            >
+                                                                +
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleToggleSubTier(item.id, "normal");
+                                                                }}
+                                                                class={`ba-btn ba-btn--xs ${item.subTier === "normal" ? "ba-btn--secondary" : "ba-btn--ghost"}`}
+                                                                style={{ "min-height": "1.25rem", padding: "0 0.35rem" }}
+                                                                aria-label="中央に設定 (通常)"
+                                                                title="中央 (通常)"
+                                                            >
+                                                                •
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleToggleSubTier(item.id, "minus");
+                                                                }}
+                                                                class={`ba-btn ba-btn--xs ${item.subTier === "minus" ? "ba-btn--warning" : "ba-btn--ghost"}`}
+                                                                style={{ "min-height": "1.25rem", padding: "0 0.35rem" }}
+                                                                aria-label="下寄りに設定 (A-)"
+                                                                title="下寄り (-)"
+                                                            >
+                                                                -
+                                                            </button>
+                                                        </div>
+                                                    </Show>
                                                 </div>
                                             );
                                         }}
                                     </For>
 
-                                    <Show
-                                        when={
-                                            items().filter((it) => it.tierId === tier.id).length === 0
-                                        }
-                                    >
-                                        <div class="text-xs text-base-content/70 italic py-4 px-2">
+                                    <Show when={items().filter((it) => it.tierId === tier.id).length === 0}>
+                                        <div class="ba-text-xs ba-text-muted" style={{ "font-style": "italic", padding: "1rem 0.5rem" }}>
                                             アイテムをここにドラッグ＆ドロップ
                                         </div>
                                     </Show>
@@ -674,16 +808,14 @@ export default function TierMaker() {
             </div>
 
             {/* アイテム管理 & 追加エリア */}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="ba-flex ba-flex-wrap ba-gap-6 ba-items-start">
                 {/* アイテム追加フォーム */}
-                <div class="card bg-base-100 border border-base-300 shadow-sm p-4 space-y-4">
-                    <h2 class="text-lg font-bold text-base-content flex items-center justify-between">
-                        <span>アイテムを追加</span>
-                    </h2>
+                <div class="ba-card ba-stack-4 ba-min-w-0" style={{ flex: "1 1 18rem" }}>
+                    <h2 class="ba-section-title">アイテムを追加</h2>
 
                     {/* テキストアイテム追加 */}
-                    <form onSubmit={handleAddTextItems} class="space-y-2">
-                        <label for="text-items-input" class="text-xs font-semibold block text-base-content/80">
+                    <form onSubmit={handleAddTextItems} class="ba-stack-2">
+                        <label for="text-items-input" class="ba-label ba-text-muted">
                             文字・単語を追加（改行で複数一括登録可）:
                         </label>
                         <textarea
@@ -691,22 +823,24 @@ export default function TierMaker() {
                             value={textInput()}
                             onInput={(e) => setTextInput(e.currentTarget.value)}
                             placeholder="アイテム名（例: キャラ名、曲名、単語など）"
-                            class="textarea textarea-bordered w-full h-20 text-sm"
+                            class="ba-textarea"
+                            style={{ "min-height": "5rem", height: "5rem" }}
                             aria-label="追加するテキストアイテム名"
                         />
-                        <button
-                            type="submit"
-                            class="btn btn-outline btn-sm w-full"
-                        >
+                        <button type="submit" class="ba-btn ba-btn--outline ba-btn--sm ba-btn--block">
                             + テキストを追加
                         </button>
                     </form>
 
-                    <div class="divider my-1 text-xs text-base-content/60">または</div>
+                    <div class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-text-muted">
+                        <hr class="ba-divider ba-flex-1" />
+                        <span>または</span>
+                        <hr class="ba-divider ba-flex-1" />
+                    </div>
 
                     {/* 画像アイテム追加 */}
-                    <div class="space-y-2">
-                        <label class="text-xs font-semibold block text-base-content/80">
+                    <div class="ba-stack-2">
+                        <label class="ba-label ba-text-muted">
                             画像ファイルを追加（複数可）:
                         </label>
                         <input
@@ -715,34 +849,44 @@ export default function TierMaker() {
                             multiple
                             accept="image/*"
                             onChange={(e) => handleAddImages(e.currentTarget.files)}
-                            class="file-input file-input-bordered file-input-sm w-full"
+                            class="ba-input ba-input--sm"
                             aria-label="画像ファイルを選択して追加"
                         />
-                        <p class="text-[11px] text-base-content/60">
+                        <p class="ba-text-muted" style={{ "font-size": "0.6875rem", margin: 0 }}>
                             ※ 画像はサーバーへ送信されず、お使いの端末内だけで安全に処理されます。
                         </p>
                     </div>
                 </div>
 
                 {/* 未分類アイテムプール */}
-                <div class="md:col-span-2 card bg-base-100 border border-base-300 shadow-sm p-4 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-bold text-base-content">
+                <div class="ba-card ba-stack-3 ba-min-w-0" style={{ flex: "2 1 24rem" }}>
+                    <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                        <h2 class="ba-section-title">
                             未分類アイテムプール ({poolItems().length})
                         </h2>
-                        <div class="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={handleResetToPool}
-                                class="btn btn-ghost btn-xs text-base-content/70"
-                            >
-                                全てプールに戻す
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={handleResetToPool}
+                            class="ba-btn ba-btn--ghost ba-btn--xs ba-text-muted"
+                        >
+                            全てプールに戻す
+                        </button>
                     </div>
 
                     <div
-                        class={`min-h-[140px] p-3 rounded-lg border-2 border-dashed border-base-300 flex flex-wrap gap-3 items-center content-start bg-base-200/30 transition-colors ${dragOverTierId() === "pool" ? "border-primary bg-primary/5" : ""}`}
+                        class="ba-flex ba-flex-wrap ba-gap-3 ba-items-start"
+                        style={{
+                            "min-height": "140px",
+                            padding: "0.75rem",
+                            "border-radius": "var(--ba-radius)",
+                            border: dragOverTierId() === "pool"
+                                ? "2px dashed var(--ba-primary)"
+                                : "2px dashed var(--ba-border-strong)",
+                            "background-color": dragOverTierId() === "pool"
+                                ? "var(--ba-primary-soft)"
+                                : "var(--ba-surface-2)",
+                            transition: "border-color 0.15s ease, background-color 0.15s ease",
+                        }}
                         onDragOver={(e) => handleDragOver(e, "pool")}
                         onDragLeave={() => setDragOverTierId(null)}
                         onDrop={(e) => handleDrop(e, null)}
@@ -753,15 +897,36 @@ export default function TierMaker() {
                                     draggable="true"
                                     onDragStart={(e) => handleDragStart(item.id, e)}
                                     onClick={() => setSelectedItemId(item.id)}
-                                    class={`relative group w-18 h-18 rounded border border-base-300 shadow-xs cursor-grab active:cursor-grabbing select-none flex items-center justify-center p-1 ${selectedItemId() === item.id ? "ring-2 ring-primary" : ""}`}
+                                    onMouseEnter={() => setHoveredItemId(item.id)}
+                                    onMouseLeave={() => setHoveredItemId(null)}
+                                    class="ba-flex ba-items-center ba-justify-center"
+                                    style={{
+                                        position: "relative",
+                                        width: "4.5rem",
+                                        height: "4.5rem",
+                                        padding: "0.25rem",
+                                        "border-radius": "var(--ba-radius-sm)",
+                                        border: selectedItemId() === item.id
+                                            ? "2px solid var(--ba-primary)"
+                                            : "1px solid var(--ba-border)",
+                                        "background-color": "var(--ba-surface)",
+                                        "box-shadow": "var(--ba-shadow-xs)",
+                                        cursor: "grab",
+                                        "user-select": "none",
+                                    }}
                                     title={`${item.label} (未分類)`}
                                 >
                                     <Show
                                         when={item.type === "image" && item.imageUrl}
                                         fallback={
                                             <div
-                                                class="w-full h-full rounded flex items-center justify-center text-center p-1 text-xs font-bold leading-tight break-words select-none"
+                                                class="ba-w-full ba-flex ba-items-center ba-justify-center ba-text-center ba-text-xs ba-font-bold"
                                                 style={{
+                                                    height: "100%",
+                                                    "border-radius": "0.25rem",
+                                                    padding: "0.25rem",
+                                                    "line-height": 1.2,
+                                                    "word-break": "break-word",
                                                     "background-color": item.bgColor || "#374151",
                                                     color: "#ffffff",
                                                 }}
@@ -773,28 +938,49 @@ export default function TierMaker() {
                                         <img
                                             src={item.imageUrl}
                                             alt={item.label}
-                                            class="w-full h-full object-cover rounded pointer-events-none"
+                                            style={{
+                                                width: "100%",
+                                                height: "100%",
+                                                "object-fit": "cover",
+                                                "border-radius": "0.25rem",
+                                                "pointer-events": "none",
+                                            }}
                                         />
                                     </Show>
 
-                                    {/* ホバー時削除ボタン */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            deleteItem(item.id);
-                                        }}
-                                        class="absolute -top-1.5 -right-1.5 hidden group-hover:flex w-4 h-4 rounded-full bg-error text-white items-center justify-center text-[10px]"
-                                        aria-label={`${item.label} を削除`}
-                                    >
-                                        ✕
-                                    </button>
+                                    {/* ホバー・選択時削除ボタン */}
+                                    <Show when={hoveredItemId() === item.id || selectedItemId() === item.id}>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteItem(item.id);
+                                            }}
+                                            class="ba-flex ba-items-center ba-justify-center"
+                                            style={{
+                                                position: "absolute",
+                                                top: "-0.375rem",
+                                                right: "-0.375rem",
+                                                width: "1.1rem",
+                                                height: "1.1rem",
+                                                "border-radius": "9999px",
+                                                border: "none",
+                                                "background-color": "var(--ba-danger)",
+                                                color: "var(--ba-danger-fg)",
+                                                "font-size": "0.625rem",
+                                                cursor: "pointer",
+                                            }}
+                                            aria-label={`${item.label} を削除`}
+                                        >
+                                            ✕
+                                        </button>
+                                    </Show>
                                 </div>
                             )}
                         </For>
 
                         <Show when={poolItems().length === 0}>
-                            <div class="w-full py-8 text-center text-xs text-base-content/70">
+                            <div class="ba-w-full ba-text-center ba-text-xs ba-text-muted" style={{ "padding-block": "2rem" }}>
                                 未分類のアイテムはありません。上のフォームから画像やテキストを追加してください。
                             </div>
                         </Show>
@@ -803,22 +989,23 @@ export default function TierMaker() {
                     {/* 選択アイテムのクイック操作（モバイル・キーボード対応） */}
                     <Show when={selectedItem()}>
                         {(item) => (
-                            <div class="mt-3 p-3 rounded-lg bg-base-200/60 border border-base-300 flex flex-wrap items-center justify-between gap-3 text-xs">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold">選択中:</span>
-                                    <span class="badge badge-neutral">{item().label}</span>
+                            <div class="ba-panel ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3 ba-text-xs">
+                                <div class="ba-flex ba-items-center ba-gap-2">
+                                    <span class="ba-font-bold">選択中:</span>
+                                    <span class="ba-badge ba-badge--neutral">{item().label}</span>
                                 </div>
 
-                                <div class="flex flex-wrap items-center gap-2">
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-2">
                                     {/* 配置先ランク移動 */}
-                                    <span class="text-base-content/70">配置先:</span>
+                                    <span class="ba-text-muted">配置先:</span>
                                     <select
                                         value={item().tierId || "pool"}
                                         onChange={(e) => {
                                             const val = e.currentTarget.value;
                                             moveItemToTier(item().id, val === "pool" ? null : val);
                                         }}
-                                        class="select select-bordered select-xs"
+                                        class="ba-select ba-select--sm"
+                                        style={{ width: "auto" }}
                                         aria-label="選択中アイテムの配置先ランク"
                                     >
                                         <option value="pool">未分類プール</option>
@@ -828,12 +1015,12 @@ export default function TierMaker() {
                                     </select>
 
                                     {/* サブティア微調整 */}
-                                    <span class="text-base-content/70 ml-2">微調整:</span>
-                                    <div class="join">
+                                    <span class="ba-text-muted" style={{ "margin-left": "0.5rem" }}>微調整:</span>
+                                    <div class="ba-flex ba-items-center ba-gap-1">
                                         <button
                                             type="button"
                                             onClick={() => handleToggleSubTier(item().id, "plus")}
-                                            class={`join-item btn btn-xs ${item().subTier === "plus" ? "btn-success text-white" : "btn-outline"}`}
+                                            class={`ba-btn ba-btn--xs ${item().subTier === "plus" ? "ba-btn--success" : "ba-btn--outline"}`}
                                             aria-label="選択中アイテムを上寄りに設定 (+)"
                                         >
                                             + (上寄り)
@@ -841,7 +1028,7 @@ export default function TierMaker() {
                                         <button
                                             type="button"
                                             onClick={() => handleToggleSubTier(item().id, "normal")}
-                                            class={`join-item btn btn-xs ${item().subTier === "normal" ? "btn-neutral text-white" : "btn-outline"}`}
+                                            class={`ba-btn ba-btn--xs ${item().subTier === "normal" ? "ba-btn--secondary" : "ba-btn--outline"}`}
                                             aria-label="選択中アイテムを中央に設定 (通常)"
                                         >
                                             通常
@@ -849,7 +1036,7 @@ export default function TierMaker() {
                                         <button
                                             type="button"
                                             onClick={() => handleToggleSubTier(item().id, "minus")}
-                                            class={`join-item btn btn-xs ${item().subTier === "minus" ? "btn-warning text-white" : "btn-outline"}`}
+                                            class={`ba-btn ba-btn--xs ${item().subTier === "minus" ? "ba-btn--warning" : "ba-btn--outline"}`}
                                             aria-label="選択中アイテムを下寄りに設定 (-)"
                                         >
                                             - (下寄り)
@@ -860,7 +1047,7 @@ export default function TierMaker() {
                                     <button
                                         type="button"
                                         onClick={() => deleteItem(item().id)}
-                                        class="btn btn-ghost btn-xs text-error ml-2"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-danger"
                                         aria-label="選択中アイテムを削除"
                                     >
                                         削除
@@ -873,26 +1060,32 @@ export default function TierMaker() {
             </div>
 
             {/* 使い方ガイド */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm p-6 space-y-4">
-                <h2 class="text-xl font-bold text-base-content">
+            <div class="ba-card ba-stack-4">
+                <h2 class="ba-section-title ba-text-xl">
                     ティア表作成ツールの使い方と便利な機能
                 </h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-base-content/80">
-                    <div class="space-y-1">
-                        <h3 class="font-bold text-base-content">1. 自由なランク数とカスタマイズ</h3>
-                        <p>
+                <div class="ba-grid-3 ba-text-sm ba-text-muted">
+                    <div class="ba-stack-1">
+                        <h3 class="ba-font-bold ba-text-sm" style={{ margin: 0, color: "var(--ba-text)" }}>
+                            1. 自由なランク数とカスタマイズ
+                        </h3>
+                        <p style={{ margin: 0 }}>
                             「+ ランク追加」ボタンで好きな数だけ段を増減できます。段のラベル名や背景色はお好みに合わせて自由に変更可能です。
                         </p>
                     </div>
-                    <div class="space-y-1">
-                        <h3 class="font-bold text-base-content">2. 画像と文字の混在配置</h3>
-                        <p>
+                    <div class="ba-stack-1">
+                        <h3 class="ba-font-bold ba-text-sm" style={{ margin: 0, color: "var(--ba-text)" }}>
+                            2. 画像と文字の混在配置
+                        </h3>
+                        <p style={{ margin: 0 }}>
                             手持ちの画像を複数一括でアップロードしたり、テキストを入力してカードとして並べたり、文字と画像を混在させて自由に配置できます。
                         </p>
                     </div>
-                    <div class="space-y-1">
-                        <h3 class="font-bold text-base-content">3. 「+」「-」上下微調整オプション</h3>
-                        <p>
+                    <div class="ba-stack-1">
+                        <h3 class="ba-font-bold ba-text-sm" style={{ margin: 0, color: "var(--ba-text)" }}>
+                            3. 「+」「-」上下微調整オプション
+                        </h3>
+                        <p style={{ margin: 0 }}>
                             各アイテムカードの「+」「-」ボタンを押すと、同じランク内でも少し上にずらして「A+」、下にずらして「A-」といった細かな優劣・強弱を直感的に表現できます。
                         </p>
                     </div>
@@ -900,41 +1093,46 @@ export default function TierMaker() {
             </div>
 
             {/* エクスポート画像プレビューモーダル */}
-            <dialog ref={previewModalRef} class="modal">
-                <div class="modal-box max-w-4xl p-4 space-y-4">
-                    <h3 class="font-bold text-lg">ティア表画像のプレビュー</h3>
-                    <div class="max-h-[65vh] overflow-auto border border-base-300 rounded-lg p-2 bg-base-200 flex justify-center">
+            <dialog
+                ref={previewModalRef}
+                class="ba-modal"
+                onClick={(e) => {
+                    if (e.target === previewModalRef) previewModalRef?.close();
+                }}
+            >
+                <div class="ba-modal-box ba-stack-4" style={{ "max-width": "56rem" }}>
+                    <h3 class="ba-section-title">ティア表画像のプレビュー</h3>
+                    <div
+                        class="ba-panel ba-flex ba-justify-center"
+                        style={{ "max-height": "65vh", overflow: "auto", padding: "0.5rem" }}
+                    >
                         <Show when={exportImageUrl()}>
                             {(url) => (
                                 <img
                                     src={url()}
                                     alt="エクスポートされたティア表画像プレビュー"
-                                    class="max-w-full h-auto rounded shadow-sm"
+                                    style={{ "max-width": "100%", height: "auto", "border-radius": "var(--ba-radius-sm)" }}
                                 />
                             )}
                         </Show>
                     </div>
-                    <div class="modal-action flex items-center justify-between">
+                    <div class="ba-flex ba-items-center ba-justify-between">
                         <button
                             type="button"
                             onClick={() => previewModalRef?.close()}
-                            class="btn btn-ghost btn-sm"
+                            class="ba-btn ba-btn--ghost ba-btn--sm"
                         >
                             閉じる
                         </button>
                         <button
                             type="button"
                             onClick={handleDownloadPng}
-                            class="btn btn-primary btn-sm"
+                            class="ba-btn ba-btn--primary ba-btn--sm"
                         >
                             PNG画像をダウンロード
                         </button>
                     </div>
                 </div>
-                <div
-                    class="modal-backdrop bg-black/50"
-                    onClick={() => previewModalRef?.close()}
-                />
             </dialog>
 
             {/* 広告エリア */}

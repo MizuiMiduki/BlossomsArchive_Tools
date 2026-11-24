@@ -250,10 +250,10 @@ describe("Integration Tests (Router + Layout + Metadata + Discovery Files)", () 
         // 電卓画面が表示されたこと
         expect(await screen.findByRole("textbox")).toBeInTheDocument();
 
-        // 4. 現在のルートリンクがアクティブ表示 (bg-primary) になっていること
+        // 4. 現在のルートリンクがアクティブ表示 (is-active) になっていること
         const allLinksAfterNav = screen.getAllByRole("link");
         const activeCalcLink = allLinksAfterNav.find(
-            (a) => a.getAttribute("href") === "/calculator" && a.classList.contains("bg-primary"),
+            (a) => a.getAttribute("href") === "/calculator" && a.classList.contains("is-active"),
         );
         expect(activeCalcLink).toBeDefined();
     });

@@ -150,15 +150,13 @@ describe("Visual Regression & UI Structure / Layout Invariant Tests", () => {
         expect(aside).not.toBeNull();
         expect(footer).not.toBeNull();
 
-        // 横スクロール・高さ崩れ防止のための overflow-x-hidden / min-h-0 構造の確認
-        expect(main?.className).toContain("overflow-x-hidden");
-        expect(main?.className).toContain("min-h-0");
+        // 横スクロール・高さ崩れ防止のための ba-main 構造の確認
+        expect(main?.className).toContain("ba-main");
 
-        // ヘッダータイトルの高コントラスト・ダークモード視認性クラスの確認
-        const headerTitle = header?.querySelector("span.truncate");
+        // ヘッダータイトルの高コントラスト・視認性クラスの確認
+        const headerTitle = header?.querySelector("span.ba-truncate");
         expect(headerTitle).not.toBeNull();
-        expect(headerTitle?.className).toContain("dark:text-white");
-        expect(headerTitle?.className).toContain("font-black");
+        expect(headerTitle?.className).toContain("ba-font-black");
     });
 
     it.each(PAGE_ENTRIES)(
@@ -199,8 +197,8 @@ describe("Visual Regression & UI Structure / Layout Invariant Tests", () => {
     it("Clock のデジタル表示とアナログ時計SVGジオメトリ（文字盤円・60目盛り・12時間数字・時分秒針）が崩れていないこと", () => {
         const { container } = render(() => <Clock />);
 
-        // デジタル表示のフォント・トラッキング構造
-        const digital = container.querySelector(".font-mono.tracking-tighter");
+        // デジタル表示のフォント構造
+        const digital = container.querySelector(".ba-mono");
         expect(digital).not.toBeNull();
         expect(digital?.textContent).toMatch(/\d{2}:\d{2}:\d{2}/);
 
@@ -235,32 +233,28 @@ describe("Visual Regression & UI Structure / Layout Invariant Tests", () => {
         expect(searchInput?.getAttribute("aria-label")).toContain("検索");
 
         // 全カード一覧
-        const allCards = container.querySelectorAll(".grid > div.card");
+        const allCards = container.querySelectorAll(".ba-grid-3 > div.ba-card");
         expect(allCards.length).toBeGreaterThan(0);
 
-        // ツールカード一覧 (.card-title を持つカード)
-        const toolCards = Array.from(allCards).filter((c) => c.querySelector(".card-title"));
+        // ツールカード一覧 (.ba-section-title を持つカード)
+        const toolCards = Array.from(allCards).filter((c) => c.querySelector(".ba-section-title"));
         expect(toolCards.length).toBeGreaterThan(0);
 
-        // インフィード広告カード一覧 (.card-title を持たないカード)
-        const adCards = Array.from(allCards).filter((c) => !c.querySelector(".card-title"));
+        // インフィード広告カード一覧 (.ba-section-title を持たないカード)
+        const adCards = Array.from(allCards).filter((c) => !c.querySelector(".ba-section-title"));
         expect(adCards.length).toBeGreaterThan(0);
 
-        // ツールカードと広告カードがデザイン共通クラス（card, bg-base-100, border-base-300, shadow-sm）を共有していること
+        // ツールカードと広告カードがデザイン共通クラス（ba-card, ba-tool-card）を共有していること
         for (const card of toolCards) {
-            expect(card.classList.contains("card")).toBe(true);
-            expect(card.classList.contains("bg-base-100")).toBe(true);
-            expect(card.classList.contains("border-base-300")).toBe(true);
-            expect(card.classList.contains("shadow-sm")).toBe(true);
+            expect(card.classList.contains("ba-card")).toBe(true);
+            expect(card.classList.contains("ba-tool-card")).toBe(true);
         }
 
         for (const adCard of adCards) {
-            expect(adCard.classList.contains("card")).toBe(true);
-            expect(adCard.classList.contains("bg-base-100")).toBe(true);
-            expect(adCard.classList.contains("border-base-300")).toBe(true);
-            expect(adCard.classList.contains("shadow-sm")).toBe(true);
+            expect(adCard.classList.contains("ba-card")).toBe(true);
+            expect(adCard.classList.contains("ba-tool-card")).toBe(true);
             // スポンサーバッジが存在すること
-            const badge = adCard.querySelector(".badge");
+            const badge = adCard.querySelector(".ba-badge");
             expect(badge).not.toBeNull();
             expect(badge?.textContent?.trim()).toBe("スポンサー");
         }

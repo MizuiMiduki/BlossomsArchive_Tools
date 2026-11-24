@@ -9,7 +9,7 @@ export default function WordCounter() {
     const [readingSpeed, setReadingSpeed] = createSignal<number>(500); // 1分あたりの文字数 (標準500字)
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".card");
+        if (containerRef) playPageEntrance(containerRef, ".ba-card");
     });
 
     const stats = createMemo(() => {
@@ -100,157 +100,164 @@ export default function WordCounter() {
     });
 
     return (
-        <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0">
-            <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
-                <div class="card bg-base-100 shadow-xl p-4 sm:p-6 md:p-8 w-full border border-base-300 min-w-0">
-                    {/* ヘッダー */}
-                    <div class="mb-6 border-b border-base-300 pb-4">
-                        <h1 class="text-2xl md:text-3xl font-black text-base-content">
-                            <BudouX text="文字数カウント・原稿用紙換算" />
-                        </h1>
-                        <p class="text-xs font-semibold text-base-content/70 mt-1.5 leading-relaxed">
-                            文字数（空白除外）、行数、段落数、原稿用紙枚数、読了時間、文字種の割合（ひらがな/漢字/英字等）をリアルタイムに集計します。
-                        </p>
+        <div ref={containerRef} class="ba-page ba-page--wide">
+            <div class="ba-card ba-stack-6">
+                {/* ヘッダー */}
+                <div style={{ "padding-bottom": "1rem", "border-bottom": "1px solid var(--ba-border)" }}>
+                    <h1 class="ba-title">
+                        <BudouX text="文字数カウント・原稿用紙換算" />
+                    </h1>
+                    <p class="ba-text-xs ba-text-muted" style={{ "margin-top": "0.375rem", "margin-bottom": 0, "font-weight": 600, "line-height": 1.6 }}>
+                        文字数（空白除外）、行数、段落数、原稿用紙枚数、読了時間、文字種の割合（ひらがな/漢字/英字等）をリアルタイムに集計します。
+                    </p>
+                </div>
+
+                {/* メインレイアウト */}
+                <div class="ba-flex ba-flex-wrap ba-gap-6 ba-items-start">
+                    {/* テキスト入力エリア */}
+                    <div class="ba-stack-3 ba-min-w-0" style={{ flex: "7 1 20rem" }}>
+                        <div class="ba-flex ba-items-center ba-justify-between">
+                            <label class="ba-label" for="counter-text-input">
+                                テキスト入力
+                            </label>
+                            <button
+                                type="button"
+                                class="ba-btn ba-btn--ghost ba-btn--xs ba-text-danger"
+                                onClick={() => setText("")}
+                                disabled={!text()}
+                            >
+                                クリア
+                            </button>
+                        </div>
+                        <textarea
+                            id="counter-text-input"
+                            value={text()}
+                            onInput={(e) => setText(e.currentTarget.value)}
+                            class="ba-textarea"
+                            style={{ height: "22rem", "line-height": 1.65 }}
+                            placeholder="文字数をカウントしたい文章を入力または貼り付けてください..."
+                            aria-label="文字数カウント対象テキスト"
+                        />
+
+                        {/* 読書スピード設定 */}
+                        <div class="ba-panel ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2 ba-text-xs" style={{ padding: "0.75rem" }}>
+                            <span class="ba-font-bold ba-text-muted">
+                                読書速度の基準:
+                            </span>
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-1 ba-mono">
+                                {[300, 500, 800].map((speed) => (
+                                    <button
+                                        type="button"
+                                        class={`ba-btn ba-btn--xs ${readingSpeed() === speed ? "ba-btn--primary" : "ba-btn--outline"}`}
+                                        onClick={() => setReadingSpeed(speed)}
+                                    >
+                                        {speed}字/分 {speed === 300 ? "(音読)" : speed === 500 ? "(標準)" : "(速読)"}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* メインレイアウト */}
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                        {/* テキスト入力エリア */}
-                        <div class="lg:col-span-7 flex flex-col gap-3">
-                            <div class="flex items-center justify-between px-1">
-                                <label class="text-xs font-bold text-base-content/80" for="counter-text-input">
-                                    テキスト入力
-                                </label>
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-xs text-error font-bold"
-                                    onClick={() => setText("")}
-                                    disabled={!text()}
-                                >
-                                    クリア
-                                </button>
-                            </div>
-                            <textarea
-                                id="counter-text-input"
-                                value={text()}
-                                onInput={(e) => setText(e.currentTarget.value)}
-                                class="textarea textarea-bordered w-full h-80 sm:h-96 text-sm leading-relaxed bg-base-100 p-4 shadow-inner"
-                                placeholder="文字数をカウントしたい文章を入力または貼り付けてください..."
-                                aria-label="文字数カウント対象テキスト"
-                            />
-
-                            {/* 読書スピード設定 */}
-                            <div class="bg-base-200/50 p-3 rounded-xl border border-base-300 flex items-center justify-between text-xs">
-                                <span class="font-bold text-base-content/80">
-                                    読書速度の基準:
+                    {/* 集計結果ダッシュボード */}
+                    <div class="ba-stack-4 ba-min-w-0" style={{ flex: "5 1 16rem" }}>
+                        {/* 主要メトリクス */}
+                        <div style={{ display: "grid", "grid-template-columns": "repeat(2, minmax(0, 1fr))", gap: "0.75rem" }}>
+                            <div
+                                class="ba-text-center"
+                                style={{
+                                    "background-color": "var(--ba-primary-soft)",
+                                    border: "1px solid var(--ba-primary)",
+                                    "border-radius": "var(--ba-radius)",
+                                    padding: "1rem",
+                                }}
+                            >
+                                <span class="ba-text-xs ba-font-bold ba-text-primary" style={{ display: "block", "margin-bottom": "0.25rem" }}>
+                                    文字数 (空白除外)
                                 </span>
-                                <div class="flex items-center gap-1.5 font-mono">
-                                    {[300, 500, 800].map((speed) => (
-                                        <button
-                                            type="button"
-                                            class={`btn btn-xs ${readingSpeed() === speed ? "btn-primary font-bold" : "btn-outline border-base-300"}`}
-                                            onClick={() => setReadingSpeed(speed)}
-                                        >
-                                            {speed}字/分 {speed === 300 ? "(音読)" : speed === 500 ? "(標準)" : "(速読)"}
-                                        </button>
-                                    ))}
-                                </div>
+                                <span class="ba-mono ba-font-black ba-text-primary" style={{ "font-size": "1.875rem", "line-height": 1.2 }}>
+                                    {stats().totalCharsNoSpace.toLocaleString()}
+                                </span>
+                            </div>
+                            <div class="ba-panel ba-text-center">
+                                <span class="ba-text-xs ba-font-bold ba-text-muted" style={{ display: "block", "margin-bottom": "0.25rem" }}>
+                                    文字数 (空白含む)
+                                </span>
+                                <span class="ba-mono ba-font-black" style={{ "font-size": "1.875rem", "line-height": 1.2 }}>
+                                    {stats().totalChars.toLocaleString()}
+                                </span>
                             </div>
                         </div>
 
-                        {/* 集計結果ダッシュボード */}
-                        <div class="lg:col-span-5 flex flex-col gap-4">
-                            {/* 主要メトリクス */}
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-primary/10 border border-primary/20 p-4 rounded-2xl text-center">
-                                    <span class="text-xs font-bold text-primary block mb-1">
-                                        文字数 (空白除外)
-                                    </span>
-                                    <span class="text-3xl font-black font-mono text-primary">
-                                        {stats().totalCharsNoSpace.toLocaleString()}
-                                    </span>
-                                </div>
-                                <div class="bg-base-200/60 border border-base-300 p-4 rounded-2xl text-center">
-                                    <span class="text-xs font-bold text-base-content/70 block mb-1">
-                                        文字数 (空白含む)
-                                    </span>
-                                    <span class="text-3xl font-black font-mono text-base-content">
-                                        {stats().totalChars.toLocaleString()}
-                                    </span>
-                                </div>
+                        {/* 原稿用紙 & 読了時間 */}
+                        <div class="ba-panel ba-stack-3">
+                            <div class="ba-flex ba-items-center ba-justify-between" style={{ "padding-bottom": "0.5rem", "border-bottom": "1px solid var(--ba-border)" }}>
+                                <span class="ba-text-xs ba-font-bold ba-text-muted">
+                                    400字詰め原稿用紙換算
+                                </span>
+                                <span class="ba-mono ba-font-bold ba-text-sm">
+                                    約 {stats().manuscriptPages} <span class="ba-text-xs" style={{ "font-weight": 400 }}>枚分</span>
+                                </span>
                             </div>
-
-                            {/* 原稿用紙 & 読了時間 */}
-                            <div class="bg-base-200/50 p-4 rounded-xl border border-base-300 space-y-3">
-                                <div class="flex items-center justify-between py-1 border-b border-base-300">
-                                    <span class="text-xs font-bold text-base-content/80">
-                                        400字詰め原稿用紙換算
-                                    </span>
-                                    <span class="font-mono font-bold text-sm text-base-content">
-                                        約 {stats().manuscriptPages} <span class="text-xs font-normal">枚分</span>
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between py-1 border-b border-base-300">
-                                    <span class="text-xs font-bold text-base-content/80">
-                                        読了目安時間
-                                    </span>
-                                    <span class="font-mono font-bold text-sm text-base-content">
-                                        {stats().readingMinutes > 0 && `${stats().readingMinutes}分 `}
-                                        {stats().readingSeconds}秒
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between py-1 border-b border-base-300">
-                                    <span class="text-xs font-bold text-base-content/80">行数 / 段落数</span>
-                                    <span class="font-mono font-bold text-sm text-base-content">
-                                        {stats().lines} 行 / {stats().paragraphs} 段落
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between py-1">
-                                    <span class="text-xs font-bold text-base-content/80">英単語数</span>
-                                    <span class="font-mono font-bold text-sm text-base-content">
-                                        {stats().words} words
-                                    </span>
-                                </div>
+                            <div class="ba-flex ba-items-center ba-justify-between" style={{ "padding-bottom": "0.5rem", "border-bottom": "1px solid var(--ba-border)" }}>
+                                <span class="ba-text-xs ba-font-bold ba-text-muted">
+                                    読了目安時間
+                                </span>
+                                <span class="ba-mono ba-font-bold ba-text-sm">
+                                    {stats().readingMinutes > 0 && `${stats().readingMinutes}分 `}
+                                    {stats().readingSeconds}秒
+                                </span>
                             </div>
+                            <div class="ba-flex ba-items-center ba-justify-between" style={{ "padding-bottom": "0.5rem", "border-bottom": "1px solid var(--ba-border)" }}>
+                                <span class="ba-text-xs ba-font-bold ba-text-muted">行数 / 段落数</span>
+                                <span class="ba-mono ba-font-bold ba-text-sm">
+                                    {stats().lines} 行 / {stats().paragraphs} 段落
+                                </span>
+                            </div>
+                            <div class="ba-flex ba-items-center ba-justify-between">
+                                <span class="ba-text-xs ba-font-bold ba-text-muted">英単語数</span>
+                                <span class="ba-mono ba-font-bold ba-text-sm">
+                                    {stats().words} words
+                                </span>
+                            </div>
+                        </div>
 
-                            {/* 文字種別比率 */}
-                            <div class="bg-base-200/50 p-4 rounded-xl border border-base-300">
-                                <h2 class="text-xs font-bold text-base-content/80 mb-2">
-                                    文字種別の内訳
-                                </h2>
-                                <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                                    <div class="bg-base-100 p-2 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">ひらがな</span>
-                                        <span class="font-mono font-bold text-base-content">{stats().types.hiragana.count} ({stats().types.hiragana.percent}%)</span>
-                                    </div>
-                                    <div class="bg-base-100 p-2 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">カタカナ</span>
-                                        <span class="font-mono font-bold text-base-content">{stats().types.katakana.count} ({stats().types.katakana.percent}%)</span>
-                                    </div>
-                                    <div class="bg-base-100 p-2 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">漢字</span>
-                                        <span class="font-mono font-bold text-base-content">{stats().types.kanji.count} ({stats().types.kanji.percent}%)</span>
-                                    </div>
-                                    <div class="bg-base-100 p-2 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">英字</span>
-                                        <span class="font-mono font-bold text-base-content">{stats().types.latin.count} ({stats().types.latin.percent}%)</span>
-                                    </div>
-                                    <div class="bg-base-100 p-2 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">数字</span>
-                                        <span class="font-mono font-bold text-base-content">{stats().types.digits.count} ({stats().types.digits.percent}%)</span>
-                                    </div>
-                                    <div class="bg-base-100 p-2 rounded-lg border border-base-300">
-                                        <span class="text-[10px] text-base-content/60 block">記号・その他</span>
-                                        <span class="font-mono font-bold text-base-content">{stats().types.other.count} ({stats().types.other.percent}%)</span>
-                                    </div>
+                        {/* 文字種別比率 */}
+                        <div class="ba-panel ba-stack-2">
+                            <h2 class="ba-text-xs ba-font-bold ba-text-muted" style={{ margin: 0 }}>
+                                文字種別の内訳
+                            </h2>
+                            <div style={{ display: "grid", "grid-template-columns": "repeat(3, minmax(0, 1fr))", gap: "0.5rem", "text-align": "center" }}>
+                                <div style={{ "background-color": "var(--ba-surface)", border: "1px solid var(--ba-border)", "border-radius": "var(--ba-radius-sm)", padding: "0.5rem" }}>
+                                    <span class="ba-text-muted" style={{ "font-size": "0.6875rem", display: "block" }}>ひらがな</span>
+                                    <span class="ba-mono ba-font-bold ba-text-xs">{stats().types.hiragana.count} ({stats().types.hiragana.percent}%)</span>
+                                </div>
+                                <div style={{ "background-color": "var(--ba-surface)", border: "1px solid var(--ba-border)", "border-radius": "var(--ba-radius-sm)", padding: "0.5rem" }}>
+                                    <span class="ba-text-muted" style={{ "font-size": "0.6875rem", display: "block" }}>カタカナ</span>
+                                    <span class="ba-mono ba-font-bold ba-text-xs">{stats().types.katakana.count} ({stats().types.katakana.percent}%)</span>
+                                </div>
+                                <div style={{ "background-color": "var(--ba-surface)", border: "1px solid var(--ba-border)", "border-radius": "var(--ba-radius-sm)", padding: "0.5rem" }}>
+                                    <span class="ba-text-muted" style={{ "font-size": "0.6875rem", display: "block" }}>漢字</span>
+                                    <span class="ba-mono ba-font-bold ba-text-xs">{stats().types.kanji.count} ({stats().types.kanji.percent}%)</span>
+                                </div>
+                                <div style={{ "background-color": "var(--ba-surface)", border: "1px solid var(--ba-border)", "border-radius": "var(--ba-radius-sm)", padding: "0.5rem" }}>
+                                    <span class="ba-text-muted" style={{ "font-size": "0.6875rem", display: "block" }}>英字</span>
+                                    <span class="ba-mono ba-font-bold ba-text-xs">{stats().types.latin.count} ({stats().types.latin.percent}%)</span>
+                                </div>
+                                <div style={{ "background-color": "var(--ba-surface)", border: "1px solid var(--ba-border)", "border-radius": "var(--ba-radius-sm)", padding: "0.5rem" }}>
+                                    <span class="ba-text-muted" style={{ "font-size": "0.6875rem", display: "block" }}>数字</span>
+                                    <span class="ba-mono ba-font-bold ba-text-xs">{stats().types.digits.count} ({stats().types.digits.percent}%)</span>
+                                </div>
+                                <div style={{ "background-color": "var(--ba-surface)", border: "1px solid var(--ba-border)", "border-radius": "var(--ba-radius-sm)", padding: "0.5rem" }}>
+                                    <span class="ba-text-muted" style={{ "font-size": "0.6875rem", display: "block" }}>記号・その他</span>
+                                    <span class="ba-mono ba-font-bold ba-text-xs">{stats().types.other.count} ({stats().types.other.percent}%)</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <AdSense />
             </div>
+
+            <AdSense />
         </div>
     );
 }

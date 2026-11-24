@@ -52,14 +52,12 @@ export default function Home() {
         filterRoutesByQuery(categoryRoutes(), searchQuery())
     );
 
-    // ツールカードの合間にデザインの揃った広告カードを挿入
     const gridItems = createMemo<HomeGridItem[]>(() => {
         const list = filteredRoutes();
         const items: HomeGridItem[] = [];
 
         list.forEach((route, idx) => {
             items.push({ type: "tool", route });
-            // 6項目ごとにインフィード広告カードを挿入（カードのデザイン・サイズ感をツールカードと完全統一）
             if ((idx + 1) % 6 === 0 && idx + 1 < list.length) {
                 items.push({ type: "ad", id: `infeed-ad-${idx}` });
             }
@@ -70,50 +68,34 @@ export default function Home() {
 
     onSettled(() => {
         if (containerRef) {
-            playPageEntrance(containerRef, ".card");
+            playPageEntrance(containerRef, ".ba-card");
         }
     });
 
     return (
-        <div ref={containerRef} class="max-w-5xl mx-auto space-y-6 sm:space-y-8 min-w-0 w-full">
-            <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4 sm:mb-6">
+        <div ref={containerRef} class="ba-page">
+            <header class="ba-home-header">
                 <div>
-                    <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-base-content dark:text-white">
-                        Webツール一覧
-                    </h1>
-                    <p class="text-xs sm:text-sm text-base-content/85 mt-1 sm:mt-2">
+                    <h1 class="ba-title">Webツール一覧</h1>
+                    <p class="ba-text-sm ba-text-muted" style={{ "margin-top": "0.35rem", "margin-bottom": 0 }}>
                         日常やWeb制作・開発に役立つ高品質な便利ツールを完全無料でご利用いただけます。
                     </p>
                 </div>
 
                 {/* トップページ用ツール検索バー */}
-                <div class="relative w-full sm:w-72 shrink-0">
-                    <label for="home-tool-search" class="sr-only">
+                <div class="ba-search-box">
+                    <label for="home-tool-search" class="ba-sr-only">
                         ツールを検索
                     </label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-base-content/60">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                aria-hidden="true"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                />
-                            </svg>
+                    <div class="ba-input-icon-wrap">
+                        <span class="ba-input-icon">
+                            <ToolIcon name="search" class="ba-icon-sm" />
                         </span>
                         <input
                             id="home-tool-search"
                             type="search"
-                            class="input input-bordered input-sm sm:input-md w-full !pl-11 !pr-9 rounded-xl bg-base-100 focus:outline-primary transition-all text-xs sm:text-sm"
-                            style={{ "padding-left": "2.75rem", "padding-right": "2.25rem" }}
+                            class="ba-input"
+                            style={{ "padding-left": "2.5rem", "padding-right": "2.25rem", "border-radius": "0.75rem" }}
                             placeholder="ツール名やキーワードで検索..."
                             value={searchQuery()}
                             onInput={(e) => setSearchQuery(e.currentTarget.value)}
@@ -122,25 +104,11 @@ export default function Home() {
                         <Show when={searchQuery().trim()}>
                             <button
                                 type="button"
-                                class="absolute inset-y-0 right-0 flex items-center pr-3 text-base-content/60 hover:text-base-content transition-colors"
+                                class="ba-input-clear"
                                 onClick={() => setSearchQuery("")}
                                 aria-label="検索キーワードをクリア"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
+                                ×
                             </button>
                         </Show>
                     </div>
@@ -148,7 +116,7 @@ export default function Home() {
             </header>
 
             {/* カテゴリ切り替えフィルター */}
-            <div class="flex items-center gap-2 overflow-x-auto pb-1 -mt-2 sm:-mt-4 scrollbar-none" role="tablist" aria-label="ツールカテゴリ">
+            <div class="ba-flex ba-items-center ba-gap-2 ba-scroll-x" role="tablist" aria-label="ツールカテゴリ">
                 <For each={CATEGORIES}>
                     {(cat) => {
                         const isSelected = () => selectedCategory() === cat.id;
@@ -157,21 +125,19 @@ export default function Home() {
                                 type="button"
                                 role="tab"
                                 aria-selected={isSelected() ? "true" : "false"}
-                                class={`btn btn-sm rounded-full transition-all gap-1.5 shrink-0 ${
-                                    isSelected()
-                                        ? "btn-primary text-primary-content font-bold shadow-xs"
-                                        : "btn-ghost bg-base-200/70 hover:bg-base-200 text-base-content"
+                                class={`ba-btn ba-btn--sm ba-btn--pill ba-shrink-0 ${
+                                    isSelected() ? "ba-btn--primary" : "ba-btn--secondary"
                                 }`}
                                 onClick={() => setSelectedCategory(cat.id)}
                             >
-                                <ToolIcon name={cat.icon} class="w-3.5 h-3.5 shrink-0" />
+                                <ToolIcon name={cat.icon} class="ba-icon-xs" />
                                 <span>{cat.name}</span>
                                 <span
-                                    class={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none ${
-                                        isSelected()
-                                            ? "bg-white text-slate-900 shadow-xs"
-                                            : "bg-base-300 text-base-content"
-                                    }`}
+                                    class="ba-badge ba-mono"
+                                    style={{
+                                        "background-color": isSelected() ? "#ffffff" : "var(--ba-surface-3)",
+                                        color: isSelected() ? "#0f172a" : "var(--ba-text)",
+                                    }}
                                 >
                                     {categoryCounts()[cat.id]}
                                 </span>
@@ -183,21 +149,21 @@ export default function Home() {
 
             {/* 検索結果・絞り込み件数表示 */}
             <Show when={searchQuery().trim() || selectedCategory() !== "all"}>
-                <div class="flex items-center justify-between text-xs text-base-content/70 px-1">
+                <div class="ba-flex ba-items-center ba-justify-between ba-text-xs ba-text-muted">
                     <span>
                         <Show when={selectedCategory() !== "all"}>
-                            <span class="badge badge-sm badge-outline mr-1.5">
+                            <span class="ba-badge ba-badge--outline" style={{ "margin-right": "0.4rem" }}>
                                 {CATEGORIES.find((c) => c.id === selectedCategory())?.name}
                             </span>
                         </Show>
                         <Show when={searchQuery().trim()}>
-                            「<span class="font-bold text-base-content">{searchQuery().trim()}</span>」の検索結果:{" "}
+                            「<strong style={{ color: "var(--ba-text)" }}>{searchQuery().trim()}</strong>」の検索結果:{" "}
                         </Show>
-                        <span class="font-bold text-primary">{filteredRoutes().length}</span> 件
+                        <strong class="ba-text-primary">{filteredRoutes().length}</strong> 件
                     </span>
                     <button
                         type="button"
-                        class="text-xs text-primary hover:underline"
+                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-primary"
                         onClick={() => {
                             setSearchQuery("");
                             setSelectedCategory("all");
@@ -210,34 +176,26 @@ export default function Home() {
 
             {/* 検索結果が0件の時のEmpty state */}
             <Show when={filteredRoutes().length === 0}>
-                <div class="card bg-base-100 border border-base-300 p-8 text-center max-w-md mx-auto my-8 shadow-xs">
-                    <div class="mb-3 flex justify-center text-base-content/60" aria-hidden="true">
-                        <ToolIcon name="search" class="w-10 h-10" />
+                <div class="ba-card ba-text-center" style={{ "max-width": "28rem", margin: "1.5rem auto", padding: "2rem" }}>
+                    <div class="ba-flex ba-justify-center ba-text-muted" style={{ "margin-bottom": "0.75rem" }} aria-hidden="true">
+                        <ToolIcon name="search" class="ba-icon-xl" />
                     </div>
-                    <h2 class="text-base sm:text-lg font-bold text-base-content mb-1">
+                    <h2 class="ba-section-title" style={{ "margin-bottom": "0.5rem" }}>
                         ツールが見つかりませんでした
                     </h2>
-                    <p class="text-xs text-base-content/60 mb-4 leading-relaxed">
+                    <p class="ba-text-xs ba-text-muted" style={{ "margin-bottom": "1rem" }}>
                         {searchQuery().trim()
                             ? `「${searchQuery()}」に一致するツールは見つかりませんでした。別のキーワードでお試しください。`
                             : "このカテゴリに一致するツールはありません。"}
                     </p>
-                    <div class="flex items-center justify-center gap-2">
+                    <div class="ba-flex ba-items-center ba-justify-center ba-gap-2">
                         <Show when={searchQuery().trim()}>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-ghost border-base-300"
-                                onClick={() => setSearchQuery("")}
-                            >
+                            <button type="button" class="ba-btn ba-btn--sm ba-btn--outline" onClick={() => setSearchQuery("")}>
                                 検索をクリア
                             </button>
                         </Show>
                         <Show when={selectedCategory() !== "all"}>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-primary"
-                                onClick={() => setSelectedCategory("all")}
-                            >
+                            <button type="button" class="ba-btn ba-btn--sm ba-btn--primary" onClick={() => setSelectedCategory("all")}>
                                 すべてのカテゴリを表示
                             </button>
                         </Show>
@@ -245,35 +203,26 @@ export default function Home() {
                 </div>
             </Show>
 
-            {/* ツール一覧グリッド（項目の間にデザインの揃った広告カードを自然に配置） */}
+            {/* ツール一覧グリッド */}
             <Show when={filteredRoutes().length > 0}>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div class="ba-grid-3">
                     <For each={gridItems()}>
                         {(item) => (
                             <Show
                                 when={item.type === "tool"}
                                 fallback={
-                                    /* ツールカードと枠線・背景・サイズ感を統一したインフィード広告カード */
-                                    <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0 flex flex-col justify-between">
-                                        <div class="card-body p-4 sm:p-6 flex flex-col justify-between h-full">
-                                            <div>
-                                                <div class="flex items-center justify-between mb-2">
-                                                    <span class="badge badge-sm badge-ghost border-base-300 text-base-content/70 font-medium text-[10px]">
-                                                        スポンサー
-                                                    </span>
-                                                    <span class="text-[10px] text-base-content/60 tracking-wider">
-                                                        ADVERTISEMENT
-                                                    </span>
-                                                </div>
-                                                <div class="min-h-[140px] flex items-center justify-center overflow-hidden w-full">
-                                                    <AdSense />
-                                                </div>
+                                    <div class="ba-card ba-tool-card">
+                                        <div>
+                                            <div class="ba-flex ba-items-center ba-justify-between" style={{ "margin-bottom": "0.5rem" }}>
+                                                <span class="ba-badge ba-badge--neutral">スポンサー</span>
+                                                <span class="ba-text-xs ba-text-muted">ADVERTISEMENT</span>
                                             </div>
-                                            <div class="card-actions justify-end mt-auto pt-2">
-                                                <span class="text-[11px] text-base-content/60">
-                                                    無料ツールの運営を支援
-                                                </span>
+                                            <div class="ba-flex ba-items-center ba-justify-center ba-w-full" style={{ "min-height": "140px", overflow: "hidden" }}>
+                                                <AdSense />
                                             </div>
+                                        </div>
+                                        <div class="ba-flex ba-justify-end" style={{ "padding-top": "0.5rem" }}>
+                                            <span class="ba-text-xs ba-text-muted">無料ツールの運営を支援</span>
                                         </div>
                                     </div>
                                 }
@@ -281,73 +230,66 @@ export default function Home() {
                                 {(() => {
                                     const route = (item as { type: "tool"; route: Route }).route;
                                     return (
-                                        <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0 flex flex-col">
-                                            <div class="card-body p-4 sm:p-6 flex flex-col justify-between h-full">
-                                                <div>
-                                                    <div class="flex items-start justify-between gap-2 mb-2">
-                                                        <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="ba-card ba-tool-card">
+                                            <div>
+                                                <div class="ba-flex ba-items-start ba-justify-between ba-gap-2" style={{ "margin-bottom": "0.75rem" }}>
+                                                    <div class="ba-flex ba-items-center ba-gap-3 ba-min-w-0">
+                                                        <span class="ba-icon-box" aria-hidden="true">
+                                                            <ToolIcon name={getToolIcon(route.path)} class="ba-icon-md" />
+                                                        </span>
+                                                        <div class="ba-min-w-0">
+                                                            <h2 class="ba-section-title ba-truncate" style={{ "font-size": "1.05rem" }}>
+                                                                {route.title}
+                                                            </h2>
                                                             <span
-                                                                aria-hidden="true"
-                                                                class="shrink-0 p-2 rounded-lg bg-base-200/70 dark:bg-base-300/40 text-primary flex items-center justify-center"
+                                                                class={getToolCategory(route.path).badgeClass}
+                                                                style={{ "margin-top": "0.2rem" }}
                                                             >
-                                                                <ToolIcon name={getToolIcon(route.path)} class="w-5 h-5 sm:w-6 sm:h-6" />
+                                                                {getToolCategory(route.path).name}
                                                             </span>
-                                                            <div class="min-w-0">
-                                                                <h2 class="card-title text-base sm:text-lg font-black text-base-content dark:text-white truncate">
-                                                                    {route.title}
-                                                                </h2>
-                                                                <span
-                                                                    class={`badge badge-xs font-semibold mt-0.5 ${getToolCategory(route.path).badgeClass}`}
-                                                                >
-                                                                    {getToolCategory(route.path).name}
-                                                                </span>
-                                                            </div>
                                                         </div>
-                                                        <button
-                                                            type="button"
-                                                            class={`btn btn-ghost btn-xs btn-square shrink-0 ${
-                                                                getFavorites().includes(route.path)
-                                                                    ? "text-amber-500"
-                                                                    : "text-base-content/60 hover:text-base-content"
-                                                            }`}
-                                                            onClick={() => toggleFavorite(route.path)}
-                                                            aria-label={
-                                                                getFavorites().includes(route.path)
-                                                                    ? `${route.title}のピン留めを解除`
-                                                                    : `${route.title}をピン留め`
-                                                            }
-                                                        >
-                                                            <svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                viewBox="0 0 24 24"
-                                                                class="w-4 h-4"
-                                                                fill={getFavorites().includes(route.path) ? "currentColor" : "none"}
-                                                                stroke="currentColor"
-                                                                stroke-width="2"
-                                                                aria-hidden="true"
-                                                            >
-                                                                <path
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
-                                                                />
-                                                            </svg>
-                                                        </button>
                                                     </div>
-                                                    <p class="text-xs sm:text-sm text-base-content/85 leading-relaxed mb-4">
-                                                        {route.description || "便利なツールです"}
-                                                    </p>
-                                                </div>
-
-                                                <div class="card-actions justify-end mt-auto">
-                                                    <a
-                                                        href={route.path}
-                                                        class="btn btn-primary btn-sm px-4 sm:px-6"
-                                                        aria-label={`${route.title} を使ってみる`}
+                                                    <button
+                                                        type="button"
+                                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-btn--square ba-shrink-0"
+                                                        style={{ color: getFavorites().includes(route.path) ? "#f59e0b" : "var(--ba-text-subtle)" }}
+                                                        onClick={() => toggleFavorite(route.path)}
+                                                        aria-label={
+                                                            getFavorites().includes(route.path)
+                                                                ? `${route.title}のピン留めを解除`
+                                                                : `${route.title}をピン留め`
+                                                        }
                                                     >
-                                                        使ってみる →
-                                                    </a>
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 24 24"
+                                                            class="ba-icon-sm"
+                                                            fill={getFavorites().includes(route.path) ? "currentColor" : "none"}
+                                                            stroke="currentColor"
+                                                            stroke-width="2"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
+                                                            />
+                                                        </svg>
+                                                    </button>
                                                 </div>
+                                                <p class="ba-text-sm ba-text-muted" style={{ "margin-top": 0, "margin-bottom": "1rem", "line-height": "1.6" }}>
+                                                    {route.description || "便利なツールです"}
+                                                </p>
+                                            </div>
+
+                                            <div class="ba-flex ba-justify-end">
+                                                <a
+                                                    href={route.path}
+                                                    class="ba-btn ba-btn--primary ba-btn--sm"
+                                                    aria-label={`${route.title} を使ってみる`}
+                                                >
+                                                    使ってみる →
+                                                </a>
                                             </div>
                                         </div>
                                     );

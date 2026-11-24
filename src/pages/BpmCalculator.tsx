@@ -16,7 +16,7 @@ export default function BpmCalculator() {
     const [tapFeedback, setTapFeedback] = createSignal<string>("");
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".card");
+        if (containerRef) playPageEntrance(containerRef, ".ba-card");
     });
 
     const safeBpm = createMemo(() => {
@@ -99,29 +99,27 @@ export default function BpmCalculator() {
     };
 
     return (
-        <div ref={containerRef} class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0">
-            <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
-                <div class="card bg-base-100 shadow-xl p-4 sm:p-6 md:p-8 w-full border border-base-300 min-w-0">
-                    {/* ヘッダー */}
-                    <div class="mb-6 border-b border-base-300 pb-4">
-                        <h1 class="text-2xl md:text-3xl font-black text-base-content">
-                            <BudouX text="BPM・ディレイタイム換算機" />
-                        </h1>
-                        <p class="text-xs font-semibold text-base-content/70 mt-1.5 leading-relaxed">
-                            楽曲のテンポ（BPM）から各音符のディレイタイム（ms）やLFOレート（Hz）を即座に算出します。タップテンポ機能も搭載。
-                        </p>
-                    </div>
+        <div ref={containerRef} class="ba-page ba-page--wide">
+            <div class="ba-card ba-stack-6">
+                {/* ヘッダー */}
+                <div style={{ "padding-bottom": "1rem", "border-bottom": "1px solid var(--ba-border)" }}>
+                    <h1 class="ba-title">
+                        <BudouX text="BPM・ディレイタイム換算機" />
+                    </h1>
+                    <p class="ba-text-xs ba-text-muted" style={{ "margin-top": "0.375rem", "margin-bottom": 0, "font-weight": 600, "line-height": 1.6 }}>
+                        楽曲のテンポ（BPM）から各音符のディレイタイム（ms）やLFOレート（Hz）を即座に算出します。タップテンポ機能も搭載。
+                    </p>
+                </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                        {/* 左側：BPM入力・タップテンポ */}
-                        <div class="lg:col-span-5 flex flex-col gap-5">
-                            <div class="bg-base-200/50 p-5 rounded-2xl border border-base-300">
-                                <label class="label py-1">
-                                    <span class="label-text font-bold text-sm text-base-content/90">
-                                        テンポ (BPM)
-                                    </span>
+                <div class="ba-flex ba-flex-wrap ba-gap-6 ba-items-start">
+                    {/* 左側：BPM入力・タップテンポ */}
+                    <div class="ba-stack-4 ba-min-w-0" style={{ flex: "5 1 18rem" }}>
+                        <div class="ba-panel ba-stack-4" style={{ padding: "1.25rem" }}>
+                            <div class="ba-field">
+                                <label class="ba-label">
+                                    <span>テンポ (BPM)</span>
                                 </label>
-                                <div class="flex items-center gap-3 mt-1">
+                                <div class="ba-flex ba-items-center ba-gap-3">
                                     <input
                                         type="number"
                                         min="20"
@@ -129,13 +127,14 @@ export default function BpmCalculator() {
                                         step="0.1"
                                         value={safeBpm()}
                                         onInput={(e) => setBpm(Number(e.currentTarget.value) || 120)}
-                                        class="input input-bordered input-lg w-full font-mono text-3xl font-black text-primary bg-base-100"
+                                        class="ba-input ba-input--lg ba-mono ba-font-black ba-text-primary"
+                                        style={{ "font-size": "1.875rem" }}
                                         aria-label="テンポ (BPM)"
                                     />
-                                    <div class="flex flex-col gap-1">
+                                    <div class="ba-stack-1">
                                         <button
                                             type="button"
-                                            class="btn btn-xs btn-outline"
+                                            class="ba-btn ba-btn--xs ba-btn--outline"
                                             onClick={() => setBpm((prev) => Math.min(400, prev + 1))}
                                             aria-label="BPMを+1"
                                         >
@@ -143,7 +142,7 @@ export default function BpmCalculator() {
                                         </button>
                                         <button
                                             type="button"
-                                            class="btn btn-xs btn-outline"
+                                            class="ba-btn ba-btn--xs ba-btn--outline"
                                             onClick={() => setBpm((prev) => Math.max(20, prev - 1))}
                                             aria-label="BPMを-1"
                                         >
@@ -151,129 +150,134 @@ export default function BpmCalculator() {
                                         </button>
                                     </div>
                                 </div>
-
-                                <input
-                                    type="range"
-                                    min="40"
-                                    max="240"
-                                    value={safeBpm()}
-                                    onInput={(e) => setBpm(Number(e.currentTarget.value) || 120)}
-                                    class="range range-primary range-sm mt-4"
-                                    aria-label="BPMスライダー"
-                                />
-
-                                {/* よく使われるテンポのショートカット */}
-                                <div class="mt-4">
-                                    <span class="text-[11px] font-bold text-base-content/70 block mb-1.5">
-                                        定番テンポプリセット
-                                    </span>
-                                    <div class="grid grid-cols-4 gap-1.5 font-mono text-xs">
-                                        {[70, 85, 100, 120, 128, 140, 160, 175].map((preset) => (
-                                            <button
-                                                type="button"
-                                                class={`btn btn-xs ${safeBpm() === preset ? "btn-primary" : "btn-outline border-base-300"}`}
-                                                onClick={() => setBpm(preset)}
-                                            >
-                                                {preset}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
                             </div>
 
-                            {/* タップテンポ */}
-                            <div class="bg-base-200/50 p-5 rounded-2xl border border-base-300 text-center">
-                                <span class="text-xs font-bold text-base-content/80 block mb-2">
-                                    タップテンポ (Tap Tempo)
+                            <input
+                                type="range"
+                                min="40"
+                                max="240"
+                                value={safeBpm()}
+                                onInput={(e) => setBpm(Number(e.currentTarget.value) || 120)}
+                                class="ba-range"
+                                aria-label="BPMスライダー"
+                            />
+
+                            {/* よく使われるテンポのショートカット */}
+                            <div class="ba-stack-2">
+                                <span class="ba-text-xs ba-font-bold ba-text-muted">
+                                    定番テンポプリセット
                                 </span>
-                                <button
-                                    type="button"
-                                    onClick={handleTap}
-                                    class="btn btn-primary btn-block h-20 text-xl font-black shadow-md rounded-xl"
+                                <div
+                                    class="ba-mono ba-text-xs"
+                                    style={{ display: "grid", "grid-template-columns": "repeat(4, minmax(0, 1fr))", gap: "0.375rem" }}
                                 >
-                                    TAP HERE
-                                </button>
-                                <div class="flex items-center justify-between mt-2.5 px-1">
-                                    <span class="text-xs font-mono text-base-content/70 truncate">
-                                        {tapFeedback() || "拍に合わせて数回タップ"}
-                                    </span>
-                                    <Show when={tapTimes().length > 0}>
+                                    {[70, 85, 100, 120, 128, 140, 160, 175].map((preset) => (
                                         <button
                                             type="button"
-                                            onClick={resetTap}
-                                            class="btn btn-ghost btn-xs text-[11px] text-base-content/60"
-                                            aria-label="タップ計測をリセット"
+                                            class={`ba-btn ba-btn--xs ${safeBpm() === preset ? "ba-btn--primary" : "ba-btn--outline"}`}
+                                            onClick={() => setBpm(preset)}
                                         >
-                                            リセット
+                                            {preset}
                                         </button>
-                                    </Show>
+                                    ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* 右側：音符ごとのディレイタイム＆周波数一覧 */}
-                        <div class="lg:col-span-7 bg-base-200/40 p-4 sm:p-5 rounded-2xl border border-base-300">
-                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-base-300">
-                                <h2 class="text-sm font-bold text-base-content">
-                                    音符別ディレイタイム (ms) & LFOレート (Hz)
-                                </h2>
-                                <span class="badge badge-sm badge-outline font-mono">
-                                    1拍 = {Math.round(quarterNoteMs() * 10) / 10} ms ({baseHz()} Hz)
+                        {/* タップテンポ */}
+                        <div class="ba-panel ba-text-center ba-stack-3" style={{ padding: "1.25rem" }}>
+                            <span class="ba-text-xs ba-font-bold ba-text-muted">
+                                タップテンポ (Tap Tempo)
+                            </span>
+                            <button
+                                type="button"
+                                onClick={handleTap}
+                                class="ba-btn ba-btn--primary ba-btn--block ba-font-black"
+                                style={{ height: "5rem", "font-size": "1.25rem" }}
+                            >
+                                TAP HERE
+                            </button>
+                            <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                <span class="ba-text-xs ba-mono ba-text-muted ba-truncate">
+                                    {tapFeedback() || "拍に合わせて数回タップ"}
                                 </span>
-                            </div>
-
-                            <div class="overflow-x-auto">
-                                <table class="table table-sm w-full font-mono text-xs">
-                                    <thead>
-                                        <tr class="text-base-content/70 border-b border-base-300">
-                                            <th>音符</th>
-                                            <th class="text-right">時間 (ms)</th>
-                                            <th class="text-right">周波数 (Hz)</th>
-                                            <th class="text-right">種別</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <For each={noteTimings()}>
-                                            {(timing) => (
-                                                <tr class="hover:bg-base-200/80 border-b border-base-300/40">
-                                                    <td class="font-bold text-base-content">
-                                                        {timing.name}
-                                                    </td>
-                                                    <td class="text-right font-black text-primary text-sm">
-                                                        {timing.ms.toLocaleString()} ms
-                                                    </td>
-                                                    <td class="text-right text-base-content/80">
-                                                        {timing.hz} Hz
-                                                    </td>
-                                                    <td class="text-right">
-                                                        <span
-                                                            class={`badge badge-xs text-[10px] font-bold ${
-                                                                timing.type === "dotted"
-                                                                    ? "bg-amber-100 dark:bg-amber-950/80 text-amber-950 dark:text-amber-200 border border-amber-400 dark:border-amber-700"
-                                                                    : timing.type === "triplet"
-                                                                      ? "bg-sky-100 dark:bg-sky-950/80 text-sky-950 dark:text-sky-100 border border-sky-400 dark:border-sky-700"
-                                                                      : "bg-base-200 text-base-content/85 border border-base-300"
-                                                            }`}
-                                                        >
-                                                            {timing.type === "dotted"
-                                                                ? "付点"
-                                                                : timing.type === "triplet"
-                                                                  ? "3連符"
-                                                                  : "ストレート"}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </For>
-                                    </tbody>
-                                </table>
+                                <Show when={tapTimes().length > 0}>
+                                    <button
+                                        type="button"
+                                        onClick={resetTap}
+                                        class="ba-btn ba-btn--ghost ba-btn--xs ba-text-muted"
+                                        aria-label="タップ計測をリセット"
+                                    >
+                                        リセット
+                                    </button>
+                                </Show>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <AdSense />
+                    {/* 右側：音符ごとのディレイタイム＆周波数一覧 */}
+                    <div class="ba-panel ba-stack-3 ba-min-w-0" style={{ flex: "7 1 22rem", padding: "1.25rem" }}>
+                        <div
+                            class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2"
+                            style={{ "padding-bottom": "0.5rem", "border-bottom": "1px solid var(--ba-border)" }}
+                        >
+                            <h2 class="ba-section-title ba-text-sm">
+                                音符別ディレイタイム (ms) & LFOレート (Hz)
+                            </h2>
+                            <span class="ba-badge ba-badge--outline ba-mono">
+                                1拍 = {Math.round(quarterNoteMs() * 10) / 10} ms ({baseHz()} Hz)
+                            </span>
+                        </div>
+
+                        <div class="ba-table-wrap">
+                            <table class="ba-table ba-mono">
+                                <thead>
+                                    <tr>
+                                        <th>音符</th>
+                                        <th class="ba-text-right">時間 (ms)</th>
+                                        <th class="ba-text-right">周波数 (Hz)</th>
+                                        <th class="ba-text-right">種別</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <For each={noteTimings()}>
+                                        {(timing) => (
+                                            <tr>
+                                                <td class="ba-font-bold">{timing.name}</td>
+                                                <td class="ba-text-right ba-font-black ba-text-primary ba-text-sm">
+                                                    {timing.ms.toLocaleString()} ms
+                                                </td>
+                                                <td class="ba-text-right ba-text-muted">
+                                                    {timing.hz} Hz
+                                                </td>
+                                                <td class="ba-text-right">
+                                                    <span
+                                                        class={`ba-badge ${
+                                                            timing.type === "dotted"
+                                                                ? "ba-badge--warning"
+                                                                : timing.type === "triplet"
+                                                                  ? "ba-badge--info"
+                                                                  : "ba-badge--neutral"
+                                                        }`}
+                                                    >
+                                                        {timing.type === "dotted"
+                                                            ? "付点"
+                                                            : timing.type === "triplet"
+                                                              ? "3連符"
+                                                              : "ストレート"}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </For>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <AdSense />
         </div>
     );
 }

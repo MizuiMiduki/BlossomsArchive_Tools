@@ -13,10 +13,10 @@ describe("QrGenerator", () => {
         expect(screen.getByPlaceholderText(/https:\/\/example\.com/)).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "QRコードを作成する" })).toBeInTheDocument();
 
-        // 各フォーマットと高視認性クラス
+        // 各フォーマットと選択状態クラス
         const pngBtn = screen.getByText("PNG").closest("button");
-        expect(pngBtn).toHaveClass("border-primary");
-        expect(pngBtn).toHaveClass("font-black");
+        expect(pngBtn).toHaveClass("is-active");
+        expect(pngBtn).toHaveAttribute("aria-pressed", "true");
         expect(screen.getByText("JPEG")).toBeInTheDocument();
         expect(screen.getByText("WebP")).toBeInTheDocument();
         expect(screen.getByText("SVG")).toBeInTheDocument();

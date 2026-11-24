@@ -299,11 +299,11 @@ describe("SeoChecker Component", () => {
 
         const mobileBtn = await screen.findByText("モバイル (スマホ)");
         fireEvent.click(mobileBtn);
-        expect(mobileBtn.className).toContain("btn-primary");
+        expect(mobileBtn.className).toContain("is-active");
 
         const desktopBtn = screen.getByText("デスクトップ (PC)");
         fireEvent.click(desktopBtn);
-        expect(desktopBtn.className).toContain("btn-primary");
+        expect(desktopBtn.className).toContain("is-active");
     });
 
     it("URLからHTMLを取得してSEO情報が表示されること", async () => {

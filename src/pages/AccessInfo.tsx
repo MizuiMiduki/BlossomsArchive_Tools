@@ -203,18 +203,27 @@ IPアドレス: ${data.ip}
         const isCopied = () => copiedKey() === copyKey;
 
         return (
-            <div class="flex flex-col md:flex-row md:items-center justify-between p-3.5 sm:p-4 gap-2 hover:bg-base-200/50 transition-colors">
+            <div
+                class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2"
+                style={{
+                    padding: "0.875rem 1rem",
+                    "border-bottom": "1px solid var(--ba-border)",
+                }}
+            >
                 {/* ラベル + モバイル用コピーボタン (横並び) */}
-                <div class="flex items-center justify-between md:w-52 lg:w-60 shrink-0">
-                    <span class="font-bold text-xs sm:text-sm text-base-content/70">
+                <div
+                    class="ba-flex ba-items-center ba-justify-between ba-shrink-0"
+                    style={{ "min-width": "13rem", flex: "0 1 14rem" }}
+                >
+                    <span class="ba-font-bold ba-text-sm ba-text-muted">
                         {label}
                     </span>
                     <button
                         disabled={options?.disabled || isValEmpty}
                         onClick={() => copyRow(val, copyKey)}
                         aria-label={`${label}をコピー`}
-                        class={`btn btn-xs h-7 px-2.5 rounded-lg text-white font-medium md:hidden transition-colors ${
-                            isCopied() ? "btn-success" : "btn-neutral"
+                        class={`ba-btn ba-btn--xs ba-hidden-desktop ${
+                            isCopied() ? "ba-btn--success" : "ba-btn--secondary"
                         }`}
                     >
                         {isCopied() ? "完了" : "コピー"}
@@ -223,25 +232,26 @@ IPアドレス: ${data.ip}
 
                 {/* 値エリア：スマホでも幅いっぱいに折り返して見切れない */}
                 <div
-                    class={`flex-1 break-all whitespace-normal text-sm sm:text-base text-base-content md:px-4 ${
-                        options?.isMono ? "font-mono" : ""
+                    class={`ba-flex-1 ba-break-all ba-text-sm ${
+                        options?.isMono ? "ba-mono" : ""
                     } ${
                         options?.isPrimary
-                            ? "font-bold text-base sm:text-lg text-primary"
-                            : "font-semibold"
+                            ? "ba-font-bold ba-text-base ba-text-primary"
+                            : "ba-font-bold"
                     }`}
+                    style={{ "min-width": "12rem" }}
                 >
                     {val}
                 </div>
 
                 {/* PC用コピーボタン */}
-                <div class="hidden md:flex shrink-0">
+                <div class="ba-only-desktop ba-shrink-0">
                     <button
                         disabled={options?.disabled || isValEmpty}
                         onClick={() => copyRow(val, copyKey)}
                         aria-label={`${label}をコピー`}
-                        class={`btn btn-xs h-7 px-3 rounded-lg text-white font-medium transition-colors ${
-                            isCopied() ? "btn-success" : "btn-neutral"
+                        class={`ba-btn ba-btn--xs ${
+                            isCopied() ? "ba-btn--success" : "ba-btn--secondary"
                         }`}
                     >
                         {isCopied() ? "完了" : "コピー"}
@@ -252,14 +262,18 @@ IPアドレス: ${data.ip}
     };
 
     return (
-        <div ref={containerRef} class="w-full max-w-5xl mx-auto flex flex-col gap-4 sm:gap-6 min-w-0">
-            <h1 class="sr-only">アクセス環境解析ツール</h1>
-            <div class="card bg-base-100 shadow-xl p-3 sm:p-8 w-full border border-base-300 min-w-0">
+        <div ref={containerRef} class="ba-page">
+            <h1 class="ba-sr-only">アクセス環境解析ツール</h1>
+            <div class="ba-card">
                 <Show when={!hasFetched() && !loading()}>
-                    <div class="flex flex-col items-center justify-center py-12 sm:py-16 gap-4 text-center">
+                    <div
+                        class="ba-flex-col ba-items-center ba-justify-center ba-gap-4 ba-text-center"
+                        style={{ "padding-block": "3.5rem" }}
+                    >
                         <BudouX
                             as="p"
-                            class="text-base-content/70 font-medium text-sm sm:text-lg"
+                            class="ba-text-muted ba-text-base"
+                            style={{ "font-weight": 500, margin: 0 }}
                             text="ボタンを押すと、現在のネットワークや端末環境を解析します。"
                         />
                         <button
@@ -267,7 +281,13 @@ IPアドレス: ${data.ip}
                                 animatePop(e.currentTarget, 0.95, 0.15);
                                 fetchAccessInfo();
                             }}
-                            class="btn btn-primary text-white text-base sm:text-xl h-12 sm:h-16 px-8 sm:px-12 rounded-xl sm:rounded-2xl shadow-lg transition-all hover:scale-105"
+                            class="ba-btn ba-btn--primary ba-btn--lg"
+                            style={{
+                                padding: "0.9rem 2.25rem",
+                                "font-size": "1.0625rem",
+                                "border-radius": "var(--ba-radius-lg)",
+                                "box-shadow": "var(--ba-shadow-md)",
+                            }}
                         >
                             アクセス情報を取得する
                         </button>
@@ -275,18 +295,27 @@ IPアドレス: ${data.ip}
                 </Show>
 
                 <Show when={loading()}>
-                    <div class="flex flex-col items-center justify-center py-12 gap-4">
-                        <span class="loading loading-spinner loading-lg text-primary"></span>
-                        <p class="text-base-content/70 font-medium text-sm sm:text-base">
+                    <div
+                        class="ba-flex-col ba-items-center ba-justify-center ba-gap-4"
+                        style={{ "padding-block": "3rem" }}
+                    >
+                        <span
+                            class="ba-spinner ba-text-primary"
+                            style={{ width: "2rem", height: "2rem", "border-width": "3px" }}
+                        ></span>
+                        <p class="ba-text-muted ba-text-sm" style={{ "font-weight": 500, margin: 0 }}>
                             情報を解析中...
                         </p>
                     </div>
                 </Show>
 
                 <Show when={error() && !loading()}>
-                    <div class="alert alert-error text-white font-bold mb-6 shadow-md rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <div class="flex items-center gap-2 text-sm sm:text-base">
-                            <ToolIcon name="alert" class="w-5 h-5 shrink-0" />
+                    <div
+                        class="ba-alert ba-alert--error ba-flex-wrap ba-justify-between"
+                        style={{ "margin-bottom": "1.5rem" }}
+                    >
+                        <div class="ba-flex ba-items-center ba-gap-2 ba-text-sm">
+                            <ToolIcon name="alert" class="ba-icon-md ba-shrink-0" />
                             <span>{error()}</span>
                         </div>
                         <button
@@ -294,7 +323,8 @@ IPアドレス: ${data.ip}
                                 animatePop(e.currentTarget, 0.95, 0.15);
                                 fetchAccessInfo();
                             }}
-                            class="btn btn-sm bg-base-100 text-error border-none hover:bg-base-200 flex-shrink-0"
+                            class="ba-btn ba-btn--sm ba-shrink-0"
+                            style={{ color: "var(--ba-danger)" }}
                         >
                             もう一度試す
                         </button>
@@ -302,13 +332,21 @@ IPアドレス: ${data.ip}
                 </Show>
 
                 <Show when={info() && !loading()}>
-                    <div class="w-full flex flex-col gap-6 sm:gap-8">
+                    <div class="ba-w-full ba-stack-6">
                         {/* 接続環境・位置情報 */}
-                        <div>
-                            <h2 class="text-lg sm:text-xl font-black mb-3 text-base-content dark:text-white flex items-center gap-2">
+                        <div class="ba-stack-3">
+                            <h2 class="ba-section-title">
                                 接続環境・位置情報
                             </h2>
-                            <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
+                            <div
+                                style={{
+                                    border: "1px solid var(--ba-border)",
+                                    "border-radius": "var(--ba-radius-lg)",
+                                    "background-color": "var(--ba-surface)",
+                                    overflow: "hidden",
+                                    "box-shadow": "var(--ba-shadow-xs)",
+                                }}
+                            >
                                 {renderRow("IPアドレス", info()?.ip, "ip", {
                                     isMono: true,
                                     isPrimary: true,
@@ -338,11 +376,19 @@ IPアドレス: ${data.ip}
                         </div>
 
                         {/* 端末・ブラウザ環境 */}
-                        <div>
-                            <h2 class="text-lg sm:text-xl font-black mb-3 text-base-content dark:text-white flex items-center gap-2">
+                        <div class="ba-stack-3">
+                            <h2 class="ba-section-title">
                                 端末・ブラウザ環境
                             </h2>
-                            <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
+                            <div
+                                style={{
+                                    border: "1px solid var(--ba-border)",
+                                    "border-radius": "var(--ba-radius-lg)",
+                                    "background-color": "var(--ba-surface)",
+                                    overflow: "hidden",
+                                    "box-shadow": "var(--ba-shadow-xs)",
+                                }}
+                            >
                                 {renderRow("物理解像度", physicScreenSize(), "physic", {
                                     isMono: true,
                                 })}
@@ -358,11 +404,11 @@ IPアドレス: ${data.ip}
                         </div>
 
                         {/* 全体コピーボタン */}
-                        <div class="flex justify-end w-full pt-2">
+                        <div class="ba-flex ba-justify-end ba-w-full" style={{ "padding-top": "0.5rem" }}>
                             <button
                                 onClick={copyAllToClipboard}
-                                class={`btn text-white w-full sm:w-auto h-11 sm:h-12 px-6 text-sm sm:text-base rounded-xl shadow-sm transition-all ${
-                                    allCopied() ? "btn-success" : "btn-neutral"
+                                class={`ba-btn ba-btn--lg ${
+                                    allCopied() ? "ba-btn--success" : "ba-btn--secondary"
                                 }`}
                             >
                                 {allCopied()

@@ -11,25 +11,25 @@ describe("Home page", () => {
         const searchInput = screen.getByLabelText("ツールを検索");
         expect(searchInput).toBeInTheDocument();
         expect(searchInput).toHaveAttribute("placeholder", "ツール名やキーワードで検索...");
-        // アイコンとの重なり防止のためインラインスタイルおよびクラスで左パディングが確保されていること
-        expect((searchInput as HTMLInputElement).style.paddingLeft).toBe("2.75rem");
+        // アイコンとの重なり防止のためインラインスタイルで左パディングが確保されていること
+        expect((searchInput as HTMLInputElement).style.paddingLeft).toBe("2.5rem");
 
         // ツールカードが複数表示されていること
-        const cards = container.querySelectorAll(".card");
+        const cards = container.querySelectorAll(".ba-card");
         expect(cards.length).toBeGreaterThanOrEqual(10);
     });
 
     it("ツールカードの合間にデザインの揃ったインフィード広告カード（スポンサーバッジ付き）が挿入されていること", () => {
-        const { container } = render(() => <Home />);
+        render(() => <Home />);
 
         // スポンサーバッジ付き広告カードの確認
         const sponsorBadges = screen.getAllByText("スポンサー");
         expect(sponsorBadges.length).toBeGreaterThanOrEqual(1);
 
-        // 広告カードがツールカードと同じ .card クラス構造を持ちデザインが揃っていること
-        const adCard = sponsorBadges[0].closest(".card");
+        // 広告カードがツールカードと同じ .ba-card .ba-tool-card クラス構造を持ちデザインが揃っていること
+        const adCard = sponsorBadges[0].closest(".ba-card");
         expect(adCard).not.toBeNull();
-        expect(adCard).toHaveClass("bg-base-100", "border-base-300", "shadow-sm");
+        expect(adCard).toHaveClass("ba-card", "ba-tool-card");
     });
 
     it("検索バーに入力するとリアルタイムにツールが絞り込まれること", () => {
@@ -88,7 +88,7 @@ describe("Home page", () => {
 
         // 電卓ツールのカード内に日常・便利バッジが存在すること
         const calcTitle = screen.getByText("電卓ツール");
-        const cardBody = calcTitle.closest(".card-body");
+        const cardBody = calcTitle.closest(".ba-card");
         expect(cardBody).not.toBeNull();
         expect(cardBody?.textContent).toContain("日常・便利");
         expect(cardBody?.querySelector("svg")).not.toBeNull();

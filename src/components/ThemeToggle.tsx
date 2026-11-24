@@ -47,11 +47,12 @@ export default function ThemeToggle() {
     return (
         <button
             ref={buttonRef}
+            type="button"
             onClick={toggleTheme}
-            class="btn btn-ghost btn-circle"
+            class="ba-btn ba-btn--ghost ba-btn--circle"
             aria-label="Toggle Dark Mode"
         >
-            <ToolIcon name={isDark() ? "sun" : "moon"} class="w-5 h-5" />
+            <ToolIcon name={isDark() ? "sun" : "moon"} class="ba-icon-md" />
         </button>
     );
 }

@@ -106,7 +106,7 @@ function AdSenseUnit(props: AdSenseProps) {
     return (
         <div
             ref={container}
-            class={`my-6 flex justify-center overflow-hidden w-full min-h-[250px] sm:min-h-[280px] [contain-intrinsic-size:280px] [content-visibility:auto] ${props.class ?? ""}`}
+            class={`ba-adsense ${props.class ?? ""}`}
         />
     );
 }

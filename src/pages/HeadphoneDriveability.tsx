@@ -122,45 +122,43 @@ export default function HeadphoneDriveability() {
     });
 
     return (
-        <div ref={containerRef} class="flex w-full max-w-7xl mx-auto flex-col gap-6 min-w-0">
-            <section class="rounded-lg border border-base-300 bg-base-100 p-3 sm:p-8 shadow-sm min-w-0">
-                <header class="mb-4 border-b border-base-300 pb-3">
-                    <p class="text-sm font-bold uppercase tracking-wide text-primary">
+        <div ref={containerRef} class="ba-page ba-page--wide">
+            <section class="ba-card ba-stack-6">
+                <header style={{ "padding-bottom": "0.75rem", "border-bottom": "1px solid var(--ba-border)" }}>
+                    <p
+                        class="ba-text-sm ba-font-bold ba-text-primary"
+                        style={{ margin: 0, "text-transform": "uppercase", "letter-spacing": "0.05em" }}
+                    >
                         Audio utility
                     </p>
-                    <h1 class="mt-1 text-2xl font-black text-base-content sm:text-3xl">
+                    <h1 class="ba-title" style={{ "margin-top": "0.25rem" }}>
                         <BudouX text="イヤホン・ヘッドホンの鳴らしやすさ" />
                     </h1>
                     <BudouX
                         as="p"
-                        class="mt-3 max-w-3xl text-sm leading-relaxed text-base-content/70"
+                        class="ba-text-sm ba-text-muted"
+                        style={{ "margin-top": "0.75rem", "margin-bottom": 0, "max-width": "48rem", "line-height": 1.65 }}
                         text="インピーダンスと音圧感度から、目標音圧に必要な出力電圧・電流・電力を見積もります。"
                     />
                 </header>
 
-                <div class="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)]">
-                    <div class="flex flex-col gap-5">
-                        <div class="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
-                            <label class="form-control w-full">
-                                <span class="label-text mb-2 block font-bold">
-                                    インピーダンス (Ω)
-                                </span>
+                <div class="ba-flex ba-flex-wrap ba-gap-6 ba-items-start">
+                    <div class="ba-stack-4 ba-min-w-0" style={{ flex: "1.2 1 24rem" }}>
+                        <div class="ba-grid-3">
+                            <label class="ba-field">
+                                <span class="ba-label">インピーダンス (Ω)</span>
                                 <input
                                     type="number"
                                     min="0.1"
                                     step="0.1"
                                     value={impedance()}
                                     aria-label="インピーダンス (Ω)"
-                                    onInput={(event) =>
-                                        setImpedance(event.currentTarget.value)
-                                    }
-                                    class="input input-bordered w-full"
+                                    onInput={(event) => setImpedance(event.currentTarget.value)}
+                                    class="ba-input"
                                 />
                             </label>
-                            <label class="form-control w-full">
-                                <span class="label-text mb-2 block font-bold">
-                                    公差 (±%)
-                                </span>
+                            <label class="ba-field">
+                                <span class="ba-label">公差 (±%)</span>
                                 <input
                                     type="number"
                                     min="0"
@@ -168,100 +166,68 @@ export default function HeadphoneDriveability() {
                                     step="0.1"
                                     value={impedanceTolerance()}
                                     aria-label="公差 (±%)"
-                                    onInput={(event) =>
-                                        setImpedanceTolerance(
-                                            event.currentTarget.value,
-                                        )
-                                    }
-                                    class="input input-bordered w-full"
+                                    onInput={(event) => setImpedanceTolerance(event.currentTarget.value)}
+                                    class="ba-input"
                                 />
                             </label>
-                            <label class="form-control w-full">
-                                <span class="label-text mb-2 block font-bold">
-                                    測定周波数 (Hz)
-                                </span>
+                            <label class="ba-field">
+                                <span class="ba-label">測定周波数 (Hz)</span>
                                 <input
                                     type="number"
                                     min="0.1"
                                     step="any"
                                     value={impedanceFrequency()}
                                     aria-label="測定周波数 (Hz)"
-                                    onInput={(event) =>
-                                        setImpedanceFrequency(
-                                            event.currentTarget.value,
-                                        )
-                                    }
-                                    class="input input-bordered w-full"
+                                    onInput={(event) => setImpedanceFrequency(event.currentTarget.value)}
+                                    class="ba-input"
                                 />
                             </label>
                         </div>
 
-                        <hr class="border-base-300" />
+                        <hr class="ba-divider" />
 
-                        <div class="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
-                            <label class="form-control w-full">
-                                <span class="label-text mb-2 block font-bold">
-                                    感度 (
-                                    {sensitivityUnit() === "mw"
-                                        ? "dB/mW"
-                                        : "dB/Vrms"}
-                                    )
+                        <div class="ba-grid-3">
+                            <label class="ba-field">
+                                <span class="ba-label">
+                                    感度 ({sensitivityUnit() === "mw" ? "dB/mW" : "dB/Vrms"})
                                 </span>
                                 <input
                                     type="number"
                                     step="0.1"
                                     value={sensitivity()}
                                     aria-label="感度"
-                                    onInput={(event) =>
-                                        setSensitivity(
-                                            event.currentTarget.value,
-                                        )
-                                    }
-                                    class="input input-bordered w-full"
+                                    onInput={(event) => setSensitivity(event.currentTarget.value)}
+                                    class="ba-input"
                                 />
                             </label>
-                            <label class="form-control w-full">
-                                <span class="label-text mb-2 block font-bold">
-                                    感度の単位
-                                </span>
+                            <label class="ba-field">
+                                <span class="ba-label">感度の単位</span>
                                 <select
                                     value={sensitivityUnit()}
                                     aria-label="感度の単位"
-                                    onChange={(event) =>
-                                        setSensitivityUnit(
-                                            event.currentTarget.value,
-                                        )
-                                    }
-                                    class="select select-bordered w-full"
+                                    onChange={(event) => setSensitivityUnit(event.currentTarget.value)}
+                                    class="ba-select"
                                 >
                                     <option value="mw">dB/mW</option>
                                     <option value="v">dB/Vrms</option>
                                 </select>
                             </label>
-                            <label class="form-control w-full">
-                                <span class="label-text mb-2 block font-bold">
-                                    測定周波数 (Hz)
-                                </span>
+                            <label class="ba-field">
+                                <span class="ba-label">測定周波数 (Hz)</span>
                                 <input
                                     type="number"
                                     min="0.1"
                                     step="any"
                                     value={sensitivityFrequency()}
                                     aria-label="感度測定周波数 (Hz)"
-                                    onInput={(event) =>
-                                        setSensitivityFrequency(
-                                            event.currentTarget.value,
-                                        )
-                                    }
-                                    class="input input-bordered w-full"
+                                    onInput={(event) => setSensitivityFrequency(event.currentTarget.value)}
+                                    class="ba-input"
                                 />
                             </label>
                         </div>
 
-                        <label class="form-control w-full">
-                            <span class="label-text mb-2 block font-bold">
-                                目標ピーク音圧 (dB SPL)
-                            </span>
+                        <label class="ba-field">
+                            <span class="ba-label">目標ピーク音圧 (dB SPL)</span>
                             <input
                                 type="number"
                                 min="1"
@@ -269,107 +235,84 @@ export default function HeadphoneDriveability() {
                                 step="1"
                                 value={targetSpl()}
                                 aria-label="目標ピーク音圧 (dB SPL)"
-                                onInput={(event) =>
-                                    setTargetSpl(event.currentTarget.value)
-                                }
-                                class="input input-bordered w-full"
+                                onInput={(event) => setTargetSpl(event.currentTarget.value)}
+                                class="ba-input"
                             />
-                            <span class="mt-2 text-xs text-base-content/60">
-                                初期値は音楽の瞬間的なピークを想定した110
-                                dBです。
+                            <span class="ba-text-xs ba-text-muted">
+                                初期値は音楽の瞬間的なピークを想定した110 dBです。
                             </span>
                         </label>
                     </div>
 
                     <section
-                        class="flex flex-col justify-between gap-6 rounded-lg border border-base-300 bg-base-200/60 p-5"
+                        class="ba-panel ba-flex-col ba-justify-between ba-gap-6 ba-min-w-0"
+                        style={{ flex: "1 1 18rem", padding: "1.25rem" }}
                         aria-live="polite"
                     >
                         <Show
                             when={result()}
                             fallback={
-                                <p class="text-sm font-semibold text-error">
+                                <p class="ba-text-sm ba-font-bold ba-text-danger" style={{ margin: 0 }}>
                                     正のインピーダンスと有効な数値を入力してください。
                                 </p>
                             }
                         >
                             {(calculation) => (
                                 <>
-                                    <div>
-                                        <p class="text-sm font-bold text-base-content/70">
+                                    <div class="ba-stack-1">
+                                        <p class="ba-text-sm ba-font-bold ba-text-muted" style={{ margin: 0 }}>
                                             鳴らしやすさスコア
                                         </p>
-                                        <div class="mt-2 flex items-baseline gap-2">
-                                            <output class="text-6xl font-black tabular-nums text-primary">
+                                        <div class="ba-flex ba-gap-2" style={{ "align-items": "baseline" }}>
+                                            <output
+                                                class="ba-font-black ba-text-primary"
+                                                style={{ "font-size": "3.5rem", "line-height": 1.1, "font-variant-numeric": "tabular-nums" }}
+                                            >
                                                 {calculation().score.toFixed(0)}
                                             </output>
-                                            <span class="text-lg font-bold text-base-content/60">
+                                            <span class="ba-text-lg ba-font-bold ba-text-muted">
                                                 / 10,000
                                             </span>
                                         </div>
-                                        <p class="mt-1 text-lg font-bold">
+                                        <p class="ba-text-lg ba-font-bold" style={{ margin: 0 }}>
                                             {calculation().difficulty}
                                         </p>
                                     </div>
-                                    <dl class="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-base-300 pt-4">
-                                        <dt class="text-sm text-base-content/70">
-                                            インピーダンス範囲
-                                        </dt>
-                                        <dd class="text-right font-bold tabular-nums">
-                                            {formatRange(
-                                                calculation().minOhms,
-                                                calculation().maxOhms,
-                                                2,
-                                                "Ω",
-                                            )}
+                                    <dl
+                                        style={{
+                                            display: "grid",
+                                            "grid-template-columns": "repeat(2, minmax(0, 1fr))",
+                                            gap: "0.75rem 1rem",
+                                            "padding-top": "1rem",
+                                            margin: 0,
+                                            "border-top": "1px solid var(--ba-border)",
+                                        }}
+                                    >
+                                        <dt class="ba-text-sm ba-text-muted">インピーダンス範囲</dt>
+                                        <dd class="ba-text-right ba-font-bold" style={{ margin: 0, "font-variant-numeric": "tabular-nums" }}>
+                                            {formatRange(calculation().minOhms, calculation().maxOhms, 2, "Ω")}
                                         </dd>
-                                        <dt class="text-sm text-base-content/70">
-                                            必要電圧
-                                        </dt>
-                                        <dd class="text-right font-bold tabular-nums">
-                                            {formatRange(
-                                                calculation().minVoltage,
-                                                calculation().maxVoltage,
-                                                3,
-                                                "Vrms",
-                                            )}
+                                        <dt class="ba-text-sm ba-text-muted">必要電圧</dt>
+                                        <dd class="ba-text-right ba-font-bold" style={{ margin: 0, "font-variant-numeric": "tabular-nums" }}>
+                                            {formatRange(calculation().minVoltage, calculation().maxVoltage, 3, "Vrms")}
                                         </dd>
-                                        <dt class="text-sm text-base-content/70">
-                                            必要電力
-                                        </dt>
-                                        <dd class="text-right font-bold tabular-nums">
-                                            {formatRange(
-                                                calculation().minPowerMw,
-                                                calculation().maxPowerMw,
-                                                2,
-                                                "mW",
-                                            )}
+                                        <dt class="ba-text-sm ba-text-muted">必要電力</dt>
+                                        <dd class="ba-text-right ba-font-bold" style={{ margin: 0, "font-variant-numeric": "tabular-nums" }}>
+                                            {formatRange(calculation().minPowerMw, calculation().maxPowerMw, 2, "mW")}
                                         </dd>
-                                        <dt class="text-sm text-base-content/70">
-                                            必要電流
-                                        </dt>
-                                        <dd class="text-right font-bold tabular-nums">
-                                            {formatRange(
-                                                calculation().minCurrentMa,
-                                                calculation().maxCurrentMa,
-                                                1,
-                                                "mA",
-                                            )}
+                                        <dt class="ba-text-sm ba-text-muted">必要電流</dt>
+                                        <dd class="ba-text-right ba-font-bold" style={{ margin: 0, "font-variant-numeric": "tabular-nums" }}>
+                                            {formatRange(calculation().minCurrentMa, calculation().maxCurrentMa, 1, "mA")}
                                         </dd>
                                     </dl>
-                                    <p class="text-xs text-base-content/60">
-                                        測定条件: インピーダンス @
-                                        {calculation().impedanceHz.toLocaleString()}{" "}
-                                        Hz / 感度 @
-                                        {calculation().sensitivityHz.toLocaleString()}{" "}
-                                        Hz
+                                    <p class="ba-text-xs ba-text-muted" style={{ margin: 0 }}>
+                                        測定条件: インピーダンス @{calculation().impedanceHz.toLocaleString()} Hz / 感度 @{calculation().sensitivityHz.toLocaleString()} Hz
                                     </p>
                                 </>
                             )}
                         </Show>
-                        <p class="text-xs leading-relaxed text-base-content/60">
-                            スコアは2 Vrms・100
-                            mA出力に対する負荷率から算出する比較用の目安です。5,000点がいずれかの基準値相当です。実際の音量は再生機器の性能、出力インピーダンス、音源の録音レベルなどでも変わります。公差がある場合、インピーダンスが低い側では必要電流が増えます。高音量での長時間再生は聴覚に影響するおそれがあります。
+                        <p class="ba-text-xs ba-text-muted" style={{ margin: 0, "line-height": 1.65 }}>
+                            スコアは2 Vrms・100 mA出力に対する負荷率から算出する比較用の目安です。5,000点がいずれかの基準値相当です。実際の音量は再生機器の性能、出力インピーダンス、音源の録音レベルなどでも変わります。公差がある場合、インピーダンスが低い側では必要電流が増えます。高音量での長時間再生は聴覚に影響するおそれがあります。
                         </p>
                     </section>
                 </div>

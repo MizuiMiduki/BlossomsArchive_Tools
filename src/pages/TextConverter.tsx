@@ -264,7 +264,7 @@ export default function TextConverter() {
 
     onSettled(() => {
         if (containerRef) {
-            playPageEntrance(containerRef, ".card");
+            playPageEntrance(containerRef, ".ba-card");
         }
     });
 
@@ -370,9 +370,9 @@ export default function TextConverter() {
             mode === "html-entities-decode" ||
             mode === "url-decode"
         ) {
-            html = `<pre class="whitespace-pre-wrap font-sans">${escapeHtml(out)}</pre>`;
+            html = `<pre class="ba-code">${escapeHtml(out)}</pre>`;
         } else {
-            html = `<pre class="whitespace-pre-wrap font-mono">${escapeHtml(out)}</pre>`;
+            html = `<pre class="ba-code">${escapeHtml(out)}</pre>`;
         }
         return parseHtmlToAst(html).children;
     });
@@ -395,242 +395,237 @@ export default function TextConverter() {
     const outputStats = createMemo(() => computeTextStats(outputText()));
 
     return (
-        <div ref={containerRef} class="w-full max-w-6xl mx-auto space-y-6 sm:space-y-8 min-w-0">
+        <div ref={containerRef} class="ba-page">
             {/* ページタイトル & 概要 */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm min-w-0">
-                <div class="card-body p-4 sm:p-8">
-                    <h1 class="card-title text-2xl sm:text-3xl font-black text-base-content dark:text-white mb-2">
+            <div class="ba-card ba-stack-4">
+                <div>
+                    <h1 class="ba-title">
                         <BudouX text="テキスト・HTML・Markdown変換ツール" />
                     </h1>
-                    <p class="text-base-content/70 text-sm sm:text-base leading-relaxed">
+                    <p
+                        class="ba-text-muted ba-text-sm"
+                        style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.65 }}
+                    >
                         <BudouX text="HTMLからMarkdown、MarkdownからHTML、プレーンテキスト抽出、特殊文字エスケープなどを瞬時に相互変換できます。すべてブラウザ内で処理されるため、データがサーバーに送信される心配はありません。" />
                     </p>
+                </div>
 
-                    {/* モード選択ボタン群 */}
-                    <div class="mt-6">
-                        <label class="label text-xs sm:text-sm font-semibold text-base-content/70 px-0 mb-1">
-                            変換モードを選択
-                        </label>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                            <For each={CONVERSION_MODES}>
-                                {(mode) => (
-                                    <button
-                                        type="button"
-                                        class={`btn btn-sm text-xs justify-start h-auto py-2.5 px-3 normal-case ${
-                                            selectedMode() === mode.id
-                                                ? "btn-primary shadow-sm"
-                                                : "btn-outline border-base-300 hover:border-primary/50"
-                                        }`}
-                                        onClick={() => setSelectedMode(mode.id)}
-                                    >
-                                        <div class="text-left">
-                                            <div class="font-bold">{mode.label}</div>
-                                        </div>
-                                    </button>
-                                )}
-                            </For>
-                        </div>
-                    </div>
-
-                    {/* 現在のモードの説明と反転ボタン */}
-                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 p-3 bg-base-200/60 rounded-xl border border-base-300">
-                        <div class="text-xs sm:text-sm text-base-content/80 flex items-center gap-2">
-                            <span class="badge badge-primary badge-sm">機能</span>
-                            <span>{currentModeDef().description}</span>
-                        </div>
-                        <Show when={currentModeDef().reverseMode}>
-                            <button
-                                type="button"
-                                class="btn btn-outline btn-xs gap-1 ml-auto"
-                                onClick={handleSwap}
-                                title="入力と出力を入れ替えて逆方向に変換"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="w-3.5 h-3.5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
+                {/* モード選択ボタン群 */}
+                <div class="ba-stack-2">
+                    <label class="ba-label ba-text-muted">
+                        変換モードを選択
+                    </label>
+                    <div
+                        style={{
+                            display: "grid",
+                            "grid-template-columns": "repeat(auto-fill, minmax(11rem, 1fr))",
+                            gap: "0.5rem",
+                        }}
+                    >
+                        <For each={CONVERSION_MODES}>
+                            {(mode) => (
+                                <button
+                                    type="button"
+                                    class={`ba-btn ba-btn--sm ${
+                                        selectedMode() === mode.id
+                                            ? "ba-btn--primary"
+                                            : "ba-btn--outline"
+                                    }`}
+                                    style={{
+                                        "justify-content": "flex-start",
+                                        height: "auto",
+                                        padding: "0.6rem 0.75rem",
+                                        "white-space": "normal",
+                                        "text-align": "left",
+                                        "font-size": "0.75rem",
+                                    }}
+                                    onClick={() => setSelectedMode(mode.id)}
                                 >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                                    />
-                                </svg>
-                                <span>逆変換に切り替え (⇄)</span>
-                            </button>
-                        </Show>
+                                    <span class="ba-font-bold">{mode.label}</span>
+                                </button>
+                            )}
+                        </For>
                     </div>
+                </div>
+
+                {/* 現在のモードの説明と反転ボタン */}
+                <div
+                    class="ba-panel ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3"
+                    style={{ padding: "0.75rem" }}
+                >
+                    <div class="ba-text-xs ba-text-muted ba-flex ba-items-center ba-gap-2">
+                        <span class="ba-badge ba-badge--primary">機能</span>
+                        <span>{currentModeDef().description}</span>
+                    </div>
+                    <Show when={currentModeDef().reverseMode}>
+                        <button
+                            type="button"
+                            class="ba-btn ba-btn--outline ba-btn--xs"
+                            style={{ "margin-left": "auto" }}
+                            onClick={handleSwap}
+                            title="入力と出力を入れ替えて逆方向に変換"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="ba-icon-xs"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                                />
+                            </svg>
+                            <span>逆変換に切り替え (⇄)</span>
+                        </button>
+                    </Show>
                 </div>
             </div>
 
             {/* エディターエリア（2カラム / モバイルでは縦積み） */}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div class="ba-grid-2">
                 {/* 入力パネル */}
-                <div class="card bg-base-100 border border-base-300 shadow-sm flex flex-col h-full">
-                    <div class="card-body p-4 sm:p-5 flex flex-col flex-1">
-                        {/* パネルヘッダー */}
-                        <div class="flex items-center justify-between pb-3 border-b border-base-200">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-sm sm:text-base text-base-content">
-                                    入力
-                                </span>
-                                <span class="badge badge-ghost badge-sm text-xs">
-                                    {inputStats().chars} 文字 / {inputStats().lines} 行
-                                </span>
-                            </div>
-
-                            <div class="flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-xs text-base-content/80 hover:text-primary"
-                                    onClick={() => fileInputRef?.click()}
-                                    title="テキストファイルを読み込む"
-                                    aria-label="読込"
-                                >
-                                    読込
-                                </button>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept=".txt,.html,.htm,.md,.json,.xml"
-                                    aria-label="テキストファイルを選択"
-                                    class="hidden"
-                                    onChange={handleFileUpload}
-                                />
-                                <button
-                                    type="button"
-                                    class="btn btn-ghost btn-xs text-red-600 dark:text-red-400 font-bold hover:text-red-700"
-                                    onClick={handleClear}
-                                    title="入力をクリア"
-                                    aria-label="クリア"
-                                >
-                                    クリア
-                                </button>
-                            </div>
+                <div class="ba-card ba-stack-3">
+                    {/* パネルヘッダー */}
+                    <div
+                        class="ba-flex ba-items-center ba-justify-between ba-gap-2"
+                        style={{ "padding-bottom": "0.75rem", "border-bottom": "1px solid var(--ba-border)" }}
+                    >
+                        <div class="ba-flex ba-items-center ba-gap-2">
+                            <span class="ba-font-bold ba-text-sm">
+                                入力
+                            </span>
+                            <span class="ba-badge ba-badge--neutral">
+                                {inputStats().chars} 文字 / {inputStats().lines} 行
+                            </span>
                         </div>
 
-                        {/* 入力テキストエリア */}
-                        <div class="mt-3 flex-1 flex flex-col">
-                            <textarea
-                                class="textarea textarea-bordered w-full flex-1 font-mono text-xs sm:text-sm leading-relaxed p-3 h-80 lg:h-96 resize-y focus:outline-primary bg-base-200/30"
-                                placeholder="変換したいテキストまたはHTML/Markdownをここに入力..."
-                                value={inputText()}
-                                aria-label="変換前のテキスト入力"
-                                onInput={(e) => setInputText(e.currentTarget.value)}
+                        <div class="ba-flex ba-items-center ba-gap-1">
+                            <button
+                                type="button"
+                                class="ba-btn ba-btn--ghost ba-btn--xs"
+                                onClick={() => fileInputRef?.click()}
+                                title="テキストファイルを読み込む"
+                                aria-label="読込"
+                            >
+                                読込
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".txt,.html,.htm,.md,.json,.xml"
+                                aria-label="テキストファイルを選択"
+                                hidden
+                                onChange={handleFileUpload}
                             />
+                            <button
+                                type="button"
+                                class="ba-btn ba-btn--ghost ba-btn--xs ba-text-danger"
+                                onClick={handleClear}
+                                title="入力をクリア"
+                                aria-label="クリア"
+                            >
+                                クリア
+                            </button>
                         </div>
+                    </div>
 
-                        {/* 入力側ステータスバー */}
-                        <div class="mt-2 text-right text-xs text-base-content/75">
-                            容量: {(inputStats().bytes / 1024).toFixed(2)} KB
-                        </div>
+                    {/* 入力テキストエリア */}
+                    <div class="ba-flex-col ba-flex-1">
+                        <textarea
+                            class="ba-textarea ba-mono ba-text-xs"
+                            style={{
+                                height: "22rem",
+                                "line-height": 1.6,
+                                "background-color": "var(--ba-surface-2)",
+                            }}
+                            placeholder="変換したいテキストまたはHTML/Markdownをここに入力..."
+                            value={inputText()}
+                            aria-label="変換前のテキスト入力"
+                            onInput={(e) => setInputText(e.currentTarget.value)}
+                        />
+                    </div>
+
+                    {/* 入力側ステータスバー */}
+                    <div class="ba-text-right ba-text-xs ba-text-muted">
+                        容量: {(inputStats().bytes / 1024).toFixed(2)} KB
                     </div>
                 </div>
 
                 {/* 出力パネル */}
-                <div class="card bg-base-100 border border-base-300 shadow-sm flex flex-col h-full">
-                    <div class="card-body p-4 sm:p-5 flex flex-col flex-1">
-                        {/* パネルヘッダー */}
-                        <div class="flex items-center justify-between pb-3 border-b border-base-200">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-sm sm:text-base text-primary">
-                                    変換結果
-                                </span>
-                                <span class="badge badge-ghost badge-sm text-xs">
-                                    {outputStats().chars} 文字 / {outputStats().lines} 行
-                                </span>
+                <div class="ba-card ba-stack-3">
+                    {/* パネルヘッダー */}
+                    <div
+                        class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2"
+                        style={{ "padding-bottom": "0.75rem", "border-bottom": "1px solid var(--ba-border)" }}
+                    >
+                        <div class="ba-flex ba-items-center ba-gap-2">
+                            <span class="ba-font-bold ba-text-sm ba-text-primary">
+                                変換結果
+                            </span>
+                            <span class="ba-badge ba-badge--neutral">
+                                {outputStats().chars} 文字 / {outputStats().lines} 行
+                            </span>
+                        </div>
+
+                        <div class="ba-flex ba-items-center ba-gap-2 ba-flex-wrap">
+                            {/* タブ切り替え（ソースコード / プレビュー） */}
+                            <div class="ba-tabs" style={{ padding: "0.2rem" }}>
+                                <button
+                                    type="button"
+                                    class={`ba-tab ${activeTab() === "code" ? "is-active" : ""}`}
+                                    style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                    onClick={() => setActiveTab("code")}
+                                >
+                                    ソース
+                                </button>
+                                <button
+                                    type="button"
+                                    class={`ba-tab ${activeTab() === "preview" ? "is-active" : ""}`}
+                                    style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                    onClick={() => setActiveTab("preview")}
+                                >
+                                    プレビュー
+                                </button>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                {/* タブ切り替え（ソースコード / プレビュー） */}
-                                <div class="join">
-                                    <button
-                                        type="button"
-                                        class={`join-item btn btn-xs ${
-                                            activeTab() === "code"
-                                                ? "btn-primary"
-                                                : "btn-ghost text-base-content/60"
-                                        }`}
-                                        onClick={() => setActiveTab("code")}
-                                    >
-                                        ソース
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class={`join-item btn btn-xs ${
-                                            activeTab() === "preview"
-                                                ? "btn-primary"
-                                                : "btn-ghost text-base-content/60"
-                                        }`}
-                                        onClick={() => setActiveTab("preview")}
-                                    >
-                                        プレビュー
-                                    </button>
-                                </div>
-
-                                {/* コピーボタン */}
-                                <button
-                                    type="button"
-                                    class={`btn btn-xs gap-1 ${
-                                        copied() ? "btn-success text-white" : "btn-primary"
-                                    }`}
-                                    onClick={handleCopy}
-                                    disabled={!outputText()}
-                                >
-                                    <Show
-                                        when={copied()}
-                                        fallback={
-                                            <>
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    class="w-3.5 h-3.5"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                                    />
-                                                </svg>
-                                                <span>コピー</span>
-                                            </>
-                                        }
-                                    >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            class="w-3.5 h-3.5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M5 13l4 4L19 7"
-                                            />
-                                        </svg>
-                                        <span>完了!</span>
-                                    </Show>
-                                </button>
-
-                                {/* 保存ボタン */}
-                                <button
-                                    type="button"
-                                    class="btn btn-outline btn-xs"
-                                    onClick={handleDownload}
-                                    disabled={!outputText()}
-                                    title="ファイルとしてダウンロード"
+                            {/* コピーボタン */}
+                            <button
+                                type="button"
+                                class={`ba-btn ba-btn--xs ${
+                                    copied() ? "ba-btn--success" : "ba-btn--primary"
+                                }`}
+                                onClick={handleCopy}
+                                disabled={!outputText()}
+                            >
+                                <Show
+                                    when={copied()}
+                                    fallback={
+                                        <>
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="ba-icon-xs"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                                />
+                                            </svg>
+                                            <span>コピー</span>
+                                        </>
+                                    }
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
-                                        class="w-3.5 h-3.5"
+                                        class="ba-icon-xs"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -639,58 +634,90 @@ export default function TextConverter() {
                                             stroke-linecap="round"
                                             stroke-linejoin="round"
                                             stroke-width="2"
-                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                            d="M5 13l4 4L19 7"
                                         />
                                     </svg>
-                                    <span>保存</span>
-                                </button>
-                            </div>
-                        </div>
+                                    <span>完了!</span>
+                                </Show>
+                            </button>
 
-                        {/* 出力コンテンツエリア */}
-                        <div class="mt-3 flex-1 flex flex-col">
-                            <Show when={errorMessage()}>
-                                <div class="alert alert-error text-xs mb-3 py-2">
-                                    <span>{errorMessage()}</span>
-                                </div>
-                            </Show>
-
-                            <Show
-                                when={activeTab() === "code"}
-                                fallback={
-                                    <div class="w-full flex-1 p-4 bg-base-200/50 rounded-lg border border-base-300 overflow-y-auto h-80 lg:h-96 prose max-w-none text-xs sm:text-sm text-base-content">
-                                        <For each={previewAstNodes()}>
-                                            {(node) => renderSafeHtmlNode(node)}
-                                        </For>
-                                    </div>
-                                }
+                            {/* 保存ボタン */}
+                            <button
+                                type="button"
+                                class="ba-btn ba-btn--outline ba-btn--xs"
+                                onClick={handleDownload}
+                                disabled={!outputText()}
+                                title="ファイルとしてダウンロード"
                             >
-                                <textarea
-                                    readonly
-                                    class="textarea textarea-bordered w-full flex-1 font-mono text-xs sm:text-sm leading-relaxed p-3 h-80 lg:h-96 resize-y bg-base-200/30 text-base-content"
-                                    placeholder="変換されたテキストがここに表示されます..."
-                                    aria-label="変換後のテキスト結果"
-                                    value={outputText()}
-                                />
-                            </Show>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="ba-icon-xs"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                    />
+                                </svg>
+                                <span>保存</span>
+                            </button>
                         </div>
+                    </div>
 
-                        {/* 出力側ステータスバー */}
-                        <div class="mt-2 text-right text-xs text-base-content/75">
-                            容量: {(outputStats().bytes / 1024).toFixed(2)} KB
-                        </div>
+                    {/* 出力コンテンツエリア */}
+                    <div class="ba-stack-2 ba-flex-1">
+                        <Show when={errorMessage()}>
+                            <div class="ba-alert ba-alert--error">
+                                <span>{errorMessage()}</span>
+                            </div>
+                        </Show>
+
+                        <Show
+                            when={activeTab() === "code"}
+                            fallback={
+                                <div
+                                    class="ba-panel ba-scroll-y ba-text-sm"
+                                    style={{ height: "22rem", "line-height": 1.65 }}
+                                >
+                                    <For each={previewAstNodes()}>
+                                        {(node) => renderSafeHtmlNode(node)}
+                                    </For>
+                                </div>
+                            }
+                        >
+                            <textarea
+                                readonly
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{
+                                    height: "22rem",
+                                    "line-height": 1.6,
+                                    "background-color": "var(--ba-surface-2)",
+                                }}
+                                placeholder="変換されたテキストがここに表示されます..."
+                                aria-label="変換後のテキスト結果"
+                                value={outputText()}
+                            />
+                        </Show>
+                    </div>
+
+                    {/* 出力側ステータスバー */}
+                    <div class="ba-text-right ba-text-xs ba-text-muted">
+                        容量: {(outputStats().bytes / 1024).toFixed(2)} KB
                     </div>
                 </div>
             </div>
 
             {/* 詳細設定オプション（アコーディオン） */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm">
-                <div class="collapse collapse-arrow">
-                    <input type="checkbox" aria-label="詳細設定オプションを開閉" />
-                    <div class="collapse-title text-sm font-semibold flex items-center gap-2">
+            <details class="ba-accordion">
+                <summary>
+                    <span class="ba-flex ba-items-center ba-gap-2">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4 text-primary"
+                            class="ba-icon-sm ba-text-primary"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -709,130 +736,173 @@ export default function TextConverter() {
                             />
                         </svg>
                         <span>変換オプション設定</span>
-                    </div>
-                    <div class="collapse-content space-y-4 pt-2">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <label class="label cursor-pointer justify-start gap-3 bg-base-200/50 p-3 rounded-lg border border-base-300">
-                                <input
-                                    type="checkbox"
-                                    class="checkbox checkbox-primary checkbox-sm"
-                                    checked={convertLineBreaks()}
-                                    onChange={(e) => setConvertLineBreaks(e.currentTarget.checked)}
-                                />
-                                <span class="label-text text-xs">
-                                    <strong>Markdown→HTML:</strong> 改行を &lt;br /&gt; に変換
-                                </span>
-                            </label>
+                    </span>
+                </summary>
+                <div class="ba-accordion-body">
+                    <div class="ba-grid-3">
+                        <label
+                            class="ba-flex ba-items-center ba-gap-3"
+                            style={{
+                                "background-color": "var(--ba-surface)",
+                                padding: "0.75rem",
+                                "border-radius": "var(--ba-radius-sm)",
+                                border: "1px solid var(--ba-border)",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                class="ba-checkbox"
+                                checked={convertLineBreaks()}
+                                onChange={(e) => setConvertLineBreaks(e.currentTarget.checked)}
+                            />
+                            <span class="ba-text-xs" style={{ color: "var(--ba-text)" }}>
+                                <strong>Markdown→HTML:</strong> 改行を &lt;br /&gt; に変換
+                            </span>
+                        </label>
 
-                            <label class="label cursor-pointer justify-start gap-3 bg-base-200/50 p-3 rounded-lg border border-base-300">
-                                <input
-                                    type="checkbox"
-                                    class="checkbox checkbox-primary checkbox-sm"
-                                    checked={wrapInParagraphs()}
-                                    onChange={(e) => setWrapInParagraphs(e.currentTarget.checked)}
-                                />
-                                <span class="label-text text-xs">
-                                    <strong>テキスト→HTML:</strong> 空行で段落 (&lt;p&gt;) に分割
-                                </span>
-                            </label>
+                        <label
+                            class="ba-flex ba-items-center ba-gap-3"
+                            style={{
+                                "background-color": "var(--ba-surface)",
+                                padding: "0.75rem",
+                                "border-radius": "var(--ba-radius-sm)",
+                                border: "1px solid var(--ba-border)",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                class="ba-checkbox"
+                                checked={wrapInParagraphs()}
+                                onChange={(e) => setWrapInParagraphs(e.currentTarget.checked)}
+                            />
+                            <span class="ba-text-xs" style={{ color: "var(--ba-text)" }}>
+                                <strong>テキスト→HTML:</strong> 空行で段落 (&lt;p&gt;) に分割
+                            </span>
+                        </label>
 
-                            <label class="label cursor-pointer justify-start gap-3 bg-base-200/50 p-3 rounded-lg border border-base-300">
-                                <input
-                                    type="checkbox"
-                                    class="checkbox checkbox-primary checkbox-sm"
-                                    checked={autoLinkUrls()}
-                                    onChange={(e) => setAutoLinkUrls(e.currentTarget.checked)}
-                                />
-                                <span class="label-text text-xs">
-                                    <strong>テキスト→HTML:</strong> URLを自動リンク化 (&lt;a&gt;)
-                                </span>
-                            </label>
+                        <label
+                            class="ba-flex ba-items-center ba-gap-3"
+                            style={{
+                                "background-color": "var(--ba-surface)",
+                                padding: "0.75rem",
+                                "border-radius": "var(--ba-radius-sm)",
+                                border: "1px solid var(--ba-border)",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                class="ba-checkbox"
+                                checked={autoLinkUrls()}
+                                onChange={(e) => setAutoLinkUrls(e.currentTarget.checked)}
+                            />
+                            <span class="ba-text-xs" style={{ color: "var(--ba-text)" }}>
+                                <strong>テキスト→HTML:</strong> URLを自動リンク化 (&lt;a&gt;)
+                            </span>
+                        </label>
 
-                            <label class="label cursor-pointer justify-start gap-3 bg-base-200/50 p-3 rounded-lg border border-base-300">
-                                <input
-                                    type="checkbox"
-                                    class="checkbox checkbox-primary checkbox-sm"
-                                    checked={preserveListBullets()}
-                                    onChange={(e) => setPreserveListBullets(e.currentTarget.checked)}
-                                />
-                                <span class="label-text text-xs">
-                                    <strong>HTML→テキスト:</strong> リストにビュレット (•) を付与
-                                </span>
-                            </label>
+                        <label
+                            class="ba-flex ba-items-center ba-gap-3"
+                            style={{
+                                "background-color": "var(--ba-surface)",
+                                padding: "0.75rem",
+                                "border-radius": "var(--ba-radius-sm)",
+                                border: "1px solid var(--ba-border)",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                class="ba-checkbox"
+                                checked={preserveListBullets()}
+                                onChange={(e) => setPreserveListBullets(e.currentTarget.checked)}
+                            />
+                            <span class="ba-text-xs" style={{ color: "var(--ba-text)" }}>
+                                <strong>HTML→テキスト:</strong> リストにビュレット (•) を付与
+                            </span>
+                        </label>
 
-                            <label class="label cursor-pointer justify-start gap-3 bg-base-200/50 p-3 rounded-lg border border-base-300">
-                                <input
-                                    type="checkbox"
-                                    class="checkbox checkbox-primary checkbox-sm"
-                                    checked={includeLinksInPlain()}
-                                    onChange={(e) => setIncludeLinksInPlain(e.currentTarget.checked)}
-                                />
-                                <span class="label-text text-xs">
-                                    <strong>HTML→テキスト:</strong> リンクURLを末尾に併記
-                                </span>
-                            </label>
-                        </div>
+                        <label
+                            class="ba-flex ba-items-center ba-gap-3"
+                            style={{
+                                "background-color": "var(--ba-surface)",
+                                padding: "0.75rem",
+                                "border-radius": "var(--ba-radius-sm)",
+                                border: "1px solid var(--ba-border)",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                class="ba-checkbox"
+                                checked={includeLinksInPlain()}
+                                onChange={(e) => setIncludeLinksInPlain(e.currentTarget.checked)}
+                            />
+                            <span class="ba-text-xs" style={{ color: "var(--ba-text)" }}>
+                                <strong>HTML→テキスト:</strong> リンクURLを末尾に併記
+                            </span>
+                        </label>
                     </div>
                 </div>
-            </div>
+            </details>
 
             {/* 使い方・機能解説ガイド */}
-            <div class="card bg-base-100 border border-base-300 shadow-sm">
-                <div class="card-body p-6 sm:p-8 space-y-6">
-                    <h2 class="text-xl font-bold text-primary flex items-center gap-2">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                        <span>各変換機能の特徴とおすすめの使い方</span>
-                    </h2>
+            <div class="ba-card ba-stack-4">
+                <h2 class="ba-section-title ba-text-primary ba-flex ba-items-center ba-gap-2">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="ba-icon-md"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <span>各変換機能の特徴とおすすめの使い方</span>
+                </h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-4 bg-base-200/40 rounded-xl border border-base-300 space-y-2">
-                            <h3 class="font-bold text-sm sm:text-base text-secondary flex items-center gap-1.5">
-                                <span>HTML → Markdown 変換</span>
-                            </h3>
-                            <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
-                                ブログ記事やCMSのリッチテキスト、NotionやGitHubで使いたいHTMLコードを、標準的なMarkdown構文（見出し、リスト、テーブル、コードブロック）に変換します。不要なスタイル属性やスクリプトタグは自動で除去されます。
-                            </p>
-                        </div>
+                <div class="ba-grid-2">
+                    <div class="ba-panel ba-stack-2">
+                        <h3 class="ba-font-bold ba-text-sm ba-text-primary" style={{ margin: 0 }}>
+                            HTML → Markdown 変換
+                        </h3>
+                        <p class="ba-text-xs ba-text-muted" style={{ margin: 0, "line-height": 1.65 }}>
+                            ブログ記事やCMSのリッチテキスト、NotionやGitHubで使いたいHTMLコードを、標準的なMarkdown構文（見出し、リスト、テーブル、コードブロック）に変換します。不要なスタイル属性やスクリプトタグは自動で除去されます。
+                        </p>
+                    </div>
 
-                        <div class="p-4 bg-base-200/40 rounded-xl border border-base-300 space-y-2">
-                            <h3 class="font-bold text-sm sm:text-base text-secondary flex items-center gap-1.5">
-                                <span>Markdown → HTML 変換</span>
-                            </h3>
-                            <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
-                                Markdownで書いたドキュメントを即座にHTML形式に変換します。見出しタグ（h1〜h6）、テーブル、リンク、引用（blockquote）、シンタックス言語クラス付きコードブロックに対応しており、ウェブサイトへの埋め込みに最適です。
-                            </p>
-                        </div>
+                    <div class="ba-panel ba-stack-2">
+                        <h3 class="ba-font-bold ba-text-sm ba-text-primary" style={{ margin: 0 }}>
+                            Markdown → HTML 変換
+                        </h3>
+                        <p class="ba-text-xs ba-text-muted" style={{ margin: 0, "line-height": 1.65 }}>
+                            Markdownで書いたドキュメントを即座にHTML形式に変換します。見出しタグ（h1〜h6）、テーブル、リンク、引用（blockquote）、シンタックス言語クラス付きコードブロックに対応しており、ウェブサイトへの埋め込みに最適です。
+                        </p>
+                    </div>
 
-                        <div class="p-4 bg-base-200/40 rounded-xl border border-base-300 space-y-2">
-                            <h3 class="font-bold text-sm sm:text-base text-secondary flex items-center gap-1.5">
-                                <span>HTML / Markdown → プレーンテキスト</span>
-                            </h3>
-                            <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
-                                ウェブページからコピーした装飾付きテキストやMarkdownから、タグや特殊記号をすべて剥がし、純粋な可読文章だけを抽出します。メール本文やチャットツール、テキストファイルへの転記に便利です。
-                            </p>
-                        </div>
+                    <div class="ba-panel ba-stack-2">
+                        <h3 class="ba-font-bold ba-text-sm ba-text-primary" style={{ margin: 0 }}>
+                            HTML / Markdown → プレーンテキスト
+                        </h3>
+                        <p class="ba-text-xs ba-text-muted" style={{ margin: 0, "line-height": 1.65 }}>
+                            ウェブページからコピーした装飾付きテキストやMarkdownから、タグや特殊記号をすべて剥がし、純粋な可読文章だけを抽出します。メール本文やチャットツール、テキストファイルへの転記に便利です。
+                        </p>
+                    </div>
 
-                        <div class="p-4 bg-base-200/40 rounded-xl border border-base-300 space-y-2">
-                            <h3 class="font-bold text-sm sm:text-base text-secondary flex items-center gap-1.5">
-                                <span>HTMLエンティティ & URLエンコード</span>
-                            </h3>
-                            <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
-                                プログラミングやWeb制作で必須となる「&lt;, &gt;, &amp;, &quot;」などの文字実体参照へのエスケープや、日本語URL・クエリパラメータのパーセントエンコード・デコードが簡単に行えます。
-                            </p>
-                        </div>
+                    <div class="ba-panel ba-stack-2">
+                        <h3 class="ba-font-bold ba-text-sm ba-text-primary" style={{ margin: 0 }}>
+                            HTMLエンティティ & URLエンコード
+                        </h3>
+                        <p class="ba-text-xs ba-text-muted" style={{ margin: 0, "line-height": 1.65 }}>
+                            プログラミングやWeb制作で必須となる「&lt;, &gt;, &amp;, &quot;」などの文字実体参照へのエスケープや、日本語URL・クエリパラメータのパーセントエンコード・デコードが簡単に行えます。
+                        </p>
                     </div>
                 </div>
             </div>

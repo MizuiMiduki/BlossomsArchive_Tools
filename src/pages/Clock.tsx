@@ -157,32 +157,26 @@ export default function Clock() {
     };
 
     return (
-        <div ref={containerRef} class="flex flex-col items-center justify-center min-h-[350px] p-2 sm:p-6 w-full min-w-0 max-w-md mx-auto">
-            <h1 class="sr-only">リアルタイム時計</h1>
-            <div class="card bg-base-100 shadow-xl p-4 sm:p-6 w-full max-w-md border border-base-300 mb-6 text-center">
-                <h2 class="text-xl sm:text-2xl font-black mb-1.5 text-base-content">現在時刻</h2>
-                <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
+        <div ref={containerRef} class="ba-page ba-items-center" style={{ "max-width": "28rem", "min-height": "350px" }}>
+            <h1 class="ba-sr-only">リアルタイム時計</h1>
+            <div class="ba-card ba-w-full ba-text-center ba-stack-2">
+                <h2 class="ba-section-title ba-text-xl ba-font-black">現在時刻</h2>
+                <p class="ba-text-sm ba-text-muted" style={{ margin: 0, "line-height": 1.6 }}>
                     高精度なデジタル表示と滑らかなアナログ時計でリアルタイムに時刻を確認できます。
                 </p>
             </div>
             {/* 切り替えボタン */}
-            <div class="inline-flex p-1 bg-base-200 rounded-2xl mb-8 sm:mb-12 shadow-inner border border-base-300">
+            <div class="ba-tabs">
                 <button
-                    class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                        mode() === "digital"
-                            ? "bg-primary text-white shadow-sm"
-                            : "text-base-content/70 hover:text-base-content"
-                    }`}
+                    type="button"
+                    class={`ba-tab ${mode() === "digital" ? "is-active" : ""}`}
                     onClick={() => switchMode("digital")}
                 >
                     デジタル
                 </button>
                 <button
-                    class={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                        mode() === "analog"
-                            ? "bg-primary text-white shadow-sm"
-                            : "text-base-content/70 hover:text-base-content"
-                    }`}
+                    type="button"
+                    class={`ba-tab ${mode() === "analog" ? "is-active" : ""}`}
                     onClick={() => switchMode("analog")}
                 >
                     アナログ
@@ -192,7 +186,12 @@ export default function Clock() {
             <Switch>
                 <Match when={mode() === "digital"}>
                     <div
-                        class="text-4xl sm:text-6xl md:text-8xl font-mono font-black text-primary tracking-tighter text-center select-none"
+                        class="ba-mono ba-font-black ba-text-primary ba-text-center"
+                        style={{
+                            "font-size": "clamp(2.5rem, 8vw, 4.75rem)",
+                            "letter-spacing": "-0.04em",
+                            "user-select": "none",
+                        }}
                     >
                         {time().toLocaleTimeString([], {
                             hour: "2-digit",
@@ -203,13 +202,17 @@ export default function Clock() {
                 </Match>
 
                 <Match when={mode() === "analog"}>
-                    <div class="flex flex-col items-center w-full">
+                    <div class="ba-flex-col ba-items-center ba-w-full ba-gap-6">
                         <div
-                            class="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 max-w-[80vw] max-h-[80vw]"
+                            style={{
+                                position: "relative",
+                                width: "min(80vw, 18rem)",
+                                height: "min(80vw, 18rem)",
+                            }}
                         >
                             <svg
                                 viewBox="0 0 100 100"
-                                class="w-full h-full stroke-base-content"
+                                style={{ width: "100%", height: "100%", stroke: "var(--ba-text)" }}
                             >
                                 <circle
                                     cx="50"
@@ -241,9 +244,14 @@ export default function Clock() {
                                             y={item.y}
                                             text-anchor="middle"
                                             dominant-baseline="central"
-                                            class="fill-base-content font-bold select-none text-[6.5px]"
                                             fill="currentColor"
                                             stroke="none"
+                                            style={{
+                                                fill: "var(--ba-text)",
+                                                "font-weight": 700,
+                                                "user-select": "none",
+                                                "font-size": "6.5px",
+                                            }}
                                         >
                                             {item.hour}
                                         </text>
@@ -291,24 +299,23 @@ export default function Clock() {
                         </div>
 
                         {/* アナログ時計専用: 秒針音（カチッカチッ）の音量・ON/OFFコントロール */}
-                        <div class="mt-6 flex items-center gap-3 p-2.5 sm:px-4 sm:py-2.5 bg-base-200/70 rounded-2xl border border-base-300 w-full max-w-xs shadow-xs">
+                        <div
+                            class="ba-panel ba-flex ba-items-center ba-gap-3 ba-w-full"
+                            style={{ "max-width": "20rem", padding: "0.625rem 0.875rem" }}
+                        >
                             <button
                                 type="button"
-                                class={`btn btn-sm rounded-xl font-bold transition-all border ${
-                                    soundEnabled()
-                                        ? "btn-primary text-white shadow-xs"
-                                        : "btn-ghost border-base-300 text-base-content/70 hover:text-base-content"
-                                }`}
+                                class={`ba-btn ba-btn--sm ${soundEnabled() ? "ba-btn--primary" : "ba-btn--outline"}`}
                                 onClick={toggleSound}
                                 aria-label={soundEnabled() ? "秒針音をオフにする" : "秒針音をオンにする"}
                                 aria-pressed={soundEnabled() ? "true" : "false"}
                                 title={soundEnabled() ? "秒針音: ON" : "秒針音: OFF"}
                             >
-                                <ToolIcon name={soundEnabled() ? "volume-on" : "volume-off"} class="w-4 h-4 shrink-0" />
+                                <ToolIcon name={soundEnabled() ? "volume-on" : "volume-off"} class="ba-icon-sm ba-shrink-0" />
                                 <span>{soundEnabled() ? "ON" : "OFF"}</span>
                             </button>
 
-                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <div class="ba-flex ba-items-center ba-gap-2 ba-flex-1 ba-min-w-0">
                                 <input
                                     type="range"
                                     min="0"
@@ -322,9 +329,12 @@ export default function Clock() {
                                             handleVolumeChange(val);
                                         }
                                     }}
-                                    class="range range-xs range-primary flex-1"
+                                    class="ba-range ba-flex-1"
                                 />
-                                <span class="font-mono text-xs tabular-nums w-10 text-right font-bold text-base-content/80">
+                                <span
+                                    class="ba-mono ba-text-xs ba-font-bold ba-text-right"
+                                    style={{ width: "2.5rem", "font-variant-numeric": "tabular-nums" }}
+                                >
                                     {soundEnabled() ? `${soundVolume()}%` : "0%"}
                                 </span>
                             </div>
@@ -333,7 +343,7 @@ export default function Clock() {
                 </Match>
             </Switch>
 
-            <div class="text-xl md:text-2xl text-base-content/60 mt-8 font-medium">
+            <div class="ba-text-xl ba-text-muted ba-text-center" style={{ "font-weight": 500 }}>
                 {time().toLocaleDateString(undefined, {
                     weekday: "long",
                     year: "numeric",

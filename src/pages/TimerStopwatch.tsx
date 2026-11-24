@@ -117,7 +117,7 @@ export default function TimerStopwatch() {
                         }
 
                         modalRef?.showModal();
-                        const modalBox = modalRef?.querySelector<HTMLElement>(".modal-box");
+                        const modalBox = modalRef?.querySelector<HTMLElement>(".ba-modal-box");
                         if (modalBox && typeof modalBox.animate === "function") {
                             modalBox.animate(
                                 [
@@ -161,19 +161,19 @@ export default function TimerStopwatch() {
     });
 
     return (
-        <div ref={containerRef} class="flex flex-col items-center justify-center p-1 sm:p-6 space-y-6 sm:space-y-8 max-w-md mx-auto w-full min-w-0">
-            <h1 class="sr-only">タイマー・ストップウォッチ</h1>
+        <div ref={containerRef} class="ba-page ba-items-center" style={{ "max-width": "28rem" }}>
+            <h1 class="ba-sr-only">タイマー・ストップウォッチ</h1>
             {/* ダイアログ */}
-            <dialog ref={modalRef} class="modal modal-bottom sm:modal-middle">
-                <div class="modal-box">
-                    <h2 class="font-black text-xl text-base-content dark:text-white">
+            <dialog ref={modalRef} class="ba-modal">
+                <div class="ba-modal-box ba-stack-4">
+                    <h2 class="ba-section-title ba-text-xl ba-font-black">
                         時間です！
                     </h2>
-                    <p class="py-4 text-base-content/70">お疲れさまでした！</p>
-                    <div class="modal-action">
+                    <p class="ba-text-muted" style={{ margin: 0 }}>お疲れさまでした！</p>
+                    <div class="ba-flex ba-justify-end">
                         <button
                             type="button"
-                            class="btn btn-primary"
+                            class="ba-btn ba-btn--primary"
                             onClick={() => modalRef?.close()}
                         >
                             閉じる
@@ -183,36 +183,27 @@ export default function TimerStopwatch() {
             </dialog>
 
             {/* タブ切り替え */}
-            <div class="grid grid-cols-3 w-full max-w-xs sm:max-w-sm p-1 bg-base-200 rounded-2xl shadow-inner border border-base-300">
+            <div
+                class="ba-tabs ba-w-full"
+                style={{ display: "grid", "grid-template-columns": "repeat(3, minmax(0, 1fr))" }}
+            >
                 <button
                     type="button"
-                    class={`py-2 px-1 text-center rounded-xl text-[11px] sm:text-xs md:text-sm font-bold transition-all truncate ${
-                        mode() === "stopwatch"
-                            ? "bg-primary text-white shadow-sm"
-                            : "text-base-content/70 hover:text-base-content"
-                    }`}
+                    class={`ba-tab ba-truncate ${mode() === "stopwatch" ? "is-active" : ""}`}
                     onClick={() => changeMode("stopwatch")}
                 >
                     ストップウォッチ
                 </button>
                 <button
                     type="button"
-                    class={`py-2 px-1 text-center rounded-xl text-[11px] sm:text-xs md:text-sm font-bold transition-all truncate ${
-                        mode() === "timer"
-                            ? "bg-primary text-white shadow-sm"
-                            : "text-base-content/70 hover:text-base-content"
-                    }`}
+                    class={`ba-tab ba-truncate ${mode() === "timer" ? "is-active" : ""}`}
                     onClick={() => changeMode("timer")}
                 >
                     タイマー
                 </button>
                 <button
                     type="button"
-                    class={`py-2 px-1 text-center rounded-xl text-[11px] sm:text-xs md:text-sm font-bold transition-all truncate ${
-                        mode() === "pomodoro"
-                            ? "bg-primary text-white shadow-sm"
-                            : "text-base-content/70 hover:text-base-content"
-                    }`}
+                    class={`ba-tab ba-truncate ${mode() === "pomodoro" ? "is-active" : ""}`}
                     onClick={() => changeMode("pomodoro")}
                 >
                     ポモドーロ
@@ -220,29 +211,38 @@ export default function TimerStopwatch() {
             </div>
 
             {/* 表示部分 */}
-            <div ref={timeDisplayRef} class="text-center w-full min-w-0">
+            <div ref={timeDisplayRef} class="ba-text-center ba-w-full ba-min-w-0 ba-stack-2 ba-items-center">
                 <Show when={mode() === "pomodoro"}>
-                    <div
-                        class={`badge ${isBreak() ? "badge-accent" : "badge-primary"} mb-2`}
-                    >
+                    <div class={`ba-badge ${isBreak() ? "ba-badge--info" : "ba-badge--primary"}`}>
                         {isBreak() ? "休憩中" : "集中タイム"}
                     </div>
                 </Show>
-                <div class="text-3xl sm:text-5xl md:text-6xl font-mono font-black text-primary tabular-nums tracking-tight">
+                <div
+                    class="ba-mono ba-font-black ba-text-primary"
+                    style={{
+                        "font-size": "clamp(2.25rem, 7vw, 3.75rem)",
+                        "font-variant-numeric": "tabular-nums",
+                        "letter-spacing": "-0.02em",
+                    }}
+                >
                     {formatTime(time(), mode() === "stopwatch")}
                 </div>
             </div>
 
             {/* 操作ボタン */}
-            <div class="flex gap-4">
+            <div class="ba-flex ba-gap-4">
                 <button
-                    class="btn btn-primary w-28"
+                    type="button"
+                    class="ba-btn ba-btn--primary"
+                    style={{ width: "7rem" }}
                     onClick={(e) => isRunning() ? stop(e.currentTarget) : start(e.currentTarget)}
                 >
                     {isRunning() ? "一時停止" : "スタート"}
                 </button>
                 <button
-                    class="btn btn-outline w-28"
+                    type="button"
+                    class="ba-btn ba-btn--outline"
+                    style={{ width: "7rem" }}
                     onClick={(e) => {
                         stop(e.currentTarget);
                         setTime(
@@ -260,12 +260,13 @@ export default function TimerStopwatch() {
             <Switch>
                 <Match when={mode() === "timer"}>
                     <div
-                        class="w-full space-y-4 pt-4 border-t border-base-200"
+                        class="ba-w-full ba-stack-4"
+                        style={{ "padding-top": "1rem", "border-top": "1px solid var(--ba-border)" }}
                     >
-                        <div class="text-sm font-bold opacity-60">
+                        <div class="ba-text-sm ba-font-bold ba-text-muted">
                             時間入力 (H:M:S)
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="ba-flex ba-items-center ba-gap-2">
                             <input
                                 type="number"
                                 min="0"
@@ -274,7 +275,7 @@ export default function TimerStopwatch() {
                                     const v = Number(e.currentTarget.value);
                                     setH(Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0);
                                 }}
-                                class="input input-bordered w-full"
+                                class="ba-input"
                                 placeholder="時"
                                 aria-label="時間（時）"
                             />
@@ -286,7 +287,7 @@ export default function TimerStopwatch() {
                                     const v = Number(e.currentTarget.value);
                                     setM(Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0);
                                 }}
-                                class="input input-bordered w-full"
+                                class="ba-input"
                                 placeholder="分"
                                 aria-label="時間（分）"
                             />
@@ -298,12 +299,13 @@ export default function TimerStopwatch() {
                                     const v = Number(e.currentTarget.value);
                                     setS(Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0);
                                 }}
-                                class="input input-bordered w-full"
+                                class="ba-input"
                                 placeholder="秒"
                                 aria-label="時間（秒）"
                             />
                             <button
-                                class="btn btn-primary"
+                                type="button"
+                                class="ba-btn ba-btn--primary ba-shrink-0"
                                 onClick={(e) => {
                                     animatePop(e.currentTarget, 0.92, 0.15);
                                     setTime(h() * 3600 + m() * 60 + s());
@@ -313,14 +315,15 @@ export default function TimerStopwatch() {
                             </button>
                         </div>
 
-                        <div class="text-sm font-bold opacity-60">
+                        <div class="ba-text-sm ba-font-bold ba-text-muted">
                             プリセット設定
                         </div>
-                        <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
+                        <div style={{ display: "grid", "grid-template-columns": "repeat(4, minmax(0, 1fr))", gap: "0.5rem" }}>
                             <For each={[1, 3, 5, 10, 15, 30, 45, 60]}>
                                 {(min) => (
                                     <button
-                                        class="btn btn-sm btn-ghost border-base-300 px-1 text-xs sm:text-sm min-w-0"
+                                        type="button"
+                                        class="ba-btn ba-btn--sm ba-btn--outline ba-min-w-0"
                                         onClick={(e) => {
                                             animatePop(e.currentTarget, 0.92, 0.15);
                                             setTime(min * 60);
@@ -335,17 +338,18 @@ export default function TimerStopwatch() {
                 </Match>
                 <Match when={mode() === "pomodoro"}>
                     <div
-                        class="w-full space-y-4 pt-4 border-t border-base-200"
+                        class="ba-w-full ba-stack-4"
+                        style={{ "padding-top": "1rem", "border-top": "1px solid var(--ba-border)" }}
                     >
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-xs opacity-60">
+                        <div style={{ display: "grid", "grid-template-columns": "repeat(2, minmax(0, 1fr))", gap: "1rem" }}>
+                            <div class="ba-field">
+                                <label class="ba-label ba-text-muted">
                                     集中(分)
                                 </label>
                                 <input
                                     type="number"
                                     min="1"
-                                    class="input input-bordered w-full"
+                                    class="ba-input"
                                     aria-label="集中時間（分）"
                                     value={focusMin()}
                                     onInput={(e) => {
@@ -358,14 +362,14 @@ export default function TimerStopwatch() {
                                     }}
                                 />
                             </div>
-                            <div>
-                                <label class="text-xs opacity-60">
+                            <div class="ba-field">
+                                <label class="ba-label ba-text-muted">
                                     休憩(分)
                                 </label>
                                 <input
                                     type="number"
                                     min="1"
-                                    class="input input-bordered w-full"
+                                    class="ba-input"
                                     aria-label="休憩時間（分）"
                                     value={breakMin()}
                                     onInput={(e) => {
@@ -379,16 +383,16 @@ export default function TimerStopwatch() {
                                 />
                             </div>
                         </div>
-                        <label class="flex items-center gap-2 cursor-pointer">
+                        <label class="ba-flex ba-items-center ba-gap-2" style={{ cursor: "pointer" }}>
                             <input
                                 type="checkbox"
-                                class="toggle toggle-primary"
+                                class="ba-toggle"
                                 checked={autoRepeat()}
                                 onChange={(e) =>
                                     setAutoRepeat(e.target.checked)
                                 }
                             />
-                            <span>自動ループを有効にする</span>
+                            <span class="ba-text-sm">自動ループを有効にする</span>
                         </label>
                     </div>
                 </Match>
@@ -396,18 +400,21 @@ export default function TimerStopwatch() {
 
             {/* サウンド設定 (タイマー・ポモドーロ用) */}
             <Show when={mode() === "timer" || mode() === "pomodoro"}>
-                <div class="w-full space-y-4 pt-4 border-t border-base-200">
-                    <div class="flex items-center justify-between">
-                        <div class="text-sm font-bold opacity-80">
+                <div
+                    class="ba-w-full ba-stack-4"
+                    style={{ "padding-top": "1rem", "border-top": "1px solid var(--ba-border)" }}
+                >
+                    <div class="ba-flex ba-items-center ba-justify-between">
+                        <div class="ba-text-sm ba-font-bold">
                             通知音設定
                         </div>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <span class="text-xs opacity-70">
+                        <label class="ba-flex ba-items-center ba-gap-2" style={{ cursor: "pointer" }}>
+                            <span class="ba-text-xs ba-text-muted">
                                 {soundEnabled() ? "ON" : "OFF"}
                             </span>
                             <input
                                 type="checkbox"
-                                class="toggle toggle-primary toggle-sm"
+                                class="ba-toggle ba-toggle--sm"
                                 checked={soundEnabled()}
                                 onChange={(e) => setSoundEnabled(e.target.checked)}
                                 aria-label="通知音を有効にする"
@@ -416,15 +423,16 @@ export default function TimerStopwatch() {
                     </div>
 
                     <Show when={soundEnabled()}>
-                        <div class="bg-base-200/50 rounded-xl p-3 sm:p-4 space-y-3 border border-base-300/50">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <label class="text-xs font-semibold opacity-70" for="sound-type-select">
+                        <div class="ba-panel ba-stack-3">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
+                                <label class="ba-text-xs ba-font-bold ba-text-muted" for="sound-type-select">
                                     音の種類
                                 </label>
-                                <div class="flex items-center gap-2">
+                                <div class="ba-flex ba-items-center ba-gap-2">
                                     <select
                                         id="sound-type-select"
-                                        class="select select-bordered select-sm w-full sm:w-auto"
+                                        class="ba-select ba-select--sm"
+                                        style={{ width: "auto" }}
                                         value={soundType()}
                                         onChange={(e) => setSoundType(e.currentTarget.value as "alarm" | "chime")}
                                         aria-label="音の種類"
@@ -434,7 +442,7 @@ export default function TimerStopwatch() {
                                     </select>
                                     <button
                                         type="button"
-                                        class="btn btn-sm btn-outline btn-primary shrink-0"
+                                        class="ba-btn ba-btn--sm ba-btn--outline ba-shrink-0"
                                         onClick={(e) => {
                                             animatePop(e.currentTarget, 0.92, 0.15);
                                             playNotificationSound({
@@ -449,12 +457,12 @@ export default function TimerStopwatch() {
                                 </div>
                             </div>
 
-                            <div class="space-y-1">
-                                <div class="flex justify-between items-center text-xs opacity-70">
-                                    <label for="sound-volume-range" class="font-semibold">
+                            <div class="ba-stack-1">
+                                <div class="ba-flex ba-justify-between ba-items-center ba-text-xs ba-text-muted">
+                                    <label for="sound-volume-range" class="ba-font-bold">
                                         音量
                                     </label>
-                                    <span class="font-mono tabular-nums">{soundVolume()}%</span>
+                                    <span class="ba-mono" style={{ "font-variant-numeric": "tabular-nums" }}>{soundVolume()}%</span>
                                 </div>
                                 <input
                                     id="sound-volume-range"
@@ -471,7 +479,7 @@ export default function TimerStopwatch() {
                                                 : 100,
                                         );
                                     }}
-                                    class="range range-primary range-sm w-full"
+                                    class="ba-range ba-w-full"
                                     aria-label="音量"
                                 />
                             </div>

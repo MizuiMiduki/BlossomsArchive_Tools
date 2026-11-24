@@ -1135,7 +1135,7 @@ export default function SeoChecker() {
     const [allCopied, setAllCopied] = createSignal(false);
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".card");
+        if (containerRef) playPageEntrance(containerRef, ".ba-card");
     });
 
     const enrichDevSameOriginSeo = (
@@ -1396,74 +1396,71 @@ export default function SeoChecker() {
     const statusBadge = (status: DiagnosticItem["status"]) => {
         if (status === "ok") {
             return (
-                <span class="badge badge-success badge-sm text-white font-bold">
+                <span class="ba-badge ba-badge--success">
                     良好
                 </span>
             );
         }
         if (status === "warn") {
             return (
-                <span class="badge badge-warning badge-sm font-bold">
+                <span class="ba-badge ba-badge--warning">
                     要確認
                 </span>
             );
         }
         if (status === "error") {
             return (
-                <span class="badge badge-error badge-sm text-white font-bold">
+                <span class="ba-badge ba-badge--danger">
                     要修正
                 </span>
             );
         }
         return (
-            <span class="badge badge-neutral badge-sm font-bold">
+            <span class="ba-badge ba-badge--neutral">
                 未設定
             </span>
         );
     };
 
     return (
-        <div
-            ref={containerRef}
-            class="w-full max-w-7xl mx-auto flex flex-col items-center min-w-0"
-        >
-            <div class="w-full flex flex-col gap-6 sm:gap-8 min-w-0">
-                {/* メインカード */}
-                <div class="card bg-base-100 shadow-xl p-3 sm:p-6 md:p-10 w-full border border-base-300 min-w-0">
-                    {/* ヘッダー */}
-                    <div class="mb-4 sm:mb-6 border-b border-base-300 pb-4 sm:pb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                        <div>
-                            <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-base-content">
-                                <BudouX text="メタタグ(SEO)確認ツール" />
-                            </h1>
-                            <BudouX
-                                as="p"
-                                class="text-xs font-semibold text-base-content/70 mt-2 leading-relaxed"
-                                text="WebページのURLまたはHTMLソースコードからtitle、meta description、canonical、robots、JSON-LD構造化データ等のSEO重要タグを解析・診断。Google検索結果スニペットのPC・スマホ表示をリアルタイムにプレビュー確認できます。"
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            onClick={loadSample}
-                            class="btn btn-outline btn-sm shrink-0 self-start sm:self-auto font-bold"
-                        >
-                            サンプルで試す
-                        </button>
+        <div ref={containerRef} class="ba-page ba-page--wide">
+            {/* メインカード */}
+            <div class="ba-card ba-stack-6">
+                {/* ヘッダー */}
+                <div
+                    class="ba-home-header"
+                    style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "1.25rem" }}
+                >
+                    <div class="ba-min-w-0">
+                        <h1 class="ba-title">
+                            <BudouX text="メタタグ(SEO)確認ツール" />
+                        </h1>
+                        <BudouX
+                            as="p"
+                            class="ba-text-xs ba-text-muted"
+                            style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.6, "font-weight": 600 }}
+                            text="WebページのURLまたはHTMLソースコードからtitle、meta description、canonical、robots、JSON-LD構造化データ等のSEO重要タグを解析・診断。Google検索結果スニペットのPC・スマホ表示をリアルタイムにプレビュー確認できます。"
+                        />
                     </div>
+                    <button
+                        type="button"
+                        onClick={loadSample}
+                        class="ba-btn ba-btn--outline ba-btn--sm ba-shrink-0"
+                    >
+                        サンプルで試す
+                    </button>
+                </div>
 
-                    {/* 入力モード切替タブ */}
-                    <div class="grid grid-cols-2 gap-1.5 sm:gap-2 p-1.5 bg-base-200 rounded-xl mb-6 max-w-lg w-full">
+                {/* 入力モード切替タブ */}
+                <div>
+                    <div class="ba-tabs">
                         <button
                             type="button"
                             onClick={() => {
                                 setInputMode("url");
                                 setError("");
                             }}
-                            class={`py-2 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-bold transition-all truncate text-center ${
-                                inputMode() === "url"
-                                    ? "bg-primary text-white shadow-sm"
-                                    : "text-base-content/70 hover:bg-base-300/50"
-                            }`}
+                            class={`ba-tab ${inputMode() === "url" ? "is-active" : ""}`}
                         >
                             URLから取得
                         </button>
@@ -1473,428 +1470,793 @@ export default function SeoChecker() {
                                 setInputMode("html");
                                 setError("");
                             }}
-                            class={`py-2 px-4 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
-                                inputMode() === "html"
-                                    ? "bg-primary text-white shadow-sm"
-                                    : "text-base-content/70 hover:bg-base-300/50"
-                            }`}
+                            class={`ba-tab ${inputMode() === "html" ? "is-active" : ""}`}
                         >
                             HTML直接入力 / ファイル読込
                         </button>
                     </div>
+                </div>
 
-                    {/* URL入力フォーム */}
-                    <Show when={inputMode() === "url"}>
-                        <form
-                            {...({
-                                toolname: "analyze_seo_url",
-                                tooldescription:
-                                    "指定したURLのWebページからSEOメタタグとJSON-LD構造化データを解析・診断します",
-                            } as Record<string, string>)}
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                handleAnalyzeUrl();
-                            }}
-                            class="flex flex-col sm:flex-row gap-3 w-full"
+                {/* URL入力フォーム */}
+                <Show when={inputMode() === "url"}>
+                    <form
+                        {...({
+                            toolname: "analyze_seo_url",
+                            tooldescription:
+                                "指定したURLのWebページからSEOメタタグとJSON-LD構造化データを解析・診断します",
+                        } as Record<string, string>)}
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleAnalyzeUrl();
+                        }}
+                        class="ba-flex ba-flex-wrap ba-gap-3 ba-w-full"
+                    >
+                        <input
+                            type="text"
+                            name="url"
+                            title="確認するページのURL"
+                            value={urlInput()}
+                            onInput={(e) =>
+                                setUrlInput(e.currentTarget.value)
+                            }
+                            placeholder="https://tools.blossomsarchive.com"
+                            aria-label="確認するページのURL"
+                            class="ba-input ba-flex-1"
+                            style={{ "min-width": "14rem", height: "3rem" }}
+                        />
+                        <button
+                            ref={actionButtonRef}
+                            type="submit"
+                            disabled={loading() || !urlInput().trim()}
+                            class="ba-btn ba-btn--primary ba-btn--lg ba-shrink-0"
+                            style={{ height: "3rem", "padding-inline": "1.75rem" }}
                         >
-                            <input
-                                type="text"
-                                name="url"
-                                title="確認するページのURL"
-                                value={urlInput()}
+                            {loading() ? (
+                                <>
+                                    <span class="ba-spinner"></span>
+                                    解析中...
+                                </>
+                            ) : (
+                                "SEOメタタグを解析"
+                            )}
+                        </button>
+                    </form>
+                </Show>
+
+                {/* HTML直接入力・ファイル読込フォーム */}
+                <Show when={inputMode() === "html"}>
+                    <div class="ba-stack-4 ba-w-full">
+                        <div class="ba-field">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
+                                <span class="ba-label">
+                                    HTMLソースコード（&lt;head&gt;内のメタタグまたはページ全体のHTML）
+                                </span>
+                                <label class="ba-btn ba-btn--outline ba-btn--xs" style={{ cursor: "pointer" }}>
+                                    HTMLファイルを読み込む
+                                    <input
+                                        type="file"
+                                        accept=".html,.htm,text/html"
+                                        aria-label="HTMLファイルを選択"
+                                        onChange={handleHtmlFileUpload}
+                                        hidden
+                                    />
+                                </label>
+                            </div>
+                            <textarea
+                                value={htmlInput()}
                                 onInput={(e) =>
-                                    setUrlInput(e.currentTarget.value)
+                                    setHtmlInput(e.currentTarget.value)
                                 }
-                                placeholder="https://tools.blossomsarchive.com"
-                                aria-label="確認するページのURL"
-                                class="input input-bordered flex-1 h-12 text-sm font-medium bg-base-100 border-2 border-base-300 focus:border-primary"
+                                placeholder={'<title>ページタイトル</title>\n<meta name="description" content="ページの説明文" />\n<link rel="canonical" href="https://example.com" />'}
+                                aria-label="解析するHTMLソースコード"
+                                class="ba-textarea ba-mono ba-text-xs"
+                                style={{ height: "11rem", "line-height": 1.6 }}
                             />
+                        </div>
+                        <div class="ba-flex ba-justify-end ba-gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setHtmlInput("");
+                                    setSeoData(null);
+                                    setError("");
+                                }}
+                                class="ba-btn ba-btn--outline ba-btn--sm"
+                            >
+                                クリア
+                            </button>
                             <button
                                 ref={actionButtonRef}
-                                type="submit"
-                                disabled={loading() || !urlInput().trim()}
-                                class="btn btn-primary text-white h-12 px-8 text-sm sm:text-base font-black shadow-md shrink-0"
+                                type="button"
+                                onClick={handleAnalyzeHtml}
+                                disabled={!htmlInput().trim()}
+                                class="ba-btn ba-btn--primary ba-btn--sm"
+                                style={{ "padding-inline": "1.5rem" }}
                             >
-                                {loading() ? (
-                                    <>
-                                        <span class="loading loading-spinner loading-sm"></span>
-                                        解析中...
-                                    </>
-                                ) : (
-                                    "SEOメタタグを解析"
-                                )}
+                                HTMLを解析する
                             </button>
-                        </form>
-                    </Show>
-
-                    {/* HTML直接入力・ファイル読込フォーム */}
-                    <Show when={inputMode() === "html"}>
-                        <div class="flex flex-col gap-4 w-full">
-                            <div class="form-control w-full">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1 mb-1">
-                                    <span class="label-text font-bold text-xs sm:text-sm text-base-content/80">
-                                        HTMLソースコード（&lt;head&gt;内のメタタグまたはページ全体のHTML）
-                                    </span>
-                                    <label class="btn btn-outline btn-xs h-8 px-3 font-bold cursor-pointer self-start sm:self-auto">
-                                        HTMLファイルを読み込む
-                                        <input
-                                            type="file"
-                                            accept=".html,.htm,text/html"
-                                            aria-label="HTMLファイルを選択"
-                                            onChange={handleHtmlFileUpload}
-                                            class="hidden"
-                                        />
-                                    </label>
-                                </div>
-                                <textarea
-                                    value={htmlInput()}
-                                    onInput={(e) =>
-                                        setHtmlInput(e.currentTarget.value)
-                                    }
-                                    placeholder={'<title>ページタイトル</title>\n<meta name="description" content="ページの説明文" />\n<link rel="canonical" href="https://example.com" />'}
-                                    aria-label="解析するHTMLソースコード"
-                                    class="textarea textarea-bordered w-full h-44 font-mono text-xs sm:text-sm bg-base-100 border-2 border-base-300 focus:border-primary p-3 leading-relaxed"
-                                />
-                            </div>
-                            <div class="flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setHtmlInput("");
-                                        setSeoData(null);
-                                        setError("");
-                                    }}
-                                    class="btn btn-outline btn-sm h-11 px-5 font-bold"
-                                >
-                                    クリア
-                                </button>
-                                <button
-                                    ref={actionButtonRef}
-                                    type="button"
-                                    onClick={handleAnalyzeHtml}
-                                    disabled={!htmlInput().trim()}
-                                    class="btn btn-primary text-white h-11 px-8 text-sm font-black shadow-md"
-                                >
-                                    HTMLを解析する
-                                </button>
-                            </div>
                         </div>
-                    </Show>
+                    </div>
+                </Show>
 
-                    {/* エラー表示 */}
-                    <Show when={error()}>
-                        <div class="alert alert-error text-white font-bold mt-6 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div class="flex items-center gap-2 text-xs sm:text-sm">
-                                <ToolIcon name="alert" class="w-5 h-5 shrink-0" />
-                                <span>{error()}</span>
-                            </div>
-                            <Show when={inputMode() === "url"}>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setInputMode("html");
-                                        setError("");
-                                    }}
-                                    class="btn btn-xs bg-base-100 text-base-content border-none hover:bg-base-200 shrink-0"
-                                >
-                                    HTML直接入力へ切替
-                                </button>
-                            </Show>
+                {/* エラー表示 */}
+                <Show when={error()}>
+                    <div class="ba-alert ba-alert--error ba-flex-wrap ba-justify-between">
+                        <div class="ba-flex ba-items-center ba-gap-2 ba-text-sm">
+                            <ToolIcon name="alert" class="ba-icon-md ba-shrink-0" />
+                            <span>{error()}</span>
                         </div>
-                    </Show>
+                        <Show when={inputMode() === "url"}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setInputMode("html");
+                                    setError("");
+                                }}
+                                class="ba-btn ba-btn--xs ba-shrink-0"
+                            >
+                                HTML直接入力へ切替
+                            </button>
+                        </Show>
+                    </div>
+                </Show>
 
-                    {/* 未解析時の初期ガイド */}
-                    <Show when={!seoData() && !loading()}>
-                        <div class="mt-8 border-2 border-dashed border-base-300 bg-base-200/40 rounded-2xl p-8 text-center flex flex-col items-center gap-3">
-                            <div class="flex justify-center text-base-content/60">
-                                <ToolIcon name="search" class="w-10 h-10" />
-                            </div>
-                            <p class="text-sm font-bold text-base-content/80">
-                                URLを入力して「SEOメタタグを解析」を押すか、HTMLソースコード・HTMLファイルを読み込んでください。
-                            </p>
-                            <p class="text-xs text-base-content/60 max-w-xl leading-relaxed">
-                                ローカル制作中のHTMLや公開前のWebページも「HTML直接入力 / ファイル読込」から完全オフライン（ブラウザ内完結）でGoogle検索スニペットプレビューとSEO診断を安全に実行できます。
-                            </p>
+                {/* 未解析時の初期ガイド */}
+                <Show when={!seoData() && !loading()}>
+                    <div
+                        class="ba-dropzone ba-flex-col ba-items-center ba-gap-3"
+                        style={{ cursor: "default", padding: "2rem" }}
+                    >
+                        <div class="ba-flex ba-justify-center ba-text-muted">
+                            <ToolIcon name="search" class="ba-icon-xl" />
                         </div>
-                    </Show>
-
-                    {/* 解析結果エリア */}
-                    <Show when={seoData() && !loading()}>
-                        <div
-                            class="mt-8 flex flex-col gap-8 border-t border-base-300 pt-8"
+                        <p class="ba-text-sm ba-font-bold ba-text-muted" style={{ margin: 0 }}>
+                            URLを入力して「SEOメタタグを解析」を押すか、HTMLソースコード・HTMLファイルを読み込んでください。
+                        </p>
+                        <p
+                            class="ba-text-xs ba-text-muted"
+                            style={{ "max-width": "36rem", "line-height": 1.6, margin: 0 }}
                         >
-                            {/* 1. 総合スコア概要カード */}
-                            <div class="bg-base-200/50 border border-base-300 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
-                                <div class="flex items-center gap-5">
-                                    <div class="radial-progress bg-base-100 text-primary border-4 border-base-200 font-black text-xl" style={{
-                                        "--value": scoreData().score,
-                                        "--size": "5rem",
-                                        "--thickness": "6px",
-                                    } as any}>
+                            ローカル制作中のHTMLや公開前のWebページも「HTML直接入力 / ファイル読込」から完全オフライン（ブラウザ内完結）でGoogle検索スニペットプレビューとSEO診断を安全に実行できます。
+                        </p>
+                    </div>
+                </Show>
+
+                {/* 解析結果エリア */}
+                <Show when={seoData() && !loading()}>
+                    <div
+                        class="ba-stack-6"
+                        style={{ "border-top": "1px solid var(--ba-border)", "padding-top": "1.75rem" }}
+                    >
+                        {/* 1. 総合スコア概要カード */}
+                        <div
+                            class="ba-panel ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-4"
+                            style={{ padding: "1.5rem" }}
+                        >
+                            <div class="ba-flex ba-items-center ba-gap-4">
+                                <div
+                                    style={{
+                                        width: "5rem",
+                                        height: "5rem",
+                                        "border-radius": "9999px",
+                                        display: "flex",
+                                        "align-items": "center",
+                                        "justify-content": "center",
+                                        background: `conic-gradient(var(--ba-primary) ${scoreData().score}%, var(--ba-surface-3) 0)`,
+                                        "flex-shrink": 0,
+                                    }}
+                                >
+                                    <div
+                                        class="ba-font-black ba-text-lg ba-text-primary"
+                                        style={{
+                                            width: "4.1rem",
+                                            height: "4.1rem",
+                                            "border-radius": "9999px",
+                                            "background-color": "var(--ba-surface)",
+                                            display: "flex",
+                                            "align-items": "center",
+                                            "justify-content": "center",
+                                        }}
+                                    >
                                         {scoreData().score}点
                                     </div>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-base sm:text-lg font-black text-base-content">
-                                                SEO健全度スコア
-                                            </span>
-                                            <span class="badge badge-primary font-black">
-                                                ランク {scoreData().rating}
-                                            </span>
-                                        </div>
-                                        <p class="text-xs text-base-content/70 mt-1">
-                                            全{scoreData().totalCount}項目のうち {scoreData().passedCount}項目が良好、{scoreData().warnCount}項目が要確認、{scoreData().errorCount}項目が要修正
-                                        </p>
-                                    </div>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-2">
+                                <div>
+                                    <div class="ba-flex ba-items-center ba-gap-2 ba-flex-wrap">
+                                        <span class="ba-text-lg ba-font-black">
+                                            SEO健全度スコア
+                                        </span>
+                                        <span class="ba-badge ba-badge--primary">
+                                            ランク {scoreData().rating}
+                                        </span>
+                                    </div>
+                                    <p class="ba-text-xs ba-text-muted" style={{ "margin-top": "0.25rem", "margin-bottom": 0 }}>
+                                        全{scoreData().totalCount}項目のうち {scoreData().passedCount}項目が良好、{scoreData().warnCount}項目が要確認、{scoreData().errorCount}項目が要修正
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-2">
+                                <button
+                                    type="button"
+                                    onClick={copyAllSummary}
+                                    class={`ba-btn ba-btn--sm ${
+                                        allCopied()
+                                            ? "ba-btn--success"
+                                            : "ba-btn--secondary"
+                                    }`}
+                                >
+                                    {allCopied()
+                                        ? "レポートをコピー完了！"
+                                        : "SEO診断レポートを全コピー"}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 2. Google検索結果（SERP）プレビュー */}
+                        <div class="ba-stack-4">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3">
+                                <div>
+                                    <h2 class="ba-section-title">
+                                        Google検索結果プレビュー (SERP Preview)
+                                    </h2>
+                                    <p class="ba-text-xs ba-text-muted" style={{ "margin-top": "0.15rem", "margin-bottom": 0 }}>
+                                        Google等の検索結果一覧でどのように表示されるかをシミュレーションします
+                                    </p>
+                                </div>
+                                {/* デスクトップ / モバイル切り替え */}
+                                <div class="ba-tabs" style={{ padding: "0.2rem" }}>
                                     <button
                                         type="button"
-                                        onClick={copyAllSummary}
-                                        class={`btn btn-sm text-white rounded-xl font-bold ${
-                                            allCopied()
-                                                ? "btn-success"
-                                                : "btn-neutral"
-                                        }`}
+                                        onClick={() => setSerpViewMode("desktop")}
+                                        class={`ba-tab ${serpViewMode() === "desktop" ? "is-active" : ""}`}
+                                        style={{ padding: "0.25rem 0.65rem", "font-size": "0.75rem" }}
                                     >
-                                        {allCopied()
-                                            ? "レポートをコピー完了！"
-                                            : "SEO診断レポートを全コピー"}
+                                        デスクトップ (PC)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSerpViewMode("mobile")}
+                                        class={`ba-tab ${serpViewMode() === "mobile" ? "is-active" : ""}`}
+                                        style={{ padding: "0.25rem 0.65rem", "font-size": "0.75rem" }}
+                                    >
+                                        モバイル (スマホ)
                                     </button>
                                 </div>
                             </div>
 
-                            {/* 2. Google検索結果（SERP）プレビュー */}
-                            <div>
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                                    <div>
-                                        <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                            Google検索結果プレビュー (SERP Preview)
-                                        </h2>
-                                        <p class="text-xs text-base-content/60 mt-0.5">
-                                            Google等の検索結果一覧でどのように表示されるかをシミュレーションします
-                                        </p>
-                                    </div>
-                                    {/* デスクトップ / モバイル切り替え */}
-                                    <div class="flex items-center gap-1.5 bg-base-200 p-1 rounded-xl self-start sm:self-auto">
-                                        <button
-                                            type="button"
-                                            onClick={() => setSerpViewMode("desktop")}
-                                            class={`btn btn-xs rounded-lg font-bold ${
-                                                serpViewMode() === "desktop"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
+                            {/* プレビューコンテナ */}
+                            <div class="ba-panel ba-flex-col ba-items-center" style={{ padding: "1.25rem" }}>
+                                <Show
+                                    when={serpViewMode() === "desktop"}
+                                    fallback={
+                                        /* モバイル表示 */
+                                        <div
+                                            class="ba-w-full ba-stack-1"
+                                            style={{
+                                                "max-width": "28rem",
+                                                "background-color": "#ffffff",
+                                                color: "#202124",
+                                                "border-radius": "1rem",
+                                                padding: "1rem",
+                                                "box-shadow": "var(--ba-shadow-sm)",
+                                                border: "1px solid #e5e7eb",
+                                                "font-family": "var(--ba-font-sans)",
+                                            }}
                                         >
-                                            デスクトップ (PC)
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setSerpViewMode("mobile")}
-                                            class={`btn btn-xs rounded-lg font-bold ${
-                                                serpViewMode() === "mobile"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            モバイル (スマホ)
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* プレビューコンテナ */}
-                                <div class="bg-base-200/40 border border-base-300 rounded-2xl p-4 sm:p-6 flex flex-col items-center">
-                                    <Show
-                                        when={serpViewMode() === "desktop"}
-                                        fallback={
-                                            /* モバイル表示 */
-                                            <div class="w-full max-w-md bg-white text-[#202124] rounded-2xl p-4 shadow-sm border border-gray-200 font-sans flex flex-col gap-1.5">
-                                                {/* 上部: ファビコン・サイト名・URL */}
-                                                <div class="flex items-center gap-2.5">
-                                                    <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200 shrink-0">
-                                                        <Show
-                                                            when={seoData()?.faviconUrl}
-                                                            fallback={<ToolIcon name="globe" class="w-3.5 h-3.5 text-slate-500" />}
-                                                        >
-                                                            <img
-                                                                src={seoData()?.faviconUrl}
-                                                                alt="Favicon"
-                                                                class="w-4 h-4 object-contain"
-                                                                onError={(e) => {
-                                                                    (e.currentTarget as HTMLElement).style.display = "none";
-                                                                }}
-                                                            />
-                                                        </Show>
-                                                    </div>
-                                                    <div class="flex flex-col min-w-0">
-                                                        <span class="text-xs font-medium text-[#202124] truncate">
-                                                            {seoData()?.ogTitle ? seoData()?.pageTitle.split(/[-|_]/)[1]?.trim() || displayDomain() : displayDomain()}
-                                                        </span>
-                                                        <span class="text-[11px] text-[#4d5156] truncate">
-                                                            {displayBreadcrumb()}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* タイトル */}
-                                                <h3 class="text-base sm:text-lg text-[#1a0dab] font-medium leading-snug line-clamp-2 hover:underline cursor-pointer break-words mt-1">
-                                                    {seoData()?.pageTitle || "（タイトル未設定）"}
-                                                </h3>
-
-                                                {/* 説明文 */}
-                                                <p class="text-xs sm:text-sm text-[#4d5156] leading-relaxed line-clamp-3 break-words mt-0.5">
-                                                    {seoData()?.metaDescription || "（メタディスクリプション未設定：検索エンジンがページ本文から自動的にスニペットを抽出します）"}
-                                                </p>
-                                            </div>
-                                        }
-                                    >
-                                        {/* デスクトップ表示 */}
-                                        <div class="w-full max-w-2xl bg-white text-[#202124] rounded-2xl p-5 shadow-sm border border-gray-200 font-sans flex flex-col gap-1">
                                             {/* 上部: ファビコン・サイト名・URL */}
-                                            <div class="flex items-center gap-2">
-                                                <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200 shrink-0">
+                                            <div class="ba-flex ba-items-center ba-gap-2">
+                                                <div
+                                                    class="ba-shrink-0 ba-flex ba-items-center ba-justify-center"
+                                                    style={{
+                                                        width: "1.5rem",
+                                                        height: "1.5rem",
+                                                        "border-radius": "9999px",
+                                                        "background-color": "#f3f4f6",
+                                                        color: "#64748b",
+                                                        overflow: "hidden",
+                                                        border: "1px solid #e5e7eb",
+                                                    }}
+                                                >
                                                     <Show
                                                         when={seoData()?.faviconUrl}
-                                                        fallback={<ToolIcon name="globe" class="w-3.5 h-3.5 text-slate-500" />}
+                                                        fallback={<ToolIcon name="globe" class="ba-icon-xs" />}
                                                     >
                                                         <img
                                                             src={seoData()?.faviconUrl}
                                                             alt="Favicon"
-                                                            class="w-4 h-4 object-contain"
+                                                            style={{ width: "1rem", height: "1rem", "object-fit": "contain" }}
                                                             onError={(e) => {
                                                                 (e.currentTarget as HTMLElement).style.display = "none";
                                                             }}
                                                         />
                                                     </Show>
                                                 </div>
-                                                <div class="flex flex-col min-w-0 leading-tight">
-                                                    <span class="text-sm text-[#202124] font-medium truncate">
-                                                        {displayDomain()}
+                                                <div class="ba-flex-col ba-min-w-0">
+                                                    <span class="ba-text-xs ba-truncate" style={{ "font-weight": 500, color: "#202124" }}>
+                                                        {seoData()?.ogTitle ? seoData()?.pageTitle.split(/[-|_]/)[1]?.trim() || displayDomain() : displayDomain()}
                                                     </span>
-                                                    <span class="text-xs text-[#4d5156] truncate">
+                                                    <span class="ba-truncate" style={{ "font-size": "0.6875rem", color: "#4d5156" }}>
                                                         {displayBreadcrumb()}
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            {/* タイトルリンク */}
-                                            <h3 class="text-lg sm:text-xl text-[#1a0dab] font-normal leading-normal line-clamp-1 hover:underline cursor-pointer break-words mt-1">
+                                            {/* タイトル */}
+                                            <h3
+                                                class="ba-text-base"
+                                                style={{
+                                                    color: "#1a0dab",
+                                                    "font-weight": 500,
+                                                    "line-height": 1.35,
+                                                    "margin-top": "0.25rem",
+                                                    "margin-bottom": 0,
+                                                    cursor: "pointer",
+                                                    "word-break": "break-word",
+                                                    display: "-webkit-box",
+                                                    "-webkit-line-clamp": 2,
+                                                    "-webkit-box-orient": "vertical",
+                                                    overflow: "hidden",
+                                                }}
+                                            >
                                                 {seoData()?.pageTitle || "（タイトル未設定）"}
                                             </h3>
 
-                                            {/* 説明文スニペット */}
-                                            <p class="text-sm text-[#4d5156] leading-relaxed line-clamp-2 break-words">
+                                            {/* 説明文 */}
+                                            <p
+                                                class="ba-text-xs"
+                                                style={{
+                                                    color: "#4d5156",
+                                                    "line-height": 1.6,
+                                                    "margin-top": "0.15rem",
+                                                    "margin-bottom": 0,
+                                                    "word-break": "break-word",
+                                                    display: "-webkit-box",
+                                                    "-webkit-line-clamp": 3,
+                                                    "-webkit-box-orient": "vertical",
+                                                    overflow: "hidden",
+                                                }}
+                                            >
                                                 {seoData()?.metaDescription || "（メタディスクリプション未設定：検索エンジンがページ本文から自動的にスニペットを抽出します）"}
                                             </p>
                                         </div>
-                                    </Show>
-
-                                    {/* 文字数ゲージバー */}
-                                    <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5 pt-4 border-t border-base-300">
-                                        <div class="bg-base-100 p-3.5 rounded-xl border border-base-300 flex flex-col gap-1.5">
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="font-bold text-base-content/80">
-                                                    タイトル文字数
+                                    }
+                                >
+                                    {/* デスクトップ表示 */}
+                                    <div
+                                        class="ba-w-full ba-stack-1"
+                                        style={{
+                                            "max-width": "42rem",
+                                            "background-color": "#ffffff",
+                                            color: "#202124",
+                                            "border-radius": "1rem",
+                                            padding: "1.25rem",
+                                            "box-shadow": "var(--ba-shadow-sm)",
+                                            border: "1px solid #e5e7eb",
+                                            "font-family": "var(--ba-font-sans)",
+                                        }}
+                                    >
+                                        {/* 上部: ファビコン・サイト名・URL */}
+                                        <div class="ba-flex ba-items-center ba-gap-2">
+                                            <div
+                                                class="ba-shrink-0 ba-flex ba-items-center ba-justify-center"
+                                                style={{
+                                                    width: "1.5rem",
+                                                    height: "1.5rem",
+                                                    "border-radius": "9999px",
+                                                    "background-color": "#f3f4f6",
+                                                    color: "#64748b",
+                                                    overflow: "hidden",
+                                                    border: "1px solid #e5e7eb",
+                                                }}
+                                            >
+                                                <Show
+                                                    when={seoData()?.faviconUrl}
+                                                    fallback={<ToolIcon name="globe" class="ba-icon-xs" />}
+                                                >
+                                                    <img
+                                                        src={seoData()?.faviconUrl}
+                                                        alt="Favicon"
+                                                        style={{ width: "1rem", height: "1rem", "object-fit": "contain" }}
+                                                        onError={(e) => {
+                                                            (e.currentTarget as HTMLElement).style.display = "none";
+                                                        }}
+                                                    />
+                                                </Show>
+                                            </div>
+                                            <div class="ba-flex-col ba-min-w-0" style={{ "line-height": 1.3 }}>
+                                                <span class="ba-text-sm ba-truncate" style={{ color: "#202124", "font-weight": 500 }}>
+                                                    {displayDomain()}
                                                 </span>
-                                                <span class={`font-mono font-bold ${
-                                                    (seoData()?.pageTitle.length ?? 0) >= 25 && (seoData()?.pageTitle.length ?? 0) <= 35
-                                                        ? "text-success"
-                                                        : (seoData()?.pageTitle.length ?? 0) > 40
-                                                          ? "text-warning"
-                                                          : "text-base-content/70"
-                                                }`}>
-                                                    {seoData()?.pageTitle.length ?? 0}文字 / 推奨 25〜35文字
+                                                <span class="ba-text-xs ba-truncate" style={{ color: "#4d5156" }}>
+                                                    {displayBreadcrumb()}
                                                 </span>
                                             </div>
-                                            <progress
-                                                class={`progress w-full h-2 ${
-                                                    (seoData()?.pageTitle.length ?? 0) >= 25 && (seoData()?.pageTitle.length ?? 0) <= 35
-                                                        ? "progress-success"
-                                                        : (seoData()?.pageTitle.length ?? 0) > 40
-                                                          ? "progress-warning"
-                                                          : "progress-primary"
-                                                }`}
-                                                value={Math.min(seoData()?.pageTitle.length ?? 0, 50)}
-                                                max="50"
-                                            ></progress>
                                         </div>
 
-                                        <div class="bg-base-100 p-3.5 rounded-xl border border-base-300 flex flex-col gap-1.5">
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="font-bold text-base-content/80">
-                                                    説明文文字数
-                                                </span>
-                                                <span class={`font-mono font-bold ${
-                                                    (seoData()?.metaDescription.length ?? 0) >= 70 && (seoData()?.metaDescription.length ?? 0) <= 120
-                                                        ? "text-success"
-                                                        : (seoData()?.metaDescription.length ?? 0) > 130
-                                                          ? "text-warning"
-                                                          : "text-base-content/70"
-                                                }`}>
-                                                    {seoData()?.metaDescription.length ?? 0}文字 / 推奨 80〜120文字
-                                                </span>
-                                            </div>
-                                            <progress
-                                                class={`progress w-full h-2 ${
-                                                    (seoData()?.metaDescription.length ?? 0) >= 70 && (seoData()?.metaDescription.length ?? 0) <= 120
-                                                        ? "progress-success"
-                                                        : (seoData()?.metaDescription.length ?? 0) > 130
-                                                          ? "progress-warning"
-                                                          : "progress-primary"
+                                        {/* タイトルリンク */}
+                                        <h3
+                                            class="ba-text-xl"
+                                            style={{
+                                                color: "#1a0dab",
+                                                "font-weight": 400,
+                                                "line-height": 1.4,
+                                                "margin-top": "0.25rem",
+                                                "margin-bottom": 0,
+                                                cursor: "pointer",
+                                                "word-break": "break-word",
+                                                display: "-webkit-box",
+                                                "-webkit-line-clamp": 1,
+                                                "-webkit-box-orient": "vertical",
+                                                overflow: "hidden",
+                                            }}
+                                        >
+                                            {seoData()?.pageTitle || "（タイトル未設定）"}
+                                        </h3>
+
+                                        {/* 説明文スニペット */}
+                                        <p
+                                            class="ba-text-sm"
+                                            style={{
+                                                color: "#4d5156",
+                                                "line-height": 1.6,
+                                                margin: 0,
+                                                "word-break": "break-word",
+                                                display: "-webkit-box",
+                                                "-webkit-line-clamp": 2,
+                                                "-webkit-box-orient": "vertical",
+                                                overflow: "hidden",
+                                            }}
+                                        >
+                                            {seoData()?.metaDescription || "（メタディスクリプション未設定：検索エンジンがページ本文から自動的にスニペットを抽出します）"}
+                                        </p>
+                                    </div>
+                                </Show>
+
+                                {/* 文字数ゲージバー */}
+                                <div
+                                    class="ba-w-full ba-grid-2"
+                                    style={{
+                                        "max-width": "42rem",
+                                        "margin-top": "1.25rem",
+                                        "padding-top": "1rem",
+                                        "border-top": "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <div
+                                        class="ba-stack-2"
+                                        style={{
+                                            "background-color": "var(--ba-surface)",
+                                            padding: "0.875rem",
+                                            "border-radius": "var(--ba-radius)",
+                                            border: "1px solid var(--ba-border)",
+                                        }}
+                                    >
+                                        <div class="ba-flex ba-items-center ba-justify-between ba-text-xs">
+                                            <span class="ba-font-bold ba-text-muted">
+                                                タイトル文字数
+                                            </span>
+                                            <span
+                                                class={`ba-mono ba-font-bold ${
+                                                    (seoData()?.pageTitle.length ?? 0) >= 25 && (seoData()?.pageTitle.length ?? 0) <= 35
+                                                        ? "ba-text-success"
+                                                        : (seoData()?.pageTitle.length ?? 0) > 40
+                                                          ? "ba-text-warning"
+                                                          : "ba-text-muted"
                                                 }`}
-                                                value={Math.min(seoData()?.metaDescription.length ?? 0, 160)}
-                                                max="160"
-                                            ></progress>
+                                            >
+                                                {seoData()?.pageTitle.length ?? 0}文字 / 推奨 25〜35文字
+                                            </span>
                                         </div>
+                                        <progress
+                                            class="ba-progress"
+                                            value={Math.min(seoData()?.pageTitle.length ?? 0, 50)}
+                                            max="50"
+                                        ></progress>
+                                    </div>
+
+                                    <div
+                                        class="ba-stack-2"
+                                        style={{
+                                            "background-color": "var(--ba-surface)",
+                                            padding: "0.875rem",
+                                            "border-radius": "var(--ba-radius)",
+                                            border: "1px solid var(--ba-border)",
+                                        }}
+                                    >
+                                        <div class="ba-flex ba-items-center ba-justify-between ba-text-xs">
+                                            <span class="ba-font-bold ba-text-muted">
+                                                説明文文字数
+                                            </span>
+                                            <span
+                                                class={`ba-mono ba-font-bold ${
+                                                    (seoData()?.metaDescription.length ?? 0) >= 70 && (seoData()?.metaDescription.length ?? 0) <= 120
+                                                        ? "ba-text-success"
+                                                        : (seoData()?.metaDescription.length ?? 0) > 130
+                                                          ? "ba-text-warning"
+                                                          : "ba-text-muted"
+                                                }`}
+                                            >
+                                                {seoData()?.metaDescription.length ?? 0}文字 / 推奨 80〜120文字
+                                            </span>
+                                        </div>
+                                        <progress
+                                            class="ba-progress"
+                                            value={Math.min(seoData()?.metaDescription.length ?? 0, 160)}
+                                            max="160"
+                                        ></progress>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* 3. SEO設定診断チェックリスト */}
-                            <div>
-                                <h2 class="text-lg sm:text-xl font-black text-base-content mb-4 flex items-center gap-2">
-                                    SEO重要項目診断チェック
+                        {/* 3. SEO設定診断チェックリスト */}
+                        <div class="ba-stack-3">
+                            <h2 class="ba-section-title">
+                                SEO重要項目診断チェック
+                            </h2>
+                            <div
+                                style={{
+                                    border: "1px solid var(--ba-border)",
+                                    "border-radius": "var(--ba-radius-lg)",
+                                    "background-color": "var(--ba-surface)",
+                                    overflow: "hidden",
+                                    "box-shadow": "var(--ba-shadow-xs)",
+                                }}
+                            >
+                                <For each={diagnostics()}>
+                                    {(item) => (
+                                        <div
+                                            class="ba-flex ba-flex-wrap ba-items-start ba-justify-between ba-gap-3"
+                                            style={{
+                                                padding: "1rem",
+                                                "border-bottom": "1px solid var(--ba-border)",
+                                            }}
+                                        >
+                                            <div
+                                                class="ba-flex ba-items-center ba-gap-3 ba-shrink-0"
+                                                style={{ "min-width": "14rem" }}
+                                            >
+                                                {statusBadge(item.status)}
+                                                <span class="ba-mono ba-font-bold ba-text-sm">
+                                                    {item.label}
+                                                </span>
+                                            </div>
+                                            <div class="ba-flex-1 ba-min-w-0 ba-stack-1" style={{ "min-width": "14rem" }}>
+                                                <p class="ba-text-sm ba-font-bold ba-break-all" style={{ margin: 0 }}>
+                                                    {item.value}
+                                                </p>
+                                                <p class="ba-text-muted" style={{ "font-size": "0.6875rem", "font-weight": 500, margin: 0 }}>
+                                                    {item.message}
+                                                </p>
+                                                <p
+                                                    style={{
+                                                        "font-size": "0.6875rem",
+                                                        color: "var(--ba-primary-soft-fg)",
+                                                        "background-color": "var(--ba-primary-soft)",
+                                                        padding: "0.5rem",
+                                                        "border-radius": "var(--ba-radius-sm)",
+                                                        "line-height": 1.5,
+                                                        "margin-top": "0.25rem",
+                                                        "margin-bottom": 0,
+                                                    }}
+                                                >
+                                                    改善ヒント: {item.advice}
+                                                </p>
+                                            </div>
+                                            <div class="ba-shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={item.value === "未設定" || item.value === "未検出"}
+                                                    onClick={() =>
+                                                        copyText(
+                                                            item.value,
+                                                            `diag-${item.key}`,
+                                                        )
+                                                    }
+                                                    class={`ba-btn ba-btn--xs ${
+                                                        copiedKey() ===
+                                                        `diag-${item.key}`
+                                                            ? "ba-btn--success"
+                                                            : "ba-btn--secondary"
+                                                    }`}
+                                                >
+                                                    {copiedKey() ===
+                                                    `diag-${item.key}`
+                                                        ? "完了"
+                                                        : "コピー"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </For>
+                            </div>
+                        </div>
+
+                        {/* 4. 構造化データ（JSON-LD）プレビュー */}
+                        <Show when={(seoData()?.jsonLdList.length ?? 0) > 0}>
+                            <div class="ba-stack-4">
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
+                                    <h2 class="ba-section-title">
+                                        検出された構造化データ (JSON-LD: {seoData()?.jsonLdList.length}件)
+                                    </h2>
+                                    <a
+                                        href={
+                                            urlInput().trim()
+                                                ? `/json-ld-viewer?url=${encodeURIComponent(normalizeInputUrl(urlInput()))}`
+                                                : "/json-ld-viewer"
+                                        }
+                                        class="ba-btn ba-btn--xs ba-btn--outline ba-text-primary"
+                                        style={{ "border-color": "var(--ba-primary)" }}
+                                        title="JSON-LD構造可視化・検証ツールでツリー構造やSchema.org診断を確認"
+                                    >
+                                        JSON-LDツリー可視化ツールで開く ↗
+                                    </a>
+                                </div>
+                                <div class="ba-stack-4">
+                                    <For each={seoData()?.jsonLdList}>
+                                        {(jsonItem, idx) => (
+                                            <div class="ba-card ba-stack-3">
+                                                <div class="ba-flex ba-items-center ba-justify-between ba-flex-wrap ba-gap-2">
+                                                    <div class="ba-flex ba-items-center ba-gap-2">
+                                                        <span class={`ba-badge ${jsonItem.isValid ? "ba-badge--success" : "ba-badge--danger"}`}>
+                                                            {jsonItem.isValid ? "有効 (Valid)" : "エラー"}
+                                                        </span>
+                                                        <span class="ba-font-bold ba-text-sm">
+                                                            Type: {jsonItem.type}
+                                                        </span>
+                                                    </div>
+                                                    <div class="ba-flex ba-items-center ba-gap-2">
+                                                        <a
+                                                            href={
+                                                                urlInput().trim()
+                                                                    ? `/json-ld-viewer?url=${encodeURIComponent(normalizeInputUrl(urlInput()))}`
+                                                                    : "/json-ld-viewer"
+                                                            }
+                                                            class="ba-btn ba-btn--xs ba-btn--ghost ba-text-primary ba-underline"
+                                                        >
+                                                            ツリー表示 ↗
+                                                        </a>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => copyText(jsonItem.raw, `jsonld-${idx()}`)}
+                                                            class={`ba-btn ba-btn--xs ${
+                                                                copiedKey() === `jsonld-${idx()}`
+                                                                    ? "ba-btn--success"
+                                                                    : "ba-btn--secondary"
+                                                            }`}
+                                                        >
+                                                            {copiedKey() === `jsonld-${idx()}` ? "コピー完了" : "JSONをコピー"}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <pre class="ba-code" style={{ "max-height": "15rem" }}>
+                                                    {jsonItem.isValid && jsonItem.parsed
+                                                        ? JSON.stringify(jsonItem.parsed, null, 2)
+                                                        : jsonItem.raw}
+                                                </pre>
+                                            </div>
+                                        )}
+                                    </For>
+                                </div>
+                            </div>
+                        </Show>
+
+                        {/* 5. 検出された全メタタグ一覧 */}
+                        <div class="ba-stack-3">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3">
+                                <h2 class="ba-section-title">
+                                    検出されたメタタグ・SEO要素一覧 ({filteredTags().length}件)
                                 </h2>
-                                <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
-                                    <For each={diagnostics()}>
-                                        {(item) => (
-                                            <div class="p-4 flex flex-col md:flex-row md:items-start justify-between gap-3 hover:bg-base-200/40 transition-colors">
-                                                <div class="flex items-center gap-3 md:w-56 shrink-0">
-                                                    {statusBadge(item.status)}
-                                                    <span class="font-mono font-bold text-xs sm:text-sm text-base-content">
-                                                        {item.label}
+                                {/* フィルタボタン */}
+                                <div class="ba-tabs" style={{ padding: "0.2rem" }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTagFilter("all")}
+                                        class={`ba-tab ${tagFilter() === "all" ? "is-active" : ""}`}
+                                        style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                    >
+                                        すべて
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTagFilter("basic")}
+                                        class={`ba-tab ${tagFilter() === "basic" ? "is-active" : ""}`}
+                                        style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                    >
+                                        基本情報
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTagFilter("indexing")}
+                                        class={`ba-tab ${tagFilter() === "indexing" ? "is-active" : ""}`}
+                                        style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                    >
+                                        インデックス
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTagFilter("structure")}
+                                        class={`ba-tab ${tagFilter() === "structure" ? "is-active" : ""}`}
+                                        style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                    >
+                                        構造/見出し
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTagFilter("social")}
+                                        class={`ba-tab ${tagFilter() === "social" ? "is-active" : ""}`}
+                                        style={{ padding: "0.25rem 0.6rem", "font-size": "0.75rem" }}
+                                    >
+                                        OGP/SNS
+                                    </button>
+                                </div>
+                            </div>
+
+                            <Show
+                                when={filteredTags().length > 0}
+                                fallback={
+                                    <div class="ba-panel ba-text-center ba-text-xs ba-text-muted ba-font-bold" style={{ padding: "1.5rem" }}>
+                                        該当カテゴリのメタタグは見つかりませんでした。
+                                    </div>
+                                }
+                            >
+                                <div
+                                    style={{
+                                        border: "1px solid var(--ba-border)",
+                                        "border-radius": "var(--ba-radius-lg)",
+                                        "background-color": "var(--ba-surface)",
+                                        overflow: "hidden",
+                                        "box-shadow": "var(--ba-shadow-xs)",
+                                    }}
+                                >
+                                    <For each={filteredTags()}>
+                                        {(tag, idx) => (
+                                            <div
+                                                class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2"
+                                                style={{
+                                                    padding: "0.875rem 1rem",
+                                                    "border-bottom": "1px solid var(--ba-border)",
+                                                }}
+                                            >
+                                                <div
+                                                    class="ba-flex ba-items-center ba-gap-2 ba-shrink-0"
+                                                    style={{ "min-width": "14rem" }}
+                                                >
+                                                    <span
+                                                        class="ba-badge ba-badge--neutral ba-mono"
+                                                        style={{ "text-transform": "uppercase" }}
+                                                    >
+                                                        {tag.category}
+                                                    </span>
+                                                    <span class="ba-mono ba-font-bold ba-text-xs ba-text-primary ba-break-all">
+                                                        {tag.key}
                                                     </span>
                                                 </div>
-                                                <div class="flex-1 min-w-0 flex flex-col gap-1">
-                                                    <p class="text-xs sm:text-sm font-semibold text-base-content break-all">
-                                                        {item.value}
-                                                    </p>
-                                                    <p class="text-[11px] text-base-content/80 font-medium">
-                                                        {item.message}
-                                                    </p>
-                                                    <p class="text-[10px] text-primary/90 mt-0.5 leading-relaxed bg-primary/5 p-2 rounded-lg border border-primary/10">
-                                                        改善ヒント: {item.advice}
-                                                    </p>
+                                                <div
+                                                    class="ba-flex-1 ba-text-xs ba-break-all"
+                                                    style={{ "min-width": "12rem", "font-weight": 500 }}
+                                                >
+                                                    {tag.value || "（空）"}
                                                 </div>
-                                                <div class="shrink-0 self-end md:self-start">
+                                                <div class="ba-shrink-0">
                                                     <button
                                                         type="button"
-                                                        disabled={item.value === "未設定" || item.value === "未検出"}
+                                                        disabled={!tag.value}
                                                         onClick={() =>
                                                             copyText(
-                                                                item.value,
-                                                                `diag-${item.key}`,
+                                                                tag.value,
+                                                                `raw-${idx()}`,
                                                             )
                                                         }
-                                                        class={`btn btn-xs h-7 px-3 rounded-lg text-white font-medium ${
+                                                        class={`ba-btn ba-btn--xs ${
                                                             copiedKey() ===
-                                                            `diag-${item.key}`
-                                                                ? "btn-success"
-                                                                : "btn-neutral"
+                                                            `raw-${idx()}`
+                                                                ? "ba-btn--success"
+                                                                : "ba-btn--secondary"
                                                         }`}
                                                     >
                                                         {copiedKey() ===
-                                                        `diag-${item.key}`
+                                                        `raw-${idx()}`
                                                             ? "完了"
                                                             : "コピー"}
                                                     </button>
@@ -1903,197 +2265,10 @@ export default function SeoChecker() {
                                         )}
                                     </For>
                                 </div>
-                            </div>
-
-                            {/* 4. 構造化データ（JSON-LD）プレビュー */}
-                            <Show when={(seoData()?.jsonLdList.length ?? 0) > 0}>
-                                <div>
-                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                                        <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                            検出された構造化データ (JSON-LD: {seoData()?.jsonLdList.length}件)
-                                        </h2>
-                                        <a
-                                            href={
-                                                urlInput().trim()
-                                                    ? `/json-ld-viewer?url=${encodeURIComponent(normalizeInputUrl(urlInput()))}`
-                                                    : "/json-ld-viewer"
-                                            }
-                                            class="btn btn-xs btn-outline btn-primary rounded-lg font-bold"
-                                            title="JSON-LD構造可視化・検証ツールでツリー構造やSchema.org診断を確認"
-                                        >
-                                            JSON-LDツリー可視化ツールで開く ↗
-                                        </a>
-                                    </div>
-                                    <div class="flex flex-col gap-4">
-                                        <For each={seoData()?.jsonLdList}>
-                                            {(jsonItem, idx) => (
-                                                <div class="bg-base-100 border border-base-300 rounded-2xl p-5 shadow-xs flex flex-col gap-3">
-                                                    <div class="flex items-center justify-between flex-wrap gap-2">
-                                                        <div class="flex items-center gap-2">
-                                                            <span class={`badge ${jsonItem.isValid ? "badge-success text-white" : "badge-error text-white"} font-bold text-xs`}>
-                                                                {jsonItem.isValid ? "有効 (Valid)" : "エラー"}
-                                                            </span>
-                                                            <span class="font-bold text-sm text-base-content">
-                                                                Type: {jsonItem.type}
-                                                            </span>
-                                                        </div>
-                                                        <div class="flex items-center gap-2">
-                                                            <a
-                                                                href={
-                                                                    urlInput().trim()
-                                                                        ? `/json-ld-viewer?url=${encodeURIComponent(normalizeInputUrl(urlInput()))}`
-                                                                        : "/json-ld-viewer"
-                                                                }
-                                                                class="btn btn-xs btn-ghost text-primary underline"
-                                                            >
-                                                                ツリー表示 ↗
-                                                            </a>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => copyText(jsonItem.raw, `jsonld-${idx()}`)}
-                                                                class={`btn btn-xs rounded-lg font-bold text-white ${
-                                                                    copiedKey() === `jsonld-${idx()}`
-                                                                        ? "btn-success"
-                                                                        : "btn-neutral"
-                                                                }`}
-                                                            >
-                                                                {copiedKey() === `jsonld-${idx()}` ? "コピー完了" : "JSONをコピー"}
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <pre class="bg-base-200/70 p-3.5 rounded-xl font-mono text-xs overflow-x-auto text-base-content/90 max-h-60 leading-relaxed">
-                                                        {jsonItem.isValid && jsonItem.parsed
-                                                            ? JSON.stringify(jsonItem.parsed, null, 2)
-                                                            : jsonItem.raw}
-                                                    </pre>
-                                                </div>
-                                            )}
-                                        </For>
-                                    </div>
-                                </div>
                             </Show>
-
-                            {/* 5. 検出された全メタタグ一覧 */}
-                            <div>
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                                    <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                        検出されたメタタグ・SEO要素一覧 ({filteredTags().length}件)
-                                    </h2>
-                                    {/* フィルタボタン */}
-                                    <div class="flex items-center gap-1 bg-base-200 p-1 rounded-xl flex-wrap">
-                                        <button
-                                            type="button"
-                                            onClick={() => setTagFilter("all")}
-                                            class={`btn btn-xs rounded-lg ${
-                                                tagFilter() === "all"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            すべて
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setTagFilter("basic")}
-                                            class={`btn btn-xs rounded-lg ${
-                                                tagFilter() === "basic"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            基本情報
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setTagFilter("indexing")}
-                                            class={`btn btn-xs rounded-lg ${
-                                                tagFilter() === "indexing"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            インデックス
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setTagFilter("structure")}
-                                            class={`btn btn-xs rounded-lg ${
-                                                tagFilter() === "structure"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            構造/見出し
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setTagFilter("social")}
-                                            class={`btn btn-xs rounded-lg ${
-                                                tagFilter() === "social"
-                                                    ? "btn-primary text-white"
-                                                    : "btn-ghost"
-                                            }`}
-                                        >
-                                            OGP/SNS
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <Show
-                                    when={filteredTags().length > 0}
-                                    fallback={
-                                        <div class="p-6 text-center bg-base-200/50 rounded-2xl border border-base-300 text-xs text-base-content/60 font-semibold">
-                                            該当カテゴリのメタタグは見つかりませんでした。
-                                        </div>
-                                    }
-                                >
-                                    <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
-                                        <For each={filteredTags()}>
-                                            {(tag, idx) => (
-                                                <div class="p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-2 hover:bg-base-200/40 transition-colors">
-                                                    <div class="flex items-center gap-2 md:w-56 shrink-0">
-                                                        <span class="badge badge-ghost badge-xs font-mono uppercase">
-                                                            {tag.category}
-                                                        </span>
-                                                        <span class="font-mono font-bold text-xs sm:text-sm text-primary break-all">
-                                                            {tag.key}
-                                                        </span>
-                                                    </div>
-                                                    <div class="flex-1 text-xs sm:text-sm text-base-content break-all font-medium md:px-4">
-                                                        {tag.value || "（空）"}
-                                                    </div>
-                                                    <div class="shrink-0 self-end md:self-center">
-                                                        <button
-                                                            type="button"
-                                                            disabled={!tag.value}
-                                                            onClick={() =>
-                                                                copyText(
-                                                                    tag.value,
-                                                                    `raw-${idx()}`,
-                                                                )
-                                                            }
-                                                            class={`btn btn-xs h-7 px-3 rounded-lg text-white font-medium ${
-                                                                copiedKey() ===
-                                                                `raw-${idx()}`
-                                                                    ? "btn-success"
-                                                                    : "btn-neutral"
-                                                            }`}
-                                                        >
-                                                            {copiedKey() ===
-                                                            `raw-${idx()}`
-                                                                ? "完了"
-                                                                : "コピー"}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </For>
-                                    </div>
-                                </Show>
-                            </div>
                         </div>
-                    </Show>
-                </div>
+                    </div>
+                </Show>
             </div>
 
             <AdSense />

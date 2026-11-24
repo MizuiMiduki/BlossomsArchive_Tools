@@ -684,38 +684,38 @@ export default function ExifFrame() {
         {
             id: "none",
             name: "標準（装飾なし）",
-            border: "border-base-300",
+            borderColor: "var(--ba-border)",
             style: "background: #fff;",
         },
         {
             id: "shadow",
             name: "立体浮き出し影",
-            border: "border-base-300 shadow-md",
-            style: "background: #eee;",
+            borderColor: "var(--ba-border)",
+            style: "background: #eee; box-shadow: 0 2px 6px rgba(0,0,0,0.2);",
         },
         {
             id: "border",
             name: "インライン線画",
-            border: "border-slate-800",
+            borderColor: "#1e293b",
             style: "background: #fff; box-shadow: inset 0 0 0 2px #333;",
         },
         {
             id: "classic",
             name: "伝統的二重マット",
-            border: "border-slate-400",
+            borderColor: "#94a3b8",
             style: "background: #fff; box-shadow: inset 0 0 0 1px #999, inset 0 0 0 3px #333;",
         },
         {
             id: "wood",
             name: "最高級オーク木目",
-            border: "border-amber-800",
+            borderColor: "#92400e",
             style: "background: linear-gradient(135deg, #a05a2c 25%, #8b4513 25%, #8b4513 50%, #a05a2c 50%, #a05a2c 75%, #8b4513 75%); background-size: 8px 8px;",
         },
         {
             id: "gold",
             name: "宮殿アンティーク金縁",
-            border: "border-yellow-600 shadow-[inset_0_0_4px_rgba(0,0,0,0.3)]",
-            style: "background: linear-gradient(to bottom, #ffe57f, #ffc107, #b78103);",
+            borderColor: "#ca8a04",
+            style: "background: linear-gradient(to bottom, #ffe57f, #ffc107, #b78103); box-shadow: inset 0 0 4px rgba(0,0,0,0.3);",
         },
     ];
 
@@ -723,15 +723,15 @@ export default function ExifFrame() {
         {
             id: "none",
             name: "標準テキスト（プレートなし）",
-            bg: "bg-base-200 text-base-content border-base-300",
+            boxStyle: { background: "var(--ba-surface-2)", color: "var(--ba-text)", "border-color": "var(--ba-border)" },
             render: () => <span>Text Only</span>,
         },
         {
             id: "box",
             name: "モダン座布団ボックス",
-            bg: "bg-base-300/60 text-base-content border-base-300 rounded-md",
+            boxStyle: { background: "var(--ba-surface-3)", color: "var(--ba-text)", "border-color": "var(--ba-border)", "border-radius": "0.375rem" },
             render: () => (
-                <span class="bg-black/10 dark:bg-white/10 px-2 py-0.5 rounded text-[11px]">
+                <span style={{ background: "rgba(0,0,0,0.12)", padding: "0.1rem 0.5rem", "border-radius": "0.25rem", "font-size": "0.6875rem" }}>
                     Label Box
                 </span>
             ),
@@ -739,9 +739,9 @@ export default function ExifFrame() {
         {
             id: "line",
             name: "クラシック上下境界線",
-            bg: "bg-base-100 text-base-content border-base-300",
+            boxStyle: { background: "var(--ba-surface)", color: "var(--ba-text)", "border-color": "var(--ba-border)" },
             render: () => (
-                <span class="border-y border-current px-1 py-0.5 text-[11px]">
+                <span style={{ "border-top": "1px solid currentColor", "border-bottom": "1px solid currentColor", padding: "0.1rem 0.25rem", "font-size": "0.6875rem" }}>
                     Line Text
                 </span>
             ),
@@ -749,9 +749,9 @@ export default function ExifFrame() {
         {
             id: "metal-gold",
             name: "真鍮ヘアラインゴールド",
-            bg: "bg-gradient-to-b from-amber-200 via-yellow-400 to-amber-600 text-amber-950 font-bold border-amber-700 shadow-[2px_2px_0px_#151515]",
+            boxStyle: { background: "linear-gradient(to bottom, #fde68a, #facc15, #d97706)", color: "#451a03", "font-weight": 700, "border-color": "#b45309", "box-shadow": "2px 2px 0 #151515" },
             render: () => (
-                <span class="text-[10px] relative px-2 py-0.5 border border-white/30 block text-center">
+                <span style={{ "font-size": "0.625rem", padding: "0.1rem 0.5rem", border: "1px solid rgba(255,255,255,0.35)", display: "block", "text-align": "center" }}>
                     凹 GOLD
                 </span>
             ),
@@ -759,9 +759,9 @@ export default function ExifFrame() {
         {
             id: "metal-silver",
             name: "アルミブラッシュドシルバー",
-            bg: "bg-gradient-to-b from-white via-slate-300 to-slate-400 text-slate-900 font-bold border-slate-500 shadow-[2px_2px_0px_#151515]",
+            boxStyle: { background: "linear-gradient(to bottom, #ffffff, #cbd5e1, #94a3b8)", color: "#0f172a", "font-weight": 700, "border-color": "#64748b", "box-shadow": "2px 2px 0 #151515" },
             render: () => (
-                <span class="text-[10px] relative px-2 py-0.5 border border-white/40 block text-center">
+                <span style={{ "font-size": "0.625rem", padding: "0.1rem 0.5rem", border: "1px solid rgba(255,255,255,0.45)", display: "block", "text-align": "center" }}>
                     凹 SILVER
                 </span>
             ),
@@ -2415,37 +2415,37 @@ export default function ExifFrame() {
             pos: "bottom",
             align: "left",
             label: "下・左",
-            alignClass: "justify-start",
+            alignClass: "ba-justify-start",
         },
         {
             pos: "bottom",
             align: "center",
             label: "下・中央",
-            alignClass: "justify-center",
+            alignClass: "ba-justify-center",
         },
         {
             pos: "bottom",
             align: "right",
             label: "下・右",
-            alignClass: "justify-end",
+            alignClass: "ba-justify-end",
         },
         {
             pos: "top",
             align: "left",
             label: "上・左",
-            alignClass: "justify-start",
+            alignClass: "ba-justify-start",
         },
         {
             pos: "top",
             align: "center",
             label: "上・中央",
-            alignClass: "justify-center",
+            alignClass: "ba-justify-center",
         },
         {
             pos: "top",
             align: "right",
             label: "上・右",
-            alignClass: "justify-end",
+            alignClass: "ba-justify-end",
         },
         {
             pos: "left",
@@ -2577,108 +2577,141 @@ export default function ExifFrame() {
     };
 
     return (
-        <div ref={containerRef} class="exif-tool h-full w-full p-0 sm:p-4 pb-36 sm:pb-36 lg:pb-4 flex flex-col gap-4 bg-base-100">
-            {/* ヘッダーセクション: 初期SSR App Shellと整合し、ハイドレーション後のレイアウトシフトとLCP要素の消滅を防止 */}
-            <div class="card bg-base-100 shadow-xl border border-base-300 p-4 sm:p-6 flex flex-col gap-3">
-                <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-base-content flex items-center gap-2.5">
-                    <span class="p-2 rounded-lg bg-base-200/80 text-primary flex items-center justify-center" aria-hidden="true">
-                        <ToolIcon name="frame" class="w-5 h-5 sm:w-6 sm:h-6" />
+        <div ref={containerRef} class="ba-page ba-page--wide">
+            {/* ヘッダーセクション */}
+            <div class="ba-card ba-stack-3">
+                <h1 class="ba-title ba-flex ba-items-center ba-gap-2">
+                    <span class="ba-icon-box" aria-hidden="true">
+                        <ToolIcon name="frame" class="ba-icon-md" />
                     </span>
                     <span>EXIFフレーム生成</span>
                 </h1>
-                <p class="text-sm text-base-content/80 leading-relaxed">
+                <p class="ba-text-sm ba-text-muted" style={{ margin: 0, "line-height": 1.65 }}>
                     写真に撮影日時、カメラ機種、レンズ名、焦点距離、F値、シャッタースピード、ISO感度などのEXIF情報を美しくレイアウトしたフレーム画像をブラウザ完結で生成・保存できる無料ツールです。完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。
                 </p>
             </div>
 
-            <div class="card bg-base-100 shadow-xl p-3 sm:p-6 w-full border border-base-300">
-                <div class="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full items-stretch">
+            <div class="ba-card ba-w-full">
+                <div class="ba-grid-2" style={{ gap: "1.5rem", "align-items": "start" }}>
                     <div
                         ref={settingsDesktopScrollRef}
-                        class="contents lg:flex lg:flex-col lg:w-[440px] xl:w-[500px] lg:flex-shrink-0 lg:gap-4 lg:max-h-[82vh] lg:overflow-y-auto lg:pr-1"
+                        class="ba-stack-4 ba-min-w-0"
+                        style={{ "max-height": "82vh", "overflow-y": "auto", "padding-right": "0.25rem" }}
                     >
-                        <div
-                            ref={settingsTopRef}
-                            class="order-3 lg:order-none flex flex-col gap-4 scroll-mt-68 sm:scroll-mt-76 lg:scroll-mt-0"
-                        >
+                        <div ref={settingsTopRef} class="ba-stack-4">
                             <div
                                 role="tablist"
                                 aria-label="設定カテゴリ"
-                                class="fixed bottom-0 inset-x-0 z-[2147483646] bg-base-100/95 backdrop-blur-md border-t border-base-300 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)] lg:sticky lg:top-0 lg:bottom-auto lg:inset-x-auto lg:z-10 lg:border lg:rounded-xl lg:shadow-xs lg:pb-0"
+                                class="ba-tabs ba-w-full"
+                                style={{ position: "sticky", top: 0, "z-index": 10 }}
                             >
-                                <div class="flex items-stretch gap-1 p-1.5 max-w-xl mx-auto lg:max-w-none">
-                                    <For each={settingTabs}>
-                                        {(tab) => (
-                                            <button
-                                                type="button"
-                                                role="tab"
-                                                id={`exif-tab-${tab.id}`}
-                                                aria-controls={`exif-panel-${tab.id}`}
-                                                aria-selected={activeTab() === tab.id ? "true" : "false"}
-                                                onClick={() => selectTab(tab.id)}
-                                                class={`relative flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 lg:h-12 rounded-lg text-[10px] sm:text-[11px] font-bold transition-colors cursor-pointer select-none ${
-                                                    activeTab() === tab.id
-                                                        ? "bg-primary text-primary-content shadow-xs"
-                                                        : "text-base-content/90 hover:bg-base-200 active:bg-base-200"
-                                                }`}
-                                            >
-                                                <Show when={tab.isBeta}>
-                                                    <span class="absolute top-0.5 right-0.5 px-1 py-0 rounded-full text-[8px] leading-tight font-extrabold bg-warning text-warning-content shadow-2xs pointer-events-none">
-                                                        BETA
-                                                    </span>
-                                                </Show>
-                                                <ToolIcon name={tab.icon} class="w-4 h-4 shrink-0" />
-                                                <span class="truncate">{tab.label}</span>
-                                            </button>
-                                        )}
-                                    </For>
-                                    <Show when={hasImage()}>
+                                <For each={settingTabs}>
+                                    {(tab) => (
                                         <button
                                             type="button"
-                                            disabled={isProcessing()}
-                                            onClick={handleGenerate}
-                                            class="lg:hidden flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 rounded-lg text-[10px] sm:text-[11px] font-bold bg-success text-success-content shadow-xs active:scale-95 transition-transform cursor-pointer select-none disabled:opacity-60"
-                                            aria-label="額縁付き画像を生成"
+                                            role="tab"
+                                            id={`exif-tab-${tab.id}`}
+                                            aria-controls={`exif-panel-${tab.id}`}
+                                            aria-selected={activeTab() === tab.id ? "true" : "false"}
+                                            onClick={() => selectTab(tab.id)}
+                                            class={`ba-tab ba-flex-1 ba-flex-col ${activeTab() === tab.id ? "is-active" : ""}`}
+                                            style={{
+                                                position: "relative",
+                                                "min-width": "3.2rem",
+                                                "min-height": "3rem",
+                                                padding: "0.35rem 0.25rem",
+                                                gap: "0.15rem",
+                                                "font-size": "0.6875rem",
+                                            }}
                                         >
-                                            <ToolIcon name="download" class="w-4 h-4 shrink-0" />
-                                            <span class="truncate">
-                                                {isProcessing() ? "生成中" : "生成"}
-                                            </span>
+                                            <Show when={tab.isBeta}>
+                                                <span
+                                                    class="ba-badge ba-badge--warning"
+                                                    style={{
+                                                        position: "absolute",
+                                                        top: "2px",
+                                                        right: "2px",
+                                                        padding: "0 0.25rem",
+                                                        "font-size": "0.5rem",
+                                                        "pointer-events": "none",
+                                                    }}
+                                                >
+                                                    BETA
+                                                </span>
+                                            </Show>
+                                            <ToolIcon name={tab.icon} class="ba-icon-sm ba-shrink-0" />
+                                            <span class="ba-truncate">{tab.label}</span>
                                         </button>
-                                    </Show>
-                                </div>
+                                    )}
+                                </For>
+                                <Show when={hasImage()}>
+                                    <button
+                                        type="button"
+                                        disabled={isProcessing()}
+                                        onClick={handleGenerate}
+                                        class="ba-btn ba-btn--success ba-hidden-desktop ba-flex-1 ba-flex-col"
+                                        style={{
+                                            "min-width": "3.2rem",
+                                            "min-height": "3rem",
+                                            padding: "0.35rem 0.25rem",
+                                            gap: "0.15rem",
+                                            "font-size": "0.6875rem",
+                                        }}
+                                        aria-label="額縁付き画像を生成"
+                                    >
+                                        <ToolIcon name="download" class="ba-icon-sm ba-shrink-0" />
+                                        <span class="ba-truncate">
+                                            {isProcessing() ? "生成中" : "生成"}
+                                        </span>
+                                    </button>
+                                </Show>
                             </div>
                             <div
                                 role="tabpanel"
                                 id="exif-panel-photo"
                                 aria-labelledby="exif-tab-photo"
                                 hidden={activeTab() !== "photo"}
-                                class="flex flex-col gap-4"
+                                class="ba-stack-4"
                             >
-                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3">
-                                    <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
+                                <div class="ba-panel ba-stack-3">
+                                    <span
+                                        class="ba-text-xs ba-font-bold"
+                                        style={{
+                                            display: "block",
+                                            "border-bottom": "1px solid var(--ba-border)",
+                                            "padding-bottom": "0.375rem",
+                                        }}
+                                    >
                                         写真の読み込み・回転
                                     </span>
-                                    <label class="btn btn-primary text-white h-12 px-6 text-sm rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 w-full">
+                                    <label class="ba-btn ba-btn--primary ba-btn--lg ba-btn--block">
                                         <span>写真を選択する</span>
                                         <input
                                             type="file"
                                             accept="image/*"
                                             aria-label="写真画像ファイルを選択"
                                             onChange={handleFileChange}
-                                            class="hidden"
+                                            style={{ display: "none" }}
                                         />
                                     </label>
                                     <Show when={fileName()}>
-                                        <div class="text-xs text-base-content/70 bg-base-100 px-3 py-2 rounded-lg border border-base-300 truncate">
-                                            選択中: <span class="font-mono font-semibold text-base-content">{fileName()}</span>
+                                        <div
+                                            class="ba-text-xs ba-text-muted ba-truncate"
+                                            style={{
+                                                background: "var(--ba-surface)",
+                                                padding: "0.5rem 0.75rem",
+                                                "border-radius": "var(--ba-radius-sm)",
+                                                border: "1px solid var(--ba-border)",
+                                            }}
+                                        >
+                                            選択中: <span class="ba-mono ba-font-bold" style={{ color: "var(--ba-text)" }}>{fileName()}</span>
                                         </div>
                                     </Show>
                                     <Show when={hasImage()}>
                                         <button
                                             type="button"
                                             onClick={rotateImage}
-                                            class="btn btn-outline btn-primary h-11 px-4 rounded-xl flex items-center justify-center gap-2 w-full border-base-300 text-xs"
+                                            class="ba-btn ba-btn--outline ba-btn--block ba-text-primary"
                                         >
                                             画像を右に90度回転
                                         </button>
@@ -2690,16 +2723,16 @@ export default function ExifFrame() {
                                 id="exif-panel-text"
                                 aria-labelledby="exif-tab-text"
                                 hidden={activeTab() !== "text"}
-                                class="flex flex-col gap-4"
+                                class="ba-stack-4"
                             >
                                 <Show when={activeTab() === "text" || visitedTabs().has("text")}>
-                                    <div class="form-control border border-base-300 p-3 rounded-xl bg-base-200/50">
-                                    <label class="flex items-center justify-between cursor-pointer text-base-content">
-                                        <div class="flex flex-col">
-                                            <span class="text-xs font-bold text-base-content">
+                                    <div class="ba-panel">
+                                    <label class="ba-flex ba-items-center ba-justify-between ba-gap-2" style={{ cursor: "pointer" }}>
+                                        <div class="ba-flex-col">
+                                            <span class="ba-text-xs ba-font-bold">
                                                 自由なタイトルモードにする
                                             </span>
-                                            <span class="text-[10px] text-base-content/75 font-medium">
+                                            <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                 カメラ情報の代わりに好きな文字を刻印
                                             </span>
                                         </div>
@@ -2713,21 +2746,36 @@ export default function ExifFrame() {
                                                     e.currentTarget.checked,
                                                 )
                                             }
-                                            class="toggle toggle-primary toggle-sm"
+                                            class="ba-toggle ba-toggle--sm"
                                         />
                                     </label>
                                 </div>
-                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3">
-                                    <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
+                                <div class="ba-panel ba-stack-3">
+                                    <span
+                                        class="ba-text-xs ba-font-bold"
+                                        style={{
+                                            display: "block",
+                                            "border-bottom": "1px solid var(--ba-border)",
+                                            "padding-bottom": "0.375rem",
+                                        }}
+                                    >
                                         文字編集
                                     </span>
-                                    <div class="flex flex-col gap-2 bg-base-100 p-3 rounded-lg border border-base-300 text-xs mb-1">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex flex-col">
-                                                <span class="font-bold text-base-content text-[11px]">
+                                    <div
+                                        class="ba-stack-2 ba-text-xs"
+                                        style={{
+                                            background: "var(--ba-surface)",
+                                            padding: "0.75rem",
+                                            "border-radius": "var(--ba-radius-sm)",
+                                            border: "1px solid var(--ba-border)",
+                                        }}
+                                    >
+                                        <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                            <div class="ba-flex-col">
+                                                <span class="ba-font-bold" style={{ "font-size": "0.75rem" }}>
                                                     接頭辞の設定
                                                 </span>
-                                                <span class="text-[10px] text-base-content/75 font-medium">
+                                                <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     テキストの先頭に文字を添えます
                                                 </span>
                                             </div>
@@ -2741,7 +2789,7 @@ export default function ExifFrame() {
                                                         e.currentTarget.checked,
                                                     )
                                                 }
-                                                class="toggle toggle-primary toggle-sm"
+                                                class="ba-toggle ba-toggle--sm"
                                             />
                                         </div>
                                         <Show when={showPrefix()}>
@@ -2755,15 +2803,15 @@ export default function ExifFrame() {
                                                         e.currentTarget.value,
                                                     )
                                                 }
-                                                class="input input-bordered input-sm w-full mt-1.5 bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                                class="ba-input ba-input--sm"
                                                 placeholder="例: Shot on "
                                             />
                                         </Show>
                                     </div>
                                     <Show when={useCustomTitle()}>
-                                        <div class="flex flex-col gap-2 text-xs animate-fade-in">
-                                            <div class="flex flex-col gap-1">
-                                                <span class="text-[10px] font-bold text-base-content/60">
+                                        <div class="ba-stack-2 ba-text-xs">
+                                            <div class="ba-field">
+                                                <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     自由タイトル 1行目（メイン題名）
                                                 </span>
                                                 <input
@@ -2777,11 +2825,11 @@ export default function ExifFrame() {
                                                             e.currentTarget.value,
                                                         )
                                                     }
-                                                    class="input input-bordered input-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                                    class="ba-input ba-input--sm"
                                                 />
                                             </div>
-                                            <div class="flex flex-col gap-1">
-                                                <span class="text-[10px] font-bold text-base-content/60">
+                                            <div class="ba-field">
+                                                <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     自由タイトル 2行目（サブ情報）
                                                 </span>
                                                 <input
@@ -2795,22 +2843,36 @@ export default function ExifFrame() {
                                                             e.currentTarget.value,
                                                         )
                                                     }
-                                                    class="input input-bordered input-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                                    class="ba-input ba-input--sm"
                                                 />
                                             </div>
                                         </div>
                                     </Show>
                                     <Show when={!useCustomTitle()}>
-                                        <div class="flex flex-col gap-1.5 bg-base-100 p-3 rounded-lg border border-base-300 text-xs">
-                                            <div class="flex items-center justify-between">
-                                                <span class="font-bold text-base-content text-[11px] flex items-center gap-1">
+                                        <div
+                                            class="ba-stack-2 ba-text-xs"
+                                            style={{
+                                                background: "var(--ba-surface)",
+                                                padding: "0.75rem",
+                                                "border-radius": "var(--ba-radius-sm)",
+                                                border: "1px solid var(--ba-border)",
+                                            }}
+                                        >
+                                            <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                                <span class="ba-font-bold" style={{ "font-size": "0.75rem" }}>
                                                     区切り文字
                                                 </span>
-                                                <span class="text-[10px] text-base-content/75 font-medium">
+                                                <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     Exifパラメータ間の区切り記号
                                                 </span>
                                             </div>
-                                            <div class="grid grid-cols-4 sm:grid-cols-7 gap-1 mt-1">
+                                            <div
+                                                class="ba-grid"
+                                                style={{
+                                                    "grid-template-columns": "repeat(auto-fill, minmax(40px, 1fr))",
+                                                    gap: "0.25rem",
+                                                }}
+                                            >
                                                 <For each={separatorPresets}>
                                                     {(item) => {
                                                         const isSelected = () =>
@@ -2824,11 +2886,8 @@ export default function ExifFrame() {
                                                                         item.value,
                                                                     )
                                                                 }
-                                                                class={`h-10 lg:h-8 px-1 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
-                                                                    isSelected()
-                                                                        ? "border-primary bg-primary text-white shadow-xs scale-[0.98]"
-                                                                        : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content/80"
-                                                                }`}
+                                                                class={`ba-btn ba-btn--xs ${isSelected() ? "ba-btn--primary" : "ba-btn--outline"}`}
+                                                                style={{ "min-height": "2rem", padding: "0.2rem" }}
                                                                 title={item.label}
                                                             >
                                                                 {item.display}
@@ -2838,8 +2897,8 @@ export default function ExifFrame() {
                                                 </For>
                                             </div>
                                             <Show when={separatorType() === "custom"}>
-                                                <div class="flex items-center gap-2 mt-1.5 animate-fade-in">
-                                                    <span class="text-[10px] text-base-content/60 font-bold whitespace-nowrap">
+                                                <div class="ba-flex ba-items-center ba-gap-2">
+                                                    <span class="ba-text-muted ba-font-bold ba-shrink-0" style={{ "font-size": "0.6875rem" }}>
                                                         任意の区切り文字:
                                                     </span>
                                                     <input
@@ -2852,7 +2911,7 @@ export default function ExifFrame() {
                                                                 e.currentTarget.value,
                                                             )
                                                         }
-                                                        class="input input-bordered input-sm flex-1 bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                                        class="ba-input ba-input--sm ba-flex-1"
                                                         placeholder="例:  //  や  ,  など"
                                                     />
                                                 </div>
@@ -2861,17 +2920,20 @@ export default function ExifFrame() {
                                     </Show>
                                 </div>
                                 <Show when={!useCustomTitle()}>
-                                    <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
-                                        <div class="flex items-center justify-between border-b border-base-300 pb-1.5">
-                                            <span class="text-xs font-bold text-base-content uppercase tracking-wider">
+                                    <div class="ba-panel ba-stack-3 ba-text-xs">
+                                        <div
+                                            class="ba-flex ba-items-center ba-justify-between ba-gap-2"
+                                            style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "0.375rem" }}
+                                        >
+                                            <span class="ba-text-xs ba-font-bold">
                                                 表示するExif情報
                                             </span>
-                                            <span class="text-[10px] text-base-content/75 font-medium">
+                                            <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                 チェックで表示 / 値は直接修正可
                                             </span>
                                         </div>
-                                        <div class="flex flex-col gap-1.5 text-[11px] text-base-content">
-                                            <div class="flex items-center gap-2">
+                                        <div class="ba-stack-2">
+                                            <div class="ba-flex ba-items-center ba-gap-2">
                                                 <input
                                                     type="checkbox"
                                                     aria-label="カメラ機種名の表示切り替え"
@@ -2883,9 +2945,9 @@ export default function ExifFrame() {
                                                                 .checked,
                                                         )
                                                     }
-                                                    class="checkbox checkbox-sm"
+                                                    class="ba-checkbox"
                                                 />
-                                                <span class="w-12 text-base-content/60 font-bold text-[10px]">
+                                                <span class="ba-text-muted ba-font-bold ba-shrink-0" style={{ width: "3.2rem", "font-size": "0.6875rem" }}>
                                                     カメラ:
                                                 </span>
                                                 <input
@@ -2899,10 +2961,10 @@ export default function ExifFrame() {
                                                                 .value,
                                                         )
                                                     }
-                                                    class="input input-bordered input-sm flex-1 bg-base-100 font-medium border-base-300"
+                                                    class="ba-input ba-input--sm ba-flex-1"
                                                 />
                                             </div>
-                                            <div class="flex items-center gap-2">
+                                            <div class="ba-flex ba-items-center ba-gap-2">
                                                 <input
                                                     type="checkbox"
                                                     aria-label="レンズ名の表示切り替え"
@@ -2914,9 +2976,9 @@ export default function ExifFrame() {
                                                                 .checked,
                                                         )
                                                     }
-                                                    class="checkbox checkbox-sm"
+                                                    class="ba-checkbox"
                                                 />
-                                                <span class="w-12 text-base-content/60 font-bold text-[10px]">
+                                                <span class="ba-text-muted ba-font-bold ba-shrink-0" style={{ width: "3.2rem", "font-size": "0.6875rem" }}>
                                                     レンズ:
                                                 </span>
                                                 <input
@@ -2930,10 +2992,10 @@ export default function ExifFrame() {
                                                                 .value,
                                                         )
                                                     }
-                                                    class="input input-bordered input-sm flex-1 bg-base-100 font-medium border-base-300"
+                                                    class="ba-input ba-input--sm ba-flex-1"
                                                 />
                                             </div>
-                                            <div class="flex items-center gap-2">
+                                            <div class="ba-flex ba-items-center ba-gap-2">
                                                 <input
                                                     type="checkbox"
                                                     aria-label="焦点距離の表示切り替え"
@@ -2945,9 +3007,9 @@ export default function ExifFrame() {
                                                                 .checked,
                                                         )
                                                     }
-                                                    class="checkbox checkbox-sm"
+                                                    class="ba-checkbox"
                                                 />
-                                                <span class="w-12 text-base-content/60 font-bold text-[10px]">
+                                                <span class="ba-text-muted ba-font-bold ba-shrink-0" style={{ width: "3.2rem", "font-size": "0.6875rem" }}>
                                                     焦点距離:
                                                 </span>
                                                 <input
@@ -2961,14 +3023,14 @@ export default function ExifFrame() {
                                                                 .value,
                                                         )
                                                     }
-                                                    class="input input-bordered input-sm flex-1 bg-base-100 font-medium border-base-300"
+                                                    class="ba-input ba-input--sm ba-flex-1"
                                                     placeholder="例: 50"
                                                 />
-                                                <span class="text-[10px] text-base-content/60">
+                                                <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     mm
                                                 </span>
                                             </div>
-                                            <div class="flex items-center gap-2">
+                                            <div class="ba-flex ba-items-center ba-gap-2">
                                                 <input
                                                     type="checkbox"
                                                     aria-label="F値の表示切り替え"
@@ -2980,12 +3042,12 @@ export default function ExifFrame() {
                                                                 .checked,
                                                         )
                                                     }
-                                                    class="checkbox checkbox-sm"
+                                                    class="ba-checkbox"
                                                 />
-                                                <span class="w-12 text-base-content/60 font-bold text-[10px]">
+                                                <span class="ba-text-muted ba-font-bold ba-shrink-0" style={{ width: "3.2rem", "font-size": "0.6875rem" }}>
                                                     絞り値:
                                                 </span>
-                                                <span class="text-[10px] text-base-content/60">
+                                                <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     f/
                                                 </span>
                                                 <input
@@ -2999,11 +3061,11 @@ export default function ExifFrame() {
                                                                 .value,
                                                         )
                                                     }
-                                                    class="input input-bordered input-sm flex-1 bg-base-100 font-medium border-base-300"
+                                                    class="ba-input ba-input--sm ba-flex-1"
                                                     placeholder="例: 2.8"
                                                 />
                                             </div>
-                                            <div class="flex items-center gap-2">
+                                            <div class="ba-flex ba-items-center ba-gap-2">
                                                 <input
                                                     type="checkbox"
                                                     aria-label="シャッター速度の表示切り替え"
@@ -3015,9 +3077,9 @@ export default function ExifFrame() {
                                                                 .checked,
                                                         )
                                                     }
-                                                    class="checkbox checkbox-sm"
+                                                    class="ba-checkbox"
                                                 />
-                                                <span class="w-12 text-base-content/60 font-bold text-[10px]">
+                                                <span class="ba-text-muted ba-font-bold ba-shrink-0" style={{ width: "3.2rem", "font-size": "0.6875rem" }}>
                                                     SS速度:
                                                 </span>
                                                 <input
@@ -3031,11 +3093,11 @@ export default function ExifFrame() {
                                                                 .value,
                                                         )
                                                     }
-                                                    class="input input-bordered input-sm flex-1 bg-base-100 font-medium border-base-300"
+                                                    class="ba-input ba-input--sm ba-flex-1"
                                                     placeholder="例: 1/250s"
                                                 />
                                             </div>
-                                            <div class="flex items-center gap-2">
+                                            <div class="ba-flex ba-items-center ba-gap-2">
                                                 <input
                                                     type="checkbox"
                                                     aria-label="ISO感度の表示切り替え"
@@ -3047,12 +3109,12 @@ export default function ExifFrame() {
                                                                 .checked,
                                                         )
                                                     }
-                                                    class="checkbox checkbox-sm"
+                                                    class="ba-checkbox"
                                                 />
-                                                <span class="w-12 text-base-content/60 font-bold text-[10px]">
+                                                <span class="ba-text-muted ba-font-bold ba-shrink-0" style={{ width: "3.2rem", "font-size": "0.6875rem" }}>
                                                     ISO感度:
                                                 </span>
-                                                <span class="text-[10px] text-base-content/60">
+                                                <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     ISO
                                                 </span>
                                                 <input
@@ -3066,7 +3128,7 @@ export default function ExifFrame() {
                                                                 .value,
                                                         )
                                                     }
-                                                    class="input input-bordered input-sm flex-1 bg-base-100 font-medium border-base-300"
+                                                    class="ba-input ba-input--sm ba-flex-1"
                                                     placeholder="例: 100"
                                                 />
                                             </div>
@@ -3080,25 +3142,34 @@ export default function ExifFrame() {
                                 id="exif-panel-layout"
                                 aria-labelledby="exif-tab-layout"
                                 hidden={activeTab() !== "layout"}
-                                class="flex flex-col gap-4"
+                                class="ba-stack-4"
                             >
                                 <Show when={activeTab() === "layout" || visitedTabs().has("layout")}>
-                                    <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
-                                    <div class="flex items-center justify-between border-b border-base-300 pb-2">
-                                        <span class="font-bold text-base-content/80 text-[11px] flex items-center gap-1">
+                                    <div class="ba-panel ba-stack-3 ba-text-xs">
+                                    <div
+                                        class="ba-flex ba-items-center ba-justify-between"
+                                        style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "0.5rem" }}
+                                    >
+                                        <span class="ba-font-bold">
                                             文字の配置設定
                                         </span>
-                                        <span class="text-[10px] text-base-content/75 font-medium">
+                                        <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             選択して変更
                                         </span>
                                     </div>
                                     <For each={positionGroups}>
                                         {(group) => (
-                                            <div class="flex flex-col gap-1.5">
-                                                <span class="text-[10px] font-bold text-base-content/60">
+                                            <div class="ba-stack-1">
+                                                <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     {group.title}
                                                 </span>
-                                                <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-2">
+                                                <div
+                                                    class="ba-grid"
+                                                    style={{
+                                                        "grid-template-columns": "repeat(3, minmax(0, 1fr))",
+                                                        gap: "0.5rem",
+                                                    }}
+                                                >
                                                     <For each={group.items}>
                                                         {(item) => {
                                                             const isSelected = () => {
@@ -3127,6 +3198,13 @@ export default function ExifFrame() {
                                                                 );
                                                             };
 
+                                                            const justifyStyle =
+                                                                item.align === "center"
+                                                                    ? "center"
+                                                                    : item.align === "right"
+                                                                      ? "flex-end"
+                                                                      : "flex-start";
+
                                                             return (
                                                                 <button
                                                                     type="button"
@@ -3147,47 +3225,84 @@ export default function ExifFrame() {
                                                                             }
                                                                         }
                                                                     }}
-                                                                    class={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all cursor-pointer ${
-                                                                        isSelected()
-                                                                            ? "border-primary bg-primary/10 text-primary font-bold ring-2 ring-primary/30 shadow-xs"
-                                                                            : "border-base-300 bg-base-100 hover:bg-base-200/80 text-base-content/70"
-                                                                    }`}
+                                                                    class="ba-flex-col ba-items-center ba-justify-center"
+                                                                    style={{
+                                                                        padding: "0.5rem",
+                                                                        "border-radius": "var(--ba-radius)",
+                                                                        border: isSelected()
+                                                                            ? "1.5px solid var(--ba-primary)"
+                                                                            : "1px solid var(--ba-border)",
+                                                                        background: isSelected()
+                                                                            ? "var(--ba-primary-soft)"
+                                                                            : "var(--ba-surface)",
+                                                                        color: isSelected()
+                                                                            ? "var(--ba-primary)"
+                                                                            : "var(--ba-text-muted)",
+                                                                        "font-weight": isSelected() ? 700 : 600,
+                                                                        cursor: "pointer",
+                                                                        transition: "all 0.15s ease",
+                                                                    }}
                                                                     title={`${item.label}に配置`}
                                                                 >
                                                                     {/* Mini Preview Box */}
-                                                                    <div class="w-full aspect-[4/3] rounded-md border border-base-300 bg-slate-950 relative overflow-hidden flex flex-col mb-1.5 shadow-2xs select-none">
+                                                                    <div
+                                                                        class="ba-w-full ba-flex-col"
+                                                                        style={{
+                                                                            "aspect-ratio": "4 / 3",
+                                                                            "border-radius": "0.375rem",
+                                                                            border: "1px solid var(--ba-border)",
+                                                                            background: "#020617",
+                                                                            position: "relative",
+                                                                            overflow: "hidden",
+                                                                            "margin-bottom": "0.375rem",
+                                                                            "user-select": "none",
+                                                                        }}
+                                                                    >
                                                                         <Show when={item.isCheki}>
                                                                             {/* Cheki style mini preview */}
                                                                             <div
-                                                                                class="w-full h-full flex flex-col p-1 transition-colors"
+                                                                                class="ba-w-full ba-flex-col"
                                                                                 style={{
-                                                                                    "background-color":
-                                                                                        getMiniBgColor(),
+                                                                                    height: "100%",
+                                                                                    padding: "0.25rem",
+                                                                                    "background-color": getMiniBgColor(),
                                                                                 }}
                                                                             >
-                                                                                <div class="flex-1 bg-slate-900 rounded-xs overflow-hidden relative flex items-center justify-center">
+                                                                                <div
+                                                                                    class="ba-flex-1 ba-flex ba-items-center ba-justify-center"
+                                                                                    style={{
+                                                                                        background: "#0f172a",
+                                                                                        "border-radius": "0.15rem",
+                                                                                        overflow: "hidden",
+                                                                                        position: "relative",
+                                                                                    }}
+                                                                                >
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <ToolIcon name="image" class="w-3 h-3 text-white/40" />
+                                                                                            <span style={{ color: "rgba(255,255,255,0.4)" }}><ToolIcon name="image" class="ba-icon-xs" /></span>
                                                                                         }
                                                                                     >
                                                                                         <img
                                                                                             src={uploadedImageSrc()}
-                                                                                            class="w-full h-full object-cover transition-transform"
                                                                                             style={{
+                                                                                                width: "100%",
+                                                                                                height: "100%",
+                                                                                                "object-fit": "cover",
                                                                                                 transform: `rotate(${imageRotation()}deg)`,
                                                                                             }}
                                                                                         />
                                                                                     </Show>
                                                                                 </div>
                                                                                 <div
-                                                                                    class="h-3 flex flex-col items-center justify-center pt-0.5 leading-none"
+                                                                                    class="ba-flex-col ba-items-center ba-justify-center"
                                                                                     style={{
+                                                                                        height: "0.75rem",
+                                                                                        "padding-top": "0.125rem",
                                                                                         color: getMiniTextColor(),
                                                                                     }}
                                                                                 >
-                                                                                    <div class="w-2/3 h-0.5 rounded-full bg-current opacity-80"></div>
+                                                                                    <div style={{ width: "66%", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.8 }}></div>
                                                                                 </div>
                                                                             </div>
                                                                         </Show>
@@ -3198,92 +3313,55 @@ export default function ExifFrame() {
                                                                                 item.isOverlay
                                                                             }
                                                                         >
-                                                                            <div class="flex-1 bg-slate-900 overflow-hidden relative flex items-center justify-center">
+                                                                            <div
+                                                                                class="ba-flex-1 ba-flex ba-items-center ba-justify-center"
+                                                                                style={{ background: "#0f172a", overflow: "hidden", position: "relative" }}
+                                                                            >
                                                                                 <Show
                                                                                     when={uploadedImageSrc()}
                                                                                     fallback={
-                                                                                        <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
+                                                                                        <span style={{ color: "rgba(255,255,255,0.35)" }}><ToolIcon name="image" class="ba-icon-xs" /></span>
                                                                                     }
                                                                                 >
                                                                                     <img
                                                                                         src={uploadedImageSrc()}
-                                                                                        class="w-full h-full object-cover transition-transform"
                                                                                         style={{
+                                                                                            width: "100%",
+                                                                                            height: "100%",
+                                                                                            "object-fit": "cover",
                                                                                             transform: `rotate(${imageRotation()}deg)`,
                                                                                         }}
                                                                                     />
                                                                                 </Show>
 
                                                                                 <div
-                                                                                    class="absolute pointer-events-none"
-                                                                                    style={
-                                                                                        item.pos ===
-                                                                                        "overlay-top-left"
-                                                                                            ? {
-                                                                                                  top: "6px",
-                                                                                                  left: "6px",
-                                                                                              }
-                                                                                            : item.pos ===
-                                                                                                "overlay-top-center"
-                                                                                              ? {
-                                                                                                    top: "6px",
-                                                                                                    left: "50%",
-                                                                                                    transform:
-                                                                                                        "translateX(-50%)",
-                                                                                                }
-                                                                                              : item.pos ===
-                                                                                                  "overlay-top-right"
-                                                                                                ? {
-                                                                                                      top: "6px",
-                                                                                                      right: "6px",
-                                                                                                  }
-                                                                                                : item.pos ===
-                                                                                                    "overlay-bottom-left"
-                                                                                                  ? {
-                                                                                                        bottom: "6px",
-                                                                                                        left: "6px",
-                                                                                                    }
-                                                                                                  : item.pos ===
-                                                                                                      "overlay-bottom-center"
-                                                                                                    ? {
-                                                                                                          bottom: "6px",
-                                                                                                          left: "50%",
-                                                                                                          transform:
-                                                                                                              "translateX(-50%)",
-                                                                                                      }
-                                                                                                    : item.pos ===
-                                                                                                        "overlay-bottom-right"
-                                                                                                      ? {
-                                                                                                            bottom: "6px",
-                                                                                                            right: "6px",
-                                                                                                        }
-                                                                                                      : item.pos ===
-                                                                                                          "overlay-right-vertical"
-                                                                                                        ? {
-                                                                                                              left: "calc(100% - 6px)",
-                                                                                                              top: "50%",
-                                                                                                              transform:
-                                                                                                                  "translate(-100%, -50%)",
-                                                                                                          }
-                                                                                                        : item.pos ===
-                                                                                                            "overlay-left-vertical"
-                                                                                                          ? {
-                                                                                                                left: "6px",
-                                                                                                                top: "50%",
-                                                                                                                transform:
-                                                                                                                    "translateY(-50%)",
-                                                                                                            }
-                                                                                                          : {}
-                                                                                    }
+                                                                                    style={{
+                                                                                        position: "absolute",
+                                                                                        "pointer-events": "none",
+                                                                                        ...(item.pos === "overlay-top-left"
+                                                                                            ? { top: "6px", left: "6px" }
+                                                                                            : item.pos === "overlay-top-center"
+                                                                                              ? { top: "6px", left: "50%", transform: "translateX(-50%)" }
+                                                                                              : item.pos === "overlay-top-right"
+                                                                                                ? { top: "6px", right: "6px" }
+                                                                                                : item.pos === "overlay-bottom-left"
+                                                                                                  ? { bottom: "6px", left: "6px" }
+                                                                                                  : item.pos === "overlay-bottom-center"
+                                                                                                    ? { bottom: "6px", left: "50%", transform: "translateX(-50%)" }
+                                                                                                    : item.pos === "overlay-bottom-right"
+                                                                                                      ? { bottom: "6px", right: "6px" }
+                                                                                                      : item.pos === "overlay-right-vertical"
+                                                                                                        ? { left: "calc(100% - 6px)", top: "50%", transform: "translate(-100%, -50%)" }
+                                                                                                        : item.pos === "overlay-left-vertical"
+                                                                                                          ? { left: "6px", top: "50%", transform: "translateY(-50%)" }
+                                                                                                          : {}),
+                                                                                    }}
                                                                                 >
                                                                                     <div
-                                                                                        class={
-                                                                                            item.pos ===
-                                                                                                "overlay-left-vertical" ||
-                                                                                            item.pos ===
-                                                                                                "overlay-right-vertical"
-                                                                                                ? "w-1 h-6 rounded-md bg-white/90 border border-black/20"
-                                                                                                : "w-6 h-1 rounded-md bg-white/90 border border-black/20"
+                                                                                        style={
+                                                                                            item.pos === "overlay-left-vertical" || item.pos === "overlay-right-vertical"
+                                                                                                ? { width: "4px", height: "24px", "border-radius": "4px", background: "rgba(255,255,255,0.9)", border: "1px solid rgba(0,0,0,0.2)" }
+                                                                                                : { width: "24px", height: "4px", "border-radius": "4px", background: "rgba(255,255,255,0.9)", border: "1px solid rgba(0,0,0,0.2)" }
                                                                                         }
                                                                                     ></div>
                                                                                 </div>
@@ -3293,46 +3371,46 @@ export default function ExifFrame() {
                                                                         <Show
                                                                             when={
                                                                                 !item.isCheki &&
-                                                                                item.pos ===
-                                                                                    "bottom"
+                                                                                item.pos === "bottom"
                                                                             }
                                                                         >
-                                                                            <div class="flex-1 bg-slate-900 overflow-hidden relative flex items-center justify-center">
+                                                                            <div
+                                                                                class="ba-flex-1 ba-flex ba-items-center ba-justify-center"
+                                                                                style={{ background: "#0f172a", overflow: "hidden", position: "relative" }}
+                                                                            >
                                                                                 <Show
                                                                                     when={uploadedImageSrc()}
                                                                                     fallback={
-                                                                                        <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
+                                                                                        <span style={{ color: "rgba(255,255,255,0.35)" }}><ToolIcon name="image" class="ba-icon-xs" /></span>
                                                                                     }
                                                                                 >
                                                                                     <img
                                                                                         src={uploadedImageSrc()}
-                                                                                        class="w-full h-full object-cover transition-transform"
                                                                                         style={{
+                                                                                            width: "100%",
+                                                                                            height: "100%",
+                                                                                            "object-fit": "cover",
                                                                                             transform: `rotate(${imageRotation()}deg)`,
                                                                                         }}
                                                                                     />
                                                                                 </Show>
                                                                             </div>
                                                                             <div
-                                                                                class="h-3.5 border-t flex flex-col justify-center px-1.5 py-0.5 leading-none transition-colors"
+                                                                                class="ba-flex-col ba-justify-center"
                                                                                 style={{
-                                                                                    "background-color":
-                                                                                        getMiniBgColor(),
-                                                                                    "border-color":
-                                                                                        "rgba(0,0,0,0.1)",
+                                                                                    height: "0.875rem",
+                                                                                    "border-top": "1px solid rgba(0,0,0,0.1)",
+                                                                                    padding: "0.125rem 0.375rem",
+                                                                                    "background-color": getMiniBgColor(),
                                                                                     color: getMiniTextColor(),
                                                                                 }}
                                                                             >
-                                                                                <div class="w-full flex flex-col gap-0.5">
-                                                                                    <div
-                                                                                        class={`w-full flex ${item.alignClass}`}
-                                                                                    >
-                                                                                        <div class="w-2/3 h-0.5 rounded-full bg-current opacity-85"></div>
+                                                                                <div class="ba-w-full ba-flex-col" style={{ gap: "2px" }}>
+                                                                                    <div class="ba-w-full ba-flex" style={{ "justify-content": justifyStyle }}>
+                                                                                        <div style={{ width: "66%", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.85 }}></div>
                                                                                     </div>
-                                                                                    <div
-                                                                                        class={`w-full flex ${item.alignClass}`}
-                                                                                    >
-                                                                                        <div class="w-1/3 h-0.5 rounded-full bg-current opacity-55"></div>
+                                                                                    <div class="ba-w-full ba-flex" style={{ "justify-content": justifyStyle }}>
+                                                                                        <div style={{ width: "33%", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.55 }}></div>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -3345,39 +3423,40 @@ export default function ExifFrame() {
                                                                             }
                                                                         >
                                                                             <div
-                                                                                class="h-3.5 border-b flex flex-col justify-center px-1.5 py-0.5 leading-none transition-colors"
+                                                                                class="ba-flex-col ba-justify-center"
                                                                                 style={{
-                                                                                    "background-color":
-                                                                                        getMiniBgColor(),
-                                                                                    "border-color":
-                                                                                        "rgba(0,0,0,0.1)",
+                                                                                    height: "0.875rem",
+                                                                                    "border-bottom": "1px solid rgba(0,0,0,0.1)",
+                                                                                    padding: "0.125rem 0.375rem",
+                                                                                    "background-color": getMiniBgColor(),
                                                                                     color: getMiniTextColor(),
                                                                                 }}
                                                                             >
-                                                                                <div class="w-full flex flex-col gap-0.5">
-                                                                                    <div
-                                                                                        class={`w-full flex ${item.alignClass}`}
-                                                                                    >
-                                                                                        <div class="w-2/3 h-0.5 rounded-full bg-current opacity-85"></div>
+                                                                                <div class="ba-w-full ba-flex-col" style={{ gap: "2px" }}>
+                                                                                    <div class="ba-w-full ba-flex" style={{ "justify-content": justifyStyle }}>
+                                                                                        <div style={{ width: "66%", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.85 }}></div>
                                                                                     </div>
-                                                                                    <div
-                                                                                        class={`w-full flex ${item.alignClass}`}
-                                                                                    >
-                                                                                        <div class="w-1/3 h-0.5 rounded-full bg-current opacity-55"></div>
+                                                                                    <div class="ba-w-full ba-flex" style={{ "justify-content": justifyStyle }}>
+                                                                                        <div style={{ width: "33%", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.55 }}></div>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
-                                                                            <div class="flex-1 bg-slate-900 overflow-hidden relative flex items-center justify-center">
+                                                                            <div
+                                                                                class="ba-flex-1 ba-flex ba-items-center ba-justify-center"
+                                                                                style={{ background: "#0f172a", overflow: "hidden", position: "relative" }}
+                                                                            >
                                                                                 <Show
                                                                                     when={uploadedImageSrc()}
                                                                                     fallback={
-                                                                                        <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
+                                                                                        <span style={{ color: "rgba(255,255,255,0.35)" }}><ToolIcon name="image" class="ba-icon-xs" /></span>
                                                                                     }
                                                                                 >
                                                                                     <img
                                                                                         src={uploadedImageSrc()}
-                                                                                        class="w-full h-full object-cover transition-transform"
                                                                                         style={{
+                                                                                            width: "100%",
+                                                                                            height: "100%",
+                                                                                            "object-fit": "cover",
                                                                                             transform: `rotate(${imageRotation()}deg)`,
                                                                                         }}
                                                                                     />
@@ -3391,31 +3470,38 @@ export default function ExifFrame() {
                                                                                 item.pos === "left"
                                                                             }
                                                                         >
-                                                                            <div class="w-full h-full flex flex-row">
+                                                                            <div class="ba-w-full ba-flex" style={{ height: "100%" }}>
                                                                                 <div
-                                                                                    class="w-4 h-full border-r flex flex-row items-center justify-center py-1 gap-[2px] transition-colors"
+                                                                                    class="ba-flex ba-items-center ba-justify-center"
                                                                                     style={{
-                                                                                        "background-color":
-                                                                                            getMiniBgColor(),
-                                                                                        "border-color":
-                                                                                            "rgba(0,0,0,0.1)",
+                                                                                        width: "1rem",
+                                                                                        height: "100%",
+                                                                                        "border-right": "1px solid rgba(0,0,0,0.1)",
+                                                                                        "padding-block": "0.25rem",
+                                                                                        gap: "2px",
+                                                                                        "background-color": getMiniBgColor(),
                                                                                         color: getMiniTextColor(),
                                                                                     }}
                                                                                 >
-                                                                                    <div class="w-0.5 h-3/5 rounded-full bg-current opacity-60"></div>
-                                                                                    <div class="w-0.5 h-4/5 rounded-full bg-current opacity-90"></div>
+                                                                                    <div style={{ width: "2px", height: "60%", "border-radius": "9999px", background: "currentColor", opacity: 0.6 }}></div>
+                                                                                    <div style={{ width: "2px", height: "80%", "border-radius": "9999px", background: "currentColor", opacity: 0.9 }}></div>
                                                                                 </div>
-                                                                                <div class="flex-1 bg-slate-900 overflow-hidden relative flex items-center justify-center">
+                                                                                <div
+                                                                                    class="ba-flex-1 ba-flex ba-items-center ba-justify-center"
+                                                                                    style={{ background: "#0f172a", overflow: "hidden", position: "relative" }}
+                                                                                >
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
+                                                                                            <span style={{ color: "rgba(255,255,255,0.35)" }}><ToolIcon name="image" class="ba-icon-xs" /></span>
                                                                                         }
                                                                                     >
                                                                                         <img
                                                                                             src={uploadedImageSrc()}
-                                                                                            class="w-full h-full object-cover transition-transform"
                                                                                             style={{
+                                                                                                width: "100%",
+                                                                                                height: "100%",
+                                                                                                "object-fit": "cover",
                                                                                                 transform: `rotate(${imageRotation()}deg)`,
                                                                                             }}
                                                                                         />
@@ -3427,33 +3513,39 @@ export default function ExifFrame() {
                                                                         <Show
                                                                             when={
                                                                                 !item.isCheki &&
-                                                                                item.pos ===
-                                                                                    "left-horizontal"
+                                                                                item.pos === "left-horizontal"
                                                                             }
                                                                         >
-                                                                            <div class="w-full h-full flex flex-row">
+                                                                            <div class="ba-w-full ba-flex" style={{ height: "100%" }}>
                                                                                 <div
-                                                                                    class="w-8 h-full flex flex-col items-center justify-center gap-1 transition-colors"
+                                                                                    class="ba-flex-col ba-items-center ba-justify-center"
                                                                                     style={{
-                                                                                        "background-color":
-                                                                                            getMiniBgColor(),
+                                                                                        width: "2rem",
+                                                                                        height: "100%",
+                                                                                        gap: "3px",
+                                                                                        "background-color": getMiniBgColor(),
                                                                                         color: getMiniTextColor(),
                                                                                     }}
                                                                                 >
-                                                                                    <div class="w-5 h-0.5 rounded-full bg-current opacity-90"></div>
-                                                                                    <div class="w-5 h-0.5 rounded-full bg-current opacity-70"></div>
+                                                                                    <div style={{ width: "1.25rem", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.9 }}></div>
+                                                                                    <div style={{ width: "1.25rem", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.7 }}></div>
                                                                                 </div>
-                                                                                <div class="flex-1 bg-slate-900 overflow-hidden relative flex items-center justify-center">
+                                                                                <div
+                                                                                    class="ba-flex-1 ba-flex ba-items-center ba-justify-center"
+                                                                                    style={{ background: "#0f172a", overflow: "hidden", position: "relative" }}
+                                                                                >
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
+                                                                                            <span style={{ color: "rgba(255,255,255,0.35)" }}><ToolIcon name="image" class="ba-icon-xs" /></span>
                                                                                         }
                                                                                     >
                                                                                         <img
                                                                                             src={uploadedImageSrc()}
-                                                                                            class="w-full h-full object-cover transition-transform"
                                                                                             style={{
+                                                                                                width: "100%",
+                                                                                                height: "100%",
+                                                                                                "object-fit": "cover",
                                                                                                 transform: `rotate(${imageRotation()}deg)`,
                                                                                             }}
                                                                                         />
@@ -3468,35 +3560,42 @@ export default function ExifFrame() {
                                                                                 item.pos === "right"
                                                                             }
                                                                         >
-                                                                            <div class="w-full h-full flex flex-row">
-                                                                                <div class="flex-1 bg-slate-900 overflow-hidden relative flex items-center justify-center">
+                                                                            <div class="ba-w-full ba-flex" style={{ height: "100%" }}>
+                                                                                <div
+                                                                                    class="ba-flex-1 ba-flex ba-items-center ba-justify-center"
+                                                                                    style={{ background: "#0f172a", overflow: "hidden", position: "relative" }}
+                                                                                >
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
+                                                                                            <span style={{ color: "rgba(255,255,255,0.35)" }}><ToolIcon name="image" class="ba-icon-xs" /></span>
                                                                                         }
                                                                                     >
                                                                                         <img
                                                                                             src={uploadedImageSrc()}
-                                                                                            class="w-full h-full object-cover transition-transform"
                                                                                             style={{
+                                                                                                width: "100%",
+                                                                                                height: "100%",
+                                                                                                "object-fit": "cover",
                                                                                                 transform: `rotate(${imageRotation()}deg)`,
                                                                                             }}
                                                                                         />
                                                                                     </Show>
                                                                                 </div>
                                                                                 <div
-                                                                                    class="w-4 h-full border-l flex flex-row items-center justify-center py-1 gap-[2px] transition-colors"
+                                                                                    class="ba-flex ba-items-center ba-justify-center"
                                                                                     style={{
-                                                                                        "background-color":
-                                                                                            getMiniBgColor(),
-                                                                                        "border-color":
-                                                                                            "rgba(0,0,0,0.1)",
+                                                                                        width: "1rem",
+                                                                                        height: "100%",
+                                                                                        "border-left": "1px solid rgba(0,0,0,0.1)",
+                                                                                        "padding-block": "0.25rem",
+                                                                                        gap: "2px",
+                                                                                        "background-color": getMiniBgColor(),
                                                                                         color: getMiniTextColor(),
                                                                                     }}
                                                                                 >
-                                                                                    <div class="w-0.5 h-3/5 rounded-full bg-current opacity-60"></div>
-                                                                                    <div class="w-0.5 h-4/5 rounded-full bg-current opacity-90"></div>
+                                                                                    <div style={{ width: "2px", height: "60%", "border-radius": "9999px", background: "currentColor", opacity: 0.6 }}></div>
+                                                                                    <div style={{ width: "2px", height: "80%", "border-radius": "9999px", background: "currentColor", opacity: 0.9 }}></div>
                                                                                 </div>
                                                                             </div>
                                                                         </Show>
@@ -3504,42 +3603,48 @@ export default function ExifFrame() {
                                                                         <Show
                                                                             when={
                                                                                 !item.isCheki &&
-                                                                                item.pos ===
-                                                                                    "right-horizontal"
+                                                                                item.pos === "right-horizontal"
                                                                             }
                                                                         >
-                                                                            <div class="w-full h-full flex flex-row">
-                                                                                <div class="flex-1 bg-slate-900 overflow-hidden relative flex items-center justify-center">
+                                                                            <div class="ba-w-full ba-flex" style={{ height: "100%" }}>
+                                                                                <div
+                                                                                    class="ba-flex-1 ba-flex ba-items-center ba-justify-center"
+                                                                                    style={{ background: "#0f172a", overflow: "hidden", position: "relative" }}
+                                                                                >
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
+                                                                                            <span style={{ color: "rgba(255,255,255,0.35)" }}><ToolIcon name="image" class="ba-icon-xs" /></span>
                                                                                         }
                                                                                     >
                                                                                         <img
                                                                                             src={uploadedImageSrc()}
-                                                                                            class="w-full h-full object-cover transition-transform"
                                                                                             style={{
+                                                                                                width: "100%",
+                                                                                                height: "100%",
+                                                                                                "object-fit": "cover",
                                                                                                 transform: `rotate(${imageRotation()}deg)`,
                                                                                             }}
                                                                                         />
                                                                                     </Show>
                                                                                 </div>
                                                                                 <div
-                                                                                    class="w-8 h-full flex flex-col items-center justify-center gap-1 transition-colors"
+                                                                                    class="ba-flex-col ba-items-center ba-justify-center"
                                                                                     style={{
-                                                                                        "background-color":
-                                                                                            getMiniBgColor(),
+                                                                                        width: "2rem",
+                                                                                        height: "100%",
+                                                                                        gap: "3px",
+                                                                                        "background-color": getMiniBgColor(),
                                                                                         color: getMiniTextColor(),
                                                                                     }}
                                                                                 >
-                                                                                    <div class="w-5 h-0.5 rounded-full bg-current opacity-90"></div>
-                                                                                    <div class="w-5 h-0.5 rounded-full bg-current opacity-70"></div>
+                                                                                    <div style={{ width: "1.25rem", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.9 }}></div>
+                                                                                    <div style={{ width: "1.25rem", height: "2px", "border-radius": "9999px", background: "currentColor", opacity: 0.7 }}></div>
                                                                                 </div>
                                                                             </div>
                                                                         </Show>
                                                                     </div>
-                                                                    <span class="text-[10px] truncate max-w-full leading-tight font-semibold">
+                                                                    <span class="ba-truncate" style={{ "font-size": "0.6875rem", "max-width": "100%" }}>
                                                                         {item.label}
                                                                     </span>
                                                                 </button>
@@ -3558,17 +3663,17 @@ export default function ExifFrame() {
                                 id="exif-panel-design"
                                 aria-labelledby="exif-tab-design"
                                 hidden={activeTab() !== "design"}
-                                class="flex flex-col gap-4"
+                                class="ba-stack-4"
                             >
                                 <Show when={activeTab() === "design" || visitedTabs().has("design")}>
                                     <Show when={!isAdvancedMode()}>
-                                    <div class="flex flex-col gap-2 bg-base-200/50 p-3 rounded-xl border border-base-300/60 text-xs">
-                                        <div class="flex items-center justify-between">
-                                            <span class="font-bold text-base-content/80">
+                                    <div class="ba-panel ba-text-xs">
+                                        <div class="ba-flex ba-items-center ba-justify-between">
+                                            <span class="ba-font-bold ba-text-muted">
                                                 背景マットの色
                                             </span>
-                                            <div class="flex items-center gap-3 font-semibold text-base-content">
-                                                <label class="flex gap-1 items-center cursor-pointer">
+                                            <div class="ba-flex ba-items-center ba-gap-3 ba-font-bold">
+                                                <label class="ba-flex ba-gap-1 ba-items-center" style={{ cursor: "pointer" }}>
                                                     <input
                                                         type="radio"
                                                         name="color"
@@ -3581,11 +3686,11 @@ export default function ExifFrame() {
                                                                 "white",
                                                             )
                                                         }
-                                                        class="radio radio-primary radio-sm"
+                                                        class="ba-radio"
                                                     />
                                                     白
                                                 </label>
-                                                <label class="flex gap-1 items-center cursor-pointer">
+                                                <label class="ba-flex ba-gap-1 ba-items-center" style={{ cursor: "pointer" }}>
                                                     <input
                                                         type="radio"
                                                         name="color"
@@ -3598,7 +3703,7 @@ export default function ExifFrame() {
                                                                 "black",
                                                             )
                                                         }
-                                                        class="radio radio-primary radio-sm"
+                                                        class="ba-radio"
                                                     />
                                                     黒
                                                 </label>
@@ -3606,12 +3711,19 @@ export default function ExifFrame() {
                                         </div>
                                     </div>
                                 </Show>
-                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
-                                    <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
+                                <div class="ba-panel ba-stack-3 ba-text-xs">
+                                    <span
+                                        class="ba-text-xs ba-font-bold"
+                                        style={{
+                                            display: "block",
+                                            "border-bottom": "1px solid var(--ba-border)",
+                                            "padding-bottom": "0.375rem",
+                                        }}
+                                    >
                                         フォント・文字サイズ
                                     </span>
-                                    <div class="flex flex-col gap-1">
-                                        <span class="font-bold text-base-content/60 text-[10px]">
+                                    <div class="ba-field">
+                                        <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             使用フォント
                                         </span>
                                         <select
@@ -3622,7 +3734,7 @@ export default function ExifFrame() {
                                                     e.currentTarget.value,
                                                 )
                                             }
-                                            class="select select-bordered select-sm w-full bg-base-100 text-base-content border-base-300"
+                                            class="ba-select ba-select--sm"
                                         >
                                             <For each={fontList}>
                                                 {(f) => (
@@ -3632,12 +3744,12 @@ export default function ExifFrame() {
                                                 )}
                                             </For>
                                         </select>
-                                        <p class="text-[10px] text-base-content/60 mt-1">
+                                        <p class="ba-text-muted" style={{ "font-size": "0.6875rem", margin: 0 }}>
                                             利用可能なフォントは各フォントの利用規約に従ってください。
                                         </p>
                                     </div>
-                                    <div class="flex flex-col gap-1">
-                                        <span class="font-bold text-base-content/60 text-[10px]">
+                                    <div class="ba-field">
+                                        <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             文字の大きさ ({fontSizeScale()}%)
                                         </span>
                                         <input
@@ -3657,17 +3769,24 @@ export default function ExifFrame() {
                                                     ),
                                                 )
                                             }
-                                            class="range range-primary range-sm mt-1 touch-none"
+                                            class="ba-range"
+                                            style={{ "touch-action": "none" }}
                                         />
                                     </div>
                                 </div>
-                                <div class="form-control border-2 border-dashed border-secondary/40 p-3.5 rounded-xl bg-secondary/5 shadow-xs mt-1">
-                                    <label class="flex items-center justify-between cursor-pointer mb-2">
-                                        <div class="flex flex-col">
-                                            <span class="label-text font-black text-secondary text-sm">
+                                <div
+                                    class="ba-panel ba-stack-3"
+                                    style={{
+                                        border: "2px dashed var(--ba-primary)",
+                                        background: "var(--ba-primary-soft)",
+                                    }}
+                                >
+                                    <label class="ba-flex ba-items-center ba-justify-between ba-gap-2" style={{ cursor: "pointer" }}>
+                                        <div class="ba-flex-col">
+                                            <span class="ba-font-black ba-text-primary ba-text-sm">
                                                 上級者カスタマイズモード
                                             </span>
-                                            <span class="text-[10px] text-base-content/60 font-medium">
+                                            <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                 こだわりの額縁や銘板プレートを解放
                                             </span>
                                         </div>
@@ -3681,18 +3800,24 @@ export default function ExifFrame() {
                                                     e.currentTarget.checked,
                                                 )
                                             }
-                                            class="toggle toggle-secondary toggle-sm"
+                                            class="ba-toggle ba-toggle--sm"
                                         />
                                     </label>
 
                                     <Show when={isAdvancedMode()}>
-                                        <div class="flex flex-col gap-3 pt-2 border-t border-secondary/20 animate-fade-in text-xs text-base-content">
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div class="flex flex-col gap-1">
-                                                    <span class="text-[10px] font-bold text-base-content/70">
+                                        <div
+                                            class="ba-stack-3 ba-text-xs"
+                                            style={{ "padding-top": "0.5rem", "border-top": "1px solid var(--ba-border)" }}
+                                        >
+                                            <div
+                                                class="ba-grid"
+                                                style={{ "grid-template-columns": "repeat(2, minmax(0, 1fr))", gap: "0.5rem" }}
+                                            >
+                                                <div class="ba-field">
+                                                    <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                         好きな枠色
                                                     </span>
-                                                    <div class="flex items-center gap-1">
+                                                    <div class="ba-flex ba-items-center ba-gap-2">
                                                         <input
                                                             type="color"
                                                             aria-label="外枠フレームの色"
@@ -3704,18 +3829,25 @@ export default function ExifFrame() {
                                                                         .value,
                                                                 )
                                                             }
-                                                            class="w-9 h-9 rounded cursor-pointer border border-base-300 bg-transparent"
+                                                            style={{
+                                                                width: "2.25rem",
+                                                                height: "2.25rem",
+                                                                "border-radius": "0.25rem",
+                                                                cursor: "pointer",
+                                                                border: "1px solid var(--ba-border)",
+                                                                background: "transparent",
+                                                            }}
                                                         />
-                                                        <span class="text-[10px] font-mono font-bold text-base-content/75">
+                                                        <span class="ba-mono ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                             {customFrameColor()}
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div class="flex flex-col gap-1">
-                                                    <span class="text-[10px] font-bold text-base-content/70">
+                                                <div class="ba-field">
+                                                    <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                         好きな文字色
                                                     </span>
-                                                    <div class="flex items-center gap-1">
+                                                    <div class="ba-flex ba-items-center ba-gap-2">
                                                         <input
                                                             type="color"
                                                             aria-label="文字の色"
@@ -3727,17 +3859,24 @@ export default function ExifFrame() {
                                                                         .value,
                                                                 )
                                                             }
-                                                            class="w-9 h-9 rounded pointer border border-base-300 bg-transparent"
+                                                            style={{
+                                                                width: "2.25rem",
+                                                                height: "2.25rem",
+                                                                "border-radius": "0.25rem",
+                                                                cursor: "pointer",
+                                                                border: "1px solid var(--ba-border)",
+                                                                background: "transparent",
+                                                            }}
                                                         />
-                                                        <span class="text-[10px] font-mono font-bold text-base-content/75">
+                                                        <span class="ba-mono ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                             {customTextColor()}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="flex flex-col gap-1">
-                                                <span class="text-[10px] font-bold text-base-content/70">
+                                            <div class="ba-field">
+                                                <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     写真の角丸調整
                                                 </span>
                                                 <input
@@ -3757,15 +3896,19 @@ export default function ExifFrame() {
                                                             ),
                                                         );
                                                     }}
-                                                    class="range range-secondary range-sm mt-1 touch-none"
+                                                    class="ba-range"
+                                                    style={{ "touch-action": "none" }}
                                                 />
                                             </div>
 
-                                            <div class="flex flex-col gap-1">
-                                                <span class="text-[10px] font-bold text-base-content/70 mb-1">
+                                            <div class="ba-stack-1">
+                                                <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     額縁の装飾スタイル
                                                 </span>
-                                                <div class="grid grid-cols-3 gap-1.5 p-0.5">
+                                                <div
+                                                    class="ba-grid"
+                                                    style={{ "grid-template-columns": "repeat(3, minmax(0, 1fr))", gap: "0.375rem" }}
+                                                >
                                                     <For each={frameTemplates}>
                                                         {(tmpl) => (
                                                             <button
@@ -3776,18 +3919,24 @@ export default function ExifFrame() {
                                                                         tmpl.id,
                                                                     )
                                                                 }
-                                                                class={`flex flex-col items-center p-1.5 rounded-lg border-2 text-center transition-all duration-150 min-h-[58px] min-w-0 ${
-                                                                    frameStyle() ===
-                                                                    tmpl.id
-                                                                        ? "border-secondary bg-secondary/10 scale-[0.96] ring-2 ring-secondary/20"
-                                                                        : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content shadow-xs"
-                                                                }`}
+                                                                class="ba-flex-col ba-items-center ba-text-center ba-min-w-0"
+                                                                style={{
+                                                                    padding: "0.375rem",
+                                                                    "border-radius": "var(--ba-radius-sm)",
+                                                                    border: frameStyle() === tmpl.id
+                                                                        ? "2px solid var(--ba-primary)"
+                                                                        : "1px solid var(--ba-border)",
+                                                                    background: frameStyle() === tmpl.id
+                                                                        ? "var(--ba-primary-soft)"
+                                                                        : "var(--ba-surface)",
+                                                                    "min-height": "58px",
+                                                                    cursor: "pointer",
+                                                                }}
                                                             >
                                                                 <div
-                                                                    class={`w-7 h-5 mb-1 border rounded-xs ${tmpl.border}`}
-                                                                    style={tmpl.style}
+                                                                    style={`${tmpl.style} width: 1.75rem; height: 1.25rem; margin-bottom: 0.25rem; border: 1px solid ${tmpl.borderColor}; border-radius: 0.15rem;`}
                                                                 />
-                                                                <span class="text-[10px] font-bold text-base-content/80 leading-tight block">
+                                                                <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.625rem", "line-height": 1.2 }}>
                                                                     {tmpl.name}
                                                                 </span>
                                                             </button>
@@ -3796,11 +3945,18 @@ export default function ExifFrame() {
                                                 </div>
                                             </div>
 
-                                            <div class="flex flex-col gap-1">
-                                                <span class="text-[10px] font-bold text-base-content/70 mb-1">
+                                            <div class="ba-stack-1">
+                                                <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     文字のプレート装飾
                                                 </span>
-                                                <div class="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto p-0.5">
+                                                <div
+                                                    class="ba-grid ba-scroll-y"
+                                                    style={{
+                                                        "grid-template-columns": "repeat(2, minmax(0, 1fr))",
+                                                        gap: "0.5rem",
+                                                        "max-height": "180px",
+                                                    }}
+                                                >
                                                     <For each={plateTemplates}>
                                                         {(plate) => (
                                                             <button
@@ -3811,18 +3967,32 @@ export default function ExifFrame() {
                                                                         plate.id,
                                                                     )
                                                                 }
-                                                                class={`flex flex-col items-center justify-between p-2 rounded-lg border-2 text-center transition-all duration-200 min-h-[64px] ${
-                                                                    textPlateStyle() ===
-                                                                    plate.id
-                                                                        ? "border-secondary bg-secondary/10 scale-[0.98] ring-2 ring-secondary/30"
-                                                                        : "border-base-300 bg-base-100 hover:bg-base-200 text-base-content shadow-sm"
-                                                                }`}
+                                                                class="ba-flex-col ba-items-center ba-justify-between ba-text-center"
+                                                                style={{
+                                                                    padding: "0.5rem",
+                                                                    "border-radius": "var(--ba-radius-sm)",
+                                                                    border: textPlateStyle() === plate.id
+                                                                        ? "2px solid var(--ba-primary)"
+                                                                        : "1px solid var(--ba-border)",
+                                                                    background: textPlateStyle() === plate.id
+                                                                        ? "var(--ba-primary-soft)"
+                                                                        : "var(--ba-surface)",
+                                                                    "min-height": "64px",
+                                                                    cursor: "pointer",
+                                                                }}
                                                             >
-                                                                <span class="text-[10px] font-bold text-base-content/70 mb-1 block">
+                                                                <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.625rem", "margin-bottom": "0.25rem" }}>
                                                                     {plate.name}
                                                                 </span>
                                                                 <div
-                                                                    class={`w-full py-1 px-1 flex items-center justify-center border text-[10px] select-none ${plate.bg}`}
+                                                                    class="ba-w-full ba-flex ba-items-center ba-justify-center"
+                                                                    style={{
+                                                                        padding: "0.25rem",
+                                                                        border: "1px solid var(--ba-border)",
+                                                                        "font-size": "0.625rem",
+                                                                        "user-select": "none",
+                                                                        ...plate.boxStyle,
+                                                                    }}
                                                                 >
                                                                     {plate.render()}
                                                                 </div>
@@ -3832,9 +4002,9 @@ export default function ExifFrame() {
                                                 </div>
                                             </div>
 
-                                            <div class="form-control border-t border-secondary/20 pt-2">
-                                                <label class="flex items-center justify-between cursor-pointer">
-                                                    <span class="text-[10px] font-bold text-base-content/60">
+                                            <div style={{ "border-top": "1px solid var(--ba-border)", "padding-top": "0.5rem" }}>
+                                                <label class="ba-flex ba-items-center ba-justify-between" style={{ cursor: "pointer" }}>
+                                                    <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                         チェキ風の帯比率を連動
                                                     </span>
                                                     <input
@@ -3847,7 +4017,7 @@ export default function ExifFrame() {
                                                                 e.currentTarget.checked,
                                                             )
                                                         }
-                                                        class="toggle toggle-secondary toggle-sm"
+                                                        class="ba-toggle ba-toggle--sm"
                                                     />
                                                 </label>
                                             </div>
@@ -3861,34 +4031,37 @@ export default function ExifFrame() {
                                 id="exif-panel-overlay"
                                 aria-labelledby="exif-tab-overlay"
                                 hidden={activeTab() !== "overlay"}
-                                class="flex flex-col gap-4"
+                                class="ba-stack-4"
                             >
                                 <Show when={activeTab() === "overlay" || visitedTabs().has("overlay")}>
-                                    <div class="rounded-xl border border-warning/40 bg-warning/10 p-3 flex items-start gap-2.5 text-xs">
-                                    <span class="badge badge-warning badge-xs font-extrabold mt-0.5 shrink-0">
+                                    <div class="ba-alert ba-alert--warning ba-items-start ba-text-xs">
+                                    <span class="ba-badge ba-badge--warning ba-shrink-0">
                                         BETA
                                     </span>
-                                    <div class="flex flex-col gap-0.5 text-base-content/80 leading-relaxed">
-                                        <span class="font-bold text-base-content">
+                                    <div class="ba-stack-1">
+                                        <span class="ba-font-bold">
                                             重ね画像（透過PNG）＆著作権表記（ベータ版）
                                         </span>
-                                        <span class="text-[11px] text-base-content/70">
+                                        <span style={{ "font-size": "0.6875rem", "font-weight": 500 }}>
                                             透過PNGやロゴ・キャラクター素材を複数読み込んで自由な位置に配置できます。フレームの空きスペースに著作権表記（©）を入れることも可能です。
                                         </span>
                                     </div>
                                 </div>
 
-                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
-                                    <div class="flex items-center justify-between border-b border-base-300 pb-1.5">
-                                        <span class="text-xs font-bold text-base-content uppercase tracking-wider">
+                                <div class="ba-panel ba-stack-3 ba-text-xs">
+                                    <div
+                                        class="ba-flex ba-items-center ba-justify-between"
+                                        style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "0.375rem" }}
+                                    >
+                                        <span class="ba-text-xs ba-font-bold">
                                             重ねる画像の追加・管理
                                         </span>
-                                        <span class="text-[10px] text-base-content/75 font-medium">
+                                        <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             複数選択可（PNG / WebP 等）
                                         </span>
                                     </div>
 
-                                    <label class="btn btn-secondary text-white h-11 px-4 text-xs rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 w-full">
+                                    <label class="ba-btn ba-btn--primary ba-btn--block">
                                         <span>+ 透過PNG・重ねる画像を追加（複数可）</span>
                                         <input
                                             type="file"
@@ -3896,61 +4069,87 @@ export default function ExifFrame() {
                                             aria-label="透過PNGや重ねる画像ファイルを選択"
                                             multiple
                                             onChange={handleOverlayFilesChange}
-                                            class="hidden"
+                                            style={{ display: "none" }}
                                         />
                                     </label>
 
                                     <Show
                                         when={overlayImages().length > 0}
                                         fallback={
-                                            <div class="text-[11px] text-base-content/75 bg-base-100/70 border border-dashed border-base-300 rounded-lg p-3 text-center">
+                                            <div
+                                                class="ba-text-muted ba-text-center"
+                                                style={{
+                                                    "font-size": "0.75rem",
+                                                    background: "var(--ba-surface)",
+                                                    border: "1px dashed var(--ba-border-strong)",
+                                                    "border-radius": "var(--ba-radius-sm)",
+                                                    padding: "0.75rem",
+                                                }}
+                                            >
                                                 まだ重ねる画像が追加されていません。上のボタンから透過PNGなどを選択してください。
                                             </div>
                                         }
                                     >
-                                        <div class="text-[11px] text-primary font-bold bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                                        <div class="ba-alert ba-alert--info ba-text-xs">
                                             <span>
                                                 プレビュー上で直接ドラッグして移動、四隅の丸（またはピンチ・マウスホイール）で拡大縮小できます。
                                             </span>
                                         </div>
-                                        <div class="flex flex-col gap-3">
+                                        <div class="ba-stack-3">
                                             <For each={overlayImages()}>
                                                 {(item, index) => (
                                                     <div
                                                         onClick={() => setSelectedOverlayId(item.id)}
-                                                        class={`bg-base-100 border rounded-xl p-3 flex flex-col gap-2.5 shadow-2xs transition-colors ${
-                                                            selectedOverlayId() === item.id
-                                                                ? "border-primary ring-2 ring-primary/20"
-                                                                : "border-base-300"
-                                                        }`}
+                                                        class="ba-stack-3"
+                                                        style={{
+                                                            background: "var(--ba-surface)",
+                                                            border: selectedOverlayId() === item.id
+                                                                ? "2px solid var(--ba-primary)"
+                                                                : "1px solid var(--ba-border)",
+                                                            "border-radius": "var(--ba-radius)",
+                                                            padding: "0.75rem",
+                                                        }}
                                                     >
-                                                        <div class="flex items-center gap-2.5 border-b border-base-200 pb-2">
-                                                            <div class="w-11 h-11 rounded-lg border border-base-300 bg-base-200/60 flex items-center justify-center overflow-hidden shrink-0">
+                                                        <div
+                                                            class="ba-flex ba-items-center ba-gap-2"
+                                                            style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "0.5rem" }}
+                                                        >
+                                                            <div
+                                                                class="ba-flex ba-items-center ba-justify-center ba-shrink-0"
+                                                                style={{
+                                                                    width: "2.75rem",
+                                                                    height: "2.75rem",
+                                                                    "border-radius": "var(--ba-radius-sm)",
+                                                                    border: "1px solid var(--ba-border)",
+                                                                    background: "var(--ba-surface-2)",
+                                                                    overflow: "hidden",
+                                                                }}
+                                                            >
                                                                 <img
                                                                     src={item.src}
                                                                     alt={item.name}
-                                                                    class="max-w-full max-h-full object-contain"
+                                                                    style={{ "max-width": "100%", "max-height": "100%", "object-fit": "contain" }}
                                                                 />
                                                             </div>
-                                                            <div class="flex-1 min-w-0">
-                                                                <div class="font-bold text-xs text-base-content truncate flex items-center gap-1.5">
+                                                            <div class="ba-flex-1 ba-min-w-0">
+                                                                <div class="ba-font-bold ba-text-xs ba-truncate ba-flex ba-items-center ba-gap-1">
                                                                     <span>#{index() + 1} {item.name}</span>
                                                                     <Show when={selectedOverlayId() === item.id}>
-                                                                        <span class="badge badge-primary badge-xs text-[9px] font-bold">
+                                                                        <span class="ba-badge ba-badge--primary">
                                                                             操作中
                                                                         </span>
                                                                     </Show>
                                                                 </div>
-                                                                <div class="text-[10px] text-base-content/75">
+                                                                <div class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                                     X:{item.x}% / Y:{item.y}% / サイズ:{item.scale}%
                                                                 </div>
                                                             </div>
-                                                            <div class="flex items-center gap-1 shrink-0">
+                                                            <div class="ba-flex ba-items-center ba-gap-1 ba-shrink-0">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => moveOverlayItemOrder(item.id, -1)}
                                                                     disabled={index() === 0}
-                                                                    class="btn btn-xs btn-ghost border border-base-300 px-1.5"
+                                                                    class="ba-btn ba-btn--xs ba-btn--outline"
                                                                     title="奥のレイヤーへ移動"
                                                                 >
                                                                     ↑
@@ -3959,7 +4158,7 @@ export default function ExifFrame() {
                                                                     type="button"
                                                                     onClick={() => moveOverlayItemOrder(item.id, 1)}
                                                                     disabled={index() === overlayImages().length - 1}
-                                                                    class="btn btn-xs btn-ghost border border-base-300 px-1.5"
+                                                                    class="ba-btn ba-btn--xs ba-btn--outline"
                                                                     title="手前のレイヤーへ移動"
                                                                 >
                                                                     ↓
@@ -3967,7 +4166,7 @@ export default function ExifFrame() {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => removeOverlayItem(item.id)}
-                                                                    class="btn btn-xs btn-error btn-outline px-2"
+                                                                    class="ba-btn ba-btn--xs ba-btn--outline ba-text-danger"
                                                                     title="この重ね画像を削除"
                                                                 >
                                                                     削除
@@ -3975,13 +4174,22 @@ export default function ExifFrame() {
                                                             </div>
                                                         </div>
 
-                                                        <div class="flex items-center gap-2">
-                                                            <label class="flex-1 flex items-center justify-between cursor-pointer bg-base-200/50 px-2.5 py-2 rounded-lg border border-base-300">
-                                                                <div class="flex flex-col">
-                                                                    <span class="text-[11px] font-bold text-base-content">
+                                                        <div class="ba-flex ba-items-center ba-gap-2">
+                                                            <label
+                                                                class="ba-flex-1 ba-flex ba-items-center ba-justify-between"
+                                                                style={{
+                                                                    cursor: "pointer",
+                                                                    background: "var(--ba-surface-2)",
+                                                                    padding: "0.5rem 0.625rem",
+                                                                    "border-radius": "var(--ba-radius-sm)",
+                                                                    border: "1px solid var(--ba-border)",
+                                                                }}
+                                                            >
+                                                                <div class="ba-flex-col">
+                                                                    <span class="ba-font-bold" style={{ "font-size": "0.75rem" }}>
                                                                         フレームの上に被せる
                                                                     </span>
-                                                                    <span class="text-[10px] text-base-content/60">
+                                                                    <span class="ba-text-muted" style={{ "font-size": "0.625rem" }}>
                                                                         OFFの時は写真の内側のみで切り抜かれます
                                                                     </span>
                                                                 </div>
@@ -3994,7 +4202,7 @@ export default function ExifFrame() {
                                                                             overFrame: e.currentTarget.checked,
                                                                         })
                                                                     }
-                                                                    class="toggle toggle-secondary toggle-sm"
+                                                                    class="ba-toggle ba-toggle--sm"
                                                                 />
                                                             </label>
                                                             <button
@@ -4004,21 +4212,17 @@ export default function ExifFrame() {
                                                                         flipX: !item.flipX,
                                                                     })
                                                                 }
-                                                                class={`btn btn-sm h-11 px-3 rounded-lg border border-base-300 text-[11px] font-bold shrink-0 ${
-                                                                    item.flipX
-                                                                        ? "btn-secondary text-white"
-                                                                        : "btn-outline bg-base-100"
-                                                                }`}
+                                                                class={`ba-btn ba-btn--sm ba-shrink-0 ${item.flipX ? "ba-btn--primary" : "ba-btn--outline"}`}
                                                             >
                                                                 ↔ 左右反転
                                                             </button>
                                                         </div>
 
-                                                        <div class="flex flex-col gap-3 pt-1">
-                                                            <div class="flex flex-col gap-1">
-                                                                <div class="flex justify-between text-[10px] font-bold text-base-content/70">
+                                                        <div class="ba-stack-3">
+                                                            <div class="ba-field">
+                                                                <div class="ba-flex ba-justify-between ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                                     <span>サイズ (拡大率)</span>
-                                                                    <span class="font-mono">{item.scale}%</span>
+                                                                    <span class="ba-mono">{item.scale}%</span>
                                                                 </div>
                                                                 <input
                                                                     type="range"
@@ -4035,14 +4239,15 @@ export default function ExifFrame() {
                                                                             scale: Number(e.currentTarget.value),
                                                                         })
                                                                     }
-                                                                    class="range range-secondary range-sm touch-none"
+                                                                    class="ba-range"
+                                                                    style={{ "touch-action": "none" }}
                                                                 />
                                                             </div>
-                                                            <div class="flex flex-col gap-1">
-                                                                <div class="flex justify-between items-center text-[10px] font-bold text-base-content/70">
+                                                            <div class="ba-field">
+                                                                <div class="ba-flex ba-justify-between ba-items-center ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                                     <span>回転率 (角度)</span>
-                                                                    <div class="flex items-center gap-1.5">
-                                                                        <span class="font-mono">{item.rotation}°</span>
+                                                                    <div class="ba-flex ba-items-center ba-gap-2">
+                                                                        <span class="ba-mono">{item.rotation}°</span>
                                                                         <button
                                                                             type="button"
                                                                             onClick={() =>
@@ -4050,7 +4255,8 @@ export default function ExifFrame() {
                                                                                     rotation: 0,
                                                                                 })
                                                                             }
-                                                                            class="text-[10px] underline text-primary cursor-pointer"
+                                                                            class="ba-underline ba-text-primary"
+                                                                            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, "font-size": "0.6875rem" }}
                                                                         >
                                                                             0°に戻す
                                                                         </button>
@@ -4071,13 +4277,14 @@ export default function ExifFrame() {
                                                                             rotation: Number(e.currentTarget.value),
                                                                         })
                                                                     }
-                                                                    class="range range-secondary range-sm touch-none"
+                                                                    class="ba-range"
+                                                                    style={{ "touch-action": "none" }}
                                                                 />
                                                             </div>
-                                                            <div class="flex flex-col gap-1">
-                                                                <div class="flex justify-between text-[10px] font-bold text-base-content/70">
+                                                            <div class="ba-field">
+                                                                <div class="ba-flex ba-justify-between ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                                     <span>不透明度</span>
-                                                                    <span class="font-mono">{item.opacity}%</span>
+                                                                    <span class="ba-mono">{item.opacity}%</span>
                                                                 </div>
                                                                 <input
                                                                     type="range"
@@ -4094,7 +4301,8 @@ export default function ExifFrame() {
                                                                             opacity: Number(e.currentTarget.value),
                                                                         })
                                                                     }
-                                                                    class="range range-primary range-sm touch-none"
+                                                                    class="ba-range"
+                                                                    style={{ "touch-action": "none" }}
                                                                 />
                                                             </div>
                                                         </div>
@@ -4105,21 +4313,24 @@ export default function ExifFrame() {
                                     </Show>
                                 </div>
 
-                                <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
-                                    <div class="flex items-center justify-between border-b border-base-300 pb-1.5">
-                                        <span class="text-xs font-bold text-base-content uppercase tracking-wider">
+                                <div class="ba-panel ba-stack-3 ba-text-xs">
+                                    <div
+                                        class="ba-flex ba-items-center ba-justify-between"
+                                        style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "0.375rem" }}
+                                    >
+                                        <span class="ba-text-xs ba-font-bold">
                                             © 著作権・クレジット表記
                                         </span>
-                                        <span class="text-[10px] text-base-content/75 font-medium">
+                                        <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             版権画像利用時の権利表記など
                                         </span>
                                     </div>
 
-                                    <div class="flex flex-col gap-1.5">
-                                        <span class="text-[10px] font-bold text-base-content/70">
+                                    <div class="ba-field">
+                                        <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             著作権・権利表記テキスト
                                         </span>
-                                        <div class="flex gap-1.5">
+                                        <div class="ba-flex ba-gap-2">
                                             <input
                                                 type="text"
                                                 aria-label="著作権クレジット表記テキスト"
@@ -4131,7 +4342,7 @@ export default function ExifFrame() {
                                                         e.currentTarget.value,
                                                     )
                                                 }
-                                                class="input input-bordered input-sm flex-1 bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                                class="ba-input ba-input--sm ba-flex-1"
                                             />
                                             <button
                                                 type="button"
@@ -4142,19 +4353,19 @@ export default function ExifFrame() {
                                                             : `© ${prev}`,
                                                     )
                                                 }
-                                                class="btn btn-sm btn-outline border-base-300 px-2.5 text-xs font-bold shrink-0"
+                                                class="ba-btn ba-btn--sm ba-btn--outline ba-shrink-0"
                                                 title="先頭に © を挿入"
                                             >
                                                 ©
                                             </button>
                                         </div>
-                                        <span class="text-[10px] text-base-content/75">
+                                        <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             ※入力するとフレームの空きスペース（または指定位置）に自動で小さく刻印されます。
                                         </span>
                                     </div>
 
-                                    <div class="flex flex-col gap-1.5">
-                                        <span class="text-[10px] font-bold text-base-content/70">
+                                    <div class="ba-field">
+                                        <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             表記の位置
                                         </span>
                                         <select
@@ -4172,7 +4383,7 @@ export default function ExifFrame() {
                                                         | "image-bottom-left",
                                                 )
                                             }
-                                            class="select select-bordered select-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                            class="ba-select ba-select--sm"
                                         >
                                             <option value="auto">
                                                 自動（フレームの空きスペースに配置）
@@ -4205,15 +4416,22 @@ export default function ExifFrame() {
                                 id="exif-panel-save"
                                 aria-labelledby="exif-tab-save"
                                 hidden={activeTab() !== "save"}
-                                class="flex flex-col gap-4"
+                                class="ba-stack-4"
                             >
                                 <Show when={activeTab() === "save" || visitedTabs().has("save")}>
-                                    <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-2.5 text-xs">
-                                    <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
+                                    <div class="ba-panel ba-stack-3 ba-text-xs">
+                                    <span
+                                        class="ba-text-xs ba-font-bold"
+                                        style={{
+                                            display: "block",
+                                            "border-bottom": "1px solid var(--ba-border)",
+                                            "padding-bottom": "0.375rem",
+                                        }}
+                                    >
                                         ファイル保存設定
                                     </span>
-                                    <div class="flex flex-col gap-1">
-                                        <span class="text-[10px] font-bold text-base-content/60">
+                                    <div class="ba-field">
+                                        <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             出力ファイル名
                                         </span>
                                         <input
@@ -4226,14 +4444,14 @@ export default function ExifFrame() {
                                                     e.currentTarget.value,
                                                 )
                                             }
-                                            class="input input-bordered input-sm w-full bg-base-100 font-mono text-base-content border-base-300"
+                                            class="ba-input ba-input--sm ba-mono"
                                         />
                                     </div>
-                                    <div class="flex gap-2 pt-1 justify-between items-center text-base-content">
-                                        <span class="text-[10px] font-bold text-base-content/60">
+                                    <div class="ba-flex ba-gap-2 ba-justify-between ba-items-center">
+                                        <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             保存形式:
                                         </span>
-                                        <div class="flex gap-2">
+                                        <div class="ba-flex ba-gap-2">
                                             <For
                                                 each={[
                                                     "image/jpeg",
@@ -4242,7 +4460,7 @@ export default function ExifFrame() {
                                                 ]}
                                             >
                                                 {(fmt) => (
-                                                    <label class="flex gap-1 text-[11px] items-center cursor-pointer font-semibold">
+                                                    <label class="ba-flex ba-gap-1 ba-items-center ba-font-bold" style={{ "font-size": "0.75rem", cursor: "pointer" }}>
                                                         <input
                                                             type="radio"
                                                             name="fmt"
@@ -4255,7 +4473,7 @@ export default function ExifFrame() {
                                                                     fmt,
                                                                 )
                                                             }
-                                                            class="radio radio-primary radio-sm"
+                                                            class="ba-radio"
                                                         />
                                                         {fmt
                                                             .split("/")[1]
@@ -4265,8 +4483,8 @@ export default function ExifFrame() {
                                             </For>
                                         </div>
                                     </div>
-                                    <div class="flex flex-col gap-1 border-t border-base-300 pt-2 text-base-content">
-                                        <span class="text-[10px] font-bold text-base-content/60">
+                                    <div class="ba-field" style={{ "border-top": "1px solid var(--ba-border)", "padding-top": "0.5rem" }}>
+                                        <span class="ba-font-bold ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                             出力サイズ（解像度）:
                                         </span>
                                         <select
@@ -4277,7 +4495,7 @@ export default function ExifFrame() {
                                                     Number(e.currentTarget.value),
                                                 )
                                             }
-                                            class="select select-bordered select-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
+                                            class="ba-select ba-select--sm"
                                         >
                                             <option value="0">
                                                 オリジナル解像度（最高画質）
@@ -4290,13 +4508,13 @@ export default function ExifFrame() {
                                             </option>
                                         </select>
                                     </div>
-                                    <div class="form-control border-t border-base-300 pt-2 text-base-content">
-                                        <label class="flex items-center justify-between cursor-pointer">
-                                            <div class="flex flex-col">
-                                                <span class="text-[11px] font-bold text-base-content/80">
+                                    <div style={{ "border-top": "1px solid var(--ba-border)", "padding-top": "0.5rem" }}>
+                                        <label class="ba-flex ba-items-center ba-justify-between" style={{ cursor: "pointer" }}>
+                                            <div class="ba-flex-col">
+                                                <span class="ba-font-bold" style={{ "font-size": "0.75rem" }}>
                                                     元のExifデータを引き継ぐ
                                                 </span>
-                                                <span class="text-[10px] text-base-content/75 font-medium">
+                                                <span class="ba-text-muted" style={{ "font-size": "0.6875rem" }}>
                                                     ※JPEG保存時のみ有効
                                                 </span>
                                             </div>
@@ -4309,7 +4527,7 @@ export default function ExifFrame() {
                                                         e.currentTarget.checked,
                                                     )
                                                 }
-                                                class="toggle toggle-primary toggle-sm"
+                                                class="ba-toggle ba-toggle--sm"
                                             />
                                         </label>
                                         <Show
@@ -4317,8 +4535,8 @@ export default function ExifFrame() {
                                                 useCustomTitle() && keepOriginalExif()
                                             }
                                         >
-                                            <span class="text-[10px] text-error font-bold mt-1.5 inline-flex items-center gap-1 leading-tight">
-                                                <ToolIcon name="alert" class="w-3.5 h-3.5 shrink-0" />
+                                            <span class="ba-text-danger ba-font-bold ba-inline-flex ba-items-center ba-gap-1" style={{ "font-size": "0.6875rem", "margin-top": "0.375rem" }}>
+                                                <ToolIcon name="alert" class="ba-icon-xs ba-shrink-0" />
                                                 注意：タイトル入力をONにすると、自動取得したExif情報は画像データに書き込まれません。
                                             </span>
                                         </Show>
@@ -4328,13 +4546,14 @@ export default function ExifFrame() {
                                             type="button"
                                             disabled={isProcessing()}
                                             onClick={handleGenerate}
-                                            class="btn btn-success text-white h-12 px-6 text-sm rounded-xl shadow-xs flex items-center justify-center gap-2 w-full mt-1"
+                                            class="ba-btn ba-btn--success ba-btn--lg ba-btn--block"
+                                            style={{ "margin-top": "0.25rem" }}
                                         >
                                             <Show
                                                 when={!isProcessing()}
                                                 fallback={
                                                     <>
-                                                        <span class="loading loading-spinner loading-xs" />
+                                                        <span class="ba-spinner" />
                                                         <span>生成中... ({processingProgress()}%)</span>
                                                     </>
                                                 }
@@ -4350,26 +4569,58 @@ export default function ExifFrame() {
                     </div>
 
                     <div
-                        class="order-2 lg:order-none flex-1 min-w-0 flex flex-col border border-base-300 bg-base-200 lg:bg-base-200/30 text-base-content rounded-2xl p-2 lg:p-4 justify-center items-center relative h-64 sm:h-72 lg:h-[540px] xl:h-[600px] shrink-0 overflow-hidden shadow-inner lg:sticky lg:top-4 lg:self-start"
+                        class="ba-panel ba-flex-col ba-justify-center ba-items-center ba-min-w-0"
+                        style={{
+                            position: "sticky",
+                            top: "1rem",
+                            "border-radius": "var(--ba-radius-lg)",
+                            padding: "1rem",
+                            "min-height": "22rem",
+                            height: "540px",
+                            "max-height": "75vh",
+                            overflow: "hidden",
+                        }}
                     >
                         <Show
                             when={hasImage()}
                             fallback={
-                                <div class="text-base-content/75 p-4 text-center font-medium text-xs sm:text-sm flex flex-col items-center gap-2">
-                                    <ToolIcon name="camera" class="w-8 h-8 text-base-content/60" />
+                                <div class="ba-text-muted ba-text-center ba-text-sm ba-flex-col ba-items-center ba-gap-2" style={{ padding: "1rem" }}>
+                                    <ToolIcon name="camera" class="ba-icon-xl" />
                                     <span>写真を読み込むと、比率を維持したプレビューが表示されます。</span>
                                 </div>
                             }
                         >
                             <Show when={overlayImages().length > 0}>
-                                <div class="absolute top-2 left-2 lg:top-4 lg:left-4 bg-slate-900/75 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-lg shadow-md z-10 pointer-events-none flex items-center gap-1">
+                                <div
+                                    class="ba-text-xs ba-font-bold ba-flex ba-items-center ba-gap-1"
+                                    style={{
+                                        position: "absolute",
+                                        top: "0.75rem",
+                                        left: "0.75rem",
+                                        background: "rgba(15, 23, 42, 0.78)",
+                                        color: "#ffffff",
+                                        padding: "0.25rem 0.625rem",
+                                        "border-radius": "var(--ba-radius-sm)",
+                                        "z-index": 10,
+                                        "pointer-events": "none",
+                                    }}
+                                >
                                     <span>ドラッグで移動・四隅/ピンチで拡縮</span>
                                 </div>
                             </Show>
                             <button
                                 type="button"
                                 onClick={() => setIsMaximized(true)}
-                                class="absolute top-2 right-2 lg:top-4 lg:right-4 btn btn-sm bg-slate-900/80 text-white border-none hover:bg-slate-900 shadow-md z-10 px-3 rounded-lg text-xs h-9"
+                                class="ba-btn ba-btn--sm"
+                                style={{
+                                    position: "absolute",
+                                    top: "0.75rem",
+                                    right: "0.75rem",
+                                    background: "rgba(15, 23, 42, 0.82)",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    "z-index": 10,
+                                }}
                             >
                                 大画面で拡大
                             </button>
@@ -4380,13 +4631,22 @@ export default function ExifFrame() {
                                 onPointerUp={handleCanvasPointerUp}
                                 onPointerCancel={handleCanvasPointerUp}
                                 onWheel={handleCanvasWheel}
-                                class={`max-w-full max-h-full w-auto h-auto object-contain rounded-none shadow-lg bg-slate-200 ${
-                                    overlayImages().length > 0
-                                        ? draggingOverlayId()
-                                            ? "cursor-grabbing touch-none select-none"
-                                            : "cursor-grab touch-none select-none"
-                                        : ""
-                                }`}
+                                style={{
+                                    "max-width": "100%",
+                                    "max-height": "100%",
+                                    width: "auto",
+                                    height: "auto",
+                                    "object-fit": "contain",
+                                    background: "#e2e8f0",
+                                    "box-shadow": "var(--ba-shadow-md)",
+                                    ...(overlayImages().length > 0
+                                        ? {
+                                              cursor: draggingOverlayId() ? "grabbing" : "grab",
+                                              "touch-action": "none",
+                                              "user-select": "none",
+                                          }
+                                        : {}),
+                                }}
                             />
                         </Show>
                     </div>
@@ -4484,7 +4744,17 @@ export default function ExifFrame() {
 
                     return (
                         <div
-                            class="fixed inset-0 bg-black/95 flex flex-col justify-center items-center z-[9999] p-4 select-none touch-none overflow-hidden"
+                            class="ba-flex-col ba-justify-center ba-items-center"
+                            style={{
+                                position: "fixed",
+                                inset: 0,
+                                background: "rgba(0, 0, 0, 0.95)",
+                                "z-index": 9999,
+                                padding: "1rem",
+                                "user-select": "none",
+                                "touch-action": "none",
+                                overflow: "hidden",
+                            }}
                             onClick={() => {
                                 setIsMaximized(false);
                                 setModalZoomScale(1);
@@ -4496,7 +4766,8 @@ export default function ExifFrame() {
                             onWheel={handleWheel}
                         >
                             <div
-                                class="absolute top-4 right-4 flex items-center gap-2 z-20"
+                                class="ba-flex ba-items-center ba-gap-2"
+                                style={{ position: "absolute", top: "1rem", right: "1rem", "z-index": 20 }}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <Show when={modalZoomScale() > 1}>
@@ -4506,7 +4777,8 @@ export default function ExifFrame() {
                                             setModalZoomScale(1);
                                             setModalTranslate({ x: 0, y: 0 });
                                         }}
-                                        class="btn btn-sm btn-ghost bg-slate-800/80 text-white rounded-lg text-xs"
+                                        class="ba-btn ba-btn--sm"
+                                        style={{ background: "rgba(30, 41, 59, 0.85)", color: "#ffffff", border: "none" }}
                                     >
                                         リセット
                                     </button>
@@ -4518,16 +4790,19 @@ export default function ExifFrame() {
                                         setModalZoomScale(1);
                                         setModalTranslate({ x: 0, y: 0 });
                                     }}
-                                    class="btn btn-circle btn-outline border-white/40 text-white"
+                                    class="ba-btn ba-btn--circle ba-btn--outline"
+                                    style={{ "border-color": "rgba(255,255,255,0.4)", color: "#ffffff" }}
                                 >
                                     ✕
                                 </button>
                             </div>
                             <div
-                                class="w-full h-full flex items-center justify-center transition-transform duration-75 ease-out"
+                                class="ba-w-full ba-flex ba-items-center ba-justify-center"
                                 style={{
+                                    height: "100%",
                                     transform: `translate(${modalTranslate().x}px, ${modalTranslate().y}px) scale(${modalZoomScale()})`,
                                     "transform-origin": "center center",
+                                    transition: "transform 75ms ease-out",
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                             >
@@ -4539,7 +4814,13 @@ export default function ExifFrame() {
                                             el.getContext("2d")?.drawImage(canvasRef, 0, 0);
                                         }
                                     }}
-                                    class="max-w-full max-h-[90vh] object-contain shadow-2xl bg-slate-200 pointer-events-auto"
+                                    style={{
+                                        "max-width": "100%",
+                                        "max-height": "90vh",
+                                        "object-fit": "contain",
+                                        background: "#e2e8f0",
+                                        "pointer-events": "auto",
+                                    }}
                                 />
                             </div>
                         </div>
@@ -4551,21 +4832,26 @@ export default function ExifFrame() {
                 <div
                     role="status"
                     aria-live="polite"
-                    class="fixed inset-0 bg-black/75 backdrop-blur-xs flex flex-col justify-center items-center z-[10001] p-4 animate-fade-in"
+                    class="ba-modal is-open"
+                    style={{ "z-index": 10001 }}
                 >
-                    <div class="bg-base-100 text-base-content max-w-sm w-full p-6 rounded-2xl shadow-2xl flex flex-col gap-3.5 text-center border border-base-300">
-                        <div class="flex items-center justify-center gap-2 font-bold text-sm text-base-content">
-                            <span class="loading loading-spinner loading-sm text-primary" />
+                    <div
+                        class="ba-modal-box ba-stack-3 ba-text-center"
+                        style={{ "max-width": "24rem" }}
+                    >
+                        <div class="ba-flex ba-items-center ba-justify-center ba-gap-2 ba-font-bold ba-text-sm">
+                            <span class="ba-spinner ba-text-primary" />
                             <span>画像を生成しています...</span>
                         </div>
                         <progress
-                            class="progress progress-primary w-full h-3"
+                            class="ba-progress"
+                            style={{ height: "0.75rem" }}
                             value={processingProgress()}
                             max="100"
                         />
-                        <div class="flex items-center justify-between text-[11px] text-base-content/70 font-medium px-0.5">
-                            <span class="truncate">{processingStepText()}</span>
-                            <span class="font-mono font-bold text-primary shrink-0">
+                        <div class="ba-flex ba-items-center ba-justify-between ba-text-muted" style={{ "font-size": "0.6875rem" }}>
+                            <span class="ba-truncate">{processingStepText()}</span>
+                            <span class="ba-mono ba-font-bold ba-text-primary ba-shrink-0">
                                 {processingProgress()}%
                             </span>
                         </div>
@@ -4575,30 +4861,33 @@ export default function ExifFrame() {
 
             <Show when={showMobileSaveModal()}>
                 <div
-                    class="fixed inset-0 bg-black/80 flex flex-col justify-center items-center z-[10000] p-4 animate-fade-in"
+                    class="ba-modal is-open"
+                    style={{ "z-index": 10000 }}
                     onClick={() => setShowMobileSaveModal(false)}
                 >
                     <div
-                        class="bg-base-100 text-base-content max-w-md w-full p-5 rounded-2xl shadow-2xl flex flex-col gap-4 text-center border border-base-300"
+                        class="ba-modal-box ba-stack-4 ba-text-center"
+                        style={{ "max-width": "28rem" }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div class="flex flex-col gap-1">
-                            <h3 class="font-bold text-sm text-base-content flex items-center justify-center gap-1.5">
-                                画像が生成されました
-                            </h3>
-                        </div>
-                        <div class="w-full max-h-[55vh] overflow-hidden bg-base-200 p-2 rounded-xl flex items-center justify-center">
+                        <h3 class="ba-font-bold ba-text-sm" style={{ margin: 0 }}>
+                            画像が生成されました
+                        </h3>
+                        <div
+                            class="ba-panel ba-w-full ba-flex ba-items-center ba-justify-center"
+                            style={{ "max-height": "55vh", overflow: "hidden", padding: "0.5rem" }}
+                        >
                             <img
                                 src={downloadImageSrc()}
                                 alt="Generated masterpiece"
-                                class="max-w-full max-h-[55vh] object-contain shadow-md rounded-xs"
+                                style={{ "max-width": "100%", "max-height": "55vh", "object-fit": "contain" }}
                             />
                         </div>
                         <a
                             href={downloadImageSrc()}
                             download={downloadFileName()}
                             onClick={handleDownload}
-                            class="btn btn-success text-white w-full h-11 text-xs rounded-xl shadow-xs flex items-center justify-center gap-1 font-bold text-sm"
+                            class="ba-btn ba-btn--success ba-btn--block"
                         >
                             画像をダウンロードする
                         </a>
@@ -4607,7 +4896,7 @@ export default function ExifFrame() {
                         <Show when={"share" in navigator && typeof (navigator as any).canShare === "function"}>
                             <button
                                 type="button"
-                                class="btn btn-info text-white w-full h-11 text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 font-bold text-sm"
+                                class="ba-btn ba-btn--secondary ba-btn--block"
                                 onClick={async () => {
                                     try {
                                         const dataUrl = downloadImageSrc();
@@ -4634,7 +4923,7 @@ export default function ExifFrame() {
                         <button
                             type="button"
                             onClick={() => setShowMobileSaveModal(false)}
-                            class="btn btn-primary text-white w-full h-11 text-xs rounded-xl shadow-xs mt-1"
+                            class="ba-btn ba-btn--primary ba-btn--block"
                         >
                             とじる
                         </button>
@@ -4643,12 +4932,6 @@ export default function ExifFrame() {
             </Show>
             <AdSense />
             <AdSense />
-            {/* スマホ固定タブバー分、末尾に十分な余白を確保して最下部広告やコンテンツが被らないようにする */}
-            <div
-                class="lg:hidden shrink-0 w-full"
-                style={{ height: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
-                aria-hidden="true"
-            />
         </div>
     );
 }

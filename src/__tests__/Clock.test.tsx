@@ -13,7 +13,7 @@ describe("Clock", () => {
         expect(screen.getByRole("button", { name: "アナログ" })).toBeInTheDocument();
 
         // デジタル表示コンテナ
-        const digitalDisplay = container.querySelector(".font-mono.tracking-tighter");
+        const digitalDisplay = container.querySelector("div.ba-mono");
         expect(digitalDisplay).toBeInTheDocument();
     });
 
@@ -47,7 +47,7 @@ describe("Clock", () => {
         // 再びデジタルに切り替え
         fireEvent.click(screen.getByRole("button", { name: "デジタル" }));
         expect(container.querySelector("svg")).not.toBeInTheDocument();
-        expect(container.querySelector(".font-mono.tracking-tighter")).toBeInTheDocument();
+        expect(container.querySelector("div.ba-mono")).toBeInTheDocument();
     });
 
     it("時間の経過に合わせてデジタル表示の秒がリアルタイムに更新されること", async () => {
@@ -57,7 +57,7 @@ describe("Clock", () => {
         vi.setSystemTime(new Date("2026-11-19T12:34:56"));
 
         const { container, unmount } = render(() => <Clock />);
-        const digitalDisplay = container.querySelector(".font-mono.tracking-tighter");
+        const digitalDisplay = container.querySelector("div.ba-mono");
         expect(digitalDisplay?.textContent).toContain("12:34:56");
 
         await vi.advanceTimersByTimeAsync(2000);
@@ -114,7 +114,7 @@ describe("Clock", () => {
     it("時計モード（デジタル/アナログ）の切り替えがlocalStorageに保存され、リロード後も選択モードが復元されること", () => {
         // 1. 初回レンダリング時はデフォルトでデジタル時計
         const { unmount: unmount1, container: container1 } = render(() => <Clock />);
-        expect(container1.querySelector(".font-mono.tracking-tighter")).toBeInTheDocument();
+        expect(container1.querySelector("div.ba-mono")).toBeInTheDocument();
         expect(container1.querySelector("svg")).not.toBeInTheDocument();
 
         // 2. 「アナログ」に切り替え -> localStorage に保存される
@@ -126,7 +126,7 @@ describe("Clock", () => {
         // 3. リロード（再マウント）時にアナログ時計モードが自動復元されること
         const { unmount: unmount2, container: container2 } = render(() => <Clock />);
         expect(container2.querySelector("svg")).toBeInTheDocument();
-        expect(container2.querySelector(".font-mono.tracking-tighter")).not.toBeInTheDocument();
+        expect(container2.querySelector("div.ba-mono")).not.toBeInTheDocument();
 
         // 4. 「デジタル」に切り替えて再マウント -> デジタル時計が復元されること
         fireEvent.click(screen.getByRole("button", { name: "デジタル" }));
@@ -134,7 +134,7 @@ describe("Clock", () => {
         unmount2();
 
         const { unmount: unmount3, container: container3 } = render(() => <Clock />);
-        expect(container3.querySelector(".font-mono.tracking-tighter")).toBeInTheDocument();
+        expect(container3.querySelector("div.ba-mono")).toBeInTheDocument();
         expect(container3.querySelector("svg")).not.toBeInTheDocument();
         unmount3();
     });

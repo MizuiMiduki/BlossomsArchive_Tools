@@ -1,5 +1,6 @@
 /* @refresh reload */
-import './index.css';
+import './styles/critical.css';
+import './styles/app.css';
 import { render } from '@solidjs/web';
 
 import App from './App';
