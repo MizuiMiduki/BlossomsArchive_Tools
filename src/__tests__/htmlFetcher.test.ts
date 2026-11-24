@@ -187,7 +187,7 @@ describe("htmlFetcher Utilities (src/utils/htmlFetcher.ts)", () => {
                 return { ok: false, status: 500 };
             });
 
-            const res = await fetchPageSource("https://infiniteloop.co.jp/vrmmate/ja/", {
+            const res = await fetchPageSource("https://example.com/demo-app/", {
                 preferHtml: true,
                 requireJsonLd: true,
             });

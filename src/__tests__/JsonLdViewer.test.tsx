@@ -108,7 +108,7 @@ describe("JsonLdViewer Component", () => {
     });
 
     it("Microlinkが429でもAllOrigins/getでbody内@graph JSON-LDを取得・解析できること", async () => {
-        const realisticHtml = `<!DOCTYPE html><html lang="ja"><head><title>VRM Mate</title></head><body><main><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"VRM Mate","url":"https://infiniteloop.co.jp/vrmmate/ja/"},{"@type":"Organization","name":"infiniteloop Co.,Ltd."},{"@type":"SoftwareApplication","name":"VRM Mate","applicationCategory":"EntertainmentApplication"}]}</script></main></body></html>`;
+        const realisticHtml = `<!DOCTYPE html><html lang="ja"><head><title>Demo App</title></head><body><main><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"Demo App","url":"https://example.com/demo-app/"},{"@type":"Organization","name":"Example Co., Ltd."},{"@type":"SoftwareApplication","name":"Demo App","applicationCategory":"EntertainmentApplication"}]}</script></main></body></html>`;
 
         globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
             if (url.startsWith("https://api.microlink.io/")) {
@@ -129,7 +129,7 @@ describe("JsonLdViewer Component", () => {
         render(() => <JsonLdViewer />);
 
         const urlInput = screen.getByLabelText("確認するページのURL");
-        fireEvent.input(urlInput, { target: { value: "https://infiniteloop.co.jp/vrmmate/ja/" } });
+        fireEvent.input(urlInput, { target: { value: "https://example.com/demo-app/" } });
 
         const submitBtn = screen.getByRole("button", { name: "JSON-LDを取得・解析" });
         fireEvent.click(submitBtn);
