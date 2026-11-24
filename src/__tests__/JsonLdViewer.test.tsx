@@ -284,4 +284,74 @@ describe("JsonLdViewer Component", () => {
         const downloadBtn = screen.getByRole("button", { name: ".jsonld 保存" });
         expect(() => fireEvent.click(downloadBtn)).not.toThrow();
     });
+
+    it("項目一覧（表）タブでプロパティと設定値が表形式で表示され、検索・エンティティ絞り込み・TSVコピーができること", () => {
+        const writeTextMock = vi.fn().mockResolvedValue(undefined);
+        Object.assign(navigator, {
+            clipboard: {
+                writeText: writeTextMock,
+            },
+        });
+
+        render(() => <JsonLdViewer />);
+
+        // 直接入力で複数エンティティの @graph を入力
+        fireEvent.click(screen.getByRole("button", { name: /直接入力/ }));
+        const textarea = screen.getByLabelText("JSON-LD入力テキストエリア") as HTMLTextAreaElement;
+        fireEvent.input(textarea, {
+            target: {
+                value: JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@graph": [
+                        {
+                            "@type": "Article",
+                            "headline": "表ビュー検証記事",
+                            "author": { "@type": "Person", "name": "テスト著者" },
+                        },
+                        {
+                            "@type": "WebSite",
+                            "name": "テストサイト",
+                            "url": "https://example.com/site",
+                        },
+                    ],
+                }),
+            },
+        });
+
+        // 「項目一覧（表）」タブへ切替
+        const tableTab = screen.getByRole("button", { name: /項目一覧（表）/ });
+        fireEvent.click(tableTab);
+
+        // ヘッダーと展開された行が表示されること
+        expect(screen.getByText("エンティティ")).toBeInTheDocument();
+        expect(screen.getByText("項目 (プロパティ)")).toBeInTheDocument();
+        expect(screen.getByText("設定値")).toBeInTheDocument();
+        expect(screen.getByText("headline")).toBeInTheDocument();
+        expect(screen.getByText("表ビュー検証記事")).toBeInTheDocument();
+        expect(screen.getByText("author.name")).toBeInTheDocument();
+        expect(screen.getByText("テスト著者")).toBeInTheDocument();
+
+        // エンティティ種別で絞り込み
+        const entitySelect = screen.getByLabelText("エンティティ種別で絞り込み") as HTMLSelectElement;
+        fireEvent.change(entitySelect, { target: { value: "WebSite" } });
+        expect(screen.getByText("テストサイト")).toBeInTheDocument();
+        expect(screen.queryByText("表ビュー検証記事")).not.toBeInTheDocument();
+
+        // すべてに戻してキーワード検索で絞り込み
+        fireEvent.change(entitySelect, { target: { value: "all" } });
+        const searchInput = screen.getByLabelText("プロパティ検索フィルター");
+        fireEvent.input(searchInput, { target: { value: "author.name" } });
+        expect(screen.getByText("テスト著者")).toBeInTheDocument();
+        expect(screen.queryByText("テストサイト")).not.toBeInTheDocument();
+
+        // TSVコピーボタンでクリップボードに書き込まれること
+        const copyTsvBtn = screen.getByRole("button", { name: /表をコピー \(TSV\)/ });
+        fireEvent.click(copyTsvBtn);
+        expect(writeTextMock).toHaveBeenCalledWith(
+            expect.stringContaining("エンティティ\t項目\t値\t型"),
+        );
+        expect(writeTextMock).toHaveBeenCalledWith(
+            expect.stringContaining("Article\tauthor.name\tテスト著者\tstring"),
+        );
+    });
 });

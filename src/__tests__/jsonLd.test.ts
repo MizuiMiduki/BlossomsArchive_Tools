@@ -4,6 +4,7 @@ import {
     validateJsonLdEntity,
     buildTreeNode,
     parseJsonLd,
+    flattenJsonLdProperties,
     JSON_LD_SAMPLES,
 } from "../utils/jsonLd";
 
@@ -172,6 +173,98 @@ describe("JSON-LD Utilities (src/utils/jsonLd.ts)", () => {
                     expect(criticalErrors, `Sample '${key}' had critical errors`).toEqual([]);
                 }
             }
+        });
+    });
+
+    describe("flattenJsonLdProperties", () => {
+        it("ネストオブジェクトや配列をドット・インデックス記法でフラット展開できること", () => {
+            const input = JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                "headline": "テスト記事",
+                "author": {
+                    "@type": "Person",
+                    "name": "山田 太郎",
+                    "url": "https://example.com/authors/taro",
+                },
+                "keywords": ["SEO", "JSON-LD"],
+            });
+            const parsed = parseJsonLd(input);
+            const rows = flattenJsonLdProperties(parsed.entities);
+
+            expect(rows.find((r) => r.propertyPath === "headline")).toMatchObject({
+                entityType: "Article",
+                value: "テスト記事",
+                valueType: "string",
+                isUrl: false,
+            });
+            expect(rows.find((r) => r.propertyPath === "author.name")).toMatchObject({
+                entityType: "Article",
+                value: "山田 太郎",
+                valueType: "string",
+            });
+            expect(rows.find((r) => r.propertyPath === "author.url")).toMatchObject({
+                value: "https://example.com/authors/taro",
+                valueType: "url",
+                isUrl: true,
+            });
+            expect(rows.find((r) => r.propertyPath === "keywords[0]")?.value).toBe("SEO");
+            expect(rows.find((r) => r.propertyPath === "keywords[1]")?.value).toBe("JSON-LD");
+        });
+
+        it("危険なURLスキームをリンク扱いにせず、空配列・空オブジェクト・各種プリミティブ型を正しく分類すること", () => {
+            const input = JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Thing",
+                "unsafeUrl": "javascript:alert(1)",
+                "count": 42,
+                "active": true,
+                "nullable": null,
+                "emptyArr": [],
+                "emptyObj": {},
+            });
+            const parsed = parseJsonLd(input);
+            const rows = flattenJsonLdProperties(parsed.entities);
+
+            expect(rows.find((r) => r.propertyPath === "unsafeUrl")).toMatchObject({
+                valueType: "string",
+                isUrl: false,
+            });
+            expect(rows.find((r) => r.propertyPath === "count")).toMatchObject({
+                value: "42",
+                valueType: "number",
+            });
+            expect(rows.find((r) => r.propertyPath === "active")).toMatchObject({
+                value: "true",
+                valueType: "boolean",
+            });
+            expect(rows.find((r) => r.propertyPath === "nullable")).toMatchObject({
+                value: "null",
+                valueType: "null",
+            });
+            expect(rows.find((r) => r.propertyPath === "emptyArr")).toMatchObject({
+                value: "[]",
+                valueType: "empty",
+            });
+            expect(rows.find((r) => r.propertyPath === "emptyObj")).toMatchObject({
+                value: "{}",
+                valueType: "empty",
+            });
+        });
+
+        it("@graph を含む複数エンティティがそれぞれの entityType 付きで展開されること", () => {
+            const graphJson = JSON.stringify({
+                "@context": "https://schema.org",
+                "@graph": [
+                    { "@type": "Organization", "name": "Org A" },
+                    { "@type": "WebSite", "name": "Site B", "url": "https://example.com" },
+                ],
+            });
+            const parsed = parseJsonLd(graphJson);
+            const rows = flattenJsonLdProperties(parsed.entities);
+
+            expect(rows.some((r) => r.entityType === "Organization" && r.propertyPath === "name" && r.value === "Org A")).toBe(true);
+            expect(rows.some((r) => r.entityType === "WebSite" && r.propertyPath === "url" && r.isUrl === true)).toBe(true);
         });
     });
 });

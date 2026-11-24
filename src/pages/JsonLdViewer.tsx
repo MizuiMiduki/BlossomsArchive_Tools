@@ -5,6 +5,7 @@ import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
 import {
     parseJsonLd,
+    flattenJsonLdProperties,
     JSON_LD_SAMPLES,
     type JsonLdTreeNode,
     type JsonLdEntitySummary,
@@ -17,7 +18,7 @@ import {
     extractJsonLdFromMicrolink,
 } from "../utils/htmlFetcher";
 
-type ViewTab = "tree" | "cards" | "diagnostics" | "code";
+type ViewTab = "tree" | "table" | "cards" | "diagnostics" | "code";
 
 /**
  * ツリーの1ノードを表示する再帰コンポーネント
@@ -183,6 +184,7 @@ export default function JsonLdViewer() {
     const [selectedSample, setSelectedSample] = createSignal("article");
     const [activeTab, setActiveTab] = createSignal<ViewTab>("tree");
     const [searchTerm, setSearchTerm] = createSignal("");
+    const [entityFilter, setEntityFilter] = createSignal("all");
     const [copyMessage, setCopyMessage] = createSignal("");
 
     const handleFetchUrl = async (targetOverride?: string) => {
@@ -259,6 +261,7 @@ export default function JsonLdViewer() {
 
     const handleLoadSample = (key: string) => {
         setSelectedSample(key);
+        setEntityFilter("all");
         setFetchError("");
         setNoJsonLdNotice("");
         setFetchedUrl("");
@@ -272,6 +275,7 @@ export default function JsonLdViewer() {
         setRawInput("");
         setUrlInput("");
         setSearchTerm("");
+        setEntityFilter("all");
         setFetchError("");
         setNoJsonLdNotice("");
         setFetchedUrl("");
@@ -281,6 +285,52 @@ export default function JsonLdViewer() {
     const parseResult = createMemo(() => {
         return parseJsonLd(rawInput());
     });
+
+    // 全項目・値のフラット表データ
+    const propertyRows = createMemo(() =>
+        flattenJsonLdProperties(parseResult().entities),
+    );
+
+    const availableEntityTypes = createMemo(() => {
+        const types = new Set<string>();
+        for (const row of propertyRows()) {
+            types.add(row.entityType);
+        }
+        return Array.from(types);
+    });
+
+    const filteredPropertyRows = createMemo(() => {
+        const filterType = entityFilter();
+        const term = searchTerm().trim().toLowerCase();
+        return propertyRows().filter((row) => {
+            if (filterType !== "all" && row.entityType !== filterType) {
+                return false;
+            }
+            if (!term) return true;
+            return (
+                row.entityType.toLowerCase().includes(term) ||
+                row.propertyPath.toLowerCase().includes(term) ||
+                row.value.toLowerCase().includes(term)
+            );
+        });
+    });
+
+    const handleCopyTableTsv = async () => {
+        const rows = filteredPropertyRows();
+        if (rows.length === 0) return;
+        const header = "エンティティ\t項目\t値\t型";
+        const body = rows
+            .map((r) => `${r.entityType}\t${r.propertyPath}\t${r.value.replace(/\r?\n/g, " ")}\t${r.valueType}`)
+            .join("\n");
+        try {
+            await navigator.clipboard.writeText(`${header}\n${body}`);
+            setCopyMessage("項目一覧をTSV形式でコピーしました");
+            setTimeout(() => setCopyMessage(""), 2500);
+        } catch {
+            setCopyMessage("コピーに失敗しました");
+            setTimeout(() => setCopyMessage(""), 2500);
+        }
+    };
 
     // 整形JSON
     const formattedJson = createMemo(() => {
@@ -636,6 +686,13 @@ export default function JsonLdViewer() {
                         </button>
                         <button
                             type="button"
+                            class={`ba-tab ${activeTab() === "table" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("table")}
+                        >
+                            項目一覧（表） ({propertyRows().length})
+                        </button>
+                        <button
+                            type="button"
                             class={`ba-tab ${activeTab() === "cards" ? "is-active" : ""}`}
                             onClick={() => setActiveTab("cards")}
                         >
@@ -729,6 +786,103 @@ export default function JsonLdViewer() {
                                     />
                                 )}
                             </For>
+                        </div>
+                    </Show>
+
+                    {/* 1.5. 項目・値一覧テーブルビュー */}
+                    <Show when={activeTab() === "table"}>
+                        <div class="ba-stack-3">
+                            <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
+                                <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-2">
+                                    <select
+                                        class="ba-select ba-select--sm"
+                                        style={{ width: "auto", "min-width": "11rem" }}
+                                        value={entityFilter()}
+                                        onChange={(e) => setEntityFilter(e.currentTarget.value)}
+                                        aria-label="エンティティ種別で絞り込み"
+                                    >
+                                        <option value="all">すべてのエンティティ ({propertyRows().length}項目)</option>
+                                        <For each={availableEntityTypes()}>
+                                            {(typeName) => (
+                                                <option value={typeName}>{typeName}</option>
+                                            )}
+                                        </For>
+                                    </select>
+                                    <span class="ba-text-xs ba-text-muted">
+                                        表示中: <strong>{filteredPropertyRows().length}</strong> / {propertyRows().length} 件
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--outline ba-btn--xs"
+                                    onClick={handleCopyTableTsv}
+                                    disabled={filteredPropertyRows().length === 0}
+                                >
+                                    表をコピー (TSV)
+                                </button>
+                            </div>
+
+                            <Show
+                                when={filteredPropertyRows().length > 0}
+                                fallback={
+                                    <div class="ba-panel ba-text-center ba-text-sm ba-text-muted">
+                                        条件に一致する項目が見つかりませんでした。
+                                    </div>
+                                }
+                            >
+                                <div class="ba-table-wrap">
+                                    <table class="ba-table">
+                                        <thead>
+                                            <tr>
+                                                <th style={{ width: "18%" }}>エンティティ</th>
+                                                <th style={{ width: "26%" }}>項目 (プロパティ)</th>
+                                                <th>設定値</th>
+                                                <th style={{ width: "10%" }}>型</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <For each={filteredPropertyRows()}>
+                                                {(row) => (
+                                                    <tr>
+                                                        <td>
+                                                            <span class="ba-badge ba-badge--neutral">
+                                                                {row.entityType}
+                                                            </span>
+                                                        </td>
+                                                        <td class="ba-mono ba-font-bold" style={{ "word-break": "break-word" }}>
+                                                            {row.propertyPath}
+                                                        </td>
+                                                        <td style={{ "word-break": "break-word", "max-width": "32rem" }}>
+                                                            <Show
+                                                                when={row.isUrl}
+                                                                fallback={
+                                                                    <span class={row.valueType === "number" || row.valueType === "boolean" ? "ba-mono" : ""}>
+                                                                        {row.value}
+                                                                    </span>
+                                                                }
+                                                            >
+                                                                <a
+                                                                    href={row.value}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    class="ba-text-primary ba-underline ba-mono ba-break-all"
+                                                                >
+                                                                    {row.value}
+                                                                </a>
+                                                            </Show>
+                                                        </td>
+                                                        <td>
+                                                            <span class="ba-badge ba-badge--outline ba-mono">
+                                                                {row.valueType}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </For>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </Show>
                         </div>
                     </Show>
 

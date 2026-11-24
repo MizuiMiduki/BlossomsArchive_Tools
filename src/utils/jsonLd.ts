@@ -384,6 +384,154 @@ export function parseJsonLd(input: string): JsonLdParseResult {
 /**
  * サンプルプリセットデータ
  */
+export interface JsonLdPropertyRow {
+    id: string;
+    entityIndex: number;
+    entityType: string;
+    propertyPath: string;
+    value: string;
+    valueType: "string" | "number" | "boolean" | "null" | "url" | "empty";
+    isUrl: boolean;
+}
+
+/**
+ * エンティティ配列から全プロパティ・値をフラットな表データに展開する
+ */
+export function flattenJsonLdProperties(entities: JsonLdEntitySummary[]): JsonLdPropertyRow[] {
+    const rows: JsonLdPropertyRow[] = [];
+    const MAX_DEPTH = 10;
+
+    const isHttpUrl = (str: string): boolean => {
+        if (!/^https?:\/\//i.test(str)) return false;
+        try {
+            const parsed = new URL(str);
+            return parsed.protocol === "http:" || parsed.protocol === "https:";
+        } catch {
+            return false;
+        }
+    };
+
+    const walk = (
+        val: any,
+        entityIndex: number,
+        entityType: string,
+        prefix: string,
+        depth: number,
+    ) => {
+        if (depth > MAX_DEPTH) {
+            rows.push({
+                id: `row-${rows.length}`,
+                entityIndex,
+                entityType,
+                propertyPath: prefix,
+                value: JSON.stringify(val),
+                valueType: "string",
+                isUrl: false,
+            });
+            return;
+        }
+
+        if (val === null || val === undefined) {
+            rows.push({
+                id: `row-${rows.length}`,
+                entityIndex,
+                entityType,
+                propertyPath: prefix,
+                value: "null",
+                valueType: "null",
+                isUrl: false,
+            });
+            return;
+        }
+
+        if (Array.isArray(val)) {
+            if (val.length === 0) {
+                rows.push({
+                    id: `row-${rows.length}`,
+                    entityIndex,
+                    entityType,
+                    propertyPath: prefix,
+                    value: "[]",
+                    valueType: "empty",
+                    isUrl: false,
+                });
+                return;
+            }
+            val.forEach((item, idx) => {
+                walk(item, entityIndex, entityType, `${prefix}[${idx}]`, depth + 1);
+            });
+            return;
+        }
+
+        if (typeof val === "object") {
+            const entries = Object.entries(val);
+            if (entries.length === 0) {
+                rows.push({
+                    id: `row-${rows.length}`,
+                    entityIndex,
+                    entityType,
+                    propertyPath: prefix,
+                    value: "{}",
+                    valueType: "empty",
+                    isUrl: false,
+                });
+                return;
+            }
+            for (const [k, v] of entries) {
+                const nextPath = prefix ? `${prefix}.${k}` : k;
+                walk(v, entityIndex, entityType, nextPath, depth + 1);
+            }
+            return;
+        }
+
+        if (typeof val === "boolean") {
+            rows.push({
+                id: `row-${rows.length}`,
+                entityIndex,
+                entityType,
+                propertyPath: prefix,
+                value: val ? "true" : "false",
+                valueType: "boolean",
+                isUrl: false,
+            });
+            return;
+        }
+
+        if (typeof val === "number") {
+            rows.push({
+                id: `row-${rows.length}`,
+                entityIndex,
+                entityType,
+                propertyPath: prefix,
+                value: String(val),
+                valueType: "number",
+                isUrl: false,
+            });
+            return;
+        }
+
+        const strVal = String(val);
+        const urlFlag = isHttpUrl(strVal);
+        rows.push({
+            id: `row-${rows.length}`,
+            entityIndex,
+            entityType,
+            propertyPath: prefix,
+            value: strVal,
+            valueType: urlFlag ? "url" : "string",
+            isUrl: urlFlag,
+        });
+    };
+
+    entities.forEach((entity, idx) => {
+        if (entity.raw && typeof entity.raw === "object") {
+            walk(entity.raw, idx + 1, entity.type, "", 0);
+        }
+    });
+
+    return rows;
+}
+
 export const JSON_LD_SAMPLES: Record<string, { label: string; description: string; data: object }> = {
     article: {
         label: "記事 (Article / BlogPosting)",
