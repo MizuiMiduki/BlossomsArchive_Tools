@@ -249,7 +249,7 @@ describe("Layout Component", () => {
         expect(qrLink.className).toContain("ba-nav-link");
     });
 
-    it("ヘッダーの検索ボタンクリックでコマンドパレットが開くこと", () => {
+    it("ヘッダーの検索ボタンクリックでコマンドパレットが開くこと", async () => {
         const PaletteRouter = createRouter({
             history: memoryHistory(),
             routes: [{ path: "/", component: () => <div>パレットテスト</div> }],
@@ -265,7 +265,7 @@ describe("Layout Component", () => {
         expect(searchBtn).toBeInTheDocument();
         fireEvent.click(searchBtn);
 
-        expect(screen.getByRole("dialog")).toBeInTheDocument();
+        expect(await screen.findByRole("dialog")).toBeInTheDocument();
         expect(screen.getByPlaceholderText(/ツール名、キーワード、機能で検索/i)).toBeInTheDocument();
     });
 

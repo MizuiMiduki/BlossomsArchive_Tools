@@ -1,5 +1,9 @@
 /* @refresh reload */
-import './styles/critical.css';
+// 本番ビルドでは critical.css を generate-route-pages.ts が全ルートHTMLへインライン埋め込みするため、
+// 外部CSSへの二重配信を防ぎ、開発サーバー (DEV) 時のみ直接読み込む
+if (import.meta.env.DEV) {
+  import('./styles/critical.css');
+}
 import './styles/app.css';
 import { render } from '@solidjs/web';
 

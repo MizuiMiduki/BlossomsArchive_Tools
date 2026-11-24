@@ -81,6 +81,19 @@ describe("Static Build Output & Sitemap Integrity Tests", () => {
             expect(html).toContain('icon-32.png');
             expect(html).toContain('icon-192.png');
         }
+
+        // CSS二重配信防止 & 超軽量予算: 外部CSSが 20KB 未満であること
+        const assetsDir = path.join(DIST_DIR, "assets");
+        if (fs.existsSync(assetsDir)) {
+            const cssFile = fs
+                .readdirSync(assetsDir)
+                .find((f) => f.startsWith("index-") && f.endsWith(".css"));
+            expect(cssFile).toBeDefined();
+            if (cssFile) {
+                const cssBytes = fs.statSync(path.join(assetsDir, cssFile)).size;
+                expect(cssBytes).toBeLessThan(20 * 1024);
+            }
+        }
     });
 
     it("dist/sitemap.xml が生成されており全公開ルートのURLを含んでいること", () => {

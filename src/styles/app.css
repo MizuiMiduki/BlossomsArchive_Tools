@@ -36,7 +36,22 @@ input[type="search"]::-webkit-search-decoration {
   display: none;
 }
 
-/* ボタンバリエーション */
+/* ボタンバリエーション (基本 .ba-btn / .ba-btn--primary は critical.css に配置) */
+.ba-btn:hover:not(:disabled) { background-color: var(--ba-surface-2); }
+.ba-btn:active:not(:disabled) { transform: scale(0.98); }
+.ba-btn:disabled, .ba-btn[disabled] { cursor: not-allowed; opacity: 0.55; }
+.ba-btn--primary:hover:not(:disabled) { background-color: var(--ba-primary-hover); border-color: var(--ba-primary-hover); }
+.ba-btn--ghost { background-color: transparent; border-color: transparent; }
+.ba-btn--ghost:hover:not(:disabled) { background-color: var(--ba-surface-2); }
+.ba-btn--sm { min-height: 2rem; padding: 0.35rem 0.75rem; font-size: 0.8125rem; }
+.ba-btn--xs { min-height: 1.75rem; padding: 0.25rem 0.55rem; font-size: 0.75rem; }
+.ba-btn--lg { min-height: 2.85rem; padding: 0.7rem 1.35rem; font-size: 0.9375rem; }
+.ba-btn--square { padding: 0; width: 2.25rem; height: 2.25rem; }
+.ba-btn--square.ba-btn--sm { width: 2rem; height: 2rem; }
+.ba-btn--square.ba-btn--xs { width: 1.75rem; height: 1.75rem; }
+.ba-btn--circle { padding: 0; width: 2.35rem; height: 2.35rem; border-radius: 9999px; }
+.ba-btn--pill { border-radius: 9999px; }
+.ba-btn--block { width: 100%; }
 .ba-btn--secondary {
   background-color: var(--ba-surface-2);
   border-color: var(--ba-border);

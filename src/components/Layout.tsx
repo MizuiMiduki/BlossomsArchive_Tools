@@ -1,5 +1,5 @@
 // src/components/Layout.tsx
-import { For, Show, createEffect, createMemo, createSignal, onSettled } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal, lazy, onSettled } from "solid-js";
 import type { JSX } from "@solidjs/web";
 import { useLocation } from "@solidjs/router";
 import { Link, Meta, Title } from "@solidjs/meta";
@@ -15,7 +15,7 @@ import {
     PUBLISHER_NAME,
 } from "../routes";
 import ThemeToggle from "./ThemeToggle";
-import CommandPalette from "./CommandPalette";
+const CommandPalette = lazy(() => import("./CommandPalette"));
 import { delayedCall } from "../utils/animations";
 import { filterRoutesByQuery } from "../utils/search";
 import { getFavorites } from "../utils/favorites";
@@ -693,8 +693,10 @@ export default function Layout(props: LayoutProps) {
                 </main>
             </div>
 
-            {/* クイック検索コマンドパレット */}
-            <CommandPalette isOpen={isPaletteOpen()} onClose={() => setIsPaletteOpen(false)} />
+            {/* クイック検索コマンドパレット（開くまでチャンクを遅延ロードして初回JSを軽量化） */}
+            <Show when={isPaletteOpen()}>
+                <CommandPalette isOpen={isPaletteOpen()} onClose={() => setIsPaletteOpen(false)} />
+            </Show>
         </div>
     );
 }

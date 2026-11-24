@@ -39,6 +39,7 @@ function minifyCssSafely(rawCss: string): string {
         .replace(/\r?\n/g, " ")
         .replace(/\s+/g, " ")
         .replace(/\s*([{:;,}])\s*/g, "$1")
+        .replace(/;}/g, "}")
         .trim();
 }
 
@@ -272,13 +273,16 @@ for (const route of routes) {
         initialShell,
     );
 
-    // FCP/LCP最優先化: modulepreloadはメインバンドルとランタイムのみに絞り、<script type="module">の直前に配置
+    // FCP/LCP最優先化: メインバンドル・ランタイム・該当ページ専用チャンクを並列先読みしウォーターフォールを解消
     const modulePreloadList = [
         runtimeJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
             : "",
         mainJsFile
             ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(mainJsFile)}" />`
+            : "",
+        routeChunk
+            ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(routeChunk)}" />`
             : "",
     ].filter(Boolean);
 
