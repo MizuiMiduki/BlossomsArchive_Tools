@@ -1,6 +1,7 @@
 import { createSignal, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { delayedCall, playPageEntrance } from "../utils/animations";
 
 export default function PasswordGenerator() {
@@ -294,9 +295,9 @@ export default function PasswordGenerator() {
                                 when={results().length > 0}
                                 fallback={
                                     <div class="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-2 text-base-content/60">
-                                        <span class="text-5xl block mb-2">
-                                            📊
-                                        </span>
+                                        <div class="flex justify-center mb-2 text-base-content/60">
+                                            <ToolIcon name="key" class="w-10 h-10" />
+                                        </div>
                                         <p class="text-xs font-semibold leading-relaxed">
                                             パラメータを入力して「自動生成」を押すと、
                                             <br />
@@ -379,7 +380,7 @@ export default function PasswordGenerator() {
 
                 <AdSense />
 
-                {/* 💡 技術仕様 ＆ FAQセクション（アピールを廃止し、学術的・客観的な記述に統一） */}
+                {/* 技術仕様 ＆ FAQセクション（アピールを廃止し、学術的・客観的な記述に統一） */}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                     {/* 暗号理論・乱数発生器の仕様 */}
                     <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm justify-between">

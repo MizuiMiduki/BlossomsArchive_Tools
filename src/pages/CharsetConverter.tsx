@@ -1,6 +1,7 @@
 import { createSignal, createMemo, createEffect, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
 import type {
     SupportedEncoding,
@@ -1247,7 +1248,9 @@ export default function CharsetConverter() {
                                 onChange={handleFileInput}
                             />
                             <div class="space-y-2">
-                                <div class="text-4xl">📄</div>
+                                <div class="flex justify-center text-base-content/60">
+                                    <ToolIcon name="file" class="w-10 h-10" />
+                                </div>
                                 <div class="font-bold text-base">
                                     ここにファイルをドラッグ＆ドロップ
                                 </div>

@@ -241,9 +241,9 @@ describe("SeoChecker Component", () => {
         expect(
             screen.getByPlaceholderText("https://tools.blossomsarchive.com"),
         ).toBeInTheDocument();
-        expect(screen.getByText("🌐 URLから取得")).toBeInTheDocument();
+        expect(screen.getByText("URLから取得")).toBeInTheDocument();
         expect(
-            screen.getByText("📝 HTML直接入力 / ファイル読込"),
+            screen.getByText("HTML直接入力 / ファイル読込"),
         ).toBeInTheDocument();
         expect(screen.getByText("サンプルで試す")).toBeInTheDocument();
     });
@@ -264,7 +264,7 @@ describe("SeoChecker Component", () => {
 
     it("HTML直接入力モードでHTMLを貼り付けて解析できること", async () => {
         render(() => <SeoChecker />);
-        const htmlTab = screen.getByText("📝 HTML直接入力 / ファイル読込");
+        const htmlTab = screen.getByText("HTML直接入力 / ファイル読込");
         fireEvent.click(htmlTab);
 
         const textarea = screen.getByLabelText("解析するHTMLソースコード");
@@ -297,11 +297,11 @@ describe("SeoChecker Component", () => {
         render(() => <SeoChecker />);
         fireEvent.click(screen.getByText("サンプルで試す"));
 
-        const mobileBtn = await screen.findByText("📱 モバイル (スマホ)");
+        const mobileBtn = await screen.findByText("モバイル (スマホ)");
         fireEvent.click(mobileBtn);
         expect(mobileBtn.className).toContain("btn-primary");
 
-        const desktopBtn = screen.getByText("💻 デスクトップ (PC)");
+        const desktopBtn = screen.getByText("デスクトップ (PC)");
         fireEvent.click(desktopBtn);
         expect(desktopBtn.className).toContain("btn-primary");
     });
@@ -348,7 +348,7 @@ describe("SeoChecker Component", () => {
         expect(descs.length).toBeGreaterThan(0);
 
         // レポート全コピー
-        const copyAllBtn = screen.getByText("📋 SEO診断レポートを全コピー");
+        const copyAllBtn = screen.getByText("SEO診断レポートを全コピー");
         fireEvent.click(copyAllBtn);
         expect(navigator.clipboard.writeText).toHaveBeenCalled();
     });

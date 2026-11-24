@@ -7,6 +7,7 @@ import {
 } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { getPageMetadata, routes } from "../routes";
 import {
     animatePop,
@@ -816,7 +817,7 @@ export default function OgpChecker() {
                                     : "text-base-content/70 hover:bg-base-300/50"
                             }`}
                         >
-                            🌐 URLから取得
+                            URLから取得
                         </button>
                         <button
                             type="button"
@@ -830,7 +831,7 @@ export default function OgpChecker() {
                                     : "text-base-content/70 hover:bg-base-300/50"
                             }`}
                         >
-                            📝 HTML直接入力 / ファイル読込
+                            HTML直接入力 / ファイル読込
                         </button>
                     </div>
 
@@ -887,7 +888,7 @@ export default function OgpChecker() {
                                         HTMLソースコード（&lt;head&gt;内のメタタグまたはページ全体のHTML）
                                     </span>
                                     <label class="btn btn-outline btn-xs h-8 px-3 font-bold cursor-pointer self-start sm:self-auto">
-                                        📂 HTMLファイルを読み込む
+                                        HTMLファイルを読み込む
                                         <input
                                             type="file"
                                             accept=".html,.htm,text/html"
@@ -936,7 +937,7 @@ export default function OgpChecker() {
                     <Show when={error()}>
                         <div class="alert alert-error text-white font-bold mt-6 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div class="flex items-center gap-2 text-xs sm:text-sm">
-                                <span>⚠️</span>
+                                <ToolIcon name="alert" class="w-5 h-5 shrink-0" />
                                 <span>{error()}</span>
                             </div>
                             <Show when={inputMode() === "url"}>
@@ -957,7 +958,9 @@ export default function OgpChecker() {
                     {/* 未解析時の初期ガイド */}
                     <Show when={!ogpData() && !loading()}>
                         <div class="mt-8 border-2 border-dashed border-base-300 bg-base-200/40 rounded-2xl p-8 text-center flex flex-col items-center gap-3">
-                            <span class="text-4xl">🔍</span>
+                            <div class="flex justify-center text-base-content/60">
+                                <ToolIcon name="search" class="w-10 h-10" />
+                            </div>
                             <p class="text-sm font-bold text-base-content/80">
                                 URLを入力して「OGPを取得・解析」を押すか、HTMLソース・HTMLファイルを読み込んで解析してください。
                             </p>
@@ -976,11 +979,11 @@ export default function OgpChecker() {
                             <div>
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                                     <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                        <span>📱</span> SNSシェア表示プレビュー
+                                        SNSシェア表示プレビュー
                                     </h2>
                                     <div class="flex flex-wrap items-center gap-2">
                                         <label class="btn btn-outline btn-xs h-7 px-2.5 font-bold cursor-pointer">
-                                            🖼️ ローカル画像で試す
+                                            ローカル画像で試す
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -1120,9 +1123,7 @@ export default function OgpChecker() {
                                                         }
                                                         fallback={
                                                             <div class="flex flex-col items-center gap-1 text-base-content/75">
-                                                                <span class="text-3xl">
-                                                                    🖼️
-                                                                </span>
+                                                                <ToolIcon name="image" class="w-8 h-8 text-base-content/60" />
                                                                 <span class="text-xs font-bold">
                                                                     OGP画像未設定
                                                                 </span>
@@ -1164,7 +1165,7 @@ export default function OgpChecker() {
                                     <div class="bg-base-200/60 border border-base-300 rounded-2xl p-5 flex flex-col gap-3">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-black text-base-content/80 flex items-center gap-1.5">
-                                                <span>💬</span> Facebook / LINE / Discord プレビュー
+                                                Facebook / LINE / Discord プレビュー
                                             </span>
                                             <span class="badge badge-neutral badge-sm font-mono text-[10px]">
                                                 Open Graph (1.91:1)
@@ -1180,9 +1181,7 @@ export default function OgpChecker() {
                                                     }
                                                     fallback={
                                                         <div class="flex flex-col items-center gap-1 text-base-content/75">
-                                                            <span class="text-3xl">
-                                                                🖼️
-                                                            </span>
+                                                            <ToolIcon name="image" class="w-8 h-8 text-base-content/60" />
                                                             <span class="text-xs font-bold">
                                                                 og:image 未設定
                                                             </span>
@@ -1223,7 +1222,7 @@ export default function OgpChecker() {
                             {/* 2. 主要OGPタグ診断チェックリスト */}
                             <div>
                                 <h2 class="text-lg sm:text-xl font-black text-base-content mb-4 flex items-center gap-2">
-                                    <span>✅</span> OGP設定診断チェック
+                                    OGP設定診断チェック
                                 </h2>
                                 <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
                                     <For each={diagnostics()}>
@@ -1279,7 +1278,7 @@ export default function OgpChecker() {
                             <div>
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                                     <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                        <span>🏷️</span> 検出されたメタタグ一覧 (
+                                        検出されたメタタグ一覧 (
                                         {ogpData()?.rawTags.length ?? 0}件)
                                     </h2>
                                     <button

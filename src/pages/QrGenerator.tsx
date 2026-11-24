@@ -1,6 +1,7 @@
 import { createSignal, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { animatePop, delayedCall, playPageEntrance } from "../utils/animations";
 
 // ボタンオプション用の型を定義して TypeScript に型を教えます
@@ -365,9 +366,9 @@ export default function QrGenerator() {
                                 when={qrData()}
                                 fallback={
                                     <div class="text-center p-8 space-y-2 text-base-content/60">
-                                        <span class="text-5xl block mb-2">
-                                            📊
-                                        </span>
+                                        <div class="flex justify-center mb-2 text-base-content/60">
+                                            <ToolIcon name="qr" class="w-10 h-10" />
+                                        </div>
                                         <p class="text-xs font-semibold leading-relaxed">
                                             文字列を入力して生成ボタンを押すと、
                                             <br />
@@ -388,7 +389,7 @@ export default function QrGenerator() {
                                         />
                                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl pointer-events-none">
                                             <span class="text-white text-xs font-medium bg-neutral/90 px-2 py-1 rounded">
-                                                🔍 プレビューを拡大
+                                                プレビューを拡大
                                             </span>
                                         </div>
                                     </div>
@@ -413,13 +414,13 @@ export default function QrGenerator() {
                     </div>
                 </div>
 
-                {/* 💡 お役立ちインフォメーションセクション */}
+                {/* お役立ちインフォメーションセクション */}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                     {/* ツールならではのメリット */}
                     <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm justify-between">
                         <div>
                             <h2 class="text-lg font-bold text-base-content border-b border-base-300 pb-3 mb-5 flex items-center gap-2">
-                                ⚙️ 技術的な特徴と処理方式について
+                                技術的な特徴と処理方式について
                             </h2>
                             <div class="space-y-4 text-xs text-base-content/80 leading-relaxed font-medium">
                                 <p>
@@ -452,7 +453,7 @@ export default function QrGenerator() {
                     {/* FAQ：アコーディオン（Collapse） */}
                     <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm">
                         <h2 class="text-lg font-bold text-base-content border-b border-base-300 pb-3 mb-5 flex items-center gap-2">
-                            ❓ 技術的な仕様について（FAQ）
+                            技術的な仕様について（FAQ）
                         </h2>
 
                         <div class="space-y-2">

@@ -1,5 +1,6 @@
 // src/components/ThemeToggle.tsx
 import { createSignal, onSettled } from "solid-js";
+import ToolIcon from "./ToolIcon";
 
 export default function ThemeToggle() {
     let buttonRef: HTMLButtonElement | undefined;
@@ -50,7 +51,7 @@ export default function ThemeToggle() {
             class="btn btn-ghost btn-circle"
             aria-label="Toggle Dark Mode"
         >
-            {isDark() ? "☀️" : "🌙"}
+            <ToolIcon name={isDark() ? "sun" : "moon"} class="w-5 h-5" />
         </button>
     );
 }

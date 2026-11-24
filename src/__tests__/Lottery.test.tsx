@@ -129,7 +129,7 @@ describe("Lottery", () => {
         fireEvent.click(skipBtn);
 
         expect(screen.getByText("選定結果")).toBeInTheDocument();
-        expect(screen.getByText("🎉 当選")).toBeInTheDocument();
+        expect(screen.getByText("当選")).toBeInTheDocument();
 
         // 3. 「カウントダウン演出（3秒）」を選択してテスト
         fireEvent.change(animSelect, { target: { value: "countdown" } });

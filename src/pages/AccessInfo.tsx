@@ -1,6 +1,7 @@
 import { createSignal, Show, onSettled } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { delayedCall, playPageEntrance, animatePop } from "../utils/animations";
 
 interface IpData {
@@ -285,7 +286,7 @@ IPアドレス: ${data.ip}
                 <Show when={error() && !loading()}>
                     <div class="alert alert-error text-white font-bold mb-6 shadow-md rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div class="flex items-center gap-2 text-sm sm:text-base">
-                            <span>⚠️</span>
+                            <ToolIcon name="alert" class="w-5 h-5 shrink-0" />
                             <span>{error()}</span>
                         </div>
                         <button
@@ -305,7 +306,7 @@ IPアドレス: ${data.ip}
                         {/* 接続環境・位置情報 */}
                         <div>
                             <h2 class="text-lg sm:text-xl font-black mb-3 text-base-content dark:text-white flex items-center gap-2">
-                                <span>🌐</span> 接続環境・位置情報
+                                接続環境・位置情報
                             </h2>
                             <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
                                 {renderRow("IPアドレス", info()?.ip, "ip", {
@@ -339,7 +340,7 @@ IPアドレス: ${data.ip}
                         {/* 端末・ブラウザ環境 */}
                         <div>
                             <h2 class="text-lg sm:text-xl font-black mb-3 text-base-content dark:text-white flex items-center gap-2">
-                                <span>💻</span> 端末・ブラウザ環境
+                                端末・ブラウザ環境
                             </h2>
                             <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
                                 {renderRow("物理解像度", physicScreenSize(), "physic", {

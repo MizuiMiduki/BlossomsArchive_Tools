@@ -21,10 +21,10 @@ describe("categories utility", () => {
     });
 
     it("ツールのパスから対応するアイコンとカテゴリを取得できること", () => {
-        expect(getToolIcon("/calculator")).toBe("🔢");
-        expect(getToolIcon("/exposure-calculator")).toBe("📷");
-        expect(getToolIcon("/json-formatter")).toBe("⚙️");
-        expect(getToolIcon("/bpm-calculator")).toBe("🎵");
+        expect(getToolIcon("/calculator")).toBe("calculator");
+        expect(getToolIcon("/exposure-calculator")).toBe("camera");
+        expect(getToolIcon("/json-formatter")).toBe("code");
+        expect(getToolIcon("/bpm-calculator")).toBe("music");
 
         expect(getToolCategory("/calculator").id).toBe("utility");
         expect(getToolCategory("/exposure-calculator").id).toBe("camera");

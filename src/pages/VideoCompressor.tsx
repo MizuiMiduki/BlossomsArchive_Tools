@@ -311,7 +311,7 @@ export default function VideoCompressor() {
                             <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-base-200">
                                 <div>
                                     <h2 class="text-lg font-bold flex items-center gap-2">
-                                        <span>🎬</span> 元の動画ファイル
+                                        元の動画ファイル
                                     </h2>
                                     <p class="text-xs text-base-content/60 truncate max-w-md mt-0.5 font-mono">
                                         {meta().name}
@@ -372,7 +372,7 @@ export default function VideoCompressor() {
                         <div class="card bg-base-100 border border-base-300 shadow-sm p-6 space-y-6">
                             <div>
                                 <h2 class="text-lg font-bold flex items-center gap-2 mb-1">
-                                    <span>⚙️</span> 圧縮設定
+                                    圧縮設定
                                 </h2>
                                 <p class="text-xs text-base-content/60">
                                     目的に合わせたプリセットを選択するか、自由に数値をカスタマイズできます。
@@ -683,7 +683,6 @@ export default function VideoCompressor() {
             <div class="card bg-base-100 border border-base-300 shadow-sm p-6 space-y-6">
                 <div>
                     <h2 class="text-lg font-bold text-base-content flex items-center gap-2">
-                        <span>💡</span>
                         <BudouX text="動画圧縮ツールの特徴と使い方" />
                     </h2>
                     <p class="text-xs text-base-content/60 mt-1">
@@ -693,19 +692,19 @@ export default function VideoCompressor() {
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-base-200/40 p-4 rounded-xl border border-base-200">
-                        <div class="font-bold text-sm text-primary mb-1">🔒 完全ローカル処理</div>
+                        <div class="font-bold text-sm text-primary mb-1">完全ローカル処理</div>
                         <p class="text-xs text-base-content/70 leading-relaxed">
                             動画ファイルは外部サーバーに一切送信されません。すべてお使いのブラウザ内部でエンコードされるため、プライベートな動画や機密動画も安心です。
                         </p>
                     </div>
                     <div class="bg-base-200/40 p-4 rounded-xl border border-base-200">
-                        <div class="font-bold text-sm text-pink-700 dark:text-pink-300 mb-1">⚡ 柔軟なカスタマイズ</div>
+                        <div class="font-bold text-sm text-pink-700 dark:text-pink-300 mb-1">柔軟なカスタマイズ</div>
                         <p class="text-xs text-base-content/70 leading-relaxed">
                             バランス重視、SNS向けの超高圧縮、画質重視のプリセットに加え、ビットレートや解像度、フレームレート、音声ミュートを自由に指定可能です。
                         </p>
                     </div>
                     <div class="bg-base-200/40 p-4 rounded-xl border border-base-200">
-                        <div class="font-bold text-sm text-teal-800 dark:text-teal-300 mb-1">📱 スマホ・PC両対応</div>
+                        <div class="font-bold text-sm text-teal-800 dark:text-teal-300 mb-1">スマホ・PC両対応</div>
                         <p class="text-xs text-base-content/70 leading-relaxed">
                             HTML5 CanvasおよびMediaRecorder APIに対応した最新のブラウザ（Chrome, Edge, Safari, Firefoxなど）でそのまま動作します。
                         </p>

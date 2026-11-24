@@ -225,4 +225,29 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         expect(missingTests).toEqual([]);
         expect(missingFromVisualRegression).toEqual([]);
     });
+
+    it("UIデザイン規約ガード: src/ 配下（テスト除く）のUIコードにUnicode絵文字が含まれていないこと", () => {
+        const srcFiles = collectCodeFiles(path.join(ROOT_DIR, "src")).filter(
+            (f) => !f.includes(`${path.sep}__tests__${path.sep}`),
+        );
+        const allowedSymbols = new Set([
+            "©", "®", "™", "↩", "↪", "↔", "↕", "↗", "↘", "↖", "↙",
+            "◀", "▶", "▲", "▼", "★", "☆", "♪", "♫", "×", "÷", "±", "∞", "※",
+        ]);
+        const emojiRe = /\p{Extended_Pictographic}/gu;
+        const violations: string[] = [];
+
+        for (const file of srcFiles) {
+            const rel = path.relative(ROOT_DIR, file);
+            const lines = fs.readFileSync(file, "utf8").split("\n");
+            lines.forEach((line, idx) => {
+                const matches = (line.match(emojiRe) || []).filter((ch) => !allowedSymbols.has(ch));
+                if (matches.length > 0) {
+                    violations.push(`${rel}:${idx + 1} (${[...new Set(matches)].join("")})`);
+                }
+            });
+        }
+
+        expect(violations).toEqual([]);
+    });
 });

@@ -800,7 +800,7 @@ export default function TextConverter() {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-base-200/40 rounded-xl border border-base-300 space-y-2">
                             <h3 class="font-bold text-sm sm:text-base text-secondary flex items-center gap-1.5">
-                                <span>📄 HTML → Markdown 変換</span>
+                                <span>HTML → Markdown 変換</span>
                             </h3>
                             <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
                                 ブログ記事やCMSのリッチテキスト、NotionやGitHubで使いたいHTMLコードを、標準的なMarkdown構文（見出し、リスト、テーブル、コードブロック）に変換します。不要なスタイル属性やスクリプトタグは自動で除去されます。
@@ -809,7 +809,7 @@ export default function TextConverter() {
 
                         <div class="p-4 bg-base-200/40 rounded-xl border border-base-300 space-y-2">
                             <h3 class="font-bold text-sm sm:text-base text-secondary flex items-center gap-1.5">
-                                <span>🌐 Markdown → HTML 変換</span>
+                                <span>Markdown → HTML 変換</span>
                             </h3>
                             <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
                                 Markdownで書いたドキュメントを即座にHTML形式に変換します。見出しタグ（h1〜h6）、テーブル、リンク、引用（blockquote）、シンタックス言語クラス付きコードブロックに対応しており、ウェブサイトへの埋め込みに最適です。
@@ -818,7 +818,7 @@ export default function TextConverter() {
 
                         <div class="p-4 bg-base-200/40 rounded-xl border border-base-300 space-y-2">
                             <h3 class="font-bold text-sm sm:text-base text-secondary flex items-center gap-1.5">
-                                <span>🧹 HTML / Markdown → プレーンテキスト</span>
+                                <span>HTML / Markdown → プレーンテキスト</span>
                             </h3>
                             <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
                                 ウェブページからコピーした装飾付きテキストやMarkdownから、タグや特殊記号をすべて剥がし、純粋な可読文章だけを抽出します。メール本文やチャットツール、テキストファイルへの転記に便利です。
@@ -827,7 +827,7 @@ export default function TextConverter() {
 
                         <div class="p-4 bg-base-200/40 rounded-xl border border-base-300 space-y-2">
                             <h3 class="font-bold text-sm sm:text-base text-secondary flex items-center gap-1.5">
-                                <span>🛡️ HTMLエンティティ & URLエンコード</span>
+                                <span>HTMLエンティティ & URLエンコード</span>
                             </h3>
                             <p class="text-xs sm:text-sm text-base-content/80 leading-relaxed">
                                 プログラミングやWeb制作で必須となる「&lt;, &gt;, &amp;, &quot;」などの文字実体参照へのエスケープや、日本語URL・クエリパラメータのパーセントエンコード・デコードが簡単に行えます。

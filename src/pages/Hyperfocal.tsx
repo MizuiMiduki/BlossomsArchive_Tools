@@ -7,6 +7,7 @@ import {
 } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
 
 export default function HyperfocalCalculator() {
@@ -183,7 +184,7 @@ export default function HyperfocalCalculator() {
             <div class="card bg-base-100 shadow-2xl p-3 sm:p-6 w-full border border-base-300 min-w-0">
                 <div class="mb-4 sm:mb-6 border-b-2 border-base-300 pb-3 sm:pb-4">
                     <h1 class="text-xl sm:text-2xl font-black text-base-content dark:text-white flex items-center gap-2">
-                        <BudouX text="📐 過焦点距離（パンフォーカス）計算ツール" />
+                        <BudouX text="過焦点距離（パンフォーカス）計算ツール" />
                     </h1>
                     <BudouX
                         as="p"
@@ -199,7 +200,7 @@ export default function HyperfocalCalculator() {
                         <div class="form-control w-full">
                             <label class="label py-1 flex flex-col items-start gap-0.5">
                                 <span class="label-text font-black text-sm text-base-content">
-                                    📸 1. カメラのセンサーサイズを選ぶ
+                                    1. カメラのセンサーサイズを選ぶ
                                 </span>
                                 <BudouX
                                     as="span"
@@ -228,7 +229,7 @@ export default function HyperfocalCalculator() {
                             <div class="form-control w-full bg-base-100 p-3 rounded-xl border border-base-300 text-xs overflow-hidden">
                                 <label class="label py-1 flex flex-col items-start gap-0.5">
                                     <span class="label-text font-black text-xs text-purple-900 dark:text-purple-200">
-                                        ⚙️ 許容錯乱円の直径 (CoC)
+                                        許容錯乱円の直径 (CoC)
                                     </span>
                                 </label>
                                 <div class="flex items-center gap-2 mt-1">
@@ -258,7 +259,7 @@ export default function HyperfocalCalculator() {
                         <div class="form-control w-full">
                             <div class="flex justify-between items-center label py-1 gap-2">
                                 <span class="label-text font-black text-sm text-base-content flex-1 break-words">
-                                    🔎 2. レンズの焦点距離 (mm)
+                                    2. レンズの焦点距離 (mm)
                                 </span>
                                 <span class="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                                     {focalLength()} mm
@@ -332,7 +333,7 @@ export default function HyperfocalCalculator() {
                         <div class="form-control w-full">
                             <div class="flex justify-between items-center label py-1 gap-2">
                                 <span class="label-text font-black text-sm text-base-content flex-1 break-words">
-                                    🔆 3. 絞り値 (F値)
+                                    3. 絞り値 (F値)
                                 </span>
                                 <span class="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap">
                                     f/{fNumber()}
@@ -423,7 +424,7 @@ export default function HyperfocalCalculator() {
                         <div class="form-control w-full border-t border-base-300 pt-4 mt-2">
                             <div class="flex justify-between items-center label py-1 gap-2">
                                 <span class="label-text font-black text-sm text-base-content flex-1 break-words">
-                                    🎯 4. 実際のピント合わせ位置
+                                    4. 実際のピント合わせ位置
                                 </span>
                                 <span class="text-xs font-black text-purple-900 dark:text-purple-200 bg-purple-100 dark:bg-purple-950/60 px-2 py-0.5 rounded-full whitespace-nowrap">
                                     {customSubjectDistance()} m
@@ -501,7 +502,6 @@ export default function HyperfocalCalculator() {
                         <div class="bg-base-200 p-5 rounded-2xl border border-base-300 flex flex-col gap-3 shadow-xs overflow-hidden">
                             <h2 class="text-xs font-black text-base-content/80 tracking-wider uppercase border-b border-base-300 pb-2 flex justify-between items-center gap-2 flex-wrap leading-normal">
                                 <span class="break-words flex-1 min-w-[120px]">
-                                    🗺️
                                     被写界深度（ピントが合う範囲）のイメージ図
                                 </span>
                                 <span class="badge badge-neutral font-mono font-bold text-[10px] whitespace-nowrap">
@@ -511,14 +511,12 @@ export default function HyperfocalCalculator() {
 
                             <div class="bg-base-100 p-3 rounded-lg border border-base-300/60 text-[11px] leading-normal space-y-1">
                                 <p class="text-base-content font-bold" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
-                                    💡{" "}
                                     <strong class="text-primary">
                                         過焦点距離（お勧めピント位置）
                                     </strong>{" "}
                                     <BudouX text="にピントを合わせると、手前から奥（無限遠）まで全てクッキリ写るようになります。" />
                                 </p>
                                 <p class="text-base-content opacity-80" style={{ "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
-                                    💡{" "}
                                     <strong class="text-purple-900 dark:text-purple-200">
                                         実際のピント合わせ位置
                                     </strong>{" "}
@@ -541,8 +539,8 @@ export default function HyperfocalCalculator() {
                                 </div>
 
                                 {/* 1. カメラ（左端） */}
-                                <div class="absolute left-2 top-20 flex flex-col items-center">
-                                    <span class="text-2xl">📷</span>
+                                <div class="absolute left-2 top-22 flex flex-col items-center text-base-content/75">
+                                    <ToolIcon name="camera" class="w-6 h-6" />
                                 </div>
 
                                 {/* 2. ピントの合う厚み（帯） */}
@@ -584,15 +582,15 @@ export default function HyperfocalCalculator() {
                                         transform: "translateX(-50%)",
                                     }}
                                 >
-                                    <span class="text-xl">🚶</span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-purple-600 dark:bg-purple-400 mb-1" aria-hidden="true"></span>
                                     <span class="text-[9.5px] font-black text-purple-900 dark:text-purple-200 bg-purple-100 dark:bg-purple-950/60 px-1.5 py-0.5 rounded-sm whitespace-nowrap overflow-hidden truncate max-w-[110px]">
                                         被写体 ({customSubjectDistance()}m)
                                     </span>
                                 </div>
 
                                 {/* 背景限界 */}
-                                <div class="absolute right-2 top-20 flex flex-col items-center">
-                                    <span class="text-xl">🏔️</span>
+                                <div class="absolute right-2 top-22 flex flex-col items-center">
+                                    <span class="text-base font-mono font-black text-base-content/60" aria-hidden="true">∞</span>
                                 </div>
 
                                 {/* 下部スケール */}
@@ -609,7 +607,7 @@ export default function HyperfocalCalculator() {
                         {/* 計算結果カードセクション */}
                         <div class="bg-base-200 p-6 rounded-2xl border-2 border-base-300 flex flex-col gap-5 shadow-inner overflow-hidden">
                             <h2 class="text-xs font-black text-base-content/80 tracking-wider uppercase border-b-2 border-base-300 pb-2">
-                                📊 計算結果
+                                計算結果
                             </h2>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -705,7 +703,7 @@ export default function HyperfocalCalculator() {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-8 pt-6 border-t border-base-300">
                     <div class="card bg-base-200/50 p-6 rounded-2xl border border-base-300">
                         <h2 class="text-sm font-bold text-base-content border-b border-base-300 pb-2 mb-4">
-                            📘 光学理論に基づく計算式
+                            光学理論に基づく計算式
                         </h2>
                         <div class="space-y-6 text-xs text-base-content/85 leading-relaxed">
                             <p>
@@ -761,7 +759,7 @@ export default function HyperfocalCalculator() {
 
                     <div class="card bg-base-200/50 p-6 rounded-2xl border border-base-300">
                         <h2 class="text-sm font-bold text-base-content border-b border-base-300 pb-2 mb-4">
-                            ❓ よくある光学の質問 (FAQ)
+                            よくある光学の質問 (FAQ)
                         </h2>
                         <div class="space-y-3 text-xs leading-relaxed text-base-content/80">
                             <div>

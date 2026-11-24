@@ -52,9 +52,9 @@ describe("ExifFrameGenerator", () => {
     it("初期状態のレンダリング確認", () => {
         render(() => <ExifFrame />);
         expect(screen.getByRole("heading", { level: 1, name: /EXIFフレーム生成/ })).toBeInTheDocument();
-        expect(screen.getByText("📁 写真を選択する")).toBeInTheDocument();
-        expect(screen.queryByText("✨ 額縁付き画像を生成")).not.toBeInTheDocument();
-        expect(screen.getByText("⚡ 区切り文字")).toBeInTheDocument();
+        expect(screen.getByText("写真を選択する")).toBeInTheDocument();
+        expect(screen.queryByText("額縁付き画像を生成")).not.toBeInTheDocument();
+        expect(screen.getByText("区切り文字")).toBeInTheDocument();
     });
 
     it("設定タブを切り替えると対応するパネルだけが表示されること", () => {
@@ -147,7 +147,7 @@ describe("ExifFrameGenerator", () => {
 
         fireEvent.change(fileInput, { target: { files: [dummyFile] } });
 
-        const generateBtn = await screen.findByText("✨ 額縁付き画像を生成");
+        const generateBtn = await screen.findByText("額縁付き画像を生成");
         expect(generateBtn).toBeInTheDocument();
 
         globalThis.Image = origImage;
@@ -173,7 +173,7 @@ describe("ExifFrameGenerator", () => {
 
         fireEvent.change(fileInput, { target: { files: [dummyFile] } });
 
-        const generateBtn = await screen.findByText("✨ 額縁付き画像を生成");
+        const generateBtn = await screen.findByText("額縁付き画像を生成");
 
         // document.createElement("a").click が呼ばれないことを検証するためのスパイ
         const createElementSpy = vi.spyOn(document, "createElement");
@@ -181,8 +181,8 @@ describe("ExifFrameGenerator", () => {
         fireEvent.click(generateBtn);
 
         // モーダルのヘッダーとダウンロードボタンが表示されていること
-        expect(await screen.findByText("✨ 画像が生成されました")).toBeInTheDocument();
-        const downloadLink = screen.getByText("📥 画像をダウンロードする");
+        expect(await screen.findByText("画像が生成されました")).toBeInTheDocument();
+        const downloadLink = screen.getByText("画像をダウンロードする");
         expect(downloadLink).toBeInTheDocument();
         expect(downloadLink.getAttribute("download")).toMatch(/^framed_test_\d{4}\.jpeg$/);
 
@@ -244,7 +244,7 @@ describe("ExifFrameGenerator", () => {
 
         fireEvent.change(fileInput, { target: { files: [dummyFile] } });
 
-        const generateBtn = await screen.findByText("✨ 額縁付き画像を生成");
+        const generateBtn = await screen.findByText("額縁付き画像を生成");
         // FileReaderの非同期処理 (readAsDataURL) の完了を待機
         await new Promise((r) => setTimeout(r, 50));
         fireEvent.click(generateBtn);

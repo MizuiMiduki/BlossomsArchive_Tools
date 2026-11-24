@@ -1,57 +1,58 @@
 import { routes, type Route } from "../routes";
+import type { ToolIconName } from "../components/ToolIcon";
 
 export type ToolCategoryId = "all" | "camera" | "utility" | "developer" | "audio";
 
 export interface CategoryDefinition {
     id: ToolCategoryId;
     name: string;
-    icon: string;
+    icon: ToolIconName;
     badgeClass: string;
 }
 
 export const CATEGORIES: CategoryDefinition[] = [
-    { id: "all", name: "すべて", icon: "🌟", badgeClass: "badge-ghost border-base-300 text-base-content font-bold" },
-    { id: "camera", name: "写真・カメラ", icon: "📷", badgeClass: "bg-blue-700 text-white font-bold border-transparent" },
-    { id: "utility", name: "日常・便利", icon: "🛠️", badgeClass: "bg-emerald-700 text-white font-bold border-transparent" },
-    { id: "developer", name: "開発者・Web", icon: "💻", badgeClass: "bg-purple-700 text-white font-bold border-transparent" },
-    { id: "audio", name: "音響・オーディオ", icon: "🎵", badgeClass: "bg-amber-700 text-white font-bold border-transparent" },
+    { id: "all", name: "すべて", icon: "grid", badgeClass: "badge-ghost border-base-300 text-base-content font-bold" },
+    { id: "camera", name: "写真・カメラ", icon: "camera", badgeClass: "bg-blue-700 text-white font-bold border-transparent" },
+    { id: "utility", name: "日常・便利", icon: "wrench", badgeClass: "bg-emerald-700 text-white font-bold border-transparent" },
+    { id: "developer", name: "開発者・Web", icon: "code", badgeClass: "bg-purple-700 text-white font-bold border-transparent" },
+    { id: "audio", name: "音響・オーディオ", icon: "music", badgeClass: "bg-amber-700 text-white font-bold border-transparent" },
 ];
 
-export const TOOL_CATEGORIES_CONFIG: Record<string, { category: ToolCategoryId; icon: string }> = {
+export const TOOL_CATEGORIES_CONFIG: Record<string, { category: ToolCategoryId; icon: ToolIconName }> = {
     // 日常・便利ツール
-    "/calculator": { category: "utility", icon: "🔢" },
-    "/qr_code": { category: "utility", icon: "📱" },
-    "/password-generator": { category: "utility", icon: "🔑" },
-    "/lottery": { category: "utility", icon: "🎲" },
-    "/word-counter": { category: "utility", icon: "📝" },
-    "/tier-maker": { category: "utility", icon: "🏆" },
-    "/clock": { category: "utility", icon: "⏰" },
-    "/timer": { category: "utility", icon: "⏱️" },
+    "/calculator": { category: "utility", icon: "calculator" },
+    "/qr_code": { category: "utility", icon: "qr" },
+    "/password-generator": { category: "utility", icon: "key" },
+    "/lottery": { category: "utility", icon: "shuffle" },
+    "/word-counter": { category: "utility", icon: "text" },
+    "/tier-maker": { category: "utility", icon: "trophy" },
+    "/clock": { category: "utility", icon: "clock" },
+    "/timer": { category: "utility", icon: "timer" },
 
     // 写真・カメラ・メディア
-    "/exif-frame": { category: "camera", icon: "🖼️" },
-    "/exposure-calculator": { category: "camera", icon: "📷" },
-    "/timelapse-calculator": { category: "camera", icon: "⏳" },
-    "/hyperfocal": { category: "camera", icon: "📐" },
-    "/image_conversion": { category: "camera", icon: "🎨" },
-    "/video-compressor": { category: "camera", icon: "🎬" },
+    "/exif-frame": { category: "camera", icon: "frame" },
+    "/exposure-calculator": { category: "camera", icon: "camera" },
+    "/timelapse-calculator": { category: "camera", icon: "hourglass" },
+    "/hyperfocal": { category: "camera", icon: "ruler" },
+    "/image_conversion": { category: "camera", icon: "image" },
+    "/video-compressor": { category: "camera", icon: "video" },
 
     // 開発者・Web制作
-    "/json-formatter": { category: "developer", icon: "⚙️" },
-    "/json-ld-viewer": { category: "developer", icon: "🧬" },
-    "/charset-converter": { category: "developer", icon: "🔤" },
-    "/text-converter": { category: "developer", icon: "📑" },
-    "/ogp-checker": { category: "developer", icon: "🌐" },
-    "/seo-checker": { category: "developer", icon: "🔍" },
-    "/access-info": { category: "developer", icon: "📡" },
+    "/json-formatter": { category: "developer", icon: "code" },
+    "/json-ld-viewer": { category: "developer", icon: "braces" },
+    "/charset-converter": { category: "developer", icon: "type" },
+    "/text-converter": { category: "developer", icon: "file-text" },
+    "/ogp-checker": { category: "developer", icon: "globe" },
+    "/seo-checker": { category: "developer", icon: "search" },
+    "/access-info": { category: "developer", icon: "radio" },
 
     // 音響・オーディオ
-    "/bpm-calculator": { category: "audio", icon: "🎵" },
-    "/headphone-driveability": { category: "audio", icon: "🎧" },
+    "/bpm-calculator": { category: "audio", icon: "music" },
+    "/headphone-driveability": { category: "audio", icon: "headphones" },
 };
 
-export function getToolIcon(path: string): string {
-    return TOOL_CATEGORIES_CONFIG[path]?.icon || "🔧";
+export function getToolIcon(path: string): ToolIconName {
+    return TOOL_CATEGORIES_CONFIG[path]?.icon || "wrench";
 }
 
 export function getToolCategory(path: string): CategoryDefinition {

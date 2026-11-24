@@ -25,7 +25,7 @@ describe("HyperfocalCalculator", () => {
         const sensorSelect = screen.getByDisplayValue(/APS-C/) as HTMLSelectElement;
 
         fireEvent.change(sensorSelect, { target: { value: "custom" } });
-        expect(screen.getByText("⚙️ 許容錯乱円の直径 (CoC)")).toBeInTheDocument();
+        expect(screen.getByText("許容錯乱円の直径 (CoC)")).toBeInTheDocument();
     });
 
     it("焦点距離・絞り値・ピント位置の増減ボタンやプリセット操作で被写界深度が再計算されること", () => {

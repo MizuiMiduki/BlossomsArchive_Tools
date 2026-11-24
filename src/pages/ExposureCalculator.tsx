@@ -7,6 +7,7 @@ import {
     Show,
 } from "solid-js";
 import AdSense from "../components/AdSense";
+import ToolIcon from "../components/ToolIcon";
 import BudouX from "../components/BudouX";
 import { playPageEntrance, animatePop } from "../utils/animations";
 import { initAudio, closeAudio, playNotificationSound } from "../utils/sound";
@@ -536,9 +537,9 @@ export default function ExposureCalculator() {
             {/* ページタイトル & リード文 */}
             <div class="card bg-base-100 shadow-xl border border-base-200">
                 <div class="card-body p-4 sm:p-6">
-                    <h1 class="card-title text-xl sm:text-2xl font-bold flex items-center gap-2">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">
-                            📷
+                    <h1 class="card-title text-xl sm:text-2xl font-bold flex items-center gap-2.5">
+                        <span class="p-2 rounded-lg bg-base-200/80 text-primary flex items-center justify-center" aria-hidden="true">
+                            <ToolIcon name="camera" class="w-5 h-5 sm:w-6 sm:h-6" />
                         </span>
                         カメラ露出計算機
                     </h1>
@@ -557,7 +558,7 @@ export default function ExposureCalculator() {
                             }`}
                             onClick={() => setActiveTab("meter")}
                         >
-                            📷 カメラ露出計
+                            カメラ露出計
                         </button>
                         <button
                             type="button"
@@ -568,7 +569,7 @@ export default function ExposureCalculator() {
                             }`}
                             onClick={() => setActiveTab("simulator")}
                         >
-                            ☀️ 適正露出計算
+                            適正露出計算
                         </button>
                         <button
                             type="button"
@@ -579,7 +580,7 @@ export default function ExposureCalculator() {
                             }`}
                             onClick={() => setActiveTab("nd-bulb")}
                         >
-                            🌊 ND長秒・バルブ
+                            ND長秒・バルブ
                         </button>
                         <button
                             type="button"
@@ -590,7 +591,7 @@ export default function ExposureCalculator() {
                             }`}
                             onClick={() => setActiveTab("equivalent")}
                         >
-                            ⚖️ 等価露出換算
+                            等価露出換算
                         </button>
                         <button
                             type="button"
@@ -601,7 +602,7 @@ export default function ExposureCalculator() {
                             }`}
                             onClick={() => setActiveTab("astro")}
                         >
-                            🌌 星空限界速度
+                            星空限界速度
                         </button>
                     </div>
                 </div>
@@ -624,7 +625,7 @@ export default function ExposureCalculator() {
                         <div class="card-body p-4 sm:p-6 space-y-4">
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-base-200 pb-2">
                                 <h2 class="card-title text-lg sm:text-xl flex items-center gap-2">
-                                    <span>📷</span> スマホカメラ リアルタイム露出計
+                                    スマホカメラ リアルタイム露出計
                                 </h2>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <button
@@ -632,7 +633,7 @@ export default function ExposureCalculator() {
                                         class="btn btn-sm btn-outline btn-secondary font-bold"
                                         onClick={() => switchToScenePresets()}
                                     >
-                                        ☀️ 選択式(シーン)に戻る
+                                        選択式(シーン)に戻る
                                     </button>
                                     <span class="badge badge-outline text-xs hidden sm:inline-flex">
                                         完全ローカル解析
@@ -643,7 +644,7 @@ export default function ExposureCalculator() {
                             {/* カメラエラー表示 */}
                             <Show when={cameraError()}>
                                 <div class="alert alert-error text-xs sm:text-sm py-2">
-                                    <span>⚠️ {cameraError()}</span>
+                                    <span class="inline-flex items-center gap-1.5"><ToolIcon name="alert" class="w-4 h-4 shrink-0" /> {cameraError()}</span>
                                 </div>
                             </Show>
 
@@ -693,8 +694,8 @@ export default function ExposureCalculator() {
                                 {/* 未起動時のプレースホルダー */}
                                 <Show when={!isCameraActive()}>
                                     <div class="text-center p-4 space-y-3">
-                                        <div class="text-4xl" aria-hidden="true">
-                                            📷
+                                        <div class="flex justify-center text-white/70" aria-hidden="true">
+                                            <ToolIcon name="camera" class="w-10 h-10" />
                                         </div>
                                         <div class="text-xs sm:text-sm font-medium text-white/80">
                                             カメラを起動して明るさをリアルタイム測光
@@ -727,7 +728,7 @@ export default function ExposureCalculator() {
                                         class="btn btn-error btn-sm px-3"
                                         onClick={() => stopCamera()}
                                     >
-                                        🛑 カメラを停止
+                                        カメラを停止
                                     </button>
                                     <button
                                         type="button"
@@ -741,14 +742,14 @@ export default function ExposureCalculator() {
                                             startCamera();
                                         }}
                                     >
-                                        🔄 {cameraFacing() === "environment" ? "インカメラに切替" : "背面カメラに切替"}
+                                        {cameraFacing() === "environment" ? "インカメラに切替" : "背面カメラに切替"}
                                     </button>
                                     <button
                                         type="button"
                                         class="btn btn-outline btn-secondary btn-sm font-bold"
                                         onClick={() => switchToScenePresets()}
                                     >
-                                        ☀️ 選択式(シーン)に戻る
+                                        選択式(シーン)に戻る
                                     </button>
                                 </div>
                             </Show>
@@ -783,7 +784,7 @@ export default function ExposureCalculator() {
                                                 class="btn btn-primary btn-sm flex-1 sm:flex-none font-bold text-white shadow-md"
                                                 onClick={() => applyMeasuredEvToSimulator()}
                                             >
-                                                ☀️ この露出値で計算する
+                                                この露出値で計算する
                                             </button>
                                             <button
                                                 type="button"
@@ -800,7 +801,7 @@ export default function ExposureCalculator() {
                             {/* 測光方式とキャリブレーション（詳細設定アコーディオン） */}
                             <details class="collapse collapse-arrow bg-base-200/50 border border-base-300/60 rounded-xl">
                                 <summary class="collapse-title text-xs sm:text-sm font-semibold text-base-content/80 py-2 min-h-0">
-                                    ⚙️ 測光方式・EVキャリブレーション補正の設定
+                                    測光方式・EVキャリブレーション補正の設定
                                 </summary>
                                 <div class="collapse-content space-y-3 pt-2">
                                     {/* 測光方式の選択 */}
@@ -816,7 +817,7 @@ export default function ExposureCalculator() {
                                             />
                                             <div>
                                                 <div class="font-bold text-xs">
-                                                    ⭕ 中央重点測光
+                                                    中央重点測光
                                                 </div>
                                                 <div class="text-[10px] text-base-content/70">
                                                     中央被写体を重視（標準的）
@@ -834,7 +835,7 @@ export default function ExposureCalculator() {
                                             />
                                             <div>
                                                 <div class="font-bold text-xs">
-                                                    🎯 スポット測光
+                                                    スポット測光
                                                 </div>
                                                 <div class="text-[10px] text-base-content/70">
                                                     中央の狭い一点のみを測定
@@ -852,7 +853,7 @@ export default function ExposureCalculator() {
                                             />
                                             <div>
                                                 <div class="font-bold text-xs">
-                                                    🔲 全画面平均測光
+                                                    全画面平均測光
                                                 </div>
                                                 <div class="text-[10px] text-base-content/70">
                                                     画面全体の明るさを均等評価
@@ -922,7 +923,7 @@ export default function ExposureCalculator() {
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <span class="text-xs uppercase tracking-wider text-slate-200 font-bold">
-                                            🎯 計算された最適露出設定
+                                            計算された最適露出設定
                                         </span>
                                         <span class="badge badge-xs bg-black/60 text-white border border-white/30 font-mono text-[10px]">
                                             目標 EV {currentTargetEv().toFixed(1)}
@@ -961,7 +962,7 @@ export default function ExposureCalculator() {
                             >
                                 <div class="mt-2 pt-2 border-t border-white/20 flex flex-wrap items-center justify-between gap-2">
                                     <span class="text-xs sm:text-sm text-white">
-                                        ⏱️ 1秒以上の露光時間です。バルブタイマーにセットしますか？
+                                        1秒以上の露光時間です。バルブタイマーにセットしますか？
                                     </span>
                                     <button
                                         type="button"
@@ -997,7 +998,7 @@ export default function ExposureCalculator() {
                                         startCamera();
                                     }}
                                 >
-                                    📷 カメラで測光する
+                                    カメラで測光する
                                 </button>
                             </div>
 
@@ -1013,7 +1014,7 @@ export default function ExposureCalculator() {
                                         }`}
                                         onClick={() => setIsManualEv(false)}
                                     >
-                                        ☀️ シーン選択式
+                                        シーン選択式
                                     </button>
                                     <button
                                         type="button"
@@ -1024,7 +1025,7 @@ export default function ExposureCalculator() {
                                         }`}
                                         onClick={() => setIsManualEv(true)}
                                     >
-                                        ⚙️ 手動EV・測光値入力
+                                        手動EV・測光値入力
                                     </button>
                                 </div>
                                 <Show when={isManualEv()}>
@@ -1033,7 +1034,7 @@ export default function ExposureCalculator() {
                                         class="btn btn-sm btn-outline btn-secondary font-bold min-h-[38px]"
                                         onClick={() => setIsManualEv(false)}
                                     >
-                                        ☀️ シーン選択式に戻る
+                                        シーン選択式に戻る
                                     </button>
                                 </Show>
                             </div>
@@ -1216,7 +1217,7 @@ export default function ExposureCalculator() {
                                     />
                                     <div>
                                         <div class="font-bold text-sm">
-                                            ⏱️ シャッタースピード
+                                            シャッタースピード
                                         </div>
                                         <div class="text-xs text-base-content/70">
                                             F値とISOから適正秒数を計算
@@ -1236,7 +1237,7 @@ export default function ExposureCalculator() {
                                     />
                                     <div>
                                         <div class="font-bold text-sm">
-                                            ⭕ 絞り (F値)
+                                            絞り (F値)
                                         </div>
                                         <div class="text-xs text-base-content/70">
                                             秒数とISOから適正F値を計算
@@ -1254,7 +1255,7 @@ export default function ExposureCalculator() {
                                     />
                                     <div>
                                         <div class="font-bold text-sm">
-                                            ⚡ ISO感度
+                                            ISO感度
                                         </div>
                                         <div class="text-xs text-base-content/70">
                                             F値と秒数から適正ISOを計算
@@ -1540,7 +1541,7 @@ export default function ExposureCalculator() {
                     <div class="card bg-base-100 shadow-xl border border-base-200">
                         <div class="card-body">
                             <h2 class="card-title text-xl border-b border-base-200 pb-2">
-                                ⏱️ 長秒露光時間 & バルブ撮影タイマー
+                                長秒露光時間 & バルブ撮影タイマー
                             </h2>
 
                             <div class="bg-base-200/50 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 my-4 border border-base-300/60">
@@ -1568,7 +1569,7 @@ export default function ExposureCalculator() {
                                     class="btn btn-outline btn-primary"
                                     onClick={() => setTimerFromNd()}
                                 >
-                                    📥 タイマーにセット
+                                    タイマーにセット
                                 </button>
                             </div>
 
@@ -1607,7 +1608,7 @@ export default function ExposureCalculator() {
                                             toggleTimer(e.currentTarget)
                                         }
                                     >
-                                        {isTimerRunning() ? "⏸️ 一時停止" : "▶️ スタート"}
+                                        {isTimerRunning() ? "一時停止" : "スタート"}
                                     </button>
                                     <button
                                         type="button"
@@ -1616,7 +1617,7 @@ export default function ExposureCalculator() {
                                             resetTimer(e.currentTarget)
                                         }
                                     >
-                                        🔄 リセット
+                                        リセット
                                     </button>
                                 </div>
 
@@ -1966,7 +1967,7 @@ export default function ExposureCalculator() {
                     <div class="card bg-base-100 shadow-xl border border-base-200">
                         <div class="card-body space-y-6">
                             <h2 class="card-title text-xl border-b border-base-200 pb-2">
-                                🌌 星景・天体写真 露光限界速度の計算
+                                星景・天体写真 露光限界速度の計算
                             </h2>
                             <p class="text-xs text-base-content/70">
                                 星景写真では、露出時間が長すぎると地球の自転によって星が点ではなく線状に流れてしまいます。点像を維持できる限界シャッター速度を算出します。
@@ -2153,12 +2154,12 @@ export default function ExposureCalculator() {
             <div class="card bg-base-100 shadow-xl border border-base-200">
                 <div class="card-body space-y-4">
                     <h2 class="card-title text-xl border-b border-base-200 pb-2">
-                        💡 露出の基礎知識と撮影テクニック
+                        露出の基礎知識と撮影テクニック
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                         <div class="p-4 bg-base-200/50 rounded-xl space-y-2 border border-base-300/40">
                             <h3 class="font-bold text-sm flex items-center gap-1.5">
-                                <span>⭕</span> 絞り (F値)
+                                絞り (F値)
                             </h3>
                             <p class="text-xs text-base-content/80 leading-relaxed">
                                 光の入る窓の大きさ。値を小さくする（f/1.4やf/2.8）と背景が大きくボケて光が多く入ります。絞り込む（f/8やf/11）と全体にピントが合います（パンフォーカス）。
@@ -2166,7 +2167,7 @@ export default function ExposureCalculator() {
                         </div>
                         <div class="p-4 bg-base-200/50 rounded-xl space-y-2 border border-base-300/40">
                             <h3 class="font-bold text-sm flex items-center gap-1.5">
-                                <span>⏱️</span> シャッタースピード
+                                シャッタースピード
                             </h3>
                             <p class="text-xs text-base-content/80 leading-relaxed">
                                 光を取り込む時間の長さ。1/1000秒などの高速は動体をピタッと静止させ、手ブレを防ぎます。数秒〜数十秒の長秒露光は水流を絹のように滑らかに表現できます。
@@ -2174,7 +2175,7 @@ export default function ExposureCalculator() {
                         </div>
                         <div class="p-4 bg-base-200/50 rounded-xl space-y-2 border border-base-300/40">
                             <h3 class="font-bold text-sm flex items-center gap-1.5">
-                                <span>⚡</span> ISO感度
+                                ISO感度
                             </h3>
                             <p class="text-xs text-base-content/80 leading-relaxed">
                                 センサーが光を増幅する度合い。暗い場所でシャッター速度を稼げますが、数値を高くしすぎると写真にノイズ（ざらつき）が発生します。基本はISO 100等の低感度を保ちます。
@@ -2185,7 +2186,7 @@ export default function ExposureCalculator() {
                     <div class="collapse collapse-arrow bg-base-200/40 border border-base-200 rounded-xl mt-2">
                         <input type="checkbox" aria-label="Sunny 16 ルールについての詳細を開く" />
                         <div class="collapse-title text-sm font-semibold">
-                            ☀️ 快晴時の基準則「Sunny 16 ルール」とは？
+                            快晴時の基準則「Sunny 16 ルール」とは？
                         </div>
                         <div class="collapse-content text-xs text-base-content/80 leading-relaxed space-y-2">
                             <p>
@@ -2200,7 +2201,7 @@ export default function ExposureCalculator() {
                     <div class="collapse collapse-arrow bg-base-200/40 border border-base-200 rounded-xl">
                         <input type="checkbox" aria-label="NDフィルターを活用した長秒露光撮影のコツを開く" />
                         <div class="collapse-title text-sm font-semibold">
-                            🌊 NDフィルターを活用した長秒露光撮影のコツ
+                            NDフィルターを活用した長秒露光撮影のコツ
                         </div>
                         <div class="collapse-content text-xs text-base-content/80 leading-relaxed space-y-2">
                             <ul class="list-disc pl-4 space-y-1">

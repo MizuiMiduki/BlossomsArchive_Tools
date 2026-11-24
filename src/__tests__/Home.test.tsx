@@ -91,6 +91,6 @@ describe("Home page", () => {
         const cardBody = calcTitle.closest(".card-body");
         expect(cardBody).not.toBeNull();
         expect(cardBody?.textContent).toContain("日常・便利");
-        expect(cardBody?.textContent).toContain("🔢");
+        expect(cardBody?.querySelector("svg")).not.toBeNull();
     });
 });

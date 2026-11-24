@@ -148,7 +148,7 @@ describe("E2E User Journey Tests (End-to-End Application Workflows)", () => {
             await screen.findByText("Google検索結果プレビュー (SERP Preview)"),
         ).toBeInTheDocument();
 
-        const copyReportBtn = screen.getByText("📋 SEO診断レポートを全コピー");
+        const copyReportBtn = screen.getByText("SEO診断レポートを全コピー");
         fireEvent.click(copyReportBtn);
         expect(navigator.clipboard.writeText).toHaveBeenCalled();
     });

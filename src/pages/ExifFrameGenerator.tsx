@@ -6,6 +6,7 @@ import {
     onSettled,
 } from "solid-js";
 import AdSense from "../components/AdSense";
+import ToolIcon, { type ToolIconName } from "../components/ToolIcon";
 import { delayedCall, playPageEntrance } from "../utils/animations";
 const isTest = typeof import.meta !== "undefined" && import.meta.env?.MODE === "test";
 
@@ -283,13 +284,13 @@ export default function ExifFrame() {
     };
 
     type SettingTab = "photo" | "text" | "layout" | "design" | "overlay" | "save";
-    const settingTabs: { id: SettingTab; icon: string; label: string; isBeta?: boolean }[] = [
-        { id: "photo", icon: "📷", label: "写真" },
-        { id: "text", icon: "📝", label: "文字" },
-        { id: "layout", icon: "📍", label: "配置" },
-        { id: "design", icon: "🎨", label: "デザイン" },
-        { id: "overlay", icon: "🪄", label: "重ね画像", isBeta: true },
-        { id: "save", icon: "💾", label: "保存" },
+    const settingTabs: { id: SettingTab; icon: ToolIconName; label: string; isBeta?: boolean }[] = [
+        { id: "photo", icon: "camera", label: "写真" },
+        { id: "text", icon: "type", label: "文字" },
+        { id: "layout", icon: "layout", label: "配置" },
+        { id: "design", icon: "sliders", label: "デザイン" },
+        { id: "overlay", icon: "layers", label: "重ね画像", isBeta: true },
+        { id: "save", icon: "download", label: "保存" },
     ];
     const [activeTab, setActiveTab] = createSignal<SettingTab>("photo");
 
@@ -2525,11 +2526,11 @@ export default function ExifFrame() {
 
     const positionGroups = [
         {
-            title: "🖼️ フレーム帯に配置",
+            title: "フレーム帯に配置",
             items: positionItems.filter((i) => !i.isOverlay),
         },
         {
-            title: "✨ 画像の上に重ねる",
+            title: "画像の上に重ねる",
             items: positionItems.filter((i) => i.isOverlay),
         },
     ];
@@ -2579,8 +2580,10 @@ export default function ExifFrame() {
         <div ref={containerRef} class="exif-tool h-full w-full p-0 sm:p-4 pb-36 sm:pb-36 lg:pb-4 flex flex-col gap-4 bg-base-100">
             {/* ヘッダーセクション: 初期SSR App Shellと整合し、ハイドレーション後のレイアウトシフトとLCP要素の消滅を防止 */}
             <div class="card bg-base-100 shadow-xl border border-base-300 p-4 sm:p-6 flex flex-col gap-3">
-                <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-base-content flex items-center gap-2">
-                    <span>🖼️</span>
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-base-content flex items-center gap-2.5">
+                    <span class="p-2 rounded-lg bg-base-200/80 text-primary flex items-center justify-center" aria-hidden="true">
+                        <ToolIcon name="frame" class="w-5 h-5 sm:w-6 sm:h-6" />
+                    </span>
                     <span>EXIFフレーム生成</span>
                 </h1>
                 <p class="text-sm text-base-content/80 leading-relaxed">
@@ -2624,12 +2627,7 @@ export default function ExifFrame() {
                                                         BETA
                                                     </span>
                                                 </Show>
-                                                <span
-                                                    class="text-base sm:text-lg lg:text-base leading-none"
-                                                    aria-hidden="true"
-                                                >
-                                                    {tab.icon}
-                                                </span>
+                                                <ToolIcon name={tab.icon} class="w-4 h-4 shrink-0" />
                                                 <span class="truncate">{tab.label}</span>
                                             </button>
                                         )}
@@ -2642,9 +2640,7 @@ export default function ExifFrame() {
                                             class="lg:hidden flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 h-14 rounded-lg text-[10px] sm:text-[11px] font-bold bg-success text-success-content shadow-xs active:scale-95 transition-transform cursor-pointer select-none disabled:opacity-60"
                                             aria-label="額縁付き画像を生成"
                                         >
-                                            <span class="text-base sm:text-lg leading-none" aria-hidden="true">
-                                                ✨
-                                            </span>
+                                            <ToolIcon name="download" class="w-4 h-4 shrink-0" />
                                             <span class="truncate">
                                                 {isProcessing() ? "生成中" : "生成"}
                                             </span>
@@ -2661,10 +2657,10 @@ export default function ExifFrame() {
                             >
                                 <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3">
                                     <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
-                                        📷 写真の読み込み・回転
+                                        写真の読み込み・回転
                                     </span>
                                     <label class="btn btn-primary text-white h-12 px-6 text-sm rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 w-full">
-                                        <span>📁 写真を選択する</span>
+                                        <span>写真を選択する</span>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -2684,7 +2680,7 @@ export default function ExifFrame() {
                                             onClick={rotateImage}
                                             class="btn btn-outline btn-primary h-11 px-4 rounded-xl flex items-center justify-center gap-2 w-full border-base-300 text-xs"
                                         >
-                                            🔄 画像を右に90度回転
+                                            画像を右に90度回転
                                         </button>
                                     </Show>
                                 </div>
@@ -2701,7 +2697,7 @@ export default function ExifFrame() {
                                     <label class="flex items-center justify-between cursor-pointer text-base-content">
                                         <div class="flex flex-col">
                                             <span class="text-xs font-bold text-base-content">
-                                                ✍️ 自由なタイトルモードにする
+                                                自由なタイトルモードにする
                                             </span>
                                             <span class="text-[10px] text-base-content/75 font-medium">
                                                 カメラ情報の代わりに好きな文字を刻印
@@ -2723,13 +2719,13 @@ export default function ExifFrame() {
                                 </div>
                                 <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3">
                                     <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
-                                        📝 文字編集
+                                        文字編集
                                     </span>
                                     <div class="flex flex-col gap-2 bg-base-100 p-3 rounded-lg border border-base-300 text-xs mb-1">
                                         <div class="flex items-center justify-between">
                                             <div class="flex flex-col">
                                                 <span class="font-bold text-base-content text-[11px]">
-                                                    🏷️ 接頭辞の設定
+                                                    接頭辞の設定
                                                 </span>
                                                 <span class="text-[10px] text-base-content/75 font-medium">
                                                     テキストの先頭に文字を添えます
@@ -2768,7 +2764,7 @@ export default function ExifFrame() {
                                         <div class="flex flex-col gap-2 text-xs animate-fade-in">
                                             <div class="flex flex-col gap-1">
                                                 <span class="text-[10px] font-bold text-base-content/60">
-                                                    ✍️ 自由タイトル 1行目（メイン題名）
+                                                    自由タイトル 1行目（メイン題名）
                                                 </span>
                                                 <input
                                                     type="text"
@@ -2786,7 +2782,7 @@ export default function ExifFrame() {
                                             </div>
                                             <div class="flex flex-col gap-1">
                                                 <span class="text-[10px] font-bold text-base-content/60">
-                                                    📅 自由タイトル 2行目（サブ情報）
+                                                    自由タイトル 2行目（サブ情報）
                                                 </span>
                                                 <input
                                                     type="text"
@@ -2808,7 +2804,7 @@ export default function ExifFrame() {
                                         <div class="flex flex-col gap-1.5 bg-base-100 p-3 rounded-lg border border-base-300 text-xs">
                                             <div class="flex items-center justify-between">
                                                 <span class="font-bold text-base-content text-[11px] flex items-center gap-1">
-                                                    ⚡ 区切り文字
+                                                    区切り文字
                                                 </span>
                                                 <span class="text-[10px] text-base-content/75 font-medium">
                                                     Exifパラメータ間の区切り記号
@@ -2868,7 +2864,7 @@ export default function ExifFrame() {
                                     <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
                                         <div class="flex items-center justify-between border-b border-base-300 pb-1.5">
                                             <span class="text-xs font-bold text-base-content uppercase tracking-wider">
-                                                📷 表示するExif情報
+                                                表示するExif情報
                                             </span>
                                             <span class="text-[10px] text-base-content/75 font-medium">
                                                 チェックで表示 / 値は直接修正可
@@ -3090,7 +3086,7 @@ export default function ExifFrame() {
                                     <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
                                     <div class="flex items-center justify-between border-b border-base-300 pb-2">
                                         <span class="font-bold text-base-content/80 text-[11px] flex items-center gap-1">
-                                            📍 文字の配置設定
+                                            文字の配置設定
                                         </span>
                                         <span class="text-[10px] text-base-content/75 font-medium">
                                             選択して変更
@@ -3173,9 +3169,7 @@ export default function ExifFrame() {
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <span class="text-[8px] opacity-40">
-                                                                                                📸
-                                                                                            </span>
+                                                                                            <ToolIcon name="image" class="w-3 h-3 text-white/40" />
                                                                                         }
                                                                                     >
                                                                                         <img
@@ -3208,9 +3202,7 @@ export default function ExifFrame() {
                                                                                 <Show
                                                                                     when={uploadedImageSrc()}
                                                                                     fallback={
-                                                                                        <span class="text-[10px] opacity-30">
-                                                                                            🖼️
-                                                                                        </span>
+                                                                                        <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
                                                                                     }
                                                                                 >
                                                                                     <img
@@ -3309,9 +3301,7 @@ export default function ExifFrame() {
                                                                                 <Show
                                                                                     when={uploadedImageSrc()}
                                                                                     fallback={
-                                                                                        <span class="text-[10px] opacity-30">
-                                                                                            🖼️
-                                                                                        </span>
+                                                                                        <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
                                                                                     }
                                                                                 >
                                                                                     <img
@@ -3381,9 +3371,7 @@ export default function ExifFrame() {
                                                                                 <Show
                                                                                     when={uploadedImageSrc()}
                                                                                     fallback={
-                                                                                        <span class="text-[10px] opacity-30">
-                                                                                            🖼️
-                                                                                        </span>
+                                                                                        <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
                                                                                     }
                                                                                 >
                                                                                     <img
@@ -3421,9 +3409,7 @@ export default function ExifFrame() {
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <span class="text-[10px] opacity-30">
-                                                                                                🖼️
-                                                                                            </span>
+                                                                                            <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
                                                                                         }
                                                                                     >
                                                                                         <img
@@ -3461,9 +3447,7 @@ export default function ExifFrame() {
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <span class="text-[10px] opacity-30">
-                                                                                                🖼️
-                                                                                            </span>
+                                                                                            <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
                                                                                         }
                                                                                     >
                                                                                         <img
@@ -3489,9 +3473,7 @@ export default function ExifFrame() {
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <span class="text-[10px] opacity-30">
-                                                                                                🖼️
-                                                                                            </span>
+                                                                                            <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
                                                                                         }
                                                                                     >
                                                                                         <img
@@ -3531,9 +3513,7 @@ export default function ExifFrame() {
                                                                                     <Show
                                                                                         when={uploadedImageSrc()}
                                                                                         fallback={
-                                                                                            <span class="text-[10px] opacity-30">
-                                                                                                🖼️
-                                                                                            </span>
+                                                                                            <ToolIcon name="image" class="w-3.5 h-3.5 text-white/30" />
                                                                                         }
                                                                                     >
                                                                                         <img
@@ -3585,7 +3565,7 @@ export default function ExifFrame() {
                                     <div class="flex flex-col gap-2 bg-base-200/50 p-3 rounded-xl border border-base-300/60 text-xs">
                                         <div class="flex items-center justify-between">
                                             <span class="font-bold text-base-content/80">
-                                                🎨 背景マットの色
+                                                背景マットの色
                                             </span>
                                             <div class="flex items-center gap-3 font-semibold text-base-content">
                                                 <label class="flex gap-1 items-center cursor-pointer">
@@ -3628,7 +3608,7 @@ export default function ExifFrame() {
                                 </Show>
                                 <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
                                     <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
-                                        🔤 フォント・文字サイズ
+                                        フォント・文字サイズ
                                     </span>
                                     <div class="flex flex-col gap-1">
                                         <span class="font-bold text-base-content/60 text-[10px]">
@@ -3685,7 +3665,7 @@ export default function ExifFrame() {
                                     <label class="flex items-center justify-between cursor-pointer mb-2">
                                         <div class="flex flex-col">
                                             <span class="label-text font-black text-secondary text-sm">
-                                                🔥 上級者カスタマイズモード
+                                                上級者カスタマイズモード
                                             </span>
                                             <span class="text-[10px] text-base-content/60 font-medium">
                                                 こだわりの額縁や銘板プレートを解放
@@ -3710,7 +3690,7 @@ export default function ExifFrame() {
                                             <div class="grid grid-cols-2 gap-2">
                                                 <div class="flex flex-col gap-1">
                                                     <span class="text-[10px] font-bold text-base-content/70">
-                                                        🎨 好きな枠色
+                                                        好きな枠色
                                                     </span>
                                                     <div class="flex items-center gap-1">
                                                         <input
@@ -3733,7 +3713,7 @@ export default function ExifFrame() {
                                                 </div>
                                                 <div class="flex flex-col gap-1">
                                                     <span class="text-[10px] font-bold text-base-content/70">
-                                                        ✍️ 好きな文字色
+                                                        好きな文字色
                                                     </span>
                                                     <div class="flex items-center gap-1">
                                                         <input
@@ -3758,7 +3738,7 @@ export default function ExifFrame() {
 
                                             <div class="flex flex-col gap-1">
                                                 <span class="text-[10px] font-bold text-base-content/70">
-                                                    🪚 写真の角丸調整
+                                                    写真の角丸調整
                                                 </span>
                                                 <input
                                                     type="range"
@@ -3783,7 +3763,7 @@ export default function ExifFrame() {
 
                                             <div class="flex flex-col gap-1">
                                                 <span class="text-[10px] font-bold text-base-content/70 mb-1">
-                                                    🖼️ 額縁の装飾スタイル
+                                                    額縁の装飾スタイル
                                                 </span>
                                                 <div class="grid grid-cols-3 gap-1.5 p-0.5">
                                                     <For each={frameTemplates}>
@@ -3818,7 +3798,7 @@ export default function ExifFrame() {
 
                                             <div class="flex flex-col gap-1">
                                                 <span class="text-[10px] font-bold text-base-content/70 mb-1">
-                                                    🏷️ 文字のプレート装飾
+                                                    文字のプレート装飾
                                                 </span>
                                                 <div class="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto p-0.5">
                                                     <For each={plateTemplates}>
@@ -3890,7 +3870,7 @@ export default function ExifFrame() {
                                     </span>
                                     <div class="flex flex-col gap-0.5 text-base-content/80 leading-relaxed">
                                         <span class="font-bold text-base-content">
-                                            🧪 重ね画像（透過PNG）＆著作権表記（ベータ版）
+                                            重ね画像（透過PNG）＆著作権表記（ベータ版）
                                         </span>
                                         <span class="text-[11px] text-base-content/70">
                                             透過PNGやロゴ・キャラクター素材を複数読み込んで自由な位置に配置できます。フレームの空きスペースに著作権表記（©）を入れることも可能です。
@@ -3901,7 +3881,7 @@ export default function ExifFrame() {
                                 <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-3 text-xs">
                                     <div class="flex items-center justify-between border-b border-base-300 pb-1.5">
                                         <span class="text-xs font-bold text-base-content uppercase tracking-wider">
-                                            🪄 重ねる画像の追加・管理
+                                            重ねる画像の追加・管理
                                         </span>
                                         <span class="text-[10px] text-base-content/75 font-medium">
                                             複数選択可（PNG / WebP 等）
@@ -3909,7 +3889,7 @@ export default function ExifFrame() {
                                     </div>
 
                                     <label class="btn btn-secondary text-white h-11 px-4 text-xs rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-2 w-full">
-                                        <span>➕ 透過PNG・重ねる画像を追加（複数可）</span>
+                                        <span>+ 透過PNG・重ねる画像を追加（複数可）</span>
                                         <input
                                             type="file"
                                             accept="image/png,image/webp,image/gif,image/svg+xml,image/*"
@@ -3929,9 +3909,8 @@ export default function ExifFrame() {
                                         }
                                     >
                                         <div class="text-[11px] text-primary font-bold bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 flex items-center gap-1.5">
-                                            <span>👆</span>
                                             <span>
-                                                プレビュー上で直接ドラッグして移動、四隅の丸（またはピンチ・マウスホイール）で拡大縮小できます！
+                                                プレビュー上で直接ドラッグして移動、四隅の丸（またはピンチ・マウスホイール）で拡大縮小できます。
                                             </span>
                                         </div>
                                         <div class="flex flex-col gap-3">
@@ -4000,7 +3979,7 @@ export default function ExifFrame() {
                                                             <label class="flex-1 flex items-center justify-between cursor-pointer bg-base-200/50 px-2.5 py-2 rounded-lg border border-base-300">
                                                                 <div class="flex flex-col">
                                                                     <span class="text-[11px] font-bold text-base-content">
-                                                                        🖼️ フレームの上に被せる
+                                                                        フレームの上に被せる
                                                                     </span>
                                                                     <span class="text-[10px] text-base-content/60">
                                                                         OFFの時は写真の内側のみで切り抜かれます
@@ -4196,7 +4175,7 @@ export default function ExifFrame() {
                                             class="select select-bordered select-sm w-full bg-base-100 text-base-content text-xs font-medium border-base-300"
                                         >
                                             <option value="auto">
-                                                ✨ 自動（フレームの空きスペースに配置）
+                                                自動（フレームの空きスペースに配置）
                                             </option>
                                             <option value="frame-bottom-right">
                                                 フレームの右下
@@ -4231,7 +4210,7 @@ export default function ExifFrame() {
                                 <Show when={activeTab() === "save" || visitedTabs().has("save")}>
                                     <div class="form-control border border-base-300 p-3.5 rounded-xl bg-base-200/30 flex flex-col gap-2.5 text-xs">
                                     <span class="text-xs font-bold text-base-content uppercase tracking-wider block border-b border-base-300 pb-1.5">
-                                        💾 ファイル保存設定
+                                        ファイル保存設定
                                     </span>
                                     <div class="flex flex-col gap-1">
                                         <span class="text-[10px] font-bold text-base-content/60">
@@ -4338,8 +4317,8 @@ export default function ExifFrame() {
                                                 useCustomTitle() && keepOriginalExif()
                                             }
                                         >
-                                            <span class="text-[10px] text-error font-bold mt-1.5 block leading-tight">
-                                                ⚠️
+                                            <span class="text-[10px] text-error font-bold mt-1.5 inline-flex items-center gap-1 leading-tight">
+                                                <ToolIcon name="alert" class="w-3.5 h-3.5 shrink-0" />
                                                 注意：タイトル入力をONにすると、自動取得したExif情報は画像データに書き込まれません。
                                             </span>
                                         </Show>
@@ -4360,7 +4339,7 @@ export default function ExifFrame() {
                                                     </>
                                                 }
                                             >
-                                                ✨ 額縁付き画像を生成
+                                                額縁付き画像を生成
                                             </Show>
                                         </button>
                                     </Show>
@@ -4376,15 +4355,14 @@ export default function ExifFrame() {
                         <Show
                             when={hasImage()}
                             fallback={
-                                <div class="text-base-content/75 p-4 text-center font-medium text-xs sm:text-sm">
-                                    📸
-                                    写真を読み込むと、比率を維持したプレビューが表示されます！
+                                <div class="text-base-content/75 p-4 text-center font-medium text-xs sm:text-sm flex flex-col items-center gap-2">
+                                    <ToolIcon name="camera" class="w-8 h-8 text-base-content/60" />
+                                    <span>写真を読み込むと、比率を維持したプレビューが表示されます。</span>
                                 </div>
                             }
                         >
                             <Show when={overlayImages().length > 0}>
                                 <div class="absolute top-2 left-2 lg:top-4 lg:left-4 bg-slate-900/75 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-lg shadow-md z-10 pointer-events-none flex items-center gap-1">
-                                    <span>👆</span>
                                     <span>ドラッグで移動・四隅/ピンチで拡縮</span>
                                 </div>
                             </Show>
@@ -4393,7 +4371,7 @@ export default function ExifFrame() {
                                 onClick={() => setIsMaximized(true)}
                                 class="absolute top-2 right-2 lg:top-4 lg:right-4 btn btn-sm bg-slate-900/80 text-white border-none hover:bg-slate-900 shadow-md z-10 px-3 rounded-lg text-xs h-9"
                             >
-                                🔍 大画面で拡大
+                                大画面で拡大
                             </button>
                             <canvas
                                 ref={(el) => (canvasRef = el)}
@@ -4606,7 +4584,7 @@ export default function ExifFrame() {
                     >
                         <div class="flex flex-col gap-1">
                             <h3 class="font-bold text-sm text-base-content flex items-center justify-center gap-1.5">
-                                ✨ 画像が生成されました
+                                画像が生成されました
                             </h3>
                         </div>
                         <div class="w-full max-h-[55vh] overflow-hidden bg-base-200 p-2 rounded-xl flex items-center justify-center">
@@ -4622,7 +4600,7 @@ export default function ExifFrame() {
                             onClick={handleDownload}
                             class="btn btn-success text-white w-full h-11 text-xs rounded-xl shadow-xs flex items-center justify-center gap-1 font-bold text-sm"
                         >
-                            📥 画像をダウンロードする
+                            画像をダウンロードする
                         </a>
 
                         {/* SNS共有ボタン */}
@@ -4649,7 +4627,7 @@ export default function ExifFrame() {
                                     }
                                 }}
                             >
-                                📤 画像をSNSにシェアする
+                                画像をSNSにシェアする
                             </button>
                         </Show>
 

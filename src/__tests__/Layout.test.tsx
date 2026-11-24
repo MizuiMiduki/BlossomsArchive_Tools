@@ -269,7 +269,7 @@ describe("Layout Component", () => {
         expect(screen.getByPlaceholderText(/ツール名、キーワード、機能で検索/i)).toBeInTheDocument();
     });
 
-    it("サイドバーが通常時にカテゴリ別セクションにグループ化され、各リンクに絵文字アイコンが表示されること", () => {
+    it("サイドバーが通常時にカテゴリ別セクションにグループ化され、各リンクにSVGアイコンが表示されること", () => {
         const CategorySidebarRouter = createRouter({
             history: memoryHistory(),
             routes: [{ path: "/", component: () => <div>カテゴリサイドバーテスト</div> }],
@@ -287,8 +287,8 @@ describe("Layout Component", () => {
         expect(screen.getByText("開発者・Web")).toBeInTheDocument();
         expect(screen.getByText("音響・オーディオ")).toBeInTheDocument();
 
-        // リンク内にアイコンが含まれていること
+        // リンク内にSVGアイコンが含まれていること
         const qrLink = screen.getByRole("link", { name: "QRコード生成" });
-        expect(qrLink.textContent).toContain("📱");
+        expect(qrLink.querySelector("svg")).not.toBeNull();
     });
 });

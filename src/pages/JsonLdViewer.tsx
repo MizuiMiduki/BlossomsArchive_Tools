@@ -1,6 +1,7 @@
 import { createSignal, createMemo, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
 import {
     parseJsonLd,
@@ -338,9 +339,9 @@ export default function JsonLdViewer() {
             <div class="card bg-base-100 shadow-xl border border-base-200">
                 <div class="card-body">
                     <div class="flex items-center gap-3">
-                        <span class="text-4xl" role="img" aria-label="JSON-LD">
-                            🧬
-                        </span>
+                        <div class="p-2.5 rounded-xl bg-base-200/80 text-primary shrink-0 flex items-center justify-center">
+                            <ToolIcon name="braces" class="w-7 h-7" />
+                        </div>
                         <div>
                             <h1 class="card-title text-2xl font-bold">
                                 JSON-LD 構造可視化・検証ツール
@@ -364,14 +365,14 @@ export default function JsonLdViewer() {
                                 class={`tab tab-sm ${inputMode() === "url" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setInputMode("url")}
                             >
-                                🌐 URLから取得
+                                URLから取得
                             </button>
                             <button
                                 type="button"
                                 class={`tab tab-sm ${inputMode() === "direct" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setInputMode("direct")}
                             >
-                                📝 JSON-LD / HTML 直接入力
+                                JSON-LD / HTML 直接入力
                             </button>
                         </div>
 
@@ -605,28 +606,28 @@ export default function JsonLdViewer() {
                                 class={`tab tab-sm ${activeTab() === "tree" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setActiveTab("tree")}
                             >
-                                🌲 階層ツリー
+                                階層ツリー
                             </button>
                             <button
                                 type="button"
                                 class={`tab tab-sm ${activeTab() === "cards" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setActiveTab("cards")}
                             >
-                                🏷️ エンティティ一覧
+                                エンティティ一覧
                             </button>
                             <button
                                 type="button"
                                 class={`tab tab-sm ${activeTab() === "diagnostics" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setActiveTab("diagnostics")}
                             >
-                                🛡️ 診断 ({allIssues().length})
+                                診断 ({allIssues().length})
                             </button>
                             <button
                                 type="button"
                                 class={`tab tab-sm ${activeTab() === "code" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setActiveTab("code")}
                             >
-                                📄 整形コード
+                                整形コード
                             </button>
                         </div>
                     </div>

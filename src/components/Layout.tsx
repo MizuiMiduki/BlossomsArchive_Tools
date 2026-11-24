@@ -20,6 +20,7 @@ import { delayedCall } from "../utils/animations";
 import { filterRoutesByQuery } from "../utils/search";
 import { getFavorites } from "../utils/favorites";
 import { CATEGORIES, TOOL_CATEGORIES_CONFIG, getToolIcon } from "../utils/categories";
+import ToolIcon from "./ToolIcon";
 
 interface LayoutProps {
     children?: JSX.Element;
@@ -463,7 +464,7 @@ export default function Layout(props: LayoutProps) {
                                                             : "text-base-content dark:text-gray-100 hover:text-base-content hover:dark:text-white hover:bg-base-200"
                                                     }`}
                                                 >
-                                                    <span aria-hidden="true" class="text-sm shrink-0">{getToolIcon(route.path)}</span>
+                                                    <ToolIcon name={getToolIcon(route.path)} class="w-4 h-4 shrink-0 opacity-80" />
                                                     <span class="truncate">{route.title}</span>
                                                 </a>
                                             )}
@@ -492,7 +493,7 @@ export default function Layout(props: LayoutProps) {
                                                             : "text-base-content dark:text-gray-100 hover:text-base-content hover:dark:text-white hover:bg-base-200"
                                                     }`}
                                                 >
-                                                    <span aria-hidden="true" class="text-base shrink-0">{getToolIcon(route.path)}</span>
+                                                    <ToolIcon name={getToolIcon(route.path)} class="w-4 h-4 shrink-0 opacity-80" />
                                                     <span class="truncate">{route.title}</span>
                                                 </a>
                                             )}
@@ -522,7 +523,7 @@ export default function Layout(props: LayoutProps) {
                                             <Show when={catRoutes.length > 0}>
                                                 <div class="mb-3">
                                                     <div class="flex items-center gap-1.5 px-3 py-1 mb-1 text-[11px] font-bold text-base-content/75 dark:text-gray-300 uppercase tracking-wider">
-                                                        <span aria-hidden="true">{cat.icon}</span>
+                                                        <ToolIcon name={cat.icon} class="w-3.5 h-3.5 shrink-0 opacity-75" />
                                                         <span>{cat.name}</span>
                                                         <span class="ml-auto text-[10px] text-base-content/60 dark:text-gray-300 font-normal">
                                                             {catRoutes.length}
@@ -539,7 +540,7 @@ export default function Layout(props: LayoutProps) {
                                                                             : "text-base-content dark:text-gray-100 hover:text-base-content hover:dark:text-white hover:bg-base-200"
                                                                     }`}
                                                                 >
-                                                                    <span aria-hidden="true" class="text-sm shrink-0">{getToolIcon(route.path)}</span>
+                                                                    <ToolIcon name={getToolIcon(route.path)} class="w-4 h-4 shrink-0 opacity-80" />
                                                                     <span class="truncate">{route.title}</span>
                                                                 </a>
                                                             )}

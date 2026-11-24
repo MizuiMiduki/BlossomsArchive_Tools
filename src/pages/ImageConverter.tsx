@@ -1,6 +1,7 @@
 import { createSignal, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { animatePop, playPageEntrance } from "../utils/animations";
 
 export default function ImageConverter() {
@@ -130,8 +131,8 @@ export default function ImageConverter() {
                                         onDrop={handleDrop}
                                         class="flex flex-col items-center justify-center gap-2 h-40 border-2 border-dashed border-base-300 rounded-xl bg-base-100 hover:bg-base-200 cursor-pointer px-4 transition-all group shadow-sm text-center"
                                     >
-                                        <span class="text-3xl opacity-50 group-hover:opacity-80 transition-opacity">
-                                            📁
+                                        <span class="opacity-50 group-hover:opacity-80 transition-opacity">
+                                            <ToolIcon name="file" class="w-8 h-8" />
                                         </span>
                                         <span class="text-base-content font-bold text-xs truncate max-w-full">
                                             {selectedFile()
@@ -205,9 +206,9 @@ export default function ImageConverter() {
                                 when={convertedUrl()}
                                 fallback={
                                     <div class="text-center p-8 space-y-2 text-base-content/60">
-                                        <span class="text-5xl block mb-2">
-                                            🖼️
-                                        </span>
+                                        <div class="flex justify-center mb-2 text-base-content/60">
+                                            <ToolIcon name="image" class="w-10 h-10" />
+                                        </div>
                                         <p class="text-xs font-semibold leading-relaxed">
                                             画像をアップロードし、変換ボタンを押すと
                                             <br />
@@ -245,7 +246,7 @@ export default function ImageConverter() {
                 </div>
                 <AdSense />
 
-                {/* 💡 技術仕様 ＆ 学術的なQ&Aセクション */}
+                {/* 技術仕様 ＆ 学術的なQ&Aセクション */}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                     {/* 技術仕様仕様 */}
                     <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm justify-between">

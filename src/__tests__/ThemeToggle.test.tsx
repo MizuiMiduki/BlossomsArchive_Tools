@@ -23,12 +23,14 @@ describe("ThemeToggle", () => {
         fireEvent.click(btn);
         expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
         expect(localStorage.getItem("theme")).toBe("dark");
-        expect(btn.textContent).toContain("☀️");
+        expect(btn.querySelector("svg")).not.toBeNull();
+        expect(btn.querySelector("svg circle")).not.toBeNull();
 
         // もう一度クリックでlightに
         fireEvent.click(btn);
         expect(document.documentElement.getAttribute("data-theme")).toBe("light");
         expect(localStorage.getItem("theme")).toBe("light");
-        expect(btn.textContent).toContain("🌙");
+        expect(btn.querySelector("svg")).not.toBeNull();
+        expect(btn.querySelector("svg circle")).toBeNull();
     });
 });

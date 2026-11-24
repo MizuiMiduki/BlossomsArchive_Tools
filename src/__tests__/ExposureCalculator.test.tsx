@@ -207,7 +207,7 @@ describe("ExposureCalculator Page Component", () => {
         expect(screen.getByLabelText("手動EVスライダー")).toBeInTheDocument();
 
         // 「シーン選択式に戻る」ボタンを押す
-        const sceneBackBtn = screen.getByRole("button", { name: "☀️ シーン選択式に戻る" });
+        const sceneBackBtn = screen.getByRole("button", { name: "シーン選択式に戻る" });
         fireEvent.click(sceneBackBtn);
 
         // プリセットセレクトボックスが表示され、スライダーが消えていること

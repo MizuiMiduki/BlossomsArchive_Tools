@@ -1,6 +1,7 @@
 import { For, Show, createSignal, createMemo, onSettled } from "solid-js";
 import { routes, type Route } from "../routes";
 import AdSense from "../components/AdSense";
+import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
 import { filterRoutesByQuery } from "../utils/search";
 import { getFavorites, toggleFavorite } from "../utils/favorites";
@@ -163,7 +164,7 @@ export default function Home() {
                                 }`}
                                 onClick={() => setSelectedCategory(cat.id)}
                             >
-                                <span aria-hidden="true">{cat.icon}</span>
+                                <ToolIcon name={cat.icon} class="w-3.5 h-3.5 shrink-0" />
                                 <span>{cat.name}</span>
                                 <span
                                     class={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-mono font-bold leading-none ${
@@ -210,8 +211,8 @@ export default function Home() {
             {/* 検索結果が0件の時のEmpty state */}
             <Show when={filteredRoutes().length === 0}>
                 <div class="card bg-base-100 border border-base-300 p-8 text-center max-w-md mx-auto my-8 shadow-xs">
-                    <div class="text-4xl mb-3" aria-hidden="true">
-                        🔍
+                    <div class="mb-3 flex justify-center text-base-content/60" aria-hidden="true">
+                        <ToolIcon name="search" class="w-10 h-10" />
                     </div>
                     <h2 class="text-base sm:text-lg font-bold text-base-content mb-1">
                         ツールが見つかりませんでした
@@ -287,9 +288,9 @@ export default function Home() {
                                                         <div class="flex items-center gap-2.5 min-w-0">
                                                             <span
                                                                 aria-hidden="true"
-                                                                class="text-xl sm:text-2xl shrink-0 p-1.5 rounded-lg bg-base-200/70 dark:bg-base-300/40"
+                                                                class="shrink-0 p-2 rounded-lg bg-base-200/70 dark:bg-base-300/40 text-primary flex items-center justify-center"
                                                             >
-                                                                {getToolIcon(route.path)}
+                                                                <ToolIcon name={getToolIcon(route.path)} class="w-5 h-5 sm:w-6 sm:h-6" />
                                                             </span>
                                                             <div class="min-w-0">
                                                                 <h2 class="card-title text-base sm:text-lg font-black text-base-content dark:text-white truncate">

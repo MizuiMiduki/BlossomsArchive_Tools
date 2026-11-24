@@ -1,6 +1,7 @@
 import { createSignal, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { delayedCall, playPageEntrance, animatePop } from "../utils/animations";
 import { playNotificationSound, playClockTickSound, initAudio } from "../utils/sound";
 
@@ -462,7 +463,7 @@ export default function Lottery() {
                                     <div class="flex items-center justify-between w-full border-b border-base-300 pb-3">
                                         <div class="flex items-center gap-2">
                                             <span class="badge badge-primary font-bold text-xs text-primary-content animate-pulse">
-                                                🎯 抽選中
+                                                抽選中
                                             </span>
                                             <span class="text-xs text-base-content/70 font-semibold">
                                                 結果を選定しています...
@@ -473,7 +474,7 @@ export default function Lottery() {
                                             onClick={skipAnimation}
                                             class="btn btn-ghost btn-xs text-xs text-primary font-bold hover:underline"
                                         >
-                                            演出をスキップ ⏩
+                                            演出をスキップ
                                         </button>
                                     </div>
 
@@ -550,7 +551,7 @@ export default function Lottery() {
                                             {(res) => (
                                                 <div class="lottery-item bg-base-100 border-2 border-primary/30 rounded-xl p-4 text-center shadow-xs transition-transform hover:scale-[1.02]">
                                                     <div class="text-[10px] text-primary font-black uppercase tracking-wider mb-1">
-                                                        🎉 当選
+                                                        当選
                                                     </div>
                                                     <h3 class="text-base font-black text-base-content select-all truncate">
                                                         {res}
@@ -610,7 +611,9 @@ export default function Lottery() {
                                  }
                              >
                                  <div class="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-base-300 bg-base-200/40 rounded-2xl p-8 text-center min-h-[250px]">
-                                     <span class="text-5xl block mb-3">📊</span>
+                                     <div class="flex justify-center mb-3 text-base-content/60">
+                                         <ToolIcon name="shuffle" class="w-10 h-10" />
+                                     </div>
                                      <p class="text-xs font-bold text-base-content/70">
                                          データ入力後、「抽選を実行」を押すと結果がここに表示されます。
                                      </p>
@@ -620,7 +623,7 @@ export default function Lottery() {
                      </div>
                  </div>
 
-                 {/* 💡 技術仕様 ＆ 学術的なQ&Aセクション */}
+                 {/* 技術仕様 ＆ 学術的なQ&Aセクション */}
                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                      {/* アルゴリズム仕様 */}
                      <div class="card bg-base-100 p-6 md:p-8 border border-base-300 shadow-sm justify-between">

@@ -2,6 +2,7 @@
 import { createSignal, onSettled, Switch, Match, For, createEffect, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import { playPageEntrance } from "../utils/animations";
+import ToolIcon from "../components/ToolIcon";
 import { initAudio, playClockTickSound } from "../utils/sound";
 
 // 文字盤の1〜12時の数字位置（半径35.5）
@@ -303,9 +304,7 @@ export default function Clock() {
                                 aria-pressed={soundEnabled() ? "true" : "false"}
                                 title={soundEnabled() ? "秒針音: ON" : "秒針音: OFF"}
                             >
-                                <span class="text-base" aria-hidden="true">
-                                    {soundEnabled() ? "🔊" : "🔇"}
-                                </span>
+                                <ToolIcon name={soundEnabled() ? "volume-on" : "volume-off"} class="w-4 h-4 shrink-0" />
                                 <span>{soundEnabled() ? "ON" : "OFF"}</span>
                             </button>
 

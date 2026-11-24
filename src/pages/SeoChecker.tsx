@@ -7,6 +7,7 @@ import {
 } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
+import ToolIcon from "../components/ToolIcon";
 import { getPageMetadata, routes } from "../routes";
 import {
     animatePop,
@@ -854,7 +855,7 @@ export function buildSeoDiagnostics(data: SeoData): DiagnosticItem[] {
             label: "検索インデックス (robots)",
             status: "error",
             value: data.robots || data.googlebot,
-            message: "⚠️ 「noindex」が指定されています！検索結果に表示されません。",
+            message: "「noindex」が指定されています。検索結果に表示されません。",
             advice: "本番公開ページでGoogle等の検索エンジンにヒットさせたい場合、noindexタグを削除してください（非公開ページやテスト環境なら正常です）。",
         });
     } else if (hasNoFollow) {
@@ -1464,7 +1465,7 @@ export default function SeoChecker() {
                                     : "text-base-content/70 hover:bg-base-300/50"
                             }`}
                         >
-                            🌐 URLから取得
+                            URLから取得
                         </button>
                         <button
                             type="button"
@@ -1478,7 +1479,7 @@ export default function SeoChecker() {
                                     : "text-base-content/70 hover:bg-base-300/50"
                             }`}
                         >
-                            📝 HTML直接入力 / ファイル読込
+                            HTML直接入力 / ファイル読込
                         </button>
                     </div>
 
@@ -1535,7 +1536,7 @@ export default function SeoChecker() {
                                         HTMLソースコード（&lt;head&gt;内のメタタグまたはページ全体のHTML）
                                     </span>
                                     <label class="btn btn-outline btn-xs h-8 px-3 font-bold cursor-pointer self-start sm:self-auto">
-                                        📂 HTMLファイルを読み込む
+                                        HTMLファイルを読み込む
                                         <input
                                             type="file"
                                             accept=".html,.htm,text/html"
@@ -1584,7 +1585,7 @@ export default function SeoChecker() {
                     <Show when={error()}>
                         <div class="alert alert-error text-white font-bold mt-6 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div class="flex items-center gap-2 text-xs sm:text-sm">
-                                <span>⚠️</span>
+                                <ToolIcon name="alert" class="w-5 h-5 shrink-0" />
                                 <span>{error()}</span>
                             </div>
                             <Show when={inputMode() === "url"}>
@@ -1605,7 +1606,9 @@ export default function SeoChecker() {
                     {/* 未解析時の初期ガイド */}
                     <Show when={!seoData() && !loading()}>
                         <div class="mt-8 border-2 border-dashed border-base-300 bg-base-200/40 rounded-2xl p-8 text-center flex flex-col items-center gap-3">
-                            <span class="text-4xl">🔎</span>
+                            <div class="flex justify-center text-base-content/60">
+                                <ToolIcon name="search" class="w-10 h-10" />
+                            </div>
                             <p class="text-sm font-bold text-base-content/80">
                                 URLを入力して「SEOメタタグを解析」を押すか、HTMLソースコード・HTMLファイルを読み込んでください。
                             </p>
@@ -1656,7 +1659,7 @@ export default function SeoChecker() {
                                     >
                                         {allCopied()
                                             ? "レポートをコピー完了！"
-                                            : "📋 SEO診断レポートを全コピー"}
+                                            : "SEO診断レポートを全コピー"}
                                     </button>
                                 </div>
                             </div>
@@ -1666,7 +1669,7 @@ export default function SeoChecker() {
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                                     <div>
                                         <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                            <span>🔍</span> Google検索結果プレビュー (SERP Preview)
+                                            Google検索結果プレビュー (SERP Preview)
                                         </h2>
                                         <p class="text-xs text-base-content/60 mt-0.5">
                                             Google等の検索結果一覧でどのように表示されるかをシミュレーションします
@@ -1683,7 +1686,7 @@ export default function SeoChecker() {
                                                     : "btn-ghost"
                                             }`}
                                         >
-                                            💻 デスクトップ (PC)
+                                            デスクトップ (PC)
                                         </button>
                                         <button
                                             type="button"
@@ -1694,7 +1697,7 @@ export default function SeoChecker() {
                                                     : "btn-ghost"
                                             }`}
                                         >
-                                            📱 モバイル (スマホ)
+                                            モバイル (スマホ)
                                         </button>
                                     </div>
                                 </div>
@@ -1711,7 +1714,7 @@ export default function SeoChecker() {
                                                     <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200 shrink-0">
                                                         <Show
                                                             when={seoData()?.faviconUrl}
-                                                            fallback={<span class="text-xs">🌐</span>}
+                                                            fallback={<ToolIcon name="globe" class="w-3.5 h-3.5 text-slate-500" />}
                                                         >
                                                             <img
                                                                 src={seoData()?.faviconUrl}
@@ -1752,7 +1755,7 @@ export default function SeoChecker() {
                                                 <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200 shrink-0">
                                                     <Show
                                                         when={seoData()?.faviconUrl}
-                                                        fallback={<span class="text-xs">🌐</span>}
+                                                        fallback={<ToolIcon name="globe" class="w-3.5 h-3.5 text-slate-500" />}
                                                     >
                                                         <img
                                                             src={seoData()?.faviconUrl}
@@ -1850,7 +1853,7 @@ export default function SeoChecker() {
                             {/* 3. SEO設定診断チェックリスト */}
                             <div>
                                 <h2 class="text-lg sm:text-xl font-black text-base-content mb-4 flex items-center gap-2">
-                                    <span>✅</span> SEO重要項目診断チェック
+                                    SEO重要項目診断チェック
                                 </h2>
                                 <div class="border border-base-300 rounded-2xl bg-base-100 overflow-hidden divide-y divide-base-200 shadow-xs">
                                     <For each={diagnostics()}>
@@ -1870,7 +1873,7 @@ export default function SeoChecker() {
                                                         {item.message}
                                                     </p>
                                                     <p class="text-[10px] text-primary/90 mt-0.5 leading-relaxed bg-primary/5 p-2 rounded-lg border border-primary/10">
-                                                        💡 改善ヒント: {item.advice}
+                                                        改善ヒント: {item.advice}
                                                     </p>
                                                 </div>
                                                 <div class="shrink-0 self-end md:self-start">
@@ -1907,7 +1910,7 @@ export default function SeoChecker() {
                                 <div>
                                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                                         <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                            <span>🧬</span> 検出された構造化データ (JSON-LD: {seoData()?.jsonLdList.length}件)
+                                            検出された構造化データ (JSON-LD: {seoData()?.jsonLdList.length}件)
                                         </h2>
                                         <a
                                             href={
@@ -1974,7 +1977,7 @@ export default function SeoChecker() {
                             <div>
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                                     <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
-                                        <span>🏷️</span> 検出されたメタタグ・SEO要素一覧 ({filteredTags().length}件)
+                                        検出されたメタタグ・SEO要素一覧 ({filteredTags().length}件)
                                     </h2>
                                     {/* フィルタボタン */}
                                     <div class="flex items-center gap-1 bg-base-200 p-1 rounded-xl flex-wrap">
