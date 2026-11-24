@@ -480,5 +480,41 @@ describe("SeoChecker Component", () => {
             expect(parsed?.jsonLdList[0].type).toBe("WebSite");
             expect(parsed?.jsonLdList[1].type).toBe("BreadcrumbList");
         });
+
+        it("Microlinkが429でもAllOrigins/getでbody内JSON-LDとSEOタグを取得できること", async () => {
+            const realisticHtml = `<!DOCTYPE html><html lang="ja"><head><title>VRM Mate | デスクトップ</title><meta name="description" content="キャラクター呼び出しアプリ" /><link rel="canonical" href="https://infiniteloop.co.jp/vrmmate/ja/" /></head><body><main><h1>VRM Mate</h1><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"VRM Mate"},{"@type":"Organization","name":"infiniteloop Co.,Ltd."}]}</script></main></body></html>`;
+
+            globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+                if (url.startsWith("https://api.microlink.io/")) {
+                    return { ok: false, status: 429 };
+                }
+                if (url.startsWith("https://api.allorigins.win/raw")) {
+                    return { ok: false, status: 408 };
+                }
+                if (url.startsWith("https://api.allorigins.win/get")) {
+                    return {
+                        ok: true,
+                        json: async () => ({ contents: realisticHtml }),
+                    };
+                }
+                return { ok: false, status: 500 };
+            });
+
+            render(() => <SeoChecker />);
+            const input = screen.getByLabelText("確認するページのURL");
+            fireEvent.input(input, {
+                target: { value: "https://infiniteloop.co.jp/vrmmate/ja/" },
+            });
+
+            const submitBtn = screen.getByRole("button", {
+                name: "SEOメタタグを解析",
+            });
+            fireEvent.click(submitBtn);
+
+            expect(
+                await screen.findByText(/検出された構造化データ \(JSON-LD: 1件\)/),
+            ).toBeInTheDocument();
+            expect(screen.getByText(/Type: WebSite, Organization/)).toBeInTheDocument();
+        });
     });
 });

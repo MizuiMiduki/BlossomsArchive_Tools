@@ -107,6 +107,37 @@ describe("JsonLdViewer Component", () => {
         ).toBeInTheDocument();
     });
 
+    it("Microlinkが429でもAllOrigins/getでbody内@graph JSON-LDを取得・解析できること", async () => {
+        const realisticHtml = `<!DOCTYPE html><html lang="ja"><head><title>VRM Mate</title></head><body><main><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"VRM Mate","url":"https://infiniteloop.co.jp/vrmmate/ja/"},{"@type":"Organization","name":"infiniteloop Co.,Ltd."},{"@type":"SoftwareApplication","name":"VRM Mate","applicationCategory":"EntertainmentApplication"}]}</script></main></body></html>`;
+
+        globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+            if (url.startsWith("https://api.microlink.io/")) {
+                return { ok: false, status: 429 };
+            }
+            if (url.startsWith("https://api.allorigins.win/raw")) {
+                return { ok: false, status: 408 };
+            }
+            if (url.startsWith("https://api.allorigins.win/get")) {
+                return {
+                    ok: true,
+                    json: async () => ({ contents: realisticHtml }),
+                };
+            }
+            return { ok: false, status: 500 };
+        });
+
+        render(() => <JsonLdViewer />);
+
+        const urlInput = screen.getByLabelText("確認するページのURL");
+        fireEvent.input(urlInput, { target: { value: "https://infiniteloop.co.jp/vrmmate/ja/" } });
+
+        const submitBtn = screen.getByRole("button", { name: "JSON-LDを取得・解析" });
+        fireEvent.click(submitBtn);
+
+        expect(await screen.findByText(/3 エンティティ検出/)).toBeInTheDocument();
+        expect(screen.getByText("@graph 構造")).toBeInTheDocument();
+    });
+
     it("直接入力モードへ切り替えるとサンプルボタンやテキストエリアが表示され、サンプルを切り替えられること", () => {
         render(() => <JsonLdViewer />);
 

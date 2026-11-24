@@ -1198,7 +1198,10 @@ export default function SeoChecker() {
 
     const fetchSeoDataFromUrl = async (targetUrl: string): Promise<SeoData> => {
         try {
-            const result = await fetchPageSource(targetUrl);
+            const result = await fetchPageSource(targetUrl, {
+                preferHtml: true,
+                requireJsonLd: true,
+            });
             if (result.kind === "html") {
                 const parsed = parseSeoFromHtml(result.html, result.finalUrl);
                 if (result.source === "direct") {

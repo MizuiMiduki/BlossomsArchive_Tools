@@ -6,12 +6,14 @@ import {
     buildMicrolinkUrl,
     extractJsonLdFromMicrolink,
     fetchPageSource,
+    clearPageSourceCache,
 } from "../utils/htmlFetcher";
 
 describe("htmlFetcher Utilities (src/utils/htmlFetcher.ts)", () => {
     const originalFetch = globalThis.fetch;
 
     afterEach(() => {
+        clearPageSourceCache();
         globalThis.fetch = originalFetch;
         vi.restoreAllMocks();
     });
@@ -162,6 +164,151 @@ describe("htmlFetcher Utilities (src/utils/htmlFetcher.ts)", () => {
             await expect(fetchPageSource("https://example.com/fail")).rejects.toThrow(
                 "ページの取得に失敗しました",
             );
+        });
+
+        it("Microlinkが429かつAllOrigins/rawが408でも、並列実行中のAllOrigins/getでHTMLを取得できること", async () => {
+            globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+                if (url.startsWith("https://api.microlink.io/")) {
+                    return { ok: false, status: 429 };
+                }
+                if (url.startsWith("https://api.allorigins.win/raw")) {
+                    return { ok: false, status: 408 };
+                }
+                if (url.startsWith("https://api.allorigins.win/get")) {
+                    await new Promise((r) => setTimeout(r, 20));
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            contents:
+                                '<!doctype html><html><body><script type="application/ld+json">{"@type":"WebSite"}</script></body></html>',
+                        }),
+                    };
+                }
+                return { ok: false, status: 500 };
+            });
+
+            const res = await fetchPageSource("https://infiniteloop.co.jp/vrmmate/ja/", {
+                preferHtml: true,
+                requireJsonLd: true,
+            });
+            expect(res.kind).toBe("html");
+            expect(res.source).toBe("cors-proxy");
+            if (res.kind === "html") {
+                expect(res.html).toContain("application/ld+json");
+            }
+        });
+
+        it("requireJsonLd: true のとき Microlink が jsonld を取りこぼしても生HTMLが取得できればHTMLを優先すること", async () => {
+            globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+                if (url.startsWith("https://api.microlink.io/")) {
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            data: { title: "Title Without JsonLd" },
+                        }),
+                    };
+                }
+                if (url.startsWith("https://api.allorigins.win/get")) {
+                    await new Promise((r) => setTimeout(r, 15));
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            contents:
+                                '<html><body><script type="application/ld+json">{"@type":"Product"}</script></body></html>',
+                        }),
+                    };
+                }
+                return { ok: false, status: 500 };
+            });
+
+            const res = await fetchPageSource("https://example.com/product", {
+                requireJsonLd: true,
+            });
+            expect(res.kind).toBe("html");
+            if (res.kind === "html") {
+                expect(res.html).toContain("Product");
+            }
+        });
+
+        it("requireJsonLd: true で生HTMLプロキシが全滅した場合は Microlink 結果にフォールバックすること", async () => {
+            globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+                if (url.startsWith("https://api.microlink.io/")) {
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            data: { title: "Only Microlink" },
+                        }),
+                    };
+                }
+                return { ok: false, status: 503 };
+            });
+
+            const res = await fetchPageSource("https://example.com/ml-only", {
+                requireJsonLd: true,
+            });
+            expect(res.kind).toBe("microlink");
+        });
+
+        it("cors.lol が成功した場合に kind: html (cors-proxy) を返すこと", async () => {
+            globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+                if (url.startsWith("https://api.cors.lol/")) {
+                    return {
+                        ok: true,
+                        text: async () => "<html><head><title>CorsLol</title></head></html>",
+                    };
+                }
+                return { ok: false, status: 500 };
+            });
+
+            const res = await fetchPageSource("https://example.com/corslol");
+            expect(res.kind).toBe("html");
+            expect(res.source).toBe("cors-proxy");
+            if (res.kind === "html") {
+                expect(res.html).toContain("CorsLol");
+            }
+        });
+
+        it("Microlink が 429 かつ全プロキシ失敗時は利用上限・HTML直接入力案内メッセージを返すこと", async () => {
+            globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+                if (url.startsWith("https://api.microlink.io/")) {
+                    return { ok: false, status: 429 };
+                }
+                return { ok: false, status: 503 };
+            });
+
+            await expect(fetchPageSource("https://example.com/rate-limit")).rejects.toThrow(
+                /HTML直接入力/,
+            );
+        });
+
+        it("useCache: true のとき2回目はfetchを再実行せずキャッシュから高速返却すること", async () => {
+            const mockFetch = vi.fn().mockImplementation(async (url: string) => {
+                if (url.startsWith("https://api.allorigins.win/get")) {
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            contents:
+                                '<html><head><title>Cached</title></head><body><script type="application/ld+json">{"@type":"WebSite"}</script></body></html>',
+                        }),
+                    };
+                }
+                return { ok: false, status: 500 };
+            });
+            globalThis.fetch = mockFetch;
+
+            const first = await fetchPageSource("https://example.com/cached", {
+                useCache: true,
+                requireJsonLd: true,
+            });
+            const callCountAfterFirst = mockFetch.mock.calls.length;
+            expect(first.kind).toBe("html");
+
+            const second = await fetchPageSource("https://example.com/cached", {
+                useCache: true,
+                requireJsonLd: true,
+            });
+            expect(second).toEqual(first);
+            expect(mockFetch.mock.calls.length).toBe(callCountAfterFirst);
         });
     });
 });

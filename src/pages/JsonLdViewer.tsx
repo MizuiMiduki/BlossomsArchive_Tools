@@ -186,7 +186,7 @@ export default function JsonLdViewer() {
         setUrlInput(normalized);
 
         try {
-            const result = await fetchPageSource(normalized);
+            const result = await fetchPageSource(normalized, { requireJsonLd: true });
             setFetchedUrl(result.finalUrl);
 
             if (result.kind === "html") {
