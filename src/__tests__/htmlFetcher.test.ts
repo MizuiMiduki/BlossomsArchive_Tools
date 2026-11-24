@@ -310,5 +310,57 @@ describe("htmlFetcher Utilities (src/utils/htmlFetcher.ts)", () => {
             expect(second).toEqual(first);
             expect(mockFetch.mock.calls.length).toBe(callCountAfterFirst);
         });
+
+        it("Jina Reader (X-Return-Format: html) が生HTMLを返した場合に他プロキシ失敗時でも取得できること", async () => {
+            const mockFetch = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+                if (url.startsWith("https://r.jina.ai/")) {
+                    const headers = init?.headers as Record<string, string> | undefined;
+                    expect(headers?.["X-Return-Format"]).toBe("html");
+                    return {
+                        ok: true,
+                        text: async () =>
+                            '<!doctype html><html><head><title>Jina HTML</title></head><body><script type="application/ld+json">{"@type":"SoftwareApplication","name":"Demo"}</script></body></html>',
+                    };
+                }
+                return { ok: false, status: 429 };
+            });
+            globalThis.fetch = mockFetch;
+
+            const res = await fetchPageSource("https://example.com/spa-app/", {
+                preferHtml: true,
+                requireJsonLd: true,
+            });
+            expect(res.kind).toBe("html");
+            expect(res.source).toBe("cors-proxy");
+            if (res.kind === "html") {
+                expect(res.html).toContain("SoftwareApplication");
+            }
+        });
+
+        it("Microlink のカスタムセレクタURLが 429 でもベーシックURLが 200 ならフォールバック成功すること", async () => {
+            globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+                if (url.startsWith("https://api.microlink.io/") && url.includes("data.jsonld")) {
+                    return { ok: false, status: 429 };
+                }
+                if (url.startsWith("https://api.microlink.io/?url=")) {
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            data: {
+                                title: "Microlink Basic Fallback",
+                                description: "Fallback description",
+                            },
+                        }),
+                    };
+                }
+                return { ok: false, status: 503 };
+            });
+
+            const res = await fetchPageSource("https://example.com/ml-fallback");
+            expect(res.kind).toBe("microlink");
+            if (res.kind === "microlink") {
+                expect(res.payload.data.title).toBe("Microlink Basic Fallback");
+            }
+        });
     });
 });

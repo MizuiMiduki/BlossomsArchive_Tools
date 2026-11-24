@@ -142,11 +142,12 @@ export function isSameOriginUrl(targetUrl: string): boolean {
 export async function fetchWithTimeout(
     url: string,
     timeoutMs = 10000,
+    init?: RequestInit,
 ): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-        return await fetch(url, { signal: controller.signal });
+        return await fetch(url, { ...init, signal: controller.signal });
     } finally {
         clearTimeout(timer);
     }
@@ -251,6 +252,39 @@ export async function fetchPageSource(
     const encodedUrl = encodeURIComponent(targetUrl);
 
     // 2. 生HTMLプロキシ群の並列レース
+    // Jina Reader HTML (X-Return-Format: html) は CORS プリフライト対応かつ高速 (0.3〜0.6s) で
+    // JSレンダリング後の完全なDOM HTMLとJSON-LDを返却するため最優先レーンとして並列投入する
+    const jinaHtmlTask = (async (): Promise<PageSourceResult> => {
+        let parsedTarget: URL;
+        try {
+            parsedTarget = new URL(targetUrl);
+        } catch {
+            throw new Error("Invalid URL for Jina Reader");
+        }
+        if (parsedTarget.protocol !== "http:" && parsedTarget.protocol !== "https:") {
+            throw new Error("Unsupported protocol for Jina Reader");
+        }
+        const res = await fetchWithTimeout(
+            `https://r.jina.ai/${parsedTarget.href}`,
+            10000,
+            {
+                headers: {
+                    "X-Return-Format": "html",
+                },
+            },
+        );
+        if (!res.ok) throw new Error(`Jina Reader status: ${res.status}`);
+        if (typeof res.text !== "function") throw new Error("No text method");
+        const text = await res.text();
+        if (!isValidHtmlContent(text)) throw new Error("Invalid HTML from Jina Reader");
+        return {
+            kind: "html",
+            html: text,
+            finalUrl: targetUrl,
+            source: "cors-proxy",
+        };
+    })();
+
     // Note: AllOrigins は /get と /raw の同時接続で競合タイムアウトを起こすため、まず /get を叩き、失敗時のみ /raw を試行
     const allOriginsTask = (async (): Promise<PageSourceResult> => {
         try {
@@ -325,20 +359,17 @@ export async function fetchPageSource(
     })();
 
     const htmlRacePromise: Promise<PageSourceResult | null> = Promise.any([
+        jinaHtmlTask,
         allOriginsTask,
         codeTabsTask,
         corsLolTask,
     ]).catch(() => null);
 
     // 3. Microlink API (高速モード + JSON-LD / SEOカスタムセレクタ) も同時スタート
+    // カスタムセレクタ付きリクエストが 429 制限を受けた場合はキャッシュが効くベーシックURLへフォールバックする
     let microlinkRateLimited = false;
     const microlinkPromise: Promise<PageSourceResult | null> = (async () => {
-        try {
-            const res = await fetchWithTimeout(buildMicrolinkUrl(targetUrl), 8000);
-            if (res.status === 429) {
-                microlinkRateLimited = true;
-                return null;
-            }
+        const parseMicrolinkRes = async (res: Response): Promise<PageSourceResult | null> => {
             if (!res.ok || typeof res.json !== "function") return null;
             const json = await res.json();
             const d = json?.data;
@@ -362,6 +393,25 @@ export async function fetchPageSource(
                     source: "microlink",
                 };
             }
+            return null;
+        };
+
+        try {
+            const res = await fetchWithTimeout(buildMicrolinkUrl(targetUrl), 8000);
+            if (res.status === 429) {
+                microlinkRateLimited = true;
+                // カスタムルールがレート制限でもベーシックURLはエッジキャッシュで200応答する場合がある
+                const basicRes = await fetchWithTimeout(
+                    `https://api.microlink.io/?url=${encodedUrl}`,
+                    5000,
+                );
+                if (basicRes.ok) {
+                    microlinkRateLimited = false;
+                    return await parseMicrolinkRes(basicRes);
+                }
+                return null;
+            }
+            return await parseMicrolinkRes(res);
         } catch {
             // Microlink失敗時は null を返して生HTMLレースに委ねる
         }
