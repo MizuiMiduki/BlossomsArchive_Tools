@@ -173,6 +173,141 @@ function extractTagAttributes(tagString: string): Record<string, string> {
     return attrs;
 }
 
+/**
+ * JSON-LDスクリプト内の余計なCDATAやHTMLコメント、前後のゴミを安全に除去する
+ * （正規表現による単一パスマルチ文字置換を行わず、文字位置走査とスライスで確実に除去）
+ */
+export function cleanJsonLdRawContent(input: string): string {
+    let text = input.trim();
+    if (!text) return "";
+
+    // 先頭の HTML コメント <!-- や CDATA の除去
+    while (text.startsWith("<!--")) {
+        text = text.slice(4).trim();
+    }
+    while (text.startsWith("/*<![CDATA[*/") || text.startsWith("/* <![CDATA[ */")) {
+        const idx = text.indexOf("*/");
+        text = text.slice(idx + 2).trim();
+    }
+    while (text.startsWith("//<![CDATA[") || text.startsWith("// <![CDATA[")) {
+        const nextLine = text.indexOf("\n");
+        text = nextLine !== -1 ? text.slice(nextLine + 1).trim() : "";
+    }
+    while (text.startsWith("<![CDATA[")) {
+        text = text.slice(9).trim();
+    }
+
+    // 末尾の HTML コメント --> や CDATA の除去
+    while (text.endsWith("-->")) {
+        text = text.slice(0, -3).trim();
+    }
+    while (text.endsWith("/*]]>*/") || text.endsWith("/* ]]> */")) {
+        const idx = text.lastIndexOf("/*");
+        text = text.slice(0, idx).trim();
+    }
+    while (text.endsWith("//]]>") || text.endsWith("// ]]>")) {
+        const idx = text.lastIndexOf("//");
+        text = text.slice(0, idx).trim();
+    }
+    while (text.endsWith("]]>")) {
+        text = text.slice(0, -3).trim();
+    }
+
+    // JSONオブジェクト { ... } または 配列 [ ... ] の有効範囲を抽出
+    const firstBrace = text.indexOf("{");
+    const firstBracket = text.indexOf("[");
+    let startIdx = -1;
+    if (firstBrace !== -1 && firstBracket !== -1) {
+        startIdx = Math.min(firstBrace, firstBracket);
+    } else if (firstBrace !== -1) {
+        startIdx = firstBrace;
+    } else if (firstBracket !== -1) {
+        startIdx = firstBracket;
+    }
+
+    const lastBrace = text.lastIndexOf("}");
+    const lastBracket = text.lastIndexOf("]");
+    const endIdx = Math.max(lastBrace, lastBracket);
+
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+        text = text.slice(startIdx, endIdx + 1).trim();
+    }
+
+    return text;
+}
+
+/**
+ * JSON-LDの多段パース（直接パース -> HTMLエンティティデコード後パース）
+ */
+export function tryParseJsonLd(raw: string): { parsed: any; cleaned: string } | null {
+    const cleaned = cleanJsonLdRawContent(raw);
+    if (!cleaned) return null;
+
+    try {
+        const parsed = JSON.parse(cleaned);
+        return { parsed, cleaned };
+    } catch {
+        // フォールバック
+    }
+
+    try {
+        const decoded = decodeHtmlEntities(cleaned);
+        const parsed = JSON.parse(decoded);
+        return { parsed, cleaned: decoded };
+    } catch {
+        // パース失敗
+    }
+
+    return null;
+}
+
+/**
+ * HTML文字列からすべての JSON-LD スクリプト文字列を抽出する
+ */
+export function extractJsonLdRawScripts(html: string): string[] {
+    const results: string[] = [];
+    if (!html || !html.trim()) return results;
+
+    if (typeof DOMParser !== "undefined") {
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const scriptElements = doc.querySelectorAll("script");
+            scriptElements.forEach((script) => {
+                const typeAttr = script.getAttribute("type");
+                if (typeAttr && typeAttr.toLowerCase().includes("application/ld+json")) {
+                    const content = script.textContent?.trim();
+                    if (content) {
+                        results.push(content);
+                    }
+                }
+            });
+            if (results.length > 0) {
+                return results;
+            }
+        } catch {
+            // DOMParser 失敗時は正規表現フォールバックへ
+        }
+    }
+
+    const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+    let match: RegExpExecArray | null;
+    while ((match = scriptRegex.exec(html)) !== null) {
+        const attrs = match[1];
+        const content = match[2]?.trim();
+        if (!content) continue;
+        if (
+            /type\s*=\s*(?:"application\/ld\+json[^"]*"|'application\/ld\+json[^']*'|application\/ld\+json[^\s>]*)/i.test(
+                attrs,
+            )
+        ) {
+            results.push(content);
+        }
+    }
+
+    return results;
+}
+
 export function parseSeoFromHtml(html: string, sourceUrl = ""): SeoData {
     const rawTags: MetaTagItem[] = [];
     const hreflangs: Array<{ lang: string; href: string }> = [];
@@ -350,16 +485,12 @@ export function parseSeoFromHtml(html: string, sourceUrl = ""): SeoData {
         }
     }
 
-    // 5. 構造化データ <script type="application/ld+json"> の抽出
-    const jsonLdRegex =
-        /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-    let jsonLdMatch: RegExpExecArray | null;
-    while ((jsonLdMatch = jsonLdRegex.exec(html)) !== null) {
-        const rawContent = jsonLdMatch[1].trim();
-        if (!rawContent) continue;
-
-        try {
-            const parsed = JSON.parse(rawContent);
+    // 5. 構造化データ <script type="application/ld+json"> の抽出と解析
+    const jsonLdScripts = extractJsonLdRawScripts(html);
+    for (const rawContent of jsonLdScripts) {
+        const parsedResult = tryParseJsonLd(rawContent);
+        if (parsedResult) {
+            const { parsed, cleaned } = parsedResult;
             let type = "Schema";
             if (typeof parsed === "object" && parsed !== null) {
                 if (parsed["@type"]) {
@@ -377,22 +508,22 @@ export function parseSeoFromHtml(html: string, sourceUrl = ""): SeoData {
             }
             jsonLdList.push({
                 type,
-                raw: rawContent,
+                raw: cleaned,
                 parsed,
                 isValid: true,
             });
             rawTags.push({
                 key: `JSON-LD (${type})`,
-                value: rawContent.slice(0, 150) + (rawContent.length > 150 ? "..." : ""),
+                value: cleaned.slice(0, 150) + (cleaned.length > 150 ? "..." : ""),
                 category: "structure",
             });
-        } catch (err: any) {
+        } else {
             jsonLdList.push({
                 type: "Error",
                 raw: rawContent,
                 parsed: null,
                 isValid: false,
-                error: err?.message || "JSONパースエラー",
+                error: "JSON構文パースエラー",
             });
             rawTags.push({
                 key: "JSON-LD (無効なJSON)",
@@ -488,6 +619,49 @@ export function parseSeoFromMicrolink(
         rawTags.push({ key: "og:image", value: imageUrl, category: "social" });
     }
 
+    const jsonLdList: JsonLdItem[] = [];
+    const rawJsonLdCandidate = data.jsonLd ?? data.jsonld ?? data.schema;
+    if (rawJsonLdCandidate) {
+        try {
+            const parsedObj =
+                typeof rawJsonLdCandidate === "string"
+                    ? JSON.parse(rawJsonLdCandidate)
+                    : rawJsonLdCandidate;
+            const rawStr =
+                typeof rawJsonLdCandidate === "string"
+                    ? rawJsonLdCandidate
+                    : JSON.stringify(rawJsonLdCandidate, null, 2);
+            let typeStr = "Schema";
+            if (typeof parsedObj === "object" && parsedObj !== null) {
+                if (parsedObj["@type"]) {
+                    typeStr = Array.isArray(parsedObj["@type"])
+                        ? parsedObj["@type"].join(", ")
+                        : String(parsedObj["@type"]);
+                } else if (Array.isArray(parsedObj) && parsedObj[0]?.["@type"]) {
+                    typeStr = parsedObj.map((item: any) => item["@type"]).join(", ");
+                } else if (parsedObj["@graph"] && Array.isArray(parsedObj["@graph"])) {
+                    typeStr = parsedObj["@graph"]
+                        .map((item: any) => item["@type"])
+                        .filter(Boolean)
+                        .join(", ");
+                }
+            }
+            jsonLdList.push({
+                type: typeStr,
+                raw: rawStr,
+                parsed: parsedObj,
+                isValid: true,
+            });
+            rawTags.push({
+                key: `JSON-LD (${typeStr})`,
+                value: rawStr.slice(0, 150) + (rawStr.length > 150 ? "..." : ""),
+                category: "structure",
+            });
+        } catch {
+            // パース失敗時はスキップ
+        }
+    }
+
     return {
         pageTitle: title,
         metaDescription: description,
@@ -507,7 +681,7 @@ export function parseSeoFromMicrolink(
         ogImage: imageUrl,
         ogType: "website",
         twitterCard: imageUrl ? "summary_large_image" : "summary",
-        jsonLdList: [],
+        jsonLdList,
         rawTags,
     };
 }
@@ -1009,7 +1183,7 @@ export default function SeoChecker() {
         // 1. 同一オリジンの場合は直接 fetch
         if (isSameOrigin(targetUrl)) {
             try {
-                const directRes = await fetchWithTimeout(targetUrl, 5000);
+                const directRes = await fetchWithTimeout(targetUrl, 4000);
                 if (directRes.ok) {
                     const text = await directRes.text();
                     if (text && text.includes("<")) {
@@ -1029,29 +1203,47 @@ export default function SeoChecker() {
             typeof import.meta !== "undefined" &&
             import.meta.env?.MODE === "test";
 
-        // 2. クロスオリジンの場合: AllOrigins プロキシ (/raw および /get) で生のHTML取得を試行
-        try {
-            const allOriginsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-            const res = await fetchWithTimeout(allOriginsUrl, 10000);
-            if (res.ok && typeof res.text === "function") {
-                const text = await res.text();
-                if (
-                    text &&
-                    (text.includes("<html") ||
-                        text.includes("<head") ||
-                        text.includes("<title") ||
-                        text.includes("<meta"))
-                ) {
-                    return parseSeoFromHtml(text, targetUrl);
-                }
+        const encodedUrl = encodeURIComponent(targetUrl);
+
+        // 2. クロスオリジンの場合: 高速CORSプロキシ群から並列最速レース（Race）で生HTMLを取得
+        const proxyEndpoints = [
+            `https://corsproxy.io/?url=${encodedUrl}`,
+            `https://api.allorigins.win/raw?url=${encodedUrl}`,
+            `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`,
+        ];
+
+        const tryFetchProxyHtml = async (proxyUrl: string): Promise<string> => {
+            const res = await fetchWithTimeout(proxyUrl, 5000);
+            if (!res.ok) throw new Error(`Proxy status: ${res.status}`);
+            const text = await res.text();
+            if (
+                text &&
+                (text.includes("<html") ||
+                    text.includes("<head") ||
+                    text.includes("<title") ||
+                    text.includes("<meta") ||
+                    text.includes("<script"))
+            ) {
+                return text;
             }
-        } catch {
-            // /get へフォールバック
-        }
+            throw new Error("Invalid HTML response from proxy");
+        };
 
         try {
-            const allOriginsGetUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-            const res = await fetchWithTimeout(allOriginsGetUrl, 10000);
+            const fastestHtml = await Promise.any(
+                proxyEndpoints.map((url) => tryFetchProxyHtml(url)),
+            );
+            if (fastestHtml) {
+                return parseSeoFromHtml(fastestHtml, targetUrl);
+            }
+        } catch {
+            // プロキシ並列レースが失敗した場合は後続フォールバックへ
+        }
+
+        // 3. AllOrigins /get フォールバック (タイムアウト 5秒)
+        try {
+            const allOriginsGetUrl = `https://api.allorigins.win/get?url=${encodedUrl}`;
+            const res = await fetchWithTimeout(allOriginsGetUrl, 5000);
             if (res.ok && typeof res.json === "function") {
                 const json = await res.json();
                 const text =
@@ -1061,7 +1253,8 @@ export default function SeoChecker() {
                     (text.includes("<html") ||
                         text.includes("<head") ||
                         text.includes("<title") ||
-                        text.includes("<meta"))
+                        text.includes("<meta") ||
+                        text.includes("<script"))
                 ) {
                     return parseSeoFromHtml(text, targetUrl);
                 }
@@ -1070,10 +1263,10 @@ export default function SeoChecker() {
             // Microlink フォールバックへ
         }
 
-        // 3. Microlink API フォールバック (コールドキャッシュ対策で14秒確保 + 初回失敗時の自動リトライ)
-        const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}`;
+        // 4. Microlink API フォールバック (タイムアウト 7秒)
+        const microlinkUrl = `https://api.microlink.io/?url=${encodedUrl}&data.jsonld=true`;
         try {
-            const firstRes = await fetchWithTimeout(microlinkUrl, 14000);
+            const firstRes = await fetchWithTimeout(microlinkUrl, 7000);
             if (firstRes.ok) {
                 const firstJson = await firstRes.json();
                 const firstParsed = parseSeoFromMicrolink(firstJson, targetUrl);
@@ -1084,10 +1277,10 @@ export default function SeoChecker() {
         }
 
         if (!isTestEnv) {
-            await new Promise((r) => setTimeout(r, 400));
+            await new Promise((r) => setTimeout(r, 300));
         }
 
-        const res = await fetchWithTimeout(microlinkUrl, 14000).catch(() => {
+        const res = await fetchWithTimeout(microlinkUrl, 7000).catch(() => {
             throw new Error(
                 "ページの取得に失敗しました。対象サイトにアクセス制限がある場合は、「HTML直接入力 / ファイル読込」タブをご利用ください。",
             );
@@ -1793,14 +1986,23 @@ export default function SeoChecker() {
                             {/* 4. 構造化データ（JSON-LD）プレビュー */}
                             <Show when={(seoData()?.jsonLdList.length ?? 0) > 0}>
                                 <div>
-                                    <h2 class="text-lg sm:text-xl font-black text-base-content mb-4 flex items-center gap-2">
-                                        <span>🧬</span> 検出された構造化データ (JSON-LD: {seoData()?.jsonLdList.length}件)
-                                    </h2>
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                                        <h2 class="text-lg sm:text-xl font-black text-base-content flex items-center gap-2">
+                                            <span>🧬</span> 検出された構造化データ (JSON-LD: {seoData()?.jsonLdList.length}件)
+                                        </h2>
+                                        <a
+                                            href="/json-ld-viewer"
+                                            class="btn btn-xs btn-outline btn-primary rounded-lg font-bold"
+                                            title="JSON-LD構造可視化・検証ツールでツリー構造やSchema.org診断を確認"
+                                        >
+                                            JSON-LDツリー可視化ツールで開く ↗
+                                        </a>
+                                    </div>
                                     <div class="flex flex-col gap-4">
                                         <For each={seoData()?.jsonLdList}>
                                             {(jsonItem, idx) => (
                                                 <div class="bg-base-100 border border-base-300 rounded-2xl p-5 shadow-xs flex flex-col gap-3">
-                                                    <div class="flex items-center justify-between">
+                                                    <div class="flex items-center justify-between flex-wrap gap-2">
                                                         <div class="flex items-center gap-2">
                                                             <span class={`badge ${jsonItem.isValid ? "badge-success text-white" : "badge-error text-white"} font-bold text-xs`}>
                                                                 {jsonItem.isValid ? "有効 (Valid)" : "エラー"}
@@ -1809,17 +2011,25 @@ export default function SeoChecker() {
                                                                 Type: {jsonItem.type}
                                                             </span>
                                                         </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => copyText(jsonItem.raw, `jsonld-${idx()}`)}
-                                                            class={`btn btn-xs rounded-lg font-bold text-white ${
-                                                                copiedKey() === `jsonld-${idx()}`
-                                                                    ? "btn-success"
-                                                                    : "btn-neutral"
-                                                            }`}
-                                                        >
-                                                            {copiedKey() === `jsonld-${idx()}` ? "コピー完了" : "JSONをコピー"}
-                                                        </button>
+                                                        <div class="flex items-center gap-2">
+                                                            <a
+                                                                href="/json-ld-viewer"
+                                                                class="btn btn-xs btn-ghost text-primary underline"
+                                                            >
+                                                                ツリー表示 ↗
+                                                            </a>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => copyText(jsonItem.raw, `jsonld-${idx()}`)}
+                                                                class={`btn btn-xs rounded-lg font-bold text-white ${
+                                                                    copiedKey() === `jsonld-${idx()}`
+                                                                        ? "btn-success"
+                                                                        : "btn-neutral"
+                                                                }`}
+                                                            >
+                                                                {copiedKey() === `jsonld-${idx()}` ? "コピー完了" : "JSONをコピー"}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                     <pre class="bg-base-200/70 p-3.5 rounded-xl font-mono text-xs overflow-x-auto text-base-content/90 max-h-60 leading-relaxed">
                                                         {jsonItem.isValid && jsonItem.parsed

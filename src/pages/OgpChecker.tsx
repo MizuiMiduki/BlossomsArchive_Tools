@@ -551,37 +551,47 @@ export default function OgpChecker() {
             return parseOgpFromMicrolink(json, targetUrl);
         };
 
-        // AllOrigins 生HTML取得ヘルパー（/raw と /get の2系統）
-        const tryAllOriginsHtml = async (): Promise<OgpData | null> => {
-            try {
-                const rawUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-                const res = await fetchWithTimeout(rawUrl, 10000);
-                if (res.ok && typeof res.text === "function") {
-                    const text = await res.text();
+        // 高速CORSプロキシ並列レース生HTML取得ヘルパー
+        const tryFastProxyHtml = async (): Promise<OgpData | null> => {
+            const encoded = encodeURIComponent(targetUrl);
+            const proxyUrls = [
+                `https://corsproxy.io/?url=${encoded}`,
+                `https://api.allorigins.win/raw?url=${encoded}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encoded}`,
+            ];
+
+            const fetchCandidate = async (url: string): Promise<OgpData> => {
+                const res = await fetchWithTimeout(url, 5000);
+                if (!res.ok) throw new Error("Proxy error");
+                const text = await res.text();
+                if (
+                    text &&
+                    (text.includes("<meta") ||
+                        text.includes("<title") ||
+                        text.includes("<head"))
+                ) {
+                    const parsed = parseOgpFromHtml(text, targetUrl);
                     if (
-                        text &&
-                        (text.includes("<meta") ||
-                            text.includes("<title") ||
-                            text.includes("<head"))
+                        parsed.ogTitle ||
+                        parsed.pageTitle ||
+                        parsed.ogDescription ||
+                        parsed.ogImage
                     ) {
-                        const parsed = parseOgpFromHtml(text, targetUrl);
-                        if (
-                            parsed.ogTitle ||
-                            parsed.pageTitle ||
-                            parsed.ogDescription ||
-                            parsed.ogImage
-                        ) {
-                            return parsed;
-                        }
+                        return parsed;
                     }
                 }
+                throw new Error("No OGP found");
+            };
+
+            try {
+                return await Promise.any(proxyUrls.map((p) => fetchCandidate(p)));
             } catch {
                 // /get へフォールバック
             }
 
             try {
-                const getUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-                const res = await fetchWithTimeout(getUrl, 10000);
+                const getUrl = `https://api.allorigins.win/get?url=${encoded}`;
+                const res = await fetchWithTimeout(getUrl, 6000);
                 if (res.ok && typeof res.json === "function") {
                     const json = await res.json();
                     const text =
@@ -617,8 +627,8 @@ export default function OgpChecker() {
             // 初回失敗時は後続のフォールバックおよび自動リトライへ
         }
 
-        // 3. AllOrigins 経由での生HTML直接解析へフォールバック
-        const htmlAttempt = await tryAllOriginsHtml();
+        // 3. 高速CORSプロキシ経由での生HTML直接解析へフォールバック
+        const htmlAttempt = await tryFastProxyHtml();
         if (htmlAttempt) return htmlAttempt;
 
         // 4. 初回リクエストによってプロキシ側のキャッシュ生成が完了しているケースが多いため、自動リトライを実行

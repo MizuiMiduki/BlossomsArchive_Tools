@@ -10,6 +10,9 @@ import SeoChecker, {
     normalizeInputUrl,
     resolveUrl,
     stripHtmlTagsToPlainText,
+    cleanJsonLdRawContent,
+    tryParseJsonLd,
+    extractJsonLdRawScripts,
 } from "../pages/SeoChecker";
 
 describe("SeoChecker helper functions", () => {
@@ -369,5 +372,88 @@ describe("SeoChecker Component", () => {
         expect(
             await screen.findByText(/SEO情報の取得中にエラーが発生しました|ページの取得に失敗しました/),
         ).toBeInTheDocument();
+    });
+
+    describe("JSON-LD 取得・パース強化テスト", () => {
+        it("cleanJsonLdRawContent が CDATA や HTMLコメントを安全に除去すること", () => {
+            const raw1 = `/* <![CDATA[ */ {"@context":"https://schema.org","@type":"Article","headline":"A"} /* ]]> */`;
+            expect(cleanJsonLdRawContent(raw1)).toBe(
+                `{"@context":"https://schema.org","@type":"Article","headline":"A"}`,
+            );
+
+            const raw2 = `<!-- {"@context":"https://schema.org","@type":"WebSite","name":"B"} -->`;
+            expect(cleanJsonLdRawContent(raw2)).toBe(
+                `{"@context":"https://schema.org","@type":"WebSite","name":"B"}`,
+            );
+        });
+
+        it("tryParseJsonLd が HTMLエンコードされたJSON-LDを正しくパースできること", () => {
+            const encoded = `{&quot;@context&quot;: &quot;https://schema.org&quot;, &quot;@type&quot;: &quot;Person&quot;, &quot;name&quot;: &quot;太郎&quot;}`;
+            const result = tryParseJsonLd(encoded);
+            expect(result).not.toBeNull();
+            expect(result?.parsed["@type"]).toBe("Person");
+            expect(result?.parsed.name).toBe("太郎");
+        });
+
+        it("extractJsonLdRawScripts が charset 付きや属性順序の異なるスクリプトタグを漏れなく抽出すること", () => {
+            const html = `
+                <script id="schema-1" type="application/ld+json; charset=utf-8">
+                {"@type": "NewsArticle", "headline": "News 1"}
+                </script>
+                <script type='application/ld+json'>
+                {"@type": "Organization", "name": "Org 2"}
+                </script>
+            `;
+            const scripts = extractJsonLdRawScripts(html);
+            expect(scripts.length).toBe(2);
+            expect(scripts[0]).toContain("NewsArticle");
+            expect(scripts[1]).toContain("Organization");
+        });
+
+        it("parseSeoFromHtml が CDATA付き・charset付きJSON-LDを正常に抽出・パースすること", () => {
+            const html = `
+                <!doctype html>
+                <html>
+                <head>
+                    <title>Test Page</title>
+                    <script type="application/ld+json; charset=UTF-8">
+                    /* <![CDATA[ */
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "Product",
+                        "name": "高級カメラ"
+                    }
+                    /* ]]> */
+                    </script>
+                </head>
+                <body></body>
+                </html>
+            `;
+            const parsed = parseSeoFromHtml(html);
+            expect(parsed.jsonLdList.length).toBe(1);
+            expect(parsed.jsonLdList[0].isValid).toBe(true);
+            expect(parsed.jsonLdList[0].type).toBe("Product");
+            expect(parsed.jsonLdList[0].parsed.name).toBe("高級カメラ");
+        });
+
+        it("parseSeoFromMicrolink がペイロード内の jsonLd 構造化データを抽出できること", () => {
+            const payload = {
+                data: {
+                    title: "Microlink ページ",
+                    description: "Microlink 説明文",
+                    url: "https://example.com/ml",
+                    jsonLd: {
+                        "@context": "https://schema.org",
+                        "@type": "BlogPosting",
+                        headline: "ブログ投稿",
+                    },
+                },
+            };
+            const parsed = parseSeoFromMicrolink(payload, "https://example.com/ml");
+            expect(parsed).not.toBeNull();
+            expect(parsed?.jsonLdList.length).toBe(1);
+            expect(parsed?.jsonLdList[0].type).toBe("BlogPosting");
+            expect(parsed?.jsonLdList[0].parsed.headline).toBe("ブログ投稿");
+        });
     });
 });
