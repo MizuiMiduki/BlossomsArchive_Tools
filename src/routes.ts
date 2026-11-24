@@ -224,6 +224,21 @@ export const routes: Route[] = [
         keywords: ["ティア表", "Tier表", "TierMaker", "ランキング作成", "ティアリスト"],
     },
     {
+        path: "/json-ld-viewer",
+        title: "JSON-LD構造可視化・検証",
+        description:
+            "Schema.orgやJSON-LD構造化データのツリー構造・プロパティ・ネストを視覚的に表示・検証できる無料Webツールです。HTMLからの抽出、構文エラー診断、Googleリッチリザルト連携、整形・コピーに完全ローカルで対応します。",
+        applicationCategory: "DeveloperApplication",
+        keywords: [
+            "JSON-LD",
+            "構造化データ",
+            "Schema.org",
+            "リッチリザルト",
+            "JSON-LD検証",
+            "ツリー表示",
+        ],
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",

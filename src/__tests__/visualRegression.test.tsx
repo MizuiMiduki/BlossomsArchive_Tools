@@ -26,6 +26,7 @@ import BpmCalculator from "../pages/BpmCalculator";
 import JsonFormatter from "../pages/JsonFormatter";
 import WordCounter from "../pages/WordCounter";
 import TierMaker from "../pages/TierMaker";
+import JsonLdViewer from "../pages/JsonLdViewer";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import Credits from "../pages/Credits";
 import NotFound from "../pages/NotFound";
@@ -105,6 +106,11 @@ const PAGE_ENTRIES: Array<{ path: string; name: string; component: Component }> 
         path: "/tier-maker",
         name: "TierMaker",
         component: TierMaker,
+    },
+    {
+        path: "/json-ld-viewer",
+        name: "JsonLdViewer",
+        component: JsonLdViewer,
     },
     { path: "/privacy", name: "PrivacyPolicy", component: PrivacyPolicy },
     { path: "/credits", name: "Credits", component: Credits },

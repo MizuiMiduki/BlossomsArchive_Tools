@@ -28,6 +28,7 @@ const BpmCalculator = lazy(() => import("./pages/BpmCalculator"));
 const JsonFormatter = lazy(() => import("./pages/JsonFormatter"));
 const WordCounter = lazy(() => import("./pages/WordCounter"));
 const TierMaker = lazy(() => import("./pages/TierMaker"));
+const JsonLdViewer = lazy(() => import("./pages/JsonLdViewer"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 export const Router = createRouter({
@@ -57,6 +58,7 @@ export const Router = createRouter({
         { path: "/json-formatter", component: JsonFormatter },
         { path: "/word-counter", component: WordCounter },
         { path: "/tier-maker", component: TierMaker },
+        { path: "/json-ld-viewer", component: JsonLdViewer },
         { path: "*", component: NotFound },
     ],
 });

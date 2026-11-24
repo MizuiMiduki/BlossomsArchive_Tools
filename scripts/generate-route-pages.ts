@@ -105,6 +105,7 @@ const ROUTE_CHUNK_PREFIX: Record<string, string> = {
     "/json-formatter": "JsonFormatter",
     "/word-counter": "WordCounter",
     "/tier-maker": "TierMaker",
+    "/json-ld-viewer": "JsonLdViewer",
 };
 
 function findRouteChunk(routePath: string): string | undefined {

@@ -24,6 +24,7 @@ export const TOOL_CATEGORIES_CONFIG: Record<string, { category: ToolCategoryId; 
     "/password-generator": { category: "utility", icon: "🔑" },
     "/lottery": { category: "utility", icon: "🎲" },
     "/word-counter": { category: "utility", icon: "📝" },
+    "/tier-maker": { category: "utility", icon: "🏆" },
     "/clock": { category: "utility", icon: "⏰" },
     "/timer": { category: "utility", icon: "⏱️" },
 
@@ -37,6 +38,7 @@ export const TOOL_CATEGORIES_CONFIG: Record<string, { category: ToolCategoryId; 
 
     // 開発者・Web制作
     "/json-formatter": { category: "developer", icon: "⚙️" },
+    "/json-ld-viewer": { category: "developer", icon: "🧬" },
     "/charset-converter": { category: "developer", icon: "🔤" },
     "/text-converter": { category: "developer", icon: "📑" },
     "/ogp-checker": { category: "developer", icon: "🌐" },

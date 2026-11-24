@@ -590,6 +590,34 @@
         "同じランクの中でA+やA-のように微調整できるティア表作成ツールを探している",
         "作成したティア表を高画質画像としてダウンロード保存したい"
       ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:json-ld-viewer",
+      "displayName": "JSON-LD構造可視化・検証 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/json-ld-viewer",
+      "description": "Schema.orgやJSON-LD構造化データのツリー構造・プロパティ・ネストを視覚的に表示・検証できる無料Webツール。HTMLからの抽出、構文エラー診断、Googleリッチリザルト連携、整形・コピーに完全ローカルで対応。",
+      "capabilities": [
+        "JsonLdParser",
+        "SchemaOrgValidation",
+        "TreeStructureVisualization",
+        "RichResultsHelper"
+      ],
+      "tags": [
+        "JSON-LD",
+        "構造化データ",
+        "Schema.org",
+        "リッチリザルト",
+        "JSON-LD検証",
+        "ツリー表示"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-24T00:00:00Z",
+      "representativeQueries": [
+        "JSON-LDの構造化データをツリー形式で分かりやすく可視化したい",
+        "WebページのHTMLソースから構造化データを抽出して検証したい",
+        "Schema.orgの必須プロパティや構文エラーをブラウザ上で診断したい"
+      ]
     }
   ]
 }
