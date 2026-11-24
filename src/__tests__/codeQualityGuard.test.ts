@@ -181,6 +181,7 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         );
         expect(criticalCss).toContain('html[data-theme="dark"] h1');
         expect(criticalCss).toContain("color: #ffffff;");
+        expect(criticalCss).toContain("--ba-primary: #b4b0ff;");
         expect(appCss).toContain('html[data-theme="dark"] .ba-btn:disabled');
         expect(appCss).toContain("rgba(255, 255, 255, 0.65)");
         expect(appCss).toContain('html[data-theme="dark"] aside nav a:not(.is-active)');
