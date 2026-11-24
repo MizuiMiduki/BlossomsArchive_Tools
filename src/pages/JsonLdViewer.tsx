@@ -106,17 +106,17 @@ function TreeNodeView(props: {
                         </span>
                     </Show>
                     <Show when={props.node.valueType === "string"}>
-                        <span class="text-success break-all">
+                        <span class="text-emerald-700 dark:text-emerald-400 break-all font-medium">
                             "{String(props.node.value)}"
                         </span>
                     </Show>
                     <Show when={props.node.valueType === "number"}>
-                        <span class="text-warning font-semibold">
+                        <span class="text-amber-700 dark:text-amber-400 font-semibold">
                             {String(props.node.value)}
                         </span>
                     </Show>
                     <Show when={props.node.valueType === "boolean"}>
-                        <span class="text-info font-bold">
+                        <span class="text-blue-700 dark:text-blue-400 font-bold">
                             {String(props.node.value)}
                         </span>
                     </Show>
@@ -146,7 +146,9 @@ function TreeNodeView(props: {
 
 export default function JsonLdViewer() {
     let containerRef: HTMLDivElement | undefined;
-    const [rawInput, setRawInput] = createSignal("");
+    const [rawInput, setRawInput] = createSignal(
+        JSON.stringify(JSON_LD_SAMPLES.article.data, null, 2),
+    );
     const [selectedSample, setSelectedSample] = createSignal("article");
     const [activeTab, setActiveTab] = createSignal<ViewTab>("tree");
     const [searchTerm, setSearchTerm] = createSignal("");
@@ -154,8 +156,6 @@ export default function JsonLdViewer() {
 
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef, ".card");
-        // 初期サンプルを読み込む
-        handleLoadSample("article");
     });
 
     const handleLoadSample = (key: string) => {
@@ -287,7 +287,6 @@ export default function JsonLdViewer() {
                                                     : "btn-outline"
                                             }`}
                                             onClick={() => handleLoadSample(key)}
-                                            aria-label={`${sample.label.split(" ")[0]}のサンプルデータを読み込む`}
                                         >
                                             {sample.label.split(" ")[0]}
                                         </button>
@@ -331,7 +330,6 @@ export default function JsonLdViewer() {
                                     class="btn btn-outline btn-sm"
                                     onClick={handleClear}
                                     disabled={!rawInput()}
-                                    aria-label="入力をクリアする"
                                 >
                                     クリア
                                 </button>
@@ -340,7 +338,6 @@ export default function JsonLdViewer() {
                                     class="btn btn-outline btn-primary btn-sm"
                                     onClick={() => handleCopy(formattedJson(), "JSON-LD")}
                                     disabled={!rawInput()}
-                                    aria-label="整形済みJSON-LDをコピー"
                                 >
                                     整形コピー
                                 </button>
@@ -349,7 +346,6 @@ export default function JsonLdViewer() {
                                     class="btn btn-outline btn-sm"
                                     onClick={handleDownload}
                                     disabled={!rawInput()}
-                                    aria-label="JSON-LDファイルをダウンロード"
                                 >
                                     .jsonld 保存
                                 </button>
@@ -394,22 +390,22 @@ export default function JsonLdViewer() {
                         <h2 class="card-title text-xl font-bold flex items-center gap-2">
                             <span>構造化データの解析結果</span>
                             <Show when={parseResult().isValid}>
-                                <span class="badge badge-success text-white font-bold">
+                                <span class="bg-emerald-800 text-white font-bold text-xs px-2.5 py-1 rounded-full">
                                     {parseResult().totalEntitiesCount} エンティティ検出
                                 </span>
                             </Show>
                             <Show when={parseResult().hasGraph}>
-                                <span class="badge badge-secondary badge-outline text-xs">
+                                <span class="bg-purple-800 text-white font-bold text-xs px-2.5 py-1 rounded-full">
                                     @graph 構造
                                 </span>
                             </Show>
                             <Show when={errorCount() > 0}>
-                                <span class="badge badge-error text-white font-bold text-xs">
+                                <span class="bg-red-800 text-white font-bold text-xs px-2.5 py-1 rounded-full">
                                     {errorCount()} エラー
                                 </span>
                             </Show>
                             <Show when={warningCount() > 0}>
-                                <span class="badge badge-warning text-base-content font-bold text-xs">
+                                <span class="bg-amber-800 text-white font-bold text-xs px-2.5 py-1 rounded-full">
                                     {warningCount()} 警告
                                 </span>
                             </Show>
@@ -421,7 +417,6 @@ export default function JsonLdViewer() {
                                 type="button"
                                 class={`tab tab-sm ${activeTab() === "tree" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setActiveTab("tree")}
-                                aria-label="階層ツリービューに切り替え"
                             >
                                 🌲 階層ツリー
                             </button>
@@ -429,7 +424,6 @@ export default function JsonLdViewer() {
                                 type="button"
                                 class={`tab tab-sm ${activeTab() === "cards" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setActiveTab("cards")}
-                                aria-label="エンティティ一覧カードに切り替え"
                             >
                                 🏷️ エンティティ一覧
                             </button>
@@ -437,7 +431,6 @@ export default function JsonLdViewer() {
                                 type="button"
                                 class={`tab tab-sm ${activeTab() === "diagnostics" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setActiveTab("diagnostics")}
-                                aria-label="バリデーション診断に切り替え"
                             >
                                 🛡️ 診断 ({allIssues().length})
                             </button>
@@ -445,7 +438,6 @@ export default function JsonLdViewer() {
                                 type="button"
                                 class={`tab tab-sm ${activeTab() === "code" ? "tab-active font-bold" : ""}`}
                                 onClick={() => setActiveTab("code")}
-                                aria-label="整形JSONコードに切り替え"
                             >
                                 📄 整形コード
                             </button>
@@ -568,12 +560,12 @@ export default function JsonLdViewer() {
                                                 <Show
                                                     when={entity.validationIssues.length === 0}
                                                     fallback={
-                                                        <span class="text-warning font-semibold">
+                                                        <span class="text-amber-700 dark:text-amber-400 font-semibold">
                                                             {entity.validationIssues.length} 件の留意点
                                                         </span>
                                                     }
                                                 >
-                                                    <span class="text-success font-semibold">
+                                                    <span class="text-emerald-700 dark:text-emerald-400 font-semibold">
                                                         ✓ バリデーションOK
                                                     </span>
                                                 </Show>

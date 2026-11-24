@@ -13,10 +13,10 @@ describe("JsonLdViewer Component", () => {
             screen.getByLabelText("JSON-LD入力テキストエリア"),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: "記事のサンプルデータを読み込む" }),
+            screen.getByRole("button", { name: "記事" }),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: "商品のサンプルデータを読み込む" }),
+            screen.getByRole("button", { name: "商品" }),
         ).toBeInTheDocument();
         expect(
             screen.getByTitle("Google リッチリザルト テストを別タブで開く"),
@@ -27,11 +27,11 @@ describe("JsonLdViewer Component", () => {
         render(() => <JsonLdViewer />);
 
         // 商品サンプルを読み込み
-        const productBtn = screen.getByRole("button", { name: "商品のサンプルデータを読み込む" });
+        const productBtn = screen.getByRole("button", { name: "商品" });
         fireEvent.click(productBtn);
 
         // エンティティ一覧タブに切り替え
-        const cardsTab = screen.getByRole("button", { name: "エンティティ一覧カードに切り替え" });
+        const cardsTab = screen.getByRole("button", { name: /エンティティ一覧/ });
         fireEvent.click(cardsTab);
 
         expect(screen.getByText("Product")).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe("JsonLdViewer Component", () => {
     it("クリアボタンを押すと入力欄が空になり入力待ちメッセージが表示されること", () => {
         render(() => <JsonLdViewer />);
 
-        const clearBtn = screen.getByRole("button", { name: "入力をクリアする" });
+        const clearBtn = screen.getByRole("button", { name: "クリア" });
         fireEvent.click(clearBtn);
 
         const textarea = screen.getByLabelText("JSON-LD入力テキストエリア") as HTMLTextAreaElement;
@@ -77,7 +77,7 @@ describe("JsonLdViewer Component", () => {
         fireEvent.input(textarea, { target: { value: html } });
 
         // タブをエンティティ一覧に切り替え
-        const cardsTab = screen.getByRole("button", { name: "エンティティ一覧カードに切り替え" });
+        const cardsTab = screen.getByRole("button", { name: /エンティティ一覧/ });
         fireEvent.click(cardsTab);
 
         expect(screen.getByText("Event")).toBeInTheDocument();
@@ -97,21 +97,21 @@ describe("JsonLdViewer Component", () => {
         render(() => <JsonLdViewer />);
 
         // 初期サンプルのArticleを読み込み
-        const articleBtn = screen.getByRole("button", { name: "記事のサンプルデータを読み込む" });
+        const articleBtn = screen.getByRole("button", { name: "記事" });
         fireEvent.click(articleBtn);
 
         // 1. ツリータブ
-        const treeTab = screen.getByRole("button", { name: "階層ツリービューに切り替え" });
+        const treeTab = screen.getByRole("button", { name: /階層ツリー/ });
         fireEvent.click(treeTab);
         expect(screen.getByText("ノード階層構造")).toBeInTheDocument();
 
         // 2. 診断タブ
-        const diagTab = screen.getByRole("button", { name: "バリデーション診断に切り替え" });
+        const diagTab = screen.getByRole("button", { name: /診断/ });
         fireEvent.click(diagTab);
         expect(screen.getByText(/主要プロパティおよび構文チェックにおいて/)).toBeInTheDocument();
 
         // 3. 整形コードタブ
-        const codeTab = screen.getByRole("button", { name: "整形JSONコードに切り替え" });
+        const codeTab = screen.getByRole("button", { name: /整形コード/ });
         fireEvent.click(codeTab);
         expect(screen.getByText(/BlogPosting/)).toBeInTheDocument();
     });
@@ -138,7 +138,7 @@ describe("JsonLdViewer Component", () => {
 
         render(() => <JsonLdViewer />);
 
-        const copyBtn = screen.getByRole("button", { name: "整形済みJSON-LDをコピー" });
+        const copyBtn = screen.getByRole("button", { name: "整形コピー" });
         fireEvent.click(copyBtn);
 
         expect(writeTextMock).toHaveBeenCalled();
@@ -147,7 +147,7 @@ describe("JsonLdViewer Component", () => {
     it("ダウンロードボタン押下時に例外なく動作すること", () => {
         render(() => <JsonLdViewer />);
 
-        const downloadBtn = screen.getByRole("button", { name: "JSON-LDファイルをダウンロード" });
+        const downloadBtn = screen.getByRole("button", { name: ".jsonld 保存" });
         expect(() => fireEvent.click(downloadBtn)).not.toThrow();
     });
 });
