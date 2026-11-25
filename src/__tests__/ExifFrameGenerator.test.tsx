@@ -259,4 +259,14 @@ describe("ExifFrameGenerator", () => {
 
         globalThis.Image = origImage;
     });
+
+    it("スマホ下部固定の操作メニューバー(.ba-exif-dock)と末尾スペーサー(.ba-exif-dock-spacer)が描画されること", () => {
+        const { container } = render(() => <ExifFrame />);
+        const tablist = screen.getByRole("tablist", { name: "設定カテゴリ" });
+        expect(tablist.classList.contains("ba-exif-dock")).toBe(true);
+        expect(container.querySelector(".ba-exif-dock-inner")).not.toBeNull();
+        expect(container.querySelector(".ba-exif-layout")).not.toBeNull();
+        expect(container.querySelector(".ba-exif-preview")).not.toBeNull();
+        expect(container.querySelector(".ba-exif-dock-spacer")).not.toBeNull();
+    });
 });

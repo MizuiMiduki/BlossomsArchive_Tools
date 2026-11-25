@@ -2592,79 +2592,64 @@ export default function ExifFrame() {
             </div>
 
             <div class="ba-card ba-w-full">
-                <div class="ba-grid-2" style={{ gap: "1.5rem", "align-items": "start" }}>
+                <div class="ba-exif-layout">
                     <div
                         ref={settingsDesktopScrollRef}
-                        class="ba-stack-4 ba-min-w-0"
-                        style={{ "max-height": "82vh", "overflow-y": "auto", "padding-right": "0.25rem" }}
+                        class="ba-exif-sidebar"
                     >
-                        <div ref={settingsTopRef} class="ba-stack-4">
+                        <div ref={settingsTopRef} class="ba-exif-settings">
                             <div
                                 role="tablist"
                                 aria-label="設定カテゴリ"
-                                class="ba-tabs ba-w-full"
-                                style={{ position: "sticky", top: 0, "z-index": 10 }}
+                                class="ba-exif-dock"
                             >
-                                <For each={settingTabs}>
-                                    {(tab) => (
+                                <div class="ba-exif-dock-inner">
+                                    <For each={settingTabs}>
+                                        {(tab) => (
+                                            <button
+                                                type="button"
+                                                role="tab"
+                                                id={`exif-tab-${tab.id}`}
+                                                aria-controls={`exif-panel-${tab.id}`}
+                                                aria-selected={activeTab() === tab.id ? "true" : "false"}
+                                                onClick={() => selectTab(tab.id)}
+                                                class={`ba-exif-dock-btn ${activeTab() === tab.id ? "is-active" : ""}`}
+                                            >
+                                                <Show when={tab.isBeta}>
+                                                    <span
+                                                        class="ba-badge ba-badge--warning"
+                                                        style={{
+                                                            position: "absolute",
+                                                            top: "2px",
+                                                            right: "2px",
+                                                            padding: "0 0.25rem",
+                                                            "font-size": "0.5rem",
+                                                            "pointer-events": "none",
+                                                        }}
+                                                    >
+                                                        BETA
+                                                    </span>
+                                                </Show>
+                                                <ToolIcon name={tab.icon} class="ba-icon-sm ba-shrink-0" />
+                                                <span class="ba-truncate">{tab.label}</span>
+                                            </button>
+                                        )}
+                                    </For>
+                                    <Show when={hasImage()}>
                                         <button
                                             type="button"
-                                            role="tab"
-                                            id={`exif-tab-${tab.id}`}
-                                            aria-controls={`exif-panel-${tab.id}`}
-                                            aria-selected={activeTab() === tab.id ? "true" : "false"}
-                                            onClick={() => selectTab(tab.id)}
-                                            class={`ba-tab ba-flex-1 ba-flex-col ${activeTab() === tab.id ? "is-active" : ""}`}
-                                            style={{
-                                                position: "relative",
-                                                "min-width": "3.2rem",
-                                                "min-height": "3rem",
-                                                padding: "0.35rem 0.25rem",
-                                                gap: "0.15rem",
-                                                "font-size": "0.6875rem",
-                                            }}
+                                            disabled={isProcessing()}
+                                            onClick={handleGenerate}
+                                            class="ba-exif-dock-gen"
+                                            aria-label="額縁付き画像を生成"
                                         >
-                                            <Show when={tab.isBeta}>
-                                                <span
-                                                    class="ba-badge ba-badge--warning"
-                                                    style={{
-                                                        position: "absolute",
-                                                        top: "2px",
-                                                        right: "2px",
-                                                        padding: "0 0.25rem",
-                                                        "font-size": "0.5rem",
-                                                        "pointer-events": "none",
-                                                    }}
-                                                >
-                                                    BETA
-                                                </span>
-                                            </Show>
-                                            <ToolIcon name={tab.icon} class="ba-icon-sm ba-shrink-0" />
-                                            <span class="ba-truncate">{tab.label}</span>
+                                            <ToolIcon name="download" class="ba-icon-sm ba-shrink-0" />
+                                            <span class="ba-truncate">
+                                                {isProcessing() ? "生成中" : "生成"}
+                                            </span>
                                         </button>
-                                    )}
-                                </For>
-                                <Show when={hasImage()}>
-                                    <button
-                                        type="button"
-                                        disabled={isProcessing()}
-                                        onClick={handleGenerate}
-                                        class="ba-btn ba-btn--success ba-hidden-desktop ba-flex-1 ba-flex-col"
-                                        style={{
-                                            "min-width": "3.2rem",
-                                            "min-height": "3rem",
-                                            padding: "0.35rem 0.25rem",
-                                            gap: "0.15rem",
-                                            "font-size": "0.6875rem",
-                                        }}
-                                        aria-label="額縁付き画像を生成"
-                                    >
-                                        <ToolIcon name="download" class="ba-icon-sm ba-shrink-0" />
-                                        <span class="ba-truncate">
-                                            {isProcessing() ? "生成中" : "生成"}
-                                        </span>
-                                    </button>
-                                </Show>
+                                    </Show>
+                                </div>
                             </div>
                             <div
                                 role="tabpanel"
@@ -4568,19 +4553,7 @@ export default function ExifFrame() {
                         </div>
                     </div>
 
-                    <div
-                        class="ba-panel ba-flex-col ba-justify-center ba-items-center ba-min-w-0"
-                        style={{
-                            position: "sticky",
-                            top: "1rem",
-                            "border-radius": "var(--ba-radius-lg)",
-                            padding: "1rem",
-                            "min-height": "22rem",
-                            height: "540px",
-                            "max-height": "75vh",
-                            overflow: "hidden",
-                        }}
-                    >
+                    <div class="ba-exif-preview">
                         <Show
                             when={hasImage()}
                             fallback={
@@ -4932,6 +4905,8 @@ export default function ExifFrame() {
             </Show>
             <AdSense />
             <AdSense />
+            {/* スマホ固定操作メニュー分の末尾スペーサー */}
+            <div class="ba-exif-dock-spacer" aria-hidden="true" />
         </div>
     );
 }
