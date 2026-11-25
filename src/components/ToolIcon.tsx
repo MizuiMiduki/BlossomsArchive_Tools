@@ -36,7 +36,8 @@ export type ToolIconName =
     | "layers"
     | "download"
     | "file"
-    | "monitor";
+    | "monitor"
+    | "sitemap";
 
 export interface ToolIconProps {
     name: ToolIconName | string;
@@ -261,6 +262,15 @@ export default function ToolIcon(props: ToolIconProps) {
                     <rect x="2" y="3" width="20" height="14" rx="2" />
                     <line x1="8" y1="21" x2="16" y2="21" />
                     <line x1="12" y1="17" x2="12" y2="21" />
+                </Match>
+                <Match when={props.name === "sitemap"}>
+                    <rect x="9" y="2" width="6" height="4" rx="1" />
+                    <rect x="2" y="18" width="6" height="4" rx="1" />
+                    <rect x="9" y="18" width="6" height="4" rx="1" />
+                    <rect x="16" y="18" width="6" height="4" rx="1" />
+                    <path d="M12 6v6" />
+                    <path d="M5 18v-3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3" />
+                    <path d="M12 12v6" />
                 </Match>
             </Switch>
         </svg>

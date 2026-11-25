@@ -618,6 +618,34 @@
         "WebページのHTMLソースから構造化データを抽出して検証したい",
         "Schema.orgの必須プロパティや構文エラーをブラウザ上で診断したい"
       ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:sitemap-visualizer",
+      "displayName": "サイトマップ構造可視化 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/sitemap-visualizer",
+      "description": "sitemap.xmlやサイトURLからサイト構造を自動解析し、ディレクトリツリー・URL一覧表・多言語(hreflang)対応状況を可視化できる無料ツール。sitemapindex再帰展開やrobots.txt自動検出にも対応。",
+      "capabilities": [
+        "SitemapXmlParsing",
+        "SitemapIndexRecursiveResolution",
+        "DirectoryTreeVisualization",
+        "HreflangMultilingualMatrix"
+      ],
+      "tags": [
+        "sitemap.xml",
+        "サイトマップ可視化",
+        "サイト構造",
+        "hreflang",
+        "多言語SEO",
+        "sitemapindex"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-25T00:00:00Z",
+      "representativeQueries": [
+        "sitemap.xmlを読み込んでサイトのディレクトリ構造をツリーで可視化したい",
+        "多言語サイトのhreflang対応状況や翻訳漏れを一覧表で確認したい",
+        "sitemapindexを持つ大規模サイトのURL構造を解析してCSVやTSVで出力したい"
+      ]
     }
   ]
 }

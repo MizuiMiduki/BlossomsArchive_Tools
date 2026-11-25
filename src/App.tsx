@@ -29,6 +29,7 @@ const JsonFormatter = lazy(() => import("./pages/JsonFormatter"));
 const WordCounter = lazy(() => import("./pages/WordCounter"));
 const TierMaker = lazy(() => import("./pages/TierMaker"));
 const JsonLdViewer = lazy(() => import("./pages/JsonLdViewer"));
+const SitemapVisualizer = lazy(() => import("./pages/SitemapVisualizer"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 export const Router = createRouter({
@@ -59,6 +60,7 @@ export const Router = createRouter({
         { path: "/word-counter", component: WordCounter },
         { path: "/tier-maker", component: TierMaker },
         { path: "/json-ld-viewer", component: JsonLdViewer },
+        { path: "/sitemap-visualizer", component: SitemapVisualizer },
         { path: "*", component: NotFound },
     ],
 });

@@ -34,6 +34,7 @@
 - [文字数カウント・原稿用紙換算](https://tools.blossomsarchive.com/word-counter/): 入力テキストの文字数（空白除外）、行数、原稿用紙枚数、読了時間、文字種別（ひらがな・漢字等）の割合をリアルタイムに集計・分析できる無料Webツール。
 - [ティア表作成ツール (Tier List)](https://tools.blossomsarchive.com/tier-maker/): 画像や文字を自由に並べてオリジナルのティア表を作成できる無料Webツール。段数の増減や配色変更、アイテムごとのA+やA-などの上下微調整、高画質画像エクスポートに対応。
 - [JSON-LD構造可視化・検証](https://tools.blossomsarchive.com/json-ld-viewer/): Schema.orgやJSON-LD構造化データのツリー構造・プロパティ・ネストを視覚的に表示・検証できる無料Webツール。HTMLからの抽出、構文エラー診断、Googleリッチリザルト連携、整形・コピーに完全ローカルで対応。
+- [サイトマップ構造可視化](https://tools.blossomsarchive.com/sitemap-visualizer/): sitemap.xmlやサイトURLからサイト構造を自動解析し、ディレクトリツリー・URL一覧表・多言語(hreflang)対応状況を可視化できる無料ツール。sitemapindex再帰展開やrobots.txt自動検出、TSVコピー・CSV保存に対応。
 
 ## 開発・運営情報
 - 運営元: BlossomsArchive (https://blossomsarchive.com)

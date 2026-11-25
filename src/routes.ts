@@ -239,6 +239,21 @@ export const routes: Route[] = [
         ],
     },
     {
+        path: "/sitemap-visualizer",
+        title: "サイトマップ構造可視化",
+        description:
+            "sitemap.xmlやサイトURLからサイト構造を自動解析し、ディレクトリツリー・URL一覧表・多言語(hreflang)対応状況を可視化できる無料ツールです。sitemapindex再帰展開やrobots.txt自動検出にも対応。",
+        applicationCategory: "DeveloperApplication",
+        keywords: [
+            "sitemap.xml",
+            "サイトマップ可視化",
+            "サイト構造",
+            "hreflang",
+            "多言語SEO",
+            "sitemapindex",
+        ],
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",

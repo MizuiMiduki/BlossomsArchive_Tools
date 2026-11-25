@@ -149,6 +149,7 @@ const ROUTE_CHUNK_PREFIX: Record<string, string> = {
     "/word-counter": "WordCounter",
     "/tier-maker": "TierMaker",
     "/json-ld-viewer": "JsonLdViewer",
+    "/sitemap-visualizer": "SitemapVisualizer",
 };
 
 function findRouteChunk(routePath: string): string | undefined {

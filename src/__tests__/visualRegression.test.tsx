@@ -27,6 +27,7 @@ import JsonFormatter from "../pages/JsonFormatter";
 import WordCounter from "../pages/WordCounter";
 import TierMaker from "../pages/TierMaker";
 import JsonLdViewer from "../pages/JsonLdViewer";
+import SitemapVisualizer from "../pages/SitemapVisualizer";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import Credits from "../pages/Credits";
 import NotFound from "../pages/NotFound";
@@ -111,6 +112,11 @@ const PAGE_ENTRIES: Array<{ path: string; name: string; component: Component }> 
         path: "/json-ld-viewer",
         name: "JsonLdViewer",
         component: JsonLdViewer,
+    },
+    {
+        path: "/sitemap-visualizer",
+        name: "SitemapVisualizer",
+        component: SitemapVisualizer,
     },
     { path: "/privacy", name: "PrivacyPolicy", component: PrivacyPolicy },
     { path: "/credits", name: "Credits", component: Credits },

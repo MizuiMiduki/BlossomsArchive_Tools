@@ -40,6 +40,7 @@ export const TOOL_CATEGORIES_CONFIG: Record<string, { category: ToolCategoryId; 
     // 開発者・Web制作
     "/json-formatter": { category: "developer", icon: "code" },
     "/json-ld-viewer": { category: "developer", icon: "braces" },
+    "/sitemap-visualizer": { category: "developer", icon: "sitemap" },
     "/charset-converter": { category: "developer", icon: "type" },
     "/text-converter": { category: "developer", icon: "file-text" },
     "/ogp-checker": { category: "developer", icon: "globe" },
