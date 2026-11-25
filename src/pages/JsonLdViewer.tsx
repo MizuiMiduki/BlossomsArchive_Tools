@@ -1,6 +1,5 @@
 import { createSignal, createMemo, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
-import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
 import {
@@ -421,7 +420,7 @@ export default function JsonLdViewer() {
                             {title()}
                         </h1>
                         <p class="ba-text-muted ba-text-sm" style={{ "margin-top": "0.25rem", "margin-bottom": 0 }}>
-                            <BudouX text={description()} />
+                            {description()}
                         </p>
                     </div>
                 </div>
@@ -1044,7 +1043,7 @@ export default function JsonLdViewer() {
                 </h2>
                 <div class="ba-stack-3 ba-text-sm ba-text-muted">
                     <p style={{ margin: 0 }}>
-                        <BudouX text="JSON-LD (JavaScript Object Notation for Linked Data) は、Webページのコンテンツの意味や構造を検索エンジン（Googleなど）に正確に伝えるためのデータ形式です。Googleのリッチリザルト（記事カルーセル、商品情報、パンくず、FAQアコーディオン等）を検索結果に表示させるための推奨フォーマットとなっています。" />
+                        JSON-LD (JavaScript Object Notation for Linked Data) は、Webページのコンテンツの意味や構造を検索エンジン（Googleなど）に正確に伝えるためのデータ形式です。Googleのリッチリザルト（記事カルーセル、商品情報、パンくず、FAQアコーディオン等）を検索結果に表示させるための推奨フォーマットとなっています。
                     </p>
                     <h3 class="ba-font-bold ba-text-base" style={{ color: "var(--ba-text)", "margin-top": "0.5rem", "margin-bottom": 0 }}>
                         本ツールの特徴・活用ポイント

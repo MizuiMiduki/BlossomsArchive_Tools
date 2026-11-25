@@ -604,17 +604,7 @@ export default function ExifFrame() {
     onSettled(() => {
         if (containerRef) playPageEntrance(containerRef);
 
-        // 初期マウント時のメインスレッド負荷（Max Potential FID / TTI）を最小化するため、
-        // 非表示タブの事前描画は初期レンダリング完了後に遅延スケジュール
-        let idleTimer: ReturnType<typeof setTimeout> | undefined;
-        if (typeof window !== "undefined") {
-            idleTimer = setTimeout(() => {
-                setVisitedTabs(new Set(["photo", "text", "layout", "design", "overlay", "save"]));
-            }, 300);
-        }
-
         return () => {
-            if (idleTimer) clearTimeout(idleTimer);
             if (rafDrawId && typeof window !== "undefined" && "cancelAnimationFrame" in window) {
                 cancelAnimationFrame(rafDrawId);
                 rafDrawId = 0;
