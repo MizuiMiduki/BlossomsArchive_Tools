@@ -267,6 +267,74 @@ export function tryParseJsonLd(raw: string): { parsed: any; cleaned: string } | 
 }
 
 /**
+ * DOMParser 非対応環境向けの文字単位スキャンによる JSON-LD スクリプト抽出
+ * HTML仕様の終了タグ（</script>, </script >, </script attr="x"> 等）を正規表現なしで安全に処理する
+ */
+function scanJsonLdScriptsWithoutDomParser(html: string): string[] {
+    const results: string[] = [];
+    const lower = html.toLowerCase();
+    let pos = 0;
+
+    while (pos < html.length) {
+        const openIdx = lower.indexOf("<script", pos);
+        if (openIdx === -1) break;
+
+        const nextChar = lower[openIdx + 7];
+        if (
+            nextChar !== undefined &&
+            nextChar !== ">" &&
+            nextChar !== "/" &&
+            !/\s/.test(nextChar)
+        ) {
+            pos = openIdx + 7;
+            continue;
+        }
+
+        const tagEndIdx = html.indexOf(">", openIdx + 7);
+        if (tagEndIdx === -1) break;
+
+        const attrs = html.slice(openIdx + 7, tagEndIdx);
+        const contentStart = tagEndIdx + 1;
+
+        // </script に続いて空白・>・/ のいずれかが来る終了タグを探索
+        let searchPos = contentStart;
+        let closeStart = -1;
+        let closeEnd = -1;
+        while (searchPos < html.length) {
+            const candidate = lower.indexOf("</script", searchPos);
+            if (candidate === -1) break;
+            const afterName = lower[candidate + 8];
+            if (
+                afterName === ">" ||
+                afterName === "/" ||
+                (afterName !== undefined && /\s/.test(afterName))
+            ) {
+                const endGt = html.indexOf(">", candidate + 8);
+                if (endGt !== -1) {
+                    closeStart = candidate;
+                    closeEnd = endGt + 1;
+                    break;
+                }
+            }
+            searchPos = candidate + 8;
+        }
+
+        if (closeStart === -1) break;
+
+        if (attrs.toLowerCase().includes("application/ld+json")) {
+            const content = html.slice(contentStart, closeStart).trim();
+            if (content) {
+                results.push(content);
+            }
+        }
+
+        pos = closeEnd;
+    }
+
+    return results;
+}
+
+/**
  * HTML文字列からすべての JSON-LD スクリプト文字列を抽出する
  */
 export function extractJsonLdRawScripts(html: string): string[] {
@@ -287,30 +355,13 @@ export function extractJsonLdRawScripts(html: string): string[] {
                     }
                 }
             });
-            if (results.length > 0) {
-                return results;
-            }
+            return results;
         } catch {
-            // DOMParser 失敗時は正規表現フォールバックへ
+            // DOMParser 失敗時は文字単位スキャンへフォールバック
         }
     }
 
-    const scriptRegex = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
-    let match: RegExpExecArray | null;
-    while ((match = scriptRegex.exec(html)) !== null) {
-        const attrs = match[1];
-        const content = match[2]?.trim();
-        if (!content) continue;
-        if (
-            /type\s*=\s*(?:"application\/ld\+json[^"]*"|'application\/ld\+json[^']*'|application\/ld\+json[^\s>]*)/i.test(
-                attrs,
-            )
-        ) {
-            results.push(content);
-        }
-    }
-
-    return results;
+    return scanJsonLdScriptsWithoutDomParser(html);
 }
 
 export function parseSeoFromHtml(html: string, sourceUrl = ""): SeoData {

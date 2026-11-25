@@ -516,5 +516,36 @@ describe("SeoChecker Component", () => {
             ).toBeInTheDocument();
             expect(screen.getByText(/Type: WebSite, Organization/)).toBeInTheDocument();
         });
+
+        it("変則的な終了タグ(</script > や </script foo=\"bar\">)を含むJSON-LDをDOMParserおよびフォールバックスキャンの両方で安全に抽出できること", () => {
+            const html = `
+                <html>
+                <head>
+                    <script type="application/ld+json">{"@type":"WebSite","name":"A"}</script >
+                    <script type="application/ld+json">{"@type":"Article","headline":"B"}</script foo="bar">
+                    <script type="text/javascript">window.__ignored = true;</script>
+                </head>
+                </html>
+            `;
+
+            // 1. 通常経路 (DOMParser)
+            const withDom = extractJsonLdRawScripts(html);
+            expect(withDom.length).toBe(2);
+            expect(withDom[0]).toContain("WebSite");
+            expect(withDom[1]).toContain("Article");
+
+            // 2. DOMParser 非存在フォールバック経路 (文字単位スキャン)
+            const originalDomParser = globalThis.DOMParser;
+            try {
+                // @ts-expect-error テスト用に一時的に未定義化
+                globalThis.DOMParser = undefined;
+                const withoutDom = extractJsonLdRawScripts(html);
+                expect(withoutDom.length).toBe(2);
+                expect(withoutDom[0]).toContain("WebSite");
+                expect(withoutDom[1]).toContain("Article");
+            } finally {
+                globalThis.DOMParser = originalDomParser;
+            }
+        });
     });
 });
