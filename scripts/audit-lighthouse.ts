@@ -360,8 +360,16 @@ function generateReportMarkdown(regressions: RegressionItem[]): void {
     markdown += `4. **反映とIssueの自動クローズ**:\n`;
     markdown += `   - \`main\` ブランチへ反映後、GitHub Actions の Lighthouse CI（10シャード並列）が自動実行され、全76パターン（ライト/ダーク × モバイル/デスクトップ）で 100/100 満点への回復が確認されると**本Issueは自動的にクローズ**されます。\n`;
 
+    // GitHub Issue の最大文字数（65536文字）を超えないよう安全マージン（60000文字）でトランケート
+    let finalMarkdown = markdown;
+    if (finalMarkdown.length > 60000) {
+        finalMarkdown =
+            finalMarkdown.slice(0, 59500) +
+            "\n\n...\n> ⚠️ 詳細ログが長大（GitHub Issue 65,536文字上限）のため一部を省略しました。詳細はCIワークフローのアーティファクトログを参照してください。\n";
+    }
+
     fs.mkdirSync(path.dirname(ISSUE_REPORT_PATH), { recursive: true });
-    fs.writeFileSync(ISSUE_REPORT_PATH, markdown, "utf8");
+    fs.writeFileSync(ISSUE_REPORT_PATH, finalMarkdown, "utf8");
     console.log(`Generated issue report at: ${ISSUE_REPORT_PATH}`);
 
     if (process.env.GITHUB_OUTPUT) {

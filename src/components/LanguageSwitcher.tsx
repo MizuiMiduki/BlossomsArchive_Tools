@@ -29,6 +29,13 @@ export default function LanguageSwitcher(props: LanguageSwitcherProps) {
     const currentLocale = () => getLocaleFromPath(location.pathname);
     const ui = () => getUiTranslations(currentLocale());
 
+    const currentDisplayLabel = () => {
+        const loc = currentLocale();
+        if (loc === "zh-hans") return "简";
+        if (loc === "zh-hant") return "繁";
+        return loc.toUpperCase();
+    };
+
     onSettled(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef && !dropdownRef.contains(e.target as Node)) {
@@ -50,19 +57,19 @@ export default function LanguageSwitcher(props: LanguageSwitcherProps) {
     });
 
     return (
-        <div class={`relative inline-block text-left ${props.class || ""}`} ref={dropdownRef}>
+        <div class={`ba-lang-dropdown ${props.class || ""}`} ref={dropdownRef}>
             <button
                 type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
-                class="btn btn-ghost btn-sm gap-1.5 px-2.5 h-9 min-h-[36px] font-medium border border-base-content/10 hover:border-base-content/30 transition-colors"
-                aria-label={ui().languageSelectorLabel}
+                class="ba-lang-trigger"
+                aria-label={`${currentDisplayLabel()} - ${ui().languageSelectorLabel}`}
                 aria-haspopup="true"
                 aria-expanded={isOpen() ? "true" : "false"}
             >
                 {/* 地球・言語アイコン */}
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="w-4 h-4 text-base-content/70"
+                    class="ba-icon-xs"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -75,16 +82,15 @@ export default function LanguageSwitcher(props: LanguageSwitcherProps) {
                     <line x1="2" y1="12" x2="22" y2="12" />
                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
-                <span class="text-xs uppercase font-semibold">
-                    {SUPPORTED_LOCALES[currentLocale()]?.code === "zh-hans"
-                        ? "简"
-                        : SUPPORTED_LOCALES[currentLocale()]?.code === "zh-hant"
-                          ? "繁"
-                          : SUPPORTED_LOCALES[currentLocale()]?.code}
-                </span>
+                <span>{currentDisplayLabel()}</span>
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${isOpen() ? "rotate-180" : ""}`}
+                    class="ba-icon-xs"
+                    style={{
+                        transform: isOpen() ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.15s ease",
+                        opacity: "0.7",
+                    }}
                     viewBox="0 0 20 20"
                     fill="currentColor"
                     aria-hidden="true"
@@ -97,32 +103,29 @@ export default function LanguageSwitcher(props: LanguageSwitcherProps) {
                 </svg>
             </button>
 
-            {isOpen() && (
+            <Show when={isOpen()}>
                 <div
-                    class="absolute right-0 mt-1.5 w-44 rounded-xl shadow-2xl bg-base-100 border border-base-content/15 py-1.5 z-50 focus:outline-none animate-in fade-in zoom-in-95 duration-100"
+                    class="ba-lang-menu"
                     role="menu"
                     aria-orientation="vertical"
                 >
                     <For each={ALL_LOCALES}>
                         {(loc: SupportedLocale) => {
                             const config = SUPPORTED_LOCALES[loc];
+                            const isCurrent = () => currentLocale() === loc;
                             return (
                                 <a
                                     href={getPathWithLocale(location.pathname, loc)}
                                     onClick={() => setIsOpen(false)}
-                                    class={`flex items-center justify-between px-3.5 py-2 text-xs font-medium transition-colors ${
-                                        currentLocale() === loc
-                                            ? "bg-primary/10 text-primary font-bold"
-                                            : "text-base-content/85 hover:bg-base-200 hover:text-base-content"
-                                    }`}
+                                    class={`ba-lang-item ${isCurrent() ? "is-active" : ""}`}
                                     role="menuitem"
-                                    aria-current={currentLocale() === loc ? "true" : undefined}
+                                    aria-current={isCurrent() ? "true" : undefined}
                                 >
                                     <span>{config.label}</span>
-                                    <Show when={currentLocale() === loc}>
+                                    <Show when={isCurrent()}>
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
-                                            class="w-4 h-4 text-primary"
+                                            class="ba-icon-xs"
                                             viewBox="0 0 20 20"
                                             fill="currentColor"
                                             aria-hidden="true"
@@ -139,7 +142,7 @@ export default function LanguageSwitcher(props: LanguageSwitcherProps) {
                         }}
                     </For>
                 </div>
-            )}
+            </Show>
         </div>
     );
 }

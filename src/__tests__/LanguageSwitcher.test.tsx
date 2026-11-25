@@ -17,7 +17,7 @@ function renderWithRouter() {
 describe("LanguageSwitcher Component", () => {
     it("言語切替ボタンがアクセシブル名付きで描画されること", () => {
         renderWithRouter();
-        const button = screen.getByRole("button", { name: "言語を変更" });
+        const button = screen.getByRole("button", { name: /言語を変更/ });
         expect(button).toBeInTheDocument();
         expect(button).toHaveAttribute("aria-haspopup", "true");
         expect(button).toHaveAttribute("aria-expanded", "false");
@@ -25,7 +25,7 @@ describe("LanguageSwitcher Component", () => {
 
     it("ボタンクリックでドロップダウンが開き、全6言語のリンクが表示されること", async () => {
         renderWithRouter();
-        const button = screen.getByRole("button", { name: "言語を変更" });
+        const button = screen.getByRole("button", { name: /言語を変更/ });
 
         fireEvent.click(button);
         expect(button).toHaveAttribute("aria-expanded", "true");
@@ -41,7 +41,7 @@ describe("LanguageSwitcher Component", () => {
 
     it("ドロップダウンが開いている状態でEscキーを押すと閉じること", async () => {
         renderWithRouter();
-        const button = screen.getByRole("button", { name: "言語を変更" });
+        const button = screen.getByRole("button", { name: /言語を変更/ });
 
         fireEvent.click(button);
         expect(screen.getByRole("menuitem", { name: /English/ })).toBeInTheDocument();

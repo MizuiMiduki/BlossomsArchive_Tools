@@ -210,6 +210,8 @@ svg[class*="ba-icon"] { flex-shrink: 0; }
 .ba-font-bold { font-weight: 700; }
 .ba-font-black { font-weight: 800; }
 .ba-text-muted { color: var(--ba-text-muted); }
+.ba-lang-dropdown { position: relative; display: inline-block; }
+.ba-lang-trigger { display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; min-height: 2rem; height: 2rem; padding: 0.25rem 0.6rem; font-size: 0.8125rem; font-weight: 600; border-radius: var(--ba-radius-sm); border: 1px solid var(--ba-border); background-color: var(--ba-surface); color: var(--ba-text); cursor: pointer; white-space: nowrap; user-select: none; }
 .ba-hidden-desktop { display: none; }
 @media (max-width: 1023.98px) {
   .ba-only-desktop { display: none !important; }
