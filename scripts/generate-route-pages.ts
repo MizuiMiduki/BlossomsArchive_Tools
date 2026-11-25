@@ -95,9 +95,6 @@ const runtimeJsFile = assetFiles.find(
 const budouxJsFile = assetFiles.find(
     (file) => file.startsWith("BudouX-") && file.endsWith(".js"),
 );
-const solidWebJsFile = assetFiles.find(
-    (file) => file.startsWith("web-") && file.endsWith(".js"),
-);
 
 let baseTemplate = removeModulePreloadTags(template);
 
@@ -332,9 +329,6 @@ for (const route of routes) {
         const modulePreloadList = [
             runtimeJsFile
                 ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
-                : "",
-            solidWebJsFile
-                ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(solidWebJsFile)}" />`
                 : "",
             mainJsFile
                 ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(mainJsFile)}" />`
