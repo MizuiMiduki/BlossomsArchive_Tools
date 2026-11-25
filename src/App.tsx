@@ -2,6 +2,7 @@
 import { lazy } from "solid-js";
 import { createRouter } from "@solidjs/router";
 import Layout from "./components/Layout";
+import { ALL_LOCALES, DEFAULT_LOCALE, SUPPORTED_LOCALES } from "./i18n/index";
 
 const Home = lazy(() => import("./pages/Home"));
 const Calculator = lazy(() => import("./pages/Calculator"));
@@ -32,37 +33,52 @@ const JsonLdViewer = lazy(() => import("./pages/JsonLdViewer"));
 const SitemapVisualizer = lazy(() => import("./pages/SitemapVisualizer"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+const baseRoutes = [
+    { path: "/", component: Home },
+    { path: "/calculator", component: Calculator },
+    { path: "/qr_code", component: QrGenerator },
+    { path: "/password-generator", component: PasswordGenerator },
+    { path: "/lottery", component: Lottery },
+    { path: "/image_conversion", component: ImageConverter },
+    { path: "/video-compressor", component: VideoCompressor },
+    { path: "/charset-converter", component: CharsetConverter },
+    { path: "/access-info", component: AccessInfo },
+    { path: "/ogp-checker", component: OgpChecker },
+    { path: "/seo-checker", component: SeoChecker },
+    { path: "/exif-frame", component: ExifFrameGenerator },
+    { path: "/clock", component: Clock },
+    { path: "/timer", component: TimerStopwatch },
+    { path: "/privacy", component: PrivacyPolicy },
+    { path: "/credits", component: Credits },
+    { path: "/hyperfocal", component: HyperfocalCalculator },
+    { path: "/headphone-driveability", component: HeadphoneDriveability },
+    { path: "/text-converter", component: TextConverter },
+    { path: "/exposure-calculator", component: ExposureCalculator },
+    { path: "/timelapse-calculator", component: TimelapseCalculator },
+    { path: "/bpm-calculator", component: BpmCalculator },
+    { path: "/json-formatter", component: JsonFormatter },
+    { path: "/word-counter", component: WordCounter },
+    { path: "/tier-maker", component: TierMaker },
+    { path: "/json-ld-viewer", component: JsonLdViewer },
+    { path: "/sitemap-visualizer", component: SitemapVisualizer },
+];
+
+const allRoutes = [...baseRoutes];
+for (const loc of ALL_LOCALES) {
+    if (loc === DEFAULT_LOCALE) continue;
+    const prefix = SUPPORTED_LOCALES[loc].prefix;
+    for (const route of baseRoutes) {
+        const localizedPath = route.path === "/" ? prefix : `${prefix}${route.path}`;
+        allRoutes.push({
+            path: localizedPath,
+            component: route.component,
+        });
+    }
+}
+allRoutes.push({ path: "*", component: NotFound });
+
 export const Router = createRouter({
-    routes: [
-        { path: "/", component: Home },
-        { path: "/calculator", component: Calculator },
-        { path: "/qr_code", component: QrGenerator },
-        { path: "/password-generator", component: PasswordGenerator },
-        { path: "/lottery", component: Lottery },
-        { path: "/image_conversion", component: ImageConverter },
-        { path: "/video-compressor", component: VideoCompressor },
-        { path: "/charset-converter", component: CharsetConverter },
-        { path: "/access-info", component: AccessInfo },
-        { path: "/ogp-checker", component: OgpChecker },
-        { path: "/seo-checker", component: SeoChecker },
-        { path: "/exif-frame", component: ExifFrameGenerator },
-        { path: "/clock", component: Clock },
-        { path: "/timer", component: TimerStopwatch },
-        { path: "/privacy", component: PrivacyPolicy },
-        { path: "/credits", component: Credits },
-        { path: "/hyperfocal", component: HyperfocalCalculator },
-        { path: "/headphone-driveability", component: HeadphoneDriveability },
-        { path: "/text-converter", component: TextConverter },
-        { path: "/exposure-calculator", component: ExposureCalculator },
-        { path: "/timelapse-calculator", component: TimelapseCalculator },
-        { path: "/bpm-calculator", component: BpmCalculator },
-        { path: "/json-formatter", component: JsonFormatter },
-        { path: "/word-counter", component: WordCounter },
-        { path: "/tier-maker", component: TierMaker },
-        { path: "/json-ld-viewer", component: JsonLdViewer },
-        { path: "/sitemap-visualizer", component: SitemapVisualizer },
-        { path: "*", component: NotFound },
-    ],
+    routes: allRoutes,
 });
 
 function App() {

@@ -2,6 +2,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { routes, SITE_URL, INDEXNOW_KEY, type Route } from "../src/routes";
+import { ALL_LOCALES, getPathWithLocale } from "../src/i18n/index";
 
 export interface IndexNowPayload {
     host: string;
@@ -15,6 +16,7 @@ export function buildIndexNowPayload(
         host?: string;
         key?: string;
         routesList?: Route[];
+        includeLocales?: boolean;
     } = {},
 ): IndexNowPayload {
     const rawHost = options.host || SITE_URL;
@@ -22,10 +24,22 @@ export function buildIndexNowPayload(
     const host = urlObj.hostname;
     const key = options.key || process.env.INDEXNOW_KEY || INDEXNOW_KEY;
     const targetRoutes = options.routesList || routes;
+    const includeLocales = options.includeLocales ?? false;
 
-    const urlList = targetRoutes
-        .filter((r) => r.path !== "*" && !r.hidden)
-        .map((r) => `${rawHost}${r.path === "/" ? "/" : r.path}`);
+    const validRoutes = targetRoutes.filter((r) => r.path !== "*" && !r.hidden);
+    let urlList: string[];
+
+    if (includeLocales) {
+        urlList = [];
+        for (const r of validRoutes) {
+            for (const loc of ALL_LOCALES) {
+                const locPath = getPathWithLocale(r.path, loc);
+                urlList.push(`${rawHost}${locPath === "/" ? "/" : locPath}`);
+            }
+        }
+    } else {
+        urlList = validRoutes.map((r) => `${rawHost}${r.path === "/" ? "/" : r.path}`);
+    }
 
     return {
         host,

@@ -13,8 +13,18 @@ import {
     SITE_LOGO,
     SITE_TITLE,
     PUBLISHER_NAME,
+    SITE_URL,
 } from "../routes";
+import {
+    getLocaleFromPath,
+    getPathWithoutLocale,
+    getPathWithLocale,
+    getHreflangLinks,
+    getUiTranslations,
+} from "../i18n/index";
+import { ROUTE_TRANSLATIONS } from "../i18n/routeTranslations";
 import ThemeToggle from "./ThemeToggle";
+import LanguageSwitcher from "./LanguageSwitcher";
 const CommandPalette = lazy(() => import("./CommandPalette"));
 import { delayedCall } from "../utils/animations";
 import { filterRoutesByQuery } from "../utils/search";
@@ -40,6 +50,30 @@ export default function Layout(props: LayoutProps) {
         const favs = getFavorites();
         return routes.filter((r) => !r.hidden && favs.includes(r.path));
     });
+
+    const getCategoryName = (cat: { id: string; name: string }) => {
+        if (currentLocale() === "ja") return cat.name;
+        switch (cat.id) {
+            case "camera":
+                return currentUi().categoryMedia;
+            case "utility":
+                return currentUi().categoryUtility;
+            case "developer":
+                return currentUi().categoryWeb;
+            case "audio":
+                return currentUi().categoryAudioPhoto;
+            default:
+                return cat.name;
+        }
+    };
+
+    const getLocalizedRouteTitle = (path: string) => {
+        return ROUTE_TRANSLATIONS[path]?.[currentLocale()]?.title ?? routes.find((r) => r.path === path)?.title ?? "";
+    };
+
+    const getLocalizedRouteHref = (path: string) => {
+        return getPathWithLocale(path, currentLocale());
+    };
 
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     const adsenseId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
@@ -147,19 +181,25 @@ export default function Layout(props: LayoutProps) {
     };
 
     const currentPath = createMemo(() => normalizePath(location.pathname));
+    const currentLocale = createMemo(() => getLocaleFromPath(location.pathname));
+    const currentUi = createMemo(() => getUiTranslations(currentLocale()));
+    const internalPath = createMemo(() => getPathWithoutLocale(currentPath()));
 
     const getHeaderTitle = createMemo(() => {
-        const route = routes.find((r) => r.path === currentPath());
-        return route ? route.title : "ツールダッシュボード";
+        const trans = ROUTE_TRANSLATIONS[internalPath()]?.[currentLocale()];
+        if (trans) return trans.title;
+        const route = routes.find((r) => r.path === internalPath());
+        return route ? route.title : currentUi().dashboardTitle;
     });
 
     const getMetadata = createMemo(() => getPageMetadata(currentPath()));
     const getCurrentUrl = () => window.location.origin + currentPath();
     const getKeywordsText = createMemo(() => (getMetadata().keywords ?? []).join(", "));
+    const hreflangLinks = createMemo(() => getHreflangLinks(currentPath(), SITE_URL));
 
     const getShareTitle = () => {
         const baseTitle = "BlossomsArchive Tools";
-        return currentPath() === "/"
+        return internalPath() === "/"
             ? baseTitle
             : `${getHeaderTitle()} | ${baseTitle}`;
     };
@@ -239,8 +279,9 @@ export default function Layout(props: LayoutProps) {
             pathname: location.pathname,
             title: getMetadata().title,
             url: getMetadata().url,
+            langTag: getMetadata().langTag,
         }),
-        ({ pathname, title, url }) => {
+        ({ pathname, title, url, langTag }) => {
             if (gaId && (window as any).gtag) {
                 (window as any).gtag("config", gaId, {
                     page_path: pathname,
@@ -250,6 +291,8 @@ export default function Layout(props: LayoutProps) {
 
             // 全ページ共通 JSON-LD 構造化データと canonical の動的更新
             if (typeof document !== "undefined") {
+                document.documentElement.lang = langTag;
+
                 const jsonLd = getPageJsonLd(pathname);
                 let script = document.getElementById(
                     "ba-tools-global-jsonld",
@@ -292,13 +335,16 @@ export default function Layout(props: LayoutProps) {
             </Show>
             <Link rel="icon" href={SITE_FAVICON} />
             <Link rel="apple-touch-icon" href={SITE_LOGO} />
+            <For each={hreflangLinks()}>
+                {(link) => <Link rel="alternate" hreflang={link.lang} href={link.href} />}
+            </For>
             <Link rel="alternate" type="text/plain" href="https://tools.blossomsarchive.com/llms.txt" />
             <Link rel="ard" type="application/ai-catalog+json" href="https://tools.blossomsarchive.com/.well-known/ard.json" />
 
             {/* OGP (Open Graph Protocol) タグ */}
             <Meta property="og:type" content="website" />
             <Meta property="og:site_name" content={SITE_TITLE} />
-            <Meta property="og:locale" content="ja_JP" />
+            <Meta property="og:locale" content={getMetadata().ogLocale} />
             <Meta property="og:title" content={getMetadata().title} />
             <Meta
                 property="og:description"
@@ -376,7 +422,7 @@ export default function Layout(props: LayoutProps) {
                 {/* サイドバー用メニュー検索バー */}
                 <div class="ba-shrink-0" style={{ padding: "0 1.25rem 0.75rem" }}>
                     <label for="sidebar-menu-search" class="ba-sr-only">
-                        メニュー内を検索
+                        {currentUi().searchMenu}
                     </label>
                     <div class="ba-input-icon-wrap">
                         <span class="ba-input-icon">
@@ -387,10 +433,10 @@ export default function Layout(props: LayoutProps) {
                             type="search"
                             class="ba-input ba-input--sm"
                             style={{ "padding-left": "2.25rem", "padding-right": "1.75rem" }}
-                            placeholder="メニューを検索..."
+                            placeholder={currentUi().searchPlaceholder}
                             value={sidebarSearchQuery()}
                             onInput={(e) => setSidebarSearchQuery(e.currentTarget.value)}
-                            aria-label="メニュー内を検索"
+                            aria-label={currentUi().searchMenu}
                         />
                         <Show when={sidebarSearchQuery().trim()}>
                             <button
@@ -416,17 +462,17 @@ export default function Layout(props: LayoutProps) {
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="ba-icon-xs" fill="currentColor" aria-hidden="true">
                                             <path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
                                         </svg>
-                                        <span>お気に入り</span>
+                                        <span>{currentUi().favorites}</span>
                                     </div>
                                     <div class="ba-stack-1">
                                         <For each={favoriteRoutes()}>
                                             {(route) => (
                                                 <a
-                                                    href={route.path}
-                                                    class={`ba-nav-link ${currentPath() === route.path ? "is-active" : ""}`}
+                                                    href={getLocalizedRouteHref(route.path)}
+                                                    class={`ba-nav-link ${internalPath() === route.path ? "is-active" : ""}`}
                                                 >
                                                     <ToolIcon name={getToolIcon(route.path)} class="ba-icon-sm ba-shrink-0" />
-                                                    <span class="ba-truncate">{route.title}</span>
+                                                    <span class="ba-truncate">{getLocalizedRouteTitle(route.path)}</span>
                                                 </a>
                                             )}
                                         </For>
@@ -447,11 +493,11 @@ export default function Layout(props: LayoutProps) {
                                         >
                                             {(route) => (
                                                 <a
-                                                    href={route.path}
-                                                    class={`ba-nav-link ${currentPath() === route.path ? "is-active" : ""}`}
+                                                    href={getLocalizedRouteHref(route.path)}
+                                                    class={`ba-nav-link ${internalPath() === route.path ? "is-active" : ""}`}
                                                 >
                                                     <ToolIcon name={getToolIcon(route.path)} class="ba-icon-sm ba-shrink-0" />
-                                                    <span class="ba-truncate">{route.title}</span>
+                                                    <span class="ba-truncate">{getLocalizedRouteTitle(route.path)}</span>
                                                 </a>
                                             )}
                                         </For>
@@ -464,7 +510,7 @@ export default function Layout(props: LayoutProps) {
                                             }
                                         >
                                             <div class="ba-text-center ba-text-xs ba-text-muted" style={{ padding: "1.5rem 0.5rem" }}>
-                                                一致するメニューがありません
+                                                {currentUi().noResults}
                                             </div>
                                         </Show>
                                     </>
@@ -481,7 +527,7 @@ export default function Layout(props: LayoutProps) {
                                                 <div style={{ "margin-bottom": "0.75rem" }}>
                                                     <div class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-font-bold ba-text-muted" style={{ padding: "0.25rem 0.5rem", "letter-spacing": "0.04em" }}>
                                                         <ToolIcon name={cat.icon} class="ba-icon-xs ba-shrink-0" />
-                                                        <span>{cat.name}</span>
+                                                        <span>{getCategoryName(cat)}</span>
                                                         <span style={{ "margin-left": "auto", "font-weight": 500 }}>
                                                             {catRoutes.length}
                                                         </span>
@@ -490,11 +536,11 @@ export default function Layout(props: LayoutProps) {
                                                         <For each={catRoutes}>
                                                             {(route) => (
                                                                 <a
-                                                                    href={route.path}
-                                                                    class={`ba-nav-link ${currentPath() === route.path ? "is-active" : ""}`}
+                                                                    href={getLocalizedRouteHref(route.path)}
+                                                                    class={`ba-nav-link ${internalPath() === route.path ? "is-active" : ""}`}
                                                                 >
                                                                     <ToolIcon name={getToolIcon(route.path)} class="ba-icon-sm ba-shrink-0" />
-                                                                    <span class="ba-truncate">{route.title}</span>
+                                                                    <span class="ba-truncate">{getLocalizedRouteTitle(route.path)}</span>
                                                                 </a>
                                                             )}
                                                         </For>
@@ -511,7 +557,7 @@ export default function Layout(props: LayoutProps) {
                             {/* SNS共有ボタン */}
                             <div style={{ "padding-top": "0.875rem", "border-top": "1px solid var(--ba-border)" }}>
                                 <p class="ba-text-xs ba-font-bold ba-text-muted" style={{ "margin-top": 0, "margin-bottom": "0.5rem" }}>
-                                    このサイトを共有
+                                    {currentUi().share}
                                 </p>
                                 <div class="ba-flex ba-items-center ba-gap-1 ba-flex-wrap">
                                     {/* Twitter / X */}
@@ -652,11 +698,11 @@ export default function Layout(props: LayoutProps) {
                             </div>
 
                             <footer class="ba-text-center ba-text-xs ba-text-muted ba-stack-1">
-                                <a href="/privacy" class="ba-underline">
-                                    プライバシーポリシー
+                                <a href={getPathWithLocale("/privacy", currentLocale())} class="ba-underline">
+                                    {currentUi().privacyPolicy}
                                 </a>
-                                <a href="/credits" class="ba-underline">
-                                    使用ライブラリ
+                                <a href={getPathWithLocale("/credits", currentLocale())} class="ba-underline">
+                                    {currentUi().credits}
                                 </a>
                                 <p style={{ "margin-top": "0.35rem", "margin-bottom": 0 }}>© BlossomsArchive</p>
                             </footer>
@@ -672,7 +718,7 @@ export default function Layout(props: LayoutProps) {
                         <button
                             type="button"
                             class={`ba-btn ba-btn--ghost ba-btn--sm ba-btn--square ba-shrink-0 ${isPcMenuOpen() ? "ba-hidden-desktop" : ""}`}
-                            aria-label="メニューを開く"
+                            aria-label={currentUi().menuOpen}
                             onClick={() => {
                                 setIsPcMenuOpen(true);
                                 setIsMenuOpen(!isMenuOpen());
@@ -695,9 +741,10 @@ export default function Layout(props: LayoutProps) {
                             onClick={() => setIsPaletteOpen(true)}
                         >
                             <ToolIcon name="search" class="ba-icon-xs" />
-                            <span class="ba-text-xs">検索...</span>
+                            <span class="ba-text-xs">{currentUi().searchPlaceholder}</span>
                             <kbd class="ba-kbd ba-hidden-mobile">⌘K</kbd>
                         </button>
+                        <LanguageSwitcher />
                         <ThemeToggle />
                     </div>
                 </header>

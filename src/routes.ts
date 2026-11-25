@@ -1,3 +1,14 @@
+import {
+    DEFAULT_LOCALE,
+    SUPPORTED_LOCALES,
+    getLocaleFromPath,
+    getPathWithLocale,
+    getPathWithoutLocale,
+    getUiTranslations,
+    type SupportedLocale,
+} from "./i18n/index";
+import { ROUTE_TRANSLATIONS } from "./i18n/routeTranslations";
+
 export interface Route {
     path: string;
     title: string;
@@ -275,6 +286,9 @@ export interface PageMetadata {
     description: string;
     url: string;
     keywords?: string[];
+    locale: SupportedLocale;
+    langTag: string;
+    ogLocale: string;
 }
 
 export function normalizePath(pathname: string): string {
@@ -282,21 +296,35 @@ export function normalizePath(pathname: string): string {
     return pathname.replace(/\/+$/, "");
 }
 
-export function getPageMetadata(pathname: string): PageMetadata {
-    const normalized = normalizePath(pathname);
-    const route = routes.find((item) => item.path === normalized);
+export function getPageMetadata(
+    pathname: string,
+    explicitLocale?: SupportedLocale,
+): PageMetadata {
+    const locale = explicitLocale ?? getLocaleFromPath(pathname);
+    const internalPath = normalizePath(getPathWithoutLocale(pathname));
+    const route = routes.find((item) => item.path === internalPath);
+    const localizedMeta = ROUTE_TRANSLATIONS[internalPath]?.[locale];
+    const localeConfig = SUPPORTED_LOCALES[locale] ?? SUPPORTED_LOCALES[DEFAULT_LOCALE];
+
     const title =
-        !route || route.path === "/"
+        !route || internalPath === "/"
             ? SITE_TITLE
-            : `${route.title} | ${SITE_TITLE}`;
+            : `${localizedMeta?.title ?? route.title} | ${SITE_TITLE}`;
+
+    const localizedPath = getPathWithLocale(internalPath, locale);
+    const fullUrl = `${SITE_URL}${localizedPath === "/" ? "/" : localizedPath}`;
 
     return {
         title,
         description:
+            localizedMeta?.description ??
             route?.description ??
             SITE_DESCRIPTION,
-        url: `${SITE_URL}${normalized}`,
-        keywords: route?.keywords ?? [],
+        url: fullUrl,
+        keywords: localizedMeta?.keywords ?? route?.keywords ?? [],
+        locale,
+        langTag: localeConfig.langTag,
+        ogLocale: localeConfig.ogLocale,
     };
 }
 
@@ -309,10 +337,30 @@ export interface JsonLdGraph {
  * ページパスに応じた完全なJSON-LD構造化データ（Schema.org）を生成する。
  * Organization, WebSite, WebApplication, BreadcrumbList などを網羅。
  */
-export function getPageJsonLd(pathname: string): JsonLdGraph {
-    const normalized = normalizePath(pathname);
-    const route = routes.find((r) => r.path === normalized);
-    const currentUrl = `${SITE_URL}${normalized === "/" ? "" : normalized}`;
+export function getPageJsonLd(
+    pathname: string,
+    explicitLocale?: SupportedLocale,
+): JsonLdGraph {
+    const locale = explicitLocale ?? getLocaleFromPath(pathname);
+    const internalPath = normalizePath(getPathWithoutLocale(pathname));
+    const route = routes.find((r) => r.path === internalPath);
+    const localizedMeta = ROUTE_TRANSLATIONS[internalPath]?.[locale];
+    const localeConfig = SUPPORTED_LOCALES[locale] ?? SUPPORTED_LOCALES[DEFAULT_LOCALE];
+    const ui = getUiTranslations(locale);
+
+    const localizedPath = getPathWithLocale(internalPath, locale);
+    const currentUrl = `${SITE_URL}${localizedPath === "/" ? "/" : localizedPath}`;
+    const localizedHomePath = getPathWithLocale("/", locale);
+    const homeUrl = `${SITE_URL}${localizedHomePath === "/" ? "/" : localizedHomePath}`;
+
+    const pageTitle =
+        !route || internalPath === "/"
+            ? SITE_TITLE
+            : `${localizedMeta?.title ?? route.title} | ${SITE_TITLE}`;
+    const pageDescription =
+        localizedMeta?.description ??
+        route?.description ??
+        ui.siteDescription;
 
     const graph: any[] = [
         {
@@ -330,23 +378,23 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
             "@id": `${SITE_URL}/#website`,
             url: `${SITE_URL}/`,
             name: SITE_TITLE,
-            description: SITE_DESCRIPTION,
+            description: ui.siteDescription,
             publisher: {
                 "@id": `${PUBLISHER_URL}#organization`,
             },
-            inLanguage: "ja",
+            inLanguage: localeConfig.langTag,
         },
     ];
 
-    if (normalized === "/") {
+    if (internalPath === "/") {
         // トップページ
         graph.push({
             "@type": "WebPage",
-            "@id": `${SITE_URL}/#webpage`,
-            url: `${SITE_URL}/`,
+            "@id": `${currentUrl}#webpage`,
+            url: currentUrl,
             name: SITE_TITLE,
-            description: SITE_DESCRIPTION,
-            inLanguage: "ja",
+            description: pageDescription,
+            inLanguage: localeConfig.langTag,
             primaryImageOfPage: {
                 "@type": "ImageObject",
                 url: DEFAULT_OG_IMAGE,
@@ -363,12 +411,16 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
             },
             hasPart: routes
                 .filter((r) => r.path !== "/" && !r.hidden)
-                .map((r) => ({
-                    "@type": "WebApplication",
-                    name: r.title,
-                    url: `${SITE_URL}${r.path}`,
-                    description: r.description,
-                })),
+                .map((r) => {
+                    const itemMeta = ROUTE_TRANSLATIONS[r.path]?.[locale];
+                    const itemUrl = `${SITE_URL}${getPathWithLocale(r.path, locale)}`;
+                    return {
+                        "@type": "WebApplication",
+                        name: itemMeta?.title ?? r.title,
+                        url: itemUrl,
+                        description: itemMeta?.description ?? r.description,
+                    };
+                }),
         });
 
         return {
@@ -384,9 +436,9 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
                 "@type": "WebPage",
                 "@id": `${currentUrl}#webpage`,
                 url: currentUrl,
-                name: `${route.title} | ${SITE_TITLE}`,
-                description: route.description,
-                inLanguage: "ja",
+                name: pageTitle,
+                description: pageDescription,
+                inLanguage: localeConfig.langTag,
                 primaryImageOfPage: {
                     "@type": "ImageObject",
                     url: DEFAULT_OG_IMAGE,
@@ -410,18 +462,22 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
             graph.push({
                 "@type": "WebApplication",
                 "@id": `${currentUrl}#webapp`,
-                name: `${route.title} | ${SITE_TITLE}`,
+                name: pageTitle,
                 url: currentUrl,
-                description: route.description,
+                description: pageDescription,
                 applicationCategory:
                     route.applicationCategory || "UtilityApplication",
                 operatingSystem: "All",
                 browserRequirements: "Requires JavaScript. Requires HTML5.",
-                inLanguage: "ja",
+                inLanguage: localeConfig.langTag,
                 isAccessibleForFree: true,
                 softwareVersion: "1.0.0",
-                featureList: route.description,
-                keywords: route.keywords ? route.keywords.join(", ") : undefined,
+                featureList: pageDescription,
+                keywords: localizedMeta?.keywords
+                    ? localizedMeta.keywords.join(", ")
+                    : route.keywords
+                      ? route.keywords.join(", ")
+                      : undefined,
                 author: {
                     "@id": `${PUBLISHER_URL}#organization`,
                 },
@@ -439,10 +495,10 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
             graph.push({
                 "@type": "WebPage",
                 "@id": `${currentUrl}#webpage`,
-                name: `${route.title} | ${SITE_TITLE}`,
+                name: pageTitle,
                 url: currentUrl,
-                description: route.description,
-                inLanguage: "ja",
+                description: pageDescription,
+                inLanguage: localeConfig.langTag,
                 primaryImageOfPage: {
                     "@type": "ImageObject",
                     url: DEFAULT_OG_IMAGE,
@@ -468,13 +524,13 @@ export function getPageJsonLd(pathname: string): JsonLdGraph {
                 {
                     "@type": "ListItem",
                     position: 1,
-                    name: "ホーム",
-                    item: `${SITE_URL}/`,
+                    name: ui.home,
+                    item: homeUrl,
                 },
                 {
                     "@type": "ListItem",
                     position: 2,
-                    name: route.title,
+                    name: localizedMeta?.title ?? route.title,
                     item: currentUrl,
                 },
             ],
