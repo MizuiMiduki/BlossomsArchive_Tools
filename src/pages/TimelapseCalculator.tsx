@@ -2,8 +2,13 @@ import { createSignal, createMemo, onSettled, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 export default function TimelapseCalculator() {
+    const { title, description } = usePageI18n("/timelapse-calculator", {
+        defaultTitle: "タイムラプス撮影計算機",
+        defaultDescription: "完成動画の長さ、撮影間隔（インターバル）、実撮影時間から、総撮影枚数と必要なSDカード容量を相互シミュレーションします。",
+    });
     let containerRef: HTMLDivElement | undefined;
 
     // 計算モード: "fromClip" (動画尺から撮影時間を逆算) または "fromShooting" (実撮影時間から動画尺を計算)
@@ -163,13 +168,13 @@ export default function TimelapseCalculator() {
                     {/* ヘッダー */}
                     <div style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "1rem" }}>
                         <h1 class="ba-title">
-                            <BudouX text="タイムラプス撮影計算機" />
+                            <BudouX text={title()} />
                         </h1>
                         <p
                             class="ba-text-xs ba-text-muted ba-font-bold"
                             style={{ "margin-top": "0.375rem", "margin-bottom": 0, "line-height": 1.65 }}
                         >
-                            完成動画の長さ、撮影間隔（インターバル）、実撮影時間から、総撮影枚数と必要なSDカード容量を相互シミュレーションします。
+                            {description()}
                         </p>
                     </div>
 

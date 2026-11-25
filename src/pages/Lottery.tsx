@@ -4,6 +4,7 @@ import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { delayedCall, playPageEntrance, animatePop } from "../utils/animations";
 import { playNotificationSound, playClockTickSound, initAudio } from "../utils/sound";
+import { usePageI18n } from "../i18n/index";
 
 interface HistoryItem {
     id: number;
@@ -14,6 +15,11 @@ interface HistoryItem {
 export type LotteryAnimationMode = "none" | "roulette" | "countdown";
 
 export default function Lottery() {
+    const { title, description } = usePageI18n("/lottery", {
+        defaultTitle: "抽選・ランダム選定ツール",
+        defaultDescription:
+            "テキストエリアに入力された複数の候補から、システム（CSPRNG）によってランダムに項目を抽出します。ブラウザ内のフロントエンド処理により一括選定を行い、ネットワーク通信なしで挙動が完結します。",
+    });
     const getInitialVolume = (): number => {
         if (typeof window === "undefined") return 50;
         try {
@@ -277,13 +283,13 @@ export default function Lottery() {
                 {/* ヘッダーセクション */}
                 <div style={{ "padding-bottom": "1.25rem", "border-bottom": "1px solid var(--ba-border)" }}>
                     <h1 class="ba-title">
-                        <BudouX text="抽選・ランダム選定ツール" />
+                        <BudouX text={title()} />
                     </h1>
                     <BudouX
                         as="p"
                         class="ba-text-xs ba-text-muted"
                         style={{ "margin-top": "0.5rem", "margin-bottom": 0, "font-weight": 600, "line-height": 1.6 }}
-                        text="テキストエリアに入力された複数の候補から、システム（CSPRNG）によってランダムに項目を抽出します。ブラウザ内のフロントエンド処理により一括選定を行い、ネットワーク通信なしで挙動が完結します。"
+                        text={description()}
                     />
                 </div>
 

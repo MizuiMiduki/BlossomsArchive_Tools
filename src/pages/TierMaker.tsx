@@ -2,6 +2,7 @@ import { createSignal, createMemo, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 import {
     type Tier,
     type TierModel,
@@ -19,6 +20,11 @@ import {
 } from "../utils/tierMaker";
 
 export default function TierMaker() {
+    const { title: pageTitle, description } = usePageI18n("/tier-maker", {
+        defaultTitle: "ティア表作成ツール (Tier List)",
+        defaultDescription:
+            "画像やテキストを自由に並べてオリジナルのランキング・ティア表を作成。段数の増減や配色変更、アイテムごとのA+・A-上下微調整、高画質PNG画像の保存に対応しています。",
+    });
     let containerRef: HTMLDivElement | undefined;
     let fileInputRef: HTMLInputElement | undefined;
     let exportCanvasRef: HTMLCanvasElement | undefined;
@@ -394,13 +400,13 @@ export default function TierMaker() {
             {/* ページタイトル & 概要 */}
             <div class="ba-card ba-text-center ba-stack-2">
                 <h1 class="ba-title">
-                    <BudouX text="ティア表作成ツール (Tier List)" />
+                    <BudouX text={pageTitle()} />
                 </h1>
                 <p
                     class="ba-text-sm ba-text-muted"
                     style={{ "max-width": "42rem", margin: "0 auto", "font-weight": 600, "line-height": 1.6 }}
                 >
-                    画像やテキストを自由に並べてオリジナルのランキング・ティア表を作成。段数の増減や配色変更、アイテムごとのA+・A-上下微調整、高画質PNG画像の保存に対応しています。
+                    <BudouX text={description()} />
                 </p>
             </div>
 

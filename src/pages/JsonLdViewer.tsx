@@ -17,6 +17,7 @@ import {
     normalizeFetchUrl,
     extractJsonLdFromMicrolink,
 } from "../utils/htmlFetcher";
+import { usePageI18n } from "../i18n/index";
 
 type ViewTab = "tree" | "table" | "cards" | "diagnostics" | "code";
 
@@ -171,6 +172,11 @@ function TreeNodeView(props: {
 }
 
 export default function JsonLdViewer() {
+    const { title, description } = usePageI18n("/json-ld-viewer", {
+        defaultTitle: "JSON-LD 構造可視化・検証ツール",
+        defaultDescription:
+            "WebページのURLを指定するだけでJSON-LD構造化データを自動取得し、ツリー構造・プロパティ・ネストを視覚的に表示・検証できる無料ツールです。HTML直接貼り付け、構文診断、Googleリッチリザルト連携にブラウザ完結で対応します。",
+    });
     let containerRef: HTMLDivElement | undefined;
     const [inputMode, setInputMode] = createSignal<"url" | "direct">("url");
     const [urlInput, setUrlInput] = createSignal("");
@@ -412,10 +418,10 @@ export default function JsonLdViewer() {
                     </div>
                     <div class="ba-min-w-0">
                         <h1 class="ba-title">
-                            JSON-LD 構造可視化・検証ツール
+                            {title()}
                         </h1>
                         <p class="ba-text-muted ba-text-sm" style={{ "margin-top": "0.25rem", "margin-bottom": 0 }}>
-                            <BudouX text="WebページのURLを指定するだけでJSON-LD構造化データを自動取得し、ツリー構造・プロパティ・ネストを視覚的に表示・検証できる無料ツールです。HTML直接貼り付け、構文診断、Googleリッチリザルト連携にブラウザ完結で対応します。" />
+                            <BudouX text={description()} />
                         </p>
                     </div>
                 </div>

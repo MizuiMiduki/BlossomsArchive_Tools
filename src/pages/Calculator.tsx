@@ -1,5 +1,6 @@
 import { createSignal, For, onSettled } from "solid-js";
 import { animatePop, playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 function safeCalculate(expression: string): number {
     const sanitized = expression
@@ -98,6 +99,7 @@ function safeCalculate(expression: string): number {
 }
 
 export default function Calculator() {
+    const { title } = usePageI18n("/calculator", { defaultTitle: "シンプル計算機" });
     let containerRef: HTMLDivElement | undefined;
     let displayInputRef: HTMLInputElement | undefined;
     const [display, setDisplay] = createSignal("0");
@@ -221,7 +223,7 @@ export default function Calculator() {
 
     return (
         <div ref={containerRef} class="ba-page">
-            <h1 class="ba-sr-only">シンプル計算機</h1>
+            <h1 class="ba-sr-only">{title()}</h1>
             <div class="ba-flex ba-flex-wrap ba-gap-6 ba-items-start">
                 <div
                     class="ba-card ba-stack-3"

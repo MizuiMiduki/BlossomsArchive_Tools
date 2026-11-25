@@ -19,6 +19,7 @@ import {
     fetchPageSource,
     extractJsonLdFromMicrolink,
 } from "../utils/htmlFetcher";
+import { usePageI18n } from "../i18n/index";
 
 export interface MetaTagItem {
     key: string;
@@ -1078,6 +1079,11 @@ export function calculateSeoScore(diagnostics: DiagnosticItem[]): {
 }
 
 export default function SeoChecker() {
+    const { title, description } = usePageI18n("/seo-checker", {
+        defaultTitle: "メタタグ(SEO)確認ツール",
+        defaultDescription:
+            "WebページのURLまたはHTMLソースコードからtitle、meta description、canonical、robots、JSON-LD構造化データ等のSEO重要タグを解析・診断。Google検索結果スニペットのPC・スマホ表示をリアルタイムにプレビュー確認できます。",
+    });
     let containerRef: HTMLDivElement | undefined;
     let actionButtonRef: HTMLButtonElement | undefined;
 
@@ -1395,13 +1401,13 @@ export default function SeoChecker() {
                 >
                     <div class="ba-min-w-0">
                         <h1 class="ba-title">
-                            <BudouX text="メタタグ(SEO)確認ツール" />
+                            <BudouX text={title()} />
                         </h1>
                         <BudouX
                             as="p"
                             class="ba-text-xs ba-text-muted"
                             style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.6, "font-weight": 600 }}
-                            text="WebページのURLまたはHTMLソースコードからtitle、meta description、canonical、robots、JSON-LD構造化データ等のSEO重要タグを解析・診断。Google検索結果スニペットのPC・スマホ表示をリアルタイムにプレビュー確認できます。"
+                            text={description()}
                         />
                     </div>
                     <button

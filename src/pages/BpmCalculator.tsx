@@ -2,6 +2,7 @@ import { createSignal, createMemo, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 interface NoteTiming {
     name: string;
@@ -10,6 +11,10 @@ interface NoteTiming {
 }
 
 export default function BpmCalculator() {
+    const { title, description } = usePageI18n("/bpm-calculator", {
+        defaultTitle: "BPM・ディレイタイム換算機",
+        defaultDescription: "楽曲のテンポ（BPM）から各音符のディレイタイム（ms）やLFOレート（Hz）を即座に算出します。タップテンポ機能も搭載。",
+    });
     let containerRef: HTMLDivElement | undefined;
     const [bpm, setBpm] = createSignal<number>(120);
     const [tapTimes, setTapTimes] = createSignal<number[]>([]);
@@ -104,10 +109,10 @@ export default function BpmCalculator() {
                 {/* ヘッダー */}
                 <div style={{ "padding-bottom": "1rem", "border-bottom": "1px solid var(--ba-border)" }}>
                     <h1 class="ba-title">
-                        <BudouX text="BPM・ディレイタイム換算機" />
+                        <BudouX text={title()} />
                     </h1>
                     <p class="ba-text-xs ba-text-muted" style={{ "margin-top": "0.375rem", "margin-bottom": 0, "font-weight": 600, "line-height": 1.6 }}>
-                        楽曲のテンポ（BPM）から各音符のディレイタイム（ms）やLFOレート（Hz）を即座に算出します。タップテンポ機能も搭載。
+                        {description()}
                     </p>
                 </div>
 

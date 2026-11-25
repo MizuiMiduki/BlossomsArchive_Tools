@@ -1039,3 +1039,22 @@ export const ROUTE_TRANSLATIONS: RouteTranslationsMap = {
         },
     },
 };
+
+export function getLocalizedRouteMeta(
+    path: string,
+    locale: SupportedLocale = "ja",
+): LocalizedRouteMeta {
+    const rawPath = path.replace(/^\/(?:en|ko|zh-hans|zh-hant|ru)(?=\/|$)/, "") || "/";
+    const entry = ROUTE_TRANSLATIONS[rawPath];
+    if (entry && entry[locale]) {
+        return entry[locale];
+    }
+    if (entry && entry.ja) {
+        return entry.ja;
+    }
+    return {
+        title: "Web Tool",
+        description: "Free online web tool for daily productivity.",
+    };
+}
+

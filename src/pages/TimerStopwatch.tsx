@@ -1,8 +1,10 @@
 import { createSignal, Switch, Match, For, Show, createEffect, onSettled } from "solid-js";
 import { animatePop, playPageEntrance } from "../utils/animations";
 import { initAudio, closeAudio, playNotificationSound } from "../utils/sound";
+import { usePageI18n } from "../i18n/index";
 
 export default function TimerStopwatch() {
+    const { title } = usePageI18n("/timer", { defaultTitle: "タイマー・ストップウォッチ" });
     // 状態管理
     const [mode, setMode] = createSignal<"stopwatch" | "timer" | "pomodoro">(
         "stopwatch",
@@ -162,7 +164,7 @@ export default function TimerStopwatch() {
 
     return (
         <div ref={containerRef} class="ba-page ba-items-center" style={{ "max-width": "28rem" }}>
-            <h1 class="ba-sr-only">タイマー・ストップウォッチ</h1>
+            <h1 class="ba-sr-only">{title()}</h1>
             {/* ダイアログ */}
             <dialog ref={modalRef} class="ba-modal">
                 <div class="ba-modal-box ba-stack-4">

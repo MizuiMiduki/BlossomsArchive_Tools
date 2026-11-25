@@ -2,8 +2,14 @@ import { createSignal, createMemo, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 export default function JsonFormatter() {
+    const { title, description } = usePageI18n("/json-formatter", {
+        defaultTitle: "JSON整形・検証・ミニファイ",
+        defaultDescription:
+            "JSONデータの構文エラー検証、インデント整形、1行ミニファイ、サイズ統計をブラウザ内で完全ローカルに実行します。データは外部に送信されません。",
+    });
     let containerRef: HTMLDivElement | undefined;
     const [rawJson, setRawJson] = createSignal("");
     const [indentSize, setIndentSize] = createSignal<number | "tab">(2);
@@ -134,13 +140,13 @@ export default function JsonFormatter() {
                 {/* ヘッダー */}
                 <div style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "1rem" }}>
                     <h1 class="ba-title">
-                        <BudouX text="JSON整形・検証・ミニファイ" />
+                        <BudouX text={title()} />
                     </h1>
                     <p
                         class="ba-text-xs ba-text-muted"
                         style={{ "margin-top": "0.375rem", "margin-bottom": 0, "line-height": 1.6, "font-weight": 600 }}
                     >
-                        JSONデータの構文エラー検証、インデント整形、1行ミニファイ、サイズ統計をブラウザ内で完全ローカルに実行します。データは外部に送信されません。
+                        {description()}
                     </p>
                 </div>
 

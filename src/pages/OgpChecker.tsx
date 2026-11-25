@@ -15,6 +15,7 @@ import {
     playPageEntrance,
 } from "../utils/animations";
 import { fetchPageSource } from "../utils/htmlFetcher";
+import { usePageI18n } from "../i18n/index";
 
 export interface MetaTagItem {
     key: string;
@@ -394,6 +395,11 @@ export function buildDiagnostics(data: OgpData): DiagnosticItem[] {
 }
 
 export default function OgpChecker() {
+    const { title, description } = usePageI18n("/ogp-checker", {
+        defaultTitle: "OGP確認・SNSシェアプレビューツール",
+        defaultDescription:
+            "WebページのURLまたはHTMLソースコード（ファイル読込対応）からOGP（Open Graph Protocol）とTwitterカードのメタタグをブラウザ上で解析し、X（旧Twitter）やFacebook・LINE・Discordなどでシェアされた際の表示をプレビューします。",
+    });
     let containerRef: HTMLDivElement | undefined;
     let actionButtonRef: HTMLButtonElement | undefined;
 
@@ -785,13 +791,13 @@ export default function OgpChecker() {
                 >
                     <div class="ba-min-w-0">
                         <h1 class="ba-title">
-                            <BudouX text="OGP確認・SNSシェアプレビューツール" />
+                            <BudouX text={title()} />
                         </h1>
                         <BudouX
                             as="p"
                             class="ba-text-xs ba-text-muted"
                             style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.6, "font-weight": 600 }}
-                            text="WebページのURLまたはHTMLソースコード（ファイル読込対応）からOGP（Open Graph Protocol）とTwitterカードのメタタグをブラウザ上で解析し、X（旧Twitter）やFacebook・LINE・Discordなどでシェアされた際の表示をプレビューします。"
+                            text={description()}
                         />
                     </div>
                     <button

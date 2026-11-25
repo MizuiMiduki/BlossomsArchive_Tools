@@ -11,6 +11,7 @@ import ToolIcon from "../components/ToolIcon";
 import BudouX from "../components/BudouX";
 import { playPageEntrance, animatePop } from "../utils/animations";
 import { initAudio, closeAudio, playNotificationSound } from "../utils/sound";
+import { usePageI18n } from "../i18n/index";
 import {
     calculateEv100,
     calculateShutterSpeed,
@@ -36,6 +37,11 @@ type CalculatorMode = "meter" | "simulator" | "nd-bulb" | "equivalent" | "astro"
 type SolveTarget = "shutter" | "aperture" | "iso";
 
 export default function ExposureCalculator() {
+    const { title, description } = usePageI18n("/exposure-calculator", {
+        defaultTitle: "カメラ露出計算機",
+        defaultDescription:
+            "スマホカメラでのリアルタイム露出計(測光)からND長秒露光・星空撮影まで、絞り(F値)・シャッター速度・ISO・NDの適正露出をシミュレーション・換算できる無料Webツールです。 完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。",
+    });
     let containerRef: HTMLDivElement | undefined;
     let videoRef: HTMLVideoElement | undefined;
     let canvasRef: HTMLCanvasElement | undefined;
@@ -540,10 +546,10 @@ export default function ExposureCalculator() {
                     <span class="ba-icon-box" aria-hidden="true">
                         <ToolIcon name="camera" class="ba-icon-md" />
                     </span>
-                    カメラ露出計算機
+                    {title()}
                 </h1>
                 <p class="ba-text-sm ba-text-muted" style={{ margin: 0, "line-height": 1.65 }}>
-                    スマホカメラでのリアルタイム露出計(測光)からND長秒露光・星空撮影まで、絞り(F値)・シャッター速度・ISO・NDの適正露出をシミュレーション・換算できる無料Webツールです。 完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。
+                    {description()}
                 </p>
 
                 {/* タブナビゲーション */}

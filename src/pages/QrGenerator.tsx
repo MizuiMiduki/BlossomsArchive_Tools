@@ -3,6 +3,7 @@ import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { animatePop, delayedCall, playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 // ボタンオプション用の型を定義して TypeScript に型を教えます
 interface FormatOption {
@@ -12,6 +13,11 @@ interface FormatOption {
 }
 
 export default function QrGenerator() {
+    const { title, description } = usePageI18n("/qr_code", {
+        defaultTitle: "QRコード作成・生成ツール",
+        defaultDescription:
+            "WebサイトのURLや任意のテキストから、高品質なQRコードをブラウザ内で瞬時に作成します。高解像度PNGに加え、拡大しても画質が荒れないベクター（SVG）出力に対応しています。",
+    });
     const [mode, setMode] = createSignal<"text" | "wifi">("text");
     const [text, setText] = createSignal("");
     const [wifiSsid, setWifiSsid] = createSignal("");
@@ -157,13 +163,13 @@ export default function QrGenerator() {
                 {/* ヘッダーセクション */}
                 <div style={{ "padding-bottom": "1.25rem", "border-bottom": "1px solid var(--ba-border)" }}>
                     <h1 class="ba-title">
-                        <BudouX text="QRコード作成・生成ツール" />
+                        <BudouX text={title()} />
                     </h1>
                     <BudouX
                         as="p"
                         class="ba-text-xs ba-text-muted"
                         style={{ "margin-top": "0.5rem", "margin-bottom": 0, "font-weight": 600, "line-height": 1.6 }}
-                        text="WebサイトのURLや任意のテキストから、高品質なQRコードをブラウザ内で瞬時に作成します。高解像度PNGに加え、拡大しても画質が荒れないベクター（SVG）出力に対応しています。"
+                        text={description()}
                     />
                 </div>
 

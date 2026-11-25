@@ -3,6 +3,7 @@ import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { delayedCall, playPageEntrance, animatePop } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 interface IpData {
     ip: string;
@@ -18,6 +19,7 @@ interface IpData {
 }
 
 export default function AccessInfo() {
+    const { title } = usePageI18n("/access-info", { defaultTitle: "アクセス環境解析ツール" });
     const [info, setInfo] = createSignal<IpData | null>(null);
     const [loading, setLoading] = createSignal(false);
     const [hasFetched, setHasFetched] = createSignal(false);
@@ -263,7 +265,7 @@ IPアドレス: ${data.ip}
 
     return (
         <div ref={containerRef} class="ba-page">
-            <h1 class="ba-sr-only">アクセス環境解析ツール</h1>
+            <h1 class="ba-sr-only">{title()}</h1>
             <div class="ba-card">
                 <Show when={!hasFetched() && !loading()}>
                     <div

@@ -3,6 +3,7 @@ import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 import type {
     SupportedEncoding,
     InputEncodingOption,
@@ -108,6 +109,11 @@ type ActiveTab =
     | "normalize";
 
 export default function CharsetConverter() {
+    const { title, description } = usePageI18n("/charset-converter", {
+        defaultTitle: "文字コード総合変換ツール",
+        defaultDescription:
+            "UTF-8、Shift_JIS、EUC-JP、JIS、UTF-16/32、Latin-1の文字コード・改行コード相互変換、16進数(HEX)・進数・Unicode表記・HTML数値文字参照・Base64・URLエンコード・Unicode正規化・文字化け復元まで完全対応。",
+    });
     let containerRef: HTMLDivElement | undefined;
 
     // タブ状態
@@ -425,13 +431,13 @@ export default function CharsetConverter() {
             {/* ヘッダー */}
             <div class="ba-text-center ba-stack-3">
                 <h1 class="ba-title">
-                    <BudouX text="文字コード総合変換ツール" />
+                    <BudouX text={title()} />
                 </h1>
                 <p
                     class="ba-text-muted ba-text-sm"
                     style={{ "max-width": "42rem", "margin-inline": "auto", "margin-block": 0 }}
                 >
-                    <BudouX text="UTF-8、Shift_JIS、EUC-JP、JIS、UTF-16/32、Latin-1の文字コード・改行コード相互変換、16進数(HEX)・進数・Unicode表記・HTML数値文字参照・Base64・URLエンコード・Unicode正規化・文字化け復元まで完全対応。" />
+                    <BudouX text={description()} />
                 </p>
                 <div class="ba-flex ba-items-center ba-justify-center ba-gap-2 ba-text-xs ba-font-bold ba-text-success">
                     <span

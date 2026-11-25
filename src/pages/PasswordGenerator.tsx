@@ -3,8 +3,14 @@ import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { delayedCall, playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 export default function PasswordGenerator() {
+    const { title, description } = usePageI18n("/password-generator", {
+        defaultTitle: "パスワード生成ツール",
+        defaultDescription:
+            "指定されたパラメータ（文字種・長さ）に基づき、ランダムな文字列をローカル環境で作成します。ブラウザの標準 API である Crypto API を利用してシード値を生成します。",
+    });
     const [length, setLength] = createSignal(16);
     const [count, setCount] = createSignal(5);
     const [useLowercase, setUseLowercase] = createSignal(true);
@@ -92,13 +98,13 @@ export default function PasswordGenerator() {
                 {/* ヘッダーセクション */}
                 <div style={{ "padding-bottom": "1.25rem", "border-bottom": "1px solid var(--ba-border)" }}>
                     <h1 class="ba-title">
-                        <BudouX text="パスワード生成ツール" />
+                        <BudouX text={title()} />
                     </h1>
                     <BudouX
                         as="p"
                         class="ba-text-xs ba-text-muted"
                         style={{ "margin-top": "0.5rem", "margin-bottom": 0, "font-weight": 600, "line-height": 1.6 }}
-                        text="指定されたパラメータ（文字種・長さ）に基づき、ランダムな文字列をローカル環境で作成します。ブラウザの標準 API である Crypto API を利用してシード値を生成します。"
+                        text={description()}
                     />
                 </div>
 

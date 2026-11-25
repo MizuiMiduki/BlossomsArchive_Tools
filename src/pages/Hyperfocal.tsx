@@ -9,8 +9,14 @@ import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 export default function HyperfocalCalculator() {
+    const { title, description } = usePageI18n("/hyperfocal", {
+        defaultTitle: "過焦点距離（パンフォーカス）計算ツール",
+        defaultDescription:
+            "手前の景色から、はるか遠くの背景まで、写真全体にクッキリピントが合っている「パンフォーカス写真」を撮るための最適なピント合わせ位置を計算します。",
+    });
     const [sensorType, setSensorType] = createSignal("apsc-sony");
     const [customCoc, setCustomCoc] = createSignal(0.02);
     const [focalLength, setFocalLength] = createSignal(16);
@@ -184,13 +190,13 @@ export default function HyperfocalCalculator() {
             <div class="ba-card ba-stack-6 ba-w-full">
                 <div style={{ "border-bottom": "2px solid var(--ba-border)", "padding-bottom": "1rem" }}>
                     <h1 class="ba-title ba-flex ba-items-center ba-gap-2">
-                        <BudouX text="過焦点距離（パンフォーカス）計算ツール" />
+                        <BudouX text={title()} />
                     </h1>
                     <BudouX
                         as="p"
                         class="ba-text-xs ba-text-muted ba-font-bold"
                         style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.65 }}
-                        text="手前の景色から、はるか遠くの背景まで、写真全体にクッキリピントが合っている「パンフォーカス写真」を撮るための最適なピント合わせ位置を計算します。"
+                        text={description()}
                     />
                 </div>
 

@@ -2,8 +2,14 @@ import { createSignal, createMemo, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 export default function WordCounter() {
+    const { title, description } = usePageI18n("/word-counter", {
+        defaultTitle: "文字数カウント・原稿用紙換算",
+        defaultDescription:
+            "文字数（空白除外）、行数、段落数、原稿用紙枚数、読了時間、文字種の割合（ひらがな/漢字/英字等）をリアルタイムに集計します。",
+    });
     let containerRef: HTMLDivElement | undefined;
     const [text, setText] = createSignal("");
     const [readingSpeed, setReadingSpeed] = createSignal<number>(500); // 1分あたりの文字数 (標準500字)
@@ -105,10 +111,10 @@ export default function WordCounter() {
                 {/* ヘッダー */}
                 <div style={{ "padding-bottom": "1rem", "border-bottom": "1px solid var(--ba-border)" }}>
                     <h1 class="ba-title">
-                        <BudouX text="文字数カウント・原稿用紙換算" />
+                        <BudouX text={title()} />
                     </h1>
                     <p class="ba-text-xs ba-text-muted" style={{ "margin-top": "0.375rem", "margin-bottom": 0, "font-weight": 600, "line-height": 1.6 }}>
-                        文字数（空白除外）、行数、段落数、原稿用紙枚数、読了時間、文字種の割合（ひらがな/漢字/英字等）をリアルタイムに集計します。
+                        {description()}
                     </p>
                 </div>
 

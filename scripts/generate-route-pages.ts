@@ -52,6 +52,32 @@ function minifyCssSafely(rawCss: string): string {
         .trim();
 }
 
+/**
+ * HTML内の既存 <link rel="modulepreload" ...> タグを文字単位走査で安全に除去する（CodeQL準拠・単一パス正規表現不使用）
+ */
+function removeModulePreloadTags(rawHtml: string): string {
+    let out = "";
+    let i = 0;
+    const target = '<link rel="modulepreload"';
+    while (i < rawHtml.length) {
+        if (rawHtml.slice(i, i + target.length) === target) {
+            const end = rawHtml.indexOf(">", i + target.length);
+            if (end === -1) break;
+            i = end + 1;
+            while (
+                i < rawHtml.length &&
+                (rawHtml[i] === "\r" || rawHtml[i] === "\n" || rawHtml[i] === " " || rawHtml[i] === "\t")
+            ) {
+                i++;
+            }
+            continue;
+        }
+        out += rawHtml[i];
+        i++;
+    }
+    return out;
+}
+
 const assetFiles = fs.existsSync(assetsDirectory)
     ? fs.readdirSync(assetsDirectory)
     : [];
@@ -69,8 +95,11 @@ const runtimeJsFile = assetFiles.find(
 const budouxJsFile = assetFiles.find(
     (file) => file.startsWith("BudouX-") && file.endsWith(".js"),
 );
+const solidWebJsFile = assetFiles.find(
+    (file) => file.startsWith("web-") && file.endsWith(".js"),
+);
 
-let baseTemplate = template;
+let baseTemplate = removeModulePreloadTags(template);
 
 // src/styles/critical.css を全ルートHTMLの <style id="ba-tools-critical-css"> へ自動共通インライン埋め込み
 if (fs.existsSync(criticalCssPath)) {
@@ -303,6 +332,9 @@ for (const route of routes) {
         const modulePreloadList = [
             runtimeJsFile
                 ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(runtimeJsFile)}" />`
+                : "",
+            solidWebJsFile
+                ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(solidWebJsFile)}" />`
                 : "",
             mainJsFile
                 ? `<link rel="modulepreload" crossorigin href="/assets/${escapeAttribute(mainJsFile)}" />`

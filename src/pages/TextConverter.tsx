@@ -6,6 +6,7 @@ import {
     delayedCall,
     playPageEntrance,
 } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 import {
     convertText,
     ConversionMode,
@@ -194,6 +195,11 @@ const CONVERSION_MODES: ModeDefinition[] = [
 ];
 
 export default function TextConverter() {
+    const { title, description } = usePageI18n("/text-converter", {
+        defaultTitle: "テキスト・HTML・Markdown変換ツール",
+        defaultDescription:
+            "HTMLからMarkdown、MarkdownからHTML、プレーンテキスト抽出、特殊文字エスケープなどを瞬時に相互変換できます。すべてブラウザ内で処理されるため、データがサーバーに送信される心配はありません。",
+    });
     const [selectedMode, setSelectedMode] = createSignal<ConversionMode>("html-to-markdown");
     const [inputText, setInputText] = createSignal("");
     const [outputText, setOutputText] = createSignal("");
@@ -400,13 +406,13 @@ export default function TextConverter() {
             <div class="ba-card ba-stack-4">
                 <div>
                     <h1 class="ba-title">
-                        <BudouX text="テキスト・HTML・Markdown変換ツール" />
+                        <BudouX text={title()} />
                     </h1>
                     <p
                         class="ba-text-muted ba-text-sm"
                         style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.65 }}
                     >
-                        <BudouX text="HTMLからMarkdown、MarkdownからHTML、プレーンテキスト抽出、特殊文字エスケープなどを瞬時に相互変換できます。すべてブラウザ内で処理されるため、データがサーバーに送信される心配はありません。" />
+                        <BudouX text={description()} />
                     </p>
                 </div>
 

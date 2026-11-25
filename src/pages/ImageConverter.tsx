@@ -3,8 +3,14 @@ import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { animatePop, playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 export default function ImageConverter() {
+    const { title, description } = usePageI18n("/image_conversion", {
+        defaultTitle: "画像形式変換ツール",
+        defaultDescription:
+            "JPEG, PNG, WebP形式の画像を、お好みの拡張子に変換します。すべての画像リサイズ・変換処理は Canvas API（クライアントサイド）を介して実行され、アップロード通信なしで瞬時に処理されます。",
+    });
     let containerRef: HTMLDivElement | undefined;
     const [selectedFile, setSelectedFile] = createSignal<File | null>(null);
     const [outputFormat, setOutputFormat] = createSignal("image/png");
@@ -105,13 +111,13 @@ export default function ImageConverter() {
                     {/* ヘッダーセクション */}
                     <div style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "1.25rem" }}>
                         <h1 class="ba-title">
-                            <BudouX text="画像形式変換ツール" />
+                            <BudouX text={title()} />
                         </h1>
                         <BudouX
                             as="p"
                             class="ba-text-xs ba-text-muted ba-font-bold"
                             style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.65 }}
-                            text="JPEG, PNG, WebP形式の画像を、お好みの拡張子に変換します。すべての画像リサイズ・変換処理は Canvas API（クライアントサイド）を介して実行され、アップロード通信なしで瞬時に処理されます。"
+                            text={description()}
                         />
                     </div>
 

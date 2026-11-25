@@ -1,8 +1,10 @@
 // src/pages/PrivacyPolicy.tsx
 import { onSettled } from "solid-js";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 export default function PrivacyPolicy() {
+    const { title } = usePageI18n("/privacy", { defaultTitle: "プライバシーポリシー" });
     let containerRef: HTMLDivElement | undefined;
 
     onSettled(() => {
@@ -11,7 +13,7 @@ export default function PrivacyPolicy() {
 
     return (
         <div ref={containerRef} class="ba-page ba-page--narrow">
-            <h1 class="ba-title">プライバシーポリシー</h1>
+            <h1 class="ba-title">{title()}</h1>
 
             <section class="ba-stack-3">
                 <h2 class="ba-section-title">1. 運営について</h2>

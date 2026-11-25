@@ -55,13 +55,13 @@ export default function Layout(props: LayoutProps) {
         if (currentLocale() === "ja") return cat.name;
         switch (cat.id) {
             case "camera":
-                return currentUi().categoryMedia;
+                return currentUi().categoryCamera;
             case "utility":
                 return currentUi().categoryUtility;
             case "developer":
-                return currentUi().categoryWeb;
+                return currentUi().categoryDeveloper;
             case "audio":
-                return currentUi().categoryAudioPhoto;
+                return currentUi().categoryAudio;
             default:
                 return cat.name;
         }

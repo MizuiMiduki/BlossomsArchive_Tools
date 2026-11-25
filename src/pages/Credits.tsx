@@ -1,6 +1,7 @@
 // src/pages/Credits.tsx
 import { onSettled } from "solid-js";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 interface Library {
     name: string;
@@ -62,6 +63,7 @@ const libraries: Library[] = [
 ];
 
 export default function Credits() {
+    const { title } = usePageI18n("/credits", { defaultTitle: "使用ライブラリ" });
     let containerRef: HTMLDivElement | undefined;
 
     onSettled(() => {
@@ -70,7 +72,7 @@ export default function Credits() {
 
     return (
         <div ref={containerRef} class="ba-page ba-page--narrow">
-            <h1 class="ba-title">使用ライブラリ</h1>
+            <h1 class="ba-title">{title()}</h1>
 
             <div class="ba-stack-3">
                 {libraries.map((lib) => (

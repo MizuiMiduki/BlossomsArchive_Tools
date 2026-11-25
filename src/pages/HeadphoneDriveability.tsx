@@ -2,6 +2,7 @@ import { createMemo, createSignal, onSettled, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 
 function formatRange(min: number, max: number, digits: number, unit: string) {
     const minText = min.toFixed(digits);
@@ -12,6 +13,10 @@ function formatRange(min: number, max: number, digits: number, unit: string) {
 }
 
 export default function HeadphoneDriveability() {
+    const { title, description } = usePageI18n("/headphone-driveability", {
+        defaultTitle: "イヤホン・ヘッドホンの鳴らしやすさ",
+        defaultDescription: "インピーダンスと音圧感度から、目標音圧に必要な出力電圧・電流・電力を見積もります。",
+    });
     let containerRef: HTMLDivElement | undefined;
     const [impedance, setImpedance] = createSignal("32");
     const [impedanceTolerance, setImpedanceTolerance] = createSignal("0");
@@ -132,13 +137,13 @@ export default function HeadphoneDriveability() {
                         Audio utility
                     </p>
                     <h1 class="ba-title" style={{ "margin-top": "0.25rem" }}>
-                        <BudouX text="イヤホン・ヘッドホンの鳴らしやすさ" />
+                        <BudouX text={title()} />
                     </h1>
                     <BudouX
                         as="p"
                         class="ba-text-sm ba-text-muted"
                         style={{ "margin-top": "0.75rem", "margin-bottom": 0, "max-width": "48rem", "line-height": 1.65 }}
-                        text="インピーダンスと音圧感度から、目標音圧に必要な出力電圧・電流・電力を見積もります。"
+                        text={description()}
                     />
                 </header>
 

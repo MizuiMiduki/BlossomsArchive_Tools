@@ -4,6 +4,7 @@ import AdSense from "../components/AdSense";
 import { playPageEntrance } from "../utils/animations";
 import ToolIcon from "../components/ToolIcon";
 import { initAudio, playClockTickSound } from "../utils/sound";
+import { usePageI18n } from "../i18n/index";
 
 // 文字盤の1〜12時の数字位置（半径35.5）
 const CLOCK_HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => {
@@ -24,6 +25,10 @@ const CLOCK_TICKS = Array.from({ length: 60 }, (_, i) => ({
 }));
 
 export default function Clock() {
+    const { title, description } = usePageI18n("/clock", {
+        defaultTitle: "リアルタイム時計",
+        defaultDescription: "高精度なデジタル表示と滑らかなアナログ時計でリアルタイムに時刻を確認できます。",
+    });
     const getInitialMode = (): "digital" | "analog" => {
         if (typeof window === "undefined") return "digital";
         try {
@@ -158,11 +163,11 @@ export default function Clock() {
 
     return (
         <div ref={containerRef} class="ba-page ba-items-center" style={{ "max-width": "28rem", "min-height": "350px" }}>
-            <h1 class="ba-sr-only">リアルタイム時計</h1>
+            <h1 class="ba-sr-only">{title()}</h1>
             <div class="ba-card ba-w-full ba-text-center ba-stack-2">
                 <h2 class="ba-section-title ba-text-xl ba-font-black">現在時刻</h2>
                 <p class="ba-text-sm ba-text-muted" style={{ margin: 0, "line-height": 1.6 }}>
-                    高精度なデジタル表示と滑らかなアナログ時計でリアルタイムに時刻を確認できます。
+                    {description()}
                 </p>
             </div>
             {/* 切り替えボタン */}

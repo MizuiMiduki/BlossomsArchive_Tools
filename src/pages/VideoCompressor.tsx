@@ -2,6 +2,7 @@ import { createSignal, createMemo, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
+import { usePageI18n } from "../i18n/index";
 import {
     COMPRESS_PRESETS,
     CompressPreset,
@@ -19,6 +20,11 @@ import {
 } from "../utils/videoCompressor";
 
 export default function VideoCompressor() {
+    const { title, description } = usePageI18n("/video-compressor", {
+        defaultTitle: "動画圧縮・軽量化ツール",
+        defaultDescription:
+            "動画の解像度やビットレートをブラウザ上で最適化し、ファイルサイズを削減します。サーバーにアップロードせず端末内で安全に完結します。",
+    });
     let containerRef: HTMLDivElement | undefined;
     let fileInputRef: HTMLInputElement | undefined;
 
@@ -236,13 +242,13 @@ export default function VideoCompressor() {
                     <svg class="ba-icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    <BudouX text="動画圧縮・軽量化ツール" />
+                    <BudouX text={title()} />
                 </h1>
                 <p
                     class="ba-text-sm ba-text-muted"
                     style={{ "max-width": "42rem", margin: "0 auto", "line-height": 1.65 }}
                 >
-                    <BudouX text="動画の解像度やビットレートをブラウザ上で最適化し、ファイルサイズを削減します。サーバーにアップロードせず端末内で安全に完結します。" />
+                    <BudouX text={description()} />
                 </p>
                 <div
                     class="ba-flex ba-flex-wrap ba-justify-center ba-gap-2"

@@ -8,8 +8,9 @@ import {
     getPathWithLocale,
     getPathWithoutLocale,
     getUiTranslations,
+    usePageI18n,
 } from "../i18n/index";
-import { ROUTE_TRANSLATIONS } from "../i18n/routeTranslations";
+import { ROUTE_TRANSLATIONS, getLocalizedRouteMeta } from "../i18n/routeTranslations";
 import {
     getPageJsonLd,
     getPageMetadata,
@@ -170,7 +171,34 @@ describe("i18n / Internationalization System", () => {
                 expect(ui.themeLight).toBeTruthy();
                 expect(ui.themeDark).toBeTruthy();
                 expect(ui.languageSelectorLabel).toBeTruthy();
+                expect(ui.homeTitle).toBeTruthy();
+                expect(ui.homeSubtitle).toBeTruthy();
+                expect(ui.homeSearchPlaceholder).toBeTruthy();
+                expect(ui.tryTool).toBeTruthy();
             }
+        });
+    });
+
+    describe("getLocalizedRouteMeta & usePageI18n", () => {
+        it("getLocalizedRouteMeta: 指定言語のルートメタデータを正確に取得できること", () => {
+            const enCalc = getLocalizedRouteMeta("/calculator", "en");
+            expect(enCalc.title).toBe("Online Calculator");
+            expect(enCalc.description).toContain("online calculator");
+
+            const jaCalc = getLocalizedRouteMeta("/calculator", "ja");
+            expect(jaCalc.title).toBe("電卓ツール");
+            expect(jaCalc.description).toContain("計算履歴を自動保存");
+        });
+
+        it("usePageI18n: デフォルトタイトル・説明文と翻訳結果のフォールバックが正しく動作すること", () => {
+            const pageI18n = usePageI18n("/calculator", {
+                defaultTitle: "デフォルト電卓",
+                defaultDescription: "デフォルト説明",
+            });
+            expect(pageI18n.locale()).toBeTruthy();
+            expect(pageI18n.title()).toBeTruthy();
+            expect(pageI18n.description()).toBeTruthy();
+            expect(pageI18n.ui().home).toBeTruthy();
         });
     });
 });
