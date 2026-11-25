@@ -5,6 +5,7 @@ import {
     buildTreeNode,
     parseJsonLd,
     flattenJsonLdProperties,
+    isSchemaOrgContext,
     JSON_LD_SAMPLES,
 } from "../utils/jsonLd";
 
@@ -89,6 +90,22 @@ describe("JSON-LD Utilities (src/utils/jsonLd.ts)", () => {
             const contextIssue = issues.find((i) => i.field === "@context");
             expect(contextIssue).toBeDefined();
             expect(contextIssue?.severity).toBe("warning");
+        });
+
+        it("isSchemaOrgContext が公式ホストのみ許可し偽装URLを拒否すること", () => {
+            expect(isSchemaOrgContext("https://schema.org")).toBe(true);
+            expect(isSchemaOrgContext("http://schema.org/")).toBe(true);
+            expect(isSchemaOrgContext("https://www.schema.org")).toBe(true);
+            expect(isSchemaOrgContext("https://evil.example/schema.org")).toBe(false);
+            expect(isSchemaOrgContext("https://schema.org.evil.example/")).toBe(false);
+            expect(isSchemaOrgContext("javascript:schema.org")).toBe(false);
+
+            const spoofedIssues = validateJsonLdEntity({
+                "@context": "https://evil.example/schema.org",
+                "@type": "Person",
+                "name": "Alice",
+            });
+            expect(spoofedIssues.some((i) => i.field === "@context" && i.severity === "info")).toBe(true);
         });
     });
 

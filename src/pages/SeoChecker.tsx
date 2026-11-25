@@ -9,6 +9,7 @@ import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { getPageMetadata, routes } from "../routes";
+import { scanJsonLdScriptsFromHtml } from "../utils/jsonLd";
 import {
     animatePop,
     delayedCall,
@@ -267,101 +268,11 @@ export function tryParseJsonLd(raw: string): { parsed: any; cleaned: string } | 
 }
 
 /**
- * DOMParser 非対応環境向けの文字単位スキャンによる JSON-LD スクリプト抽出
- * HTML仕様の終了タグ（</script>, </script >, </script attr="x"> 等）を正規表現なしで安全に処理する
- */
-function scanJsonLdScriptsWithoutDomParser(html: string): string[] {
-    const results: string[] = [];
-    const lower = html.toLowerCase();
-    let pos = 0;
-
-    while (pos < html.length) {
-        const openIdx = lower.indexOf("<script", pos);
-        if (openIdx === -1) break;
-
-        const nextChar = lower[openIdx + 7];
-        if (
-            nextChar !== undefined &&
-            nextChar !== ">" &&
-            nextChar !== "/" &&
-            !/\s/.test(nextChar)
-        ) {
-            pos = openIdx + 7;
-            continue;
-        }
-
-        const tagEndIdx = html.indexOf(">", openIdx + 7);
-        if (tagEndIdx === -1) break;
-
-        const attrs = html.slice(openIdx + 7, tagEndIdx);
-        const contentStart = tagEndIdx + 1;
-
-        // </script に続いて空白・>・/ のいずれかが来る終了タグを探索
-        let searchPos = contentStart;
-        let closeStart = -1;
-        let closeEnd = -1;
-        while (searchPos < html.length) {
-            const candidate = lower.indexOf("</script", searchPos);
-            if (candidate === -1) break;
-            const afterName = lower[candidate + 8];
-            if (
-                afterName === ">" ||
-                afterName === "/" ||
-                (afterName !== undefined && /\s/.test(afterName))
-            ) {
-                const endGt = html.indexOf(">", candidate + 8);
-                if (endGt !== -1) {
-                    closeStart = candidate;
-                    closeEnd = endGt + 1;
-                    break;
-                }
-            }
-            searchPos = candidate + 8;
-        }
-
-        if (closeStart === -1) break;
-
-        if (attrs.toLowerCase().includes("application/ld+json")) {
-            const content = html.slice(contentStart, closeStart).trim();
-            if (content) {
-                results.push(content);
-            }
-        }
-
-        pos = closeEnd;
-    }
-
-    return results;
-}
-
-/**
- * HTML文字列からすべての JSON-LD スクリプト文字列を抽出する
+ * HTML文字列からすべての JSON-LD スクリプト文字列を安全に抽出する
+ * (DOMParser("text/html") を使わないため CodeQL js/xss-through-dom・js/bad-tag-filter の両方を防止)
  */
 export function extractJsonLdRawScripts(html: string): string[] {
-    const results: string[] = [];
-    if (!html || !html.trim()) return results;
-
-    if (typeof DOMParser !== "undefined") {
-        try {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
-            const scriptElements = doc.querySelectorAll("script");
-            scriptElements.forEach((script) => {
-                const typeAttr = script.getAttribute("type");
-                if (typeAttr && typeAttr.toLowerCase().includes("application/ld+json")) {
-                    const content = script.textContent?.trim();
-                    if (content) {
-                        results.push(content);
-                    }
-                }
-            });
-            return results;
-        } catch {
-            // DOMParser 失敗時は文字単位スキャンへフォールバック
-        }
-    }
-
-    return scanJsonLdScriptsWithoutDomParser(html);
+    return scanJsonLdScriptsFromHtml(html);
 }
 
 export function parseSeoFromHtml(html: string, sourceUrl = ""): SeoData {

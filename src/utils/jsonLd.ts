@@ -108,6 +108,96 @@ const SCHEMA_RECOMMENDATIONS: Record<string, { required: string[]; recommended: 
     },
 };
 
+const ALLOWED_SCHEMA_ORG_HOSTS = new Set(["schema.org", "www.schema.org"]);
+
+/**
+ * @context URL が公式の schema.org ホストを指しているかを厳密に検証する
+ * (CodeQL js/incomplete-url-substring-sanitization 対策)
+ */
+export function isSchemaOrgContext(context: string): boolean {
+    if (!context || typeof context !== "string") return false;
+    try {
+        const parsed = new URL(context.trim());
+        return (
+            (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+            ALLOWED_SCHEMA_ORG_HOSTS.has(parsed.hostname.toLowerCase())
+        );
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * 文字単位スキャンで HTML 内の <script type="application/ld+json"> を安全に抽出する
+ * DOMParser("text/html") を使わず（js/xss-through-dom 対策）、
+ * 正規表現によるHTMLタグ抽出も使わない（js/bad-tag-filter 対策）。
+ * </script > や </script attr="x"> などの変則終了タグにも対応する。
+ */
+export function scanJsonLdScriptsFromHtml(html: string): string[] {
+    const results: string[] = [];
+    if (!html || !html.trim()) return results;
+
+    const lower = html.toLowerCase();
+    let pos = 0;
+
+    while (pos < html.length) {
+        const openIdx = lower.indexOf("<script", pos);
+        if (openIdx === -1) break;
+
+        const nextChar = lower[openIdx + 7];
+        if (
+            nextChar !== undefined &&
+            nextChar !== ">" &&
+            nextChar !== "/" &&
+            !/\s/.test(nextChar)
+        ) {
+            pos = openIdx + 7;
+            continue;
+        }
+
+        const tagEndIdx = html.indexOf(">", openIdx + 7);
+        if (tagEndIdx === -1) break;
+
+        const attrs = html.slice(openIdx + 7, tagEndIdx);
+        const contentStart = tagEndIdx + 1;
+
+        let searchPos = contentStart;
+        let closeStart = -1;
+        let closeEnd = -1;
+        while (searchPos < html.length) {
+            const candidate = lower.indexOf("</script", searchPos);
+            if (candidate === -1) break;
+            const afterName = lower[candidate + 8];
+            if (
+                afterName === ">" ||
+                afterName === "/" ||
+                (afterName !== undefined && /\s/.test(afterName))
+            ) {
+                const endGt = html.indexOf(">", candidate + 8);
+                if (endGt !== -1) {
+                    closeStart = candidate;
+                    closeEnd = endGt + 1;
+                    break;
+                }
+            }
+            searchPos = candidate + 8;
+        }
+
+        if (closeStart === -1) break;
+
+        if (attrs.toLowerCase().includes("application/ld+json")) {
+            const content = html.slice(contentStart, closeStart).trim();
+            if (content) {
+                results.push(content);
+            }
+        }
+
+        pos = closeEnd;
+    }
+
+    return results;
+}
+
 /**
  * HTMLまたは生のJSONテキストからJSON-LDスニペットを安全に抽出する
  */
@@ -123,30 +213,7 @@ export function extractJsonLdBlocks(input: string): string[] {
         lower.includes("<head");
 
     if (looksLikeHtml) {
-        if (typeof DOMParser !== "undefined") {
-            try {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(trimmed, "text/html");
-                const scripts = doc.querySelectorAll("script");
-                const results: string[] = [];
-                scripts.forEach((script) => {
-                    const typeAttr = script.getAttribute("type");
-                    if (
-                        typeAttr &&
-                        typeAttr.toLowerCase().includes("application/ld+json")
-                    ) {
-                        const text = script.textContent?.trim();
-                        if (text) {
-                            results.push(text);
-                        }
-                    }
-                });
-                return results;
-            } catch {
-                // DOMParser失敗時は空配列
-            }
-        }
-        return [];
+        return scanJsonLdScriptsFromHtml(trimmed);
     }
 
     // 単一のJSON文字列として返す
@@ -176,7 +243,7 @@ export function validateJsonLdEntity(entity: any, parentContext?: string): JsonL
             message: "@context が指定されていません（推奨: \"https://schema.org\"）",
         });
     } else if (typeof context === "string") {
-        if (!context.includes("schema.org")) {
+        if (!isSchemaOrgContext(context)) {
             issues.push({
                 severity: "info",
                 field: "@context",
