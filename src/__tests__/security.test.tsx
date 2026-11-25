@@ -17,10 +17,57 @@ import Credits from "../pages/Credits";
 import ThemeToggle from "../components/ThemeToggle";
 import { filterRoutesByQuery } from "../utils/search";
 import { routes } from "../routes";
+import {
+    extractJsonLdBlocks,
+    isSchemaOrgContext,
+    scanJsonLdScriptsFromHtml,
+} from "../utils/jsonLd";
+import { extractJsonLdRawScripts } from "../pages/SeoChecker";
 
 describe("Security Tests (XSS, Sanitization, Code Injection, CSPRNG & Headers)", () => {
     beforeEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it("CodeQL js/bad-tag-filter 再発防止: </script > や </script foo=\"bar\"> 等の変則終了タグでもJSON-LD抽出が破綻しないこと", () => {
+        const html = [
+            '<script type="application/ld+json">{"@type":"WebSite"}</script >',
+            '<script type="application/ld+json">{"@type":"Article"}</script foo="bar">',
+            '<SCRIPT type="application/ld+json">{"@type":"Person"}</SCRIPT\n>',
+            "<script>window.__xss = true;</script>",
+        ].join("\n");
+
+        for (const extractor of [scanJsonLdScriptsFromHtml, extractJsonLdBlocks, extractJsonLdRawScripts]) {
+            const blocks = extractor(html);
+            expect(blocks.length).toBe(3);
+            expect(blocks.join("\n")).not.toContain("__xss");
+            expect(blocks.join("\n").toLowerCase()).not.toContain("</script");
+        }
+    });
+
+    it("CodeQL js/xss-through-dom 再発防止: JSON-LD抽出時にHTMLをDOMとして再解釈せず、onerror等のスクリプトが実行されないこと", () => {
+        const parseSpy = vi.spyOn(DOMParser.prototype, "parseFromString");
+        (window as any).__dom_xss_executed = false;
+        const html =
+            '<img src=x onerror="window.__dom_xss_executed = true"><script type="application/ld+json">{"@type":"Thing"}</script>';
+
+        const blocks = extractJsonLdBlocks(html);
+        const rawBlocks = extractJsonLdRawScripts(html);
+
+        expect(blocks).toEqual(['{"@type":"Thing"}']);
+        expect(rawBlocks).toEqual(['{"@type":"Thing"}']);
+        expect(parseSpy).not.toHaveBeenCalled();
+        expect((window as any).__dom_xss_executed).toBe(false);
+    });
+
+    it("CodeQL js/incomplete-url-substring-sanitization 再発防止: schema.org 判定がホスト名の厳密一致で行われること", () => {
+        expect(isSchemaOrgContext("https://schema.org")).toBe(true);
+        expect(isSchemaOrgContext("https://www.schema.org/")).toBe(true);
+        expect(isSchemaOrgContext("https://evil.example/schema.org")).toBe(false);
+        expect(isSchemaOrgContext("https://evil.example/?ref=schema.org")).toBe(false);
+        expect(isSchemaOrgContext("https://schema.org.evil.example")).toBe(false);
+        expect(isSchemaOrgContext("https://evilschema.org")).toBe(false);
+        expect(isSchemaOrgContext("javascript://schema.org")).toBe(false);
     });
 
     it("XSS防止: TextConverter の Markdown->HTML 変換およびプレビュー描画で <script>, <iframe>, onerror, javascript: スキームが完全に無害化されること", () => {

@@ -39,6 +39,17 @@ pnpm run type-check && pnpm test && pnpm run build
    - `target="_blank"` を持つ外部リンクには必ず `rel="noopener noreferrer"` を付与してください。
 3. **暗号学的乱数 (CSPRNG)**:
    - パスワード生成や抽選などの乱数生成には `Math.random()` ではなく `window.crypto.getRandomValues()` を使用してください。
+4. **`js/bad-tag-filter` の禁止**:
+   - `/<script\b[^>]*>([\s\S]*?)<\/script>/gi` のような正規表現で `<script>` / `<style>` タグやHTMLコメントを照合しないでください（`</script >` や `</script foo="bar">` を取りこぼします）。
+   - HTML内の JSON-LD 抽出は必ず `src/utils/jsonLd.ts` の `scanJsonLdScriptsFromHtml`（文字単位スキャン）を使用してください。
+5. **`js/xss-through-dom` の禁止**:
+   - ユーザー入力や外部取得したHTMLを `DOMParser.parseFromString(..., "text/html")`・`innerHTML` 等でDOMとして再解釈しないでください。
+   - XML（sitemap.xml 等）の解析に限り `parseFromString(..., "application/xml")` を許可します。
+6. **`js/incomplete-url-substring-sanitization` の禁止**:
+   - `url.includes("schema.org")` のようにドメイン名を文字列の部分一致（`includes` / `indexOf` / `startsWith` / `endsWith`）で判定しないでください。
+   - 必ず `new URL()` でパースし、`hostname` を許可リスト（`Set`）と厳密一致で比較してください（例: `src/utils/jsonLd.ts` の `isSchemaOrgContext`）。
+7. **自動ガード**:
+   - 上記4〜6は `src/__tests__/codeQualityGuard.test.ts` の静的検査と `src/__tests__/security.test.tsx` の挙動テストで自動検出されます。ガードを弱める・除外する変更は禁止です。
 
 ---
 

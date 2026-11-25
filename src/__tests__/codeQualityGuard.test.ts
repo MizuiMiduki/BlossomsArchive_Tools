@@ -267,4 +267,60 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
 
         expect(violations).toEqual([]);
     });
+
+    it("CodeQL再発防止ガード: js/bad-tag-filter・js/xss-through-dom・js/incomplete-url-substring-sanitization の危険パターンが src/ と scripts/ に存在しないこと", () => {
+        const targetFiles = [
+            ...collectCodeFiles(path.join(ROOT_DIR, "src")),
+            ...collectCodeFiles(path.join(ROOT_DIR, "scripts")),
+        ].filter((f) => !f.includes(`${path.sep}__tests__${path.sep}`));
+
+        // 1. js/bad-tag-filter: 正規表現リテラルで <script>/<style> 終了タグやHTMLコメントを照合しない
+        const badTagFilterRe = /<\\\/(?:script|style)|<!--\[\\s\\S\]|-->\/[gimsuy]*/i;
+        // 2. js/xss-through-dom: DOMParser で text/html として再解析しない（XMLの application/xml は許可）
+        const xssThroughDomRe = /parseFromString\([^)]*["'`]text\/html["'`]/;
+        // 3. js/incomplete-url-substring-sanitization: ドメイン名を文字列の部分一致で判定しない
+        const urlSubstringRe =
+            /\.(?:includes|indexOf|startsWith|endsWith)\(\s*["'`][A-Za-z0-9.-]*\.(?:org|com|net|io|jp|dev|app|co)\/?["'`]/;
+
+        const violations: string[] = [];
+        for (const file of targetFiles) {
+            const rel = path.relative(ROOT_DIR, file);
+            const lines = fs.readFileSync(file, "utf8").split("\n");
+            lines.forEach((line, idx) => {
+                const trimmed = line.trim();
+                if (trimmed.startsWith("//") || trimmed.startsWith("*")) return;
+                if (badTagFilterRe.test(line)) {
+                    violations.push(`[js/bad-tag-filter] ${rel}:${idx + 1}`);
+                }
+                if (xssThroughDomRe.test(line)) {
+                    violations.push(`[js/xss-through-dom] ${rel}:${idx + 1}`);
+                }
+                if (urlSubstringRe.test(line)) {
+                    violations.push(`[js/incomplete-url-substring-sanitization] ${rel}:${idx + 1}`);
+                }
+            });
+        }
+
+        expect(violations).toEqual([]);
+
+        // 安全な共通実装が維持されていること
+        const jsonLdSrc = fs.readFileSync(path.join(ROOT_DIR, "src", "utils", "jsonLd.ts"), "utf8");
+        expect(jsonLdSrc).toContain("export function scanJsonLdScriptsFromHtml");
+        expect(jsonLdSrc).toContain("export function isSchemaOrgContext");
+        const seoSrc = fs.readFileSync(path.join(ROOT_DIR, "src", "pages", "SeoChecker.tsx"), "utf8");
+        expect(seoSrc).toContain("scanJsonLdScriptsFromHtml");
+    });
+
+    it("CodeQL再発防止ガード自体が危険パターンを確実に検出できること（自己検証）", () => {
+        const badTagFilterRe = /<\\\/(?:script|style)|<!--\[\\s\\S\]|-->\/[gimsuy]*/i;
+        const xssThroughDomRe = /parseFromString\([^)]*["'`]text\/html["'`]/;
+        const urlSubstringRe =
+            /\.(?:includes|indexOf|startsWith|endsWith)\(\s*["'`][A-Za-z0-9.-]*\.(?:org|com|net|io|jp|dev|app|co)\/?["'`]/;
+
+        expect(badTagFilterRe.test(String.raw`const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;`)).toBe(true);
+        expect(xssThroughDomRe.test(`parser.parseFromString(html, "text/html")`)).toBe(true);
+        expect(xssThroughDomRe.test(`parser.parseFromString(xml, "application/xml")`)).toBe(false);
+        expect(urlSubstringRe.test(`if (!context.includes("schema.org")) {`)).toBe(true);
+        expect(urlSubstringRe.test(`lower.includes("<script")`)).toBe(false);
+    });
 });
