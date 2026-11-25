@@ -8,7 +8,6 @@ import {
 import AdSense from "../components/AdSense";
 import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
-import { getPageMetadata, routes } from "../routes";
 import {
     animatePop,
     delayedCall,
@@ -427,15 +426,16 @@ export default function OgpChecker() {
         };
     });
 
-    const enrichDevSameOriginOgp = (
+    const enrichDevSameOriginOgp = async (
         parsed: OgpData,
         html: string,
         targetUrl: string,
-    ): OgpData => {
-        if (parsed.ogTitle || !html.includes("/src/index.tsx")) {
+    ): Promise<OgpData> => {
+        if (!import.meta.env.DEV || parsed.ogTitle || !html.includes("/src/index.tsx")) {
             return parsed;
         }
         try {
+            const { routes, getPageMetadata } = await import("../routes");
             const urlObj = new URL(targetUrl);
             const matched = routes.some(
                 (r) => r.path === (urlObj.pathname.replace(/\/+$/, "") || "/"),
@@ -508,7 +508,7 @@ export default function OgpChecker() {
             if (result.kind === "html") {
                 const parsed = parseOgpFromHtml(result.html, result.finalUrl);
                 if (result.source === "direct") {
-                    return enrichDevSameOriginOgp(parsed, result.html, result.finalUrl);
+                    return await enrichDevSameOriginOgp(parsed, result.html, result.finalUrl);
                 }
                 if (
                     parsed.ogTitle ||

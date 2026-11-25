@@ -6,9 +6,7 @@ import {
     Show,
 } from "solid-js";
 import AdSense from "../components/AdSense";
-import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
-import { getPageMetadata, routes } from "../routes";
 import { scanJsonLdScriptsFromHtml } from "../utils/jsonLd";
 import {
     animatePop,
@@ -1106,15 +1104,16 @@ export default function SeoChecker() {
         if (containerRef) playPageEntrance(containerRef, ".ba-card");
     });
 
-    const enrichDevSameOriginSeo = (
+    const enrichDevSameOriginSeo = async (
         parsed: SeoData,
         html: string,
         targetUrl: string,
-    ): SeoData => {
-        if (parsed.pageTitle || !html.includes("/src/index.tsx")) {
+    ): Promise<SeoData> => {
+        if (!import.meta.env.DEV || parsed.pageTitle || !html.includes("/src/index.tsx")) {
             return parsed;
         }
         try {
+            const { routes, getPageMetadata } = await import("../routes");
             const urlObj = new URL(targetUrl);
             const matched = routes.some(
                 (r) => r.path === (urlObj.pathname.replace(/\/+$/, "") || "/"),
@@ -1174,7 +1173,7 @@ export default function SeoChecker() {
             if (result.kind === "html") {
                 const parsed = parseSeoFromHtml(result.html, result.finalUrl);
                 if (result.source === "direct") {
-                    return enrichDevSameOriginSeo(parsed, result.html, result.finalUrl);
+                    return await enrichDevSameOriginSeo(parsed, result.html, result.finalUrl);
                 }
                 return parsed;
             }
@@ -1401,14 +1400,14 @@ export default function SeoChecker() {
                 >
                     <div class="ba-min-w-0">
                         <h1 class="ba-title">
-                            <BudouX text={title()} />
+                            {title()}
                         </h1>
-                        <BudouX
-                            as="p"
+                        <p
                             class="ba-text-xs ba-text-muted"
                             style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.6, "font-weight": 600 }}
-                            text={description()}
-                        />
+                        >
+                            {description()}
+                        </p>
                     </div>
                     <button
                         type="button"
