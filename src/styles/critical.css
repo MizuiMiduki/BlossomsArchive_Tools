@@ -117,14 +117,14 @@ html[data-theme="dark"] .ba-title,
 html[data-theme="dark"] .ba-section-title { color: #ffffff; }
 
 .ba-app-shell { display: flex; height: 100dvh; max-height: 100dvh; width: 100%; overflow: hidden; background-color: var(--ba-bg); }
-.ba-sidebar { width: 16rem; max-width: 85vw; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; background-color: var(--ba-surface); border-right: 1px solid var(--ba-border); z-index: 40; transition: transform 0.25s ease, margin-left 0.25s ease; }
+.ba-sidebar { width: 16rem; max-width: 85vw; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; background-color: var(--ba-surface); border-right: 1px solid var(--ba-border); z-index: 40; overflow: hidden; transition: transform 0.25s ease, margin-left 0.25s ease, visibility 0.25s ease; }
 @media (max-width: 1023.98px) {
-  .ba-sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); box-shadow: var(--ba-shadow-md); }
-  .ba-sidebar.is-open { transform: translateX(0); }
+  .ba-sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); box-shadow: var(--ba-shadow-md); visibility: hidden; pointer-events: none; }
+  .ba-sidebar.is-open { transform: translateX(0); visibility: visible; pointer-events: auto; }
 }
 @media (min-width: 1024px) {
-  .ba-sidebar.is-collapsed { margin-left: -16rem; }
-  .ba-sidebar.is-hovered { margin-left: 0; box-shadow: var(--ba-shadow-md); }
+  .ba-sidebar.is-collapsed { margin-left: -16rem; visibility: hidden; pointer-events: none; }
+  .ba-sidebar.is-collapsed.is-hovered { margin-left: 0; box-shadow: var(--ba-shadow-md); visibility: visible; pointer-events: auto; }
 }
 .ba-sidebar-backdrop { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 35; }
 .ba-content-col { flex: 1 1 0%; display: flex; flex-direction: column; min-width: 0; height: 100dvh; max-height: 100dvh; overflow: hidden; }
@@ -179,8 +179,11 @@ svg[class*="ba-icon"] { flex-shrink: 0; }
   flex-shrink: 0;
 }
 
-/* シェル・トップバー用レイアウトユーティリティ */
+/* シェル・トップバー・サイドバー用レイアウトユーティリティ */
 .ba-flex { display: flex; }
+.ba-flex-col { display: flex; flex-direction: column; }
+.ba-flex-wrap { flex-wrap: wrap; }
+.ba-flex-1 { flex: 1 1 0%; }
 .ba-items-center { align-items: center; }
 .ba-items-start { align-items: flex-start; }
 .ba-justify-between { justify-content: space-between; }
@@ -188,12 +191,23 @@ svg[class*="ba-icon"] { flex-shrink: 0; }
 .ba-gap-2 { gap: 0.5rem; }
 .ba-gap-3 { gap: 0.75rem; }
 .ba-gap-4 { gap: 1rem; }
+.ba-gap-6 { gap: 1.5rem; }
+.ba-stack-1 { display: flex; flex-direction: column; gap: 0.25rem; }
+.ba-stack-2 { display: flex; flex-direction: column; gap: 0.5rem; }
+.ba-stack-3 { display: flex; flex-direction: column; gap: 0.75rem; }
+.ba-stack-4 { display: flex; flex-direction: column; gap: 1rem; }
+.ba-stack-6 { display: flex; flex-direction: column; gap: 1.5rem; }
+.ba-scroll-y { overflow-y: auto; min-height: 0; }
+.ba-scroll-x { overflow-x: auto; scrollbar-width: none; }
+.ba-nav-link { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.75rem; border-radius: var(--ba-radius-sm); font-size: 0.875rem; font-weight: 500; color: var(--ba-text); white-space: nowrap; }
+.ba-nav-link.is-active { background-color: var(--ba-primary); color: var(--ba-primary-fg) !important; font-weight: 700; }
 .ba-min-w-0 { min-width: 0; }
 .ba-w-full { width: 100%; }
 .ba-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ba-text-xs { font-size: 0.75rem; line-height: 1rem; }
 .ba-text-sm { font-size: 0.875rem; line-height: 1.25rem; }
 .ba-text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.ba-font-bold { font-weight: 700; }
 .ba-font-black { font-weight: 800; }
 .ba-text-muted { color: var(--ba-text-muted); }
 .ba-hidden-desktop { display: none; }

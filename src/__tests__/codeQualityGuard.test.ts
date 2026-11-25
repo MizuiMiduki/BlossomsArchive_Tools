@@ -214,6 +214,13 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         expect(criticalCss).toContain(".ba-btn--square");
         expect(criticalCss).toContain(".ba-btn--ghost");
         expect(criticalCss).toContain('svg[class*="ba-icon"]');
+
+        // サイドバー枠外漏れ出し & シェアボタン瞬間露出 (FOUC) 防止ガード
+        expect(criticalCss).toContain("overflow: hidden;");
+        expect(criticalCss).toContain("visibility: hidden;");
+        expect(criticalCss).toContain(".ba-flex-col");
+        expect(criticalCss).toContain(".ba-stack-4");
+        expect(criticalCss).toContain(".ba-nav-link");
     });
 
     it("テスト網羅ガード: src/pages 内の全ページコンポーネントに対応するテストコードが存在し、visualRegression に登録されていること", () => {
