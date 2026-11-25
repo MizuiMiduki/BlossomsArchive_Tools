@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, it, expect } from "vitest";
-import { routes, getPageMetadata, SITE_URL } from "../routes";
+import { routes, getPageMetadata, SITE_URL, INDEXNOW_KEY } from "../routes";
 
 const ROOT_DIR = path.resolve(process.cwd());
 const DIST_DIR = path.join(ROOT_DIR, "dist");
@@ -114,5 +114,21 @@ describe("Static Build Output & Sitemap Integrity Tests", () => {
                 route.path === "/" ? `${SITE_URL}/` : `${SITE_URL}${route.path}`;
             expect(xml).toContain(`<loc>${expectedUrl}</loc>`);
         }
+    });
+
+    it("dist/indexnow.json およびキー認証ファイルが正しく生成されていること", () => {
+        const keyFilePath = path.join(DIST_DIR, `${INDEXNOW_KEY}.txt`);
+        const jsonPath = path.join(DIST_DIR, "indexnow.json");
+        if (!fs.existsSync(DIST_DIR)) return;
+
+        expect(fs.existsSync(keyFilePath)).toBe(true);
+        expect(fs.readFileSync(keyFilePath, "utf8").trim()).toBe(INDEXNOW_KEY);
+
+        expect(fs.existsSync(jsonPath)).toBe(true);
+        const data = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+        expect(data.host).toBe(new URL(SITE_URL).hostname);
+        expect(data.key).toBe(INDEXNOW_KEY);
+        expect(data.keyLocation).toBe(`${SITE_URL}/${INDEXNOW_KEY}.txt`);
+        expect(data.urlList.length).toBeGreaterThanOrEqual(25);
     });
 });

@@ -155,6 +155,23 @@ jobs:
                   server-dir: "${{ secrets.FTP_TARGET_DIR }}"
                   dangerous-clean-slate: ${{ github.event_name == 'workflow_dispatch' && inputs['サーバーを全削除して再デプロイ'] || false }}
 
+            - name: Submit URLs to IndexNow
+              shell: bash
+              run: |
+                  if [ -f "dist/indexnow.json" ]; then
+                    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://api.indexnow.org/indexnow \
+                      -H "Content-Type: application/json; charset=utf-8" \
+                      -d @dist/indexnow.json || echo "000")
+                    echo "IndexNow response HTTP status: $HTTP_STATUS"
+                    if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "202" ]; then
+                      echo "✅ Successfully submitted URL list to IndexNow (HTTP $HTTP_STATUS)"
+                    else
+                      echo "⚠️ IndexNow returned HTTP $HTTP_STATUS (continuing deployment)"
+                    fi
+                  else
+                    echo "dist/indexnow.json not found, skipping IndexNow submission"
+                  fi
+
     # ─── 4. Lighthouse 並列分散監査 (8シャード均等分散でキュー待ちゼロ・即時並列実行) ───
     lighthouse-audit:
         needs: [build]

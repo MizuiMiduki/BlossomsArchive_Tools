@@ -10,6 +10,7 @@
         "build": "vite build && npx tsx scripts/generate-sitemap.ts && npx tsx scripts/generate-route-pages.ts",
         "serve": "vite preview",
         "type-check": "tsc --noEmit",
+        "submit:indexnow": "npx tsx scripts/submit-indexnow.ts",
         "test": "vitest run"
     },
     "license": "MIT",

@@ -22,6 +22,8 @@ export const DEFAULT_OG_IMAGE =
     "https://tools.blossomsarchive.com/icon-192.png";
 export const PUBLISHER_NAME = "BlossomsArchive";
 export const PUBLISHER_URL = "https://blossomsarchive.com";
+export const INDEXNOW_KEY = "cd0faa6619fc661161fd621dde383c52";
+export const INDEXNOW_KEY_LOCATION = `${SITE_URL}/${INDEXNOW_KEY}.txt`;
 
 export const routes: Route[] = [
     {
