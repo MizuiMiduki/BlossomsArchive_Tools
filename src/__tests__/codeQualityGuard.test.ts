@@ -200,6 +200,22 @@ describe("Code Quality, Architecture & Stability Invariant Guards", () => {
         expect(allDeps).not.toHaveProperty("beercss");
     });
 
+    it("クリティカルCSS・アイコン初期描画ガード: critical.css に SVG アイコン寸法・アイコンボックス・正方形ボタンが定義され、初回描画時のアイコン巨大化 (FOUC) が防止されていること", () => {
+        const criticalCss = fs.readFileSync(
+            path.join(ROOT_DIR, "src", "styles", "critical.css"),
+            "utf8",
+        );
+        expect(criticalCss).toContain(".ba-icon-xs");
+        expect(criticalCss).toContain(".ba-icon-sm");
+        expect(criticalCss).toContain(".ba-icon-md");
+        expect(criticalCss).toContain(".ba-icon-lg");
+        expect(criticalCss).toContain(".ba-icon-xl");
+        expect(criticalCss).toContain(".ba-icon-box");
+        expect(criticalCss).toContain(".ba-btn--square");
+        expect(criticalCss).toContain(".ba-btn--ghost");
+        expect(criticalCss).toContain('svg[class*="ba-icon"]');
+    });
+
     it("テスト網羅ガード: src/pages 内の全ページコンポーネントに対応するテストコードが存在し、visualRegression に登録されていること", () => {
         const pagesDir = path.join(ROOT_DIR, "src", "pages");
         const testsDir = path.join(ROOT_DIR, "src", "__tests__");

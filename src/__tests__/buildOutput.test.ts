@@ -75,11 +75,14 @@ describe("Static Build Output & Sitemap Integrity Tests", () => {
             expect(jsonLdPos).toBeGreaterThan(rootPos);
             expect(scriptPos).toBeGreaterThan(preloadPos);
 
-            // PageSpeed最適化: クリティカルCSSと完全非同期CSSローディング、同一オリジンアイコン
+            // PageSpeed最適化: クリティカルCSSと完全非同期CSSローディング、同一オリジンアイコン、アイコン初期巨大化防止
             expect(html).toContain('id="ba-tools-critical-css"');
             expect(html).toContain('media="print" onload="this.media=\'all\'"');
             expect(html).toContain('icon-32.png');
             expect(html).toContain('icon-192.png');
+            expect(html).toContain(".ba-icon-sm");
+            expect(html).toContain(".ba-icon-md");
+            expect(html).toContain(".ba-btn--square");
         }
 
         // CSS二重配信防止 & 超軽量予算: 外部CSSが 20KB 未満であること

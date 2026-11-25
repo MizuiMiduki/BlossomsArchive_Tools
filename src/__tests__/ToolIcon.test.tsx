@@ -29,6 +29,9 @@ describe("ToolIcon Component", () => {
             const svg = container.querySelector("svg");
             expect(svg).not.toBeNull();
             expect(svg?.getAttribute("aria-hidden")).toBe("true");
+            expect(svg?.getAttribute("width")).toBe("24");
+            expect(svg?.getAttribute("height")).toBe("24");
+            expect(svg?.getAttribute("viewBox")).toBe("0 0 24 24");
             expect(svg?.getAttribute("stroke")).toBe("currentColor");
             expect(svg?.getAttribute("class")).toContain("w-5 h-5");
             cleanup();
