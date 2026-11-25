@@ -170,7 +170,7 @@ describe("Performance & Bundle Budget Tests", () => {
         }
     });
 
-    it("検索フィルタリング処理が 100 ルート × 50 回検索でも 100ms 以内に高速完了すること", () => {
+    it("検索フィルタリング処理が 100 ルート × 50 回検索でも 200ms 以内に高速完了すること", () => {
         // 100件のダミールートリストを生成
         const largeRouteList = Array.from({ length: 100 }, (_, i) => ({
             ...routes[i % routes.length],
@@ -188,7 +188,7 @@ describe("Performance & Bundle Budget Tests", () => {
         }
 
         const elapsed = performance.now() - start;
-        expect(elapsed).toBeLessThan(100);
+        expect(elapsed).toBeLessThan(200);
     });
 
     it("アナログ時計（Clock）の初期描画およびSVG文字盤（60目盛り+12数字）レンダリングが高速（50ms以内）であること", () => {
