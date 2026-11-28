@@ -127,6 +127,11 @@ describe("MosaicArt Page Component", () => {
 
             const downloadLink = await screen.findByRole("link", { name: "モザイクアート画像をダウンロード" });
             expect(downloadLink).toBeInTheDocument();
+            // 完了モーダルが表示され、「プレビュー画面へ戻る」で閉じられること
+            const backToPreviewBtn = screen.getByRole("button", { name: "プレビュー画面へ戻る" });
+            fireEvent.click(backToPreviewBtn);
+            expect(screen.queryByRole("button", { name: "プレビュー画面へ戻る" })).not.toBeInTheDocument();
+
             // 余分な出力用 <canvas> がDOM上に重複表示されていないこと
             expect(container.querySelector("canvas")).toBeNull();
 
@@ -194,6 +199,7 @@ describe("MosaicArt Page Component", () => {
 
         try {
             const { container } = render(() => <MosaicArt />);
+            fireEvent.click(screen.getByRole("tab", { name: "素材" }));
             const tilesInput = container.querySelectorAll('input[type="file"]')[1] as HTMLInputElement;
             const tileFile = new File(["tile"], "tile.png", { type: "image/png" });
             await fireEvent.change(tilesInput, { target: { files: [tileFile] } });
@@ -206,5 +212,25 @@ describe("MosaicArt Page Component", () => {
         } finally {
             globalThis.Image = OriginalImage;
         }
+    });
+
+    it("Exifフレーム形式のドックタブ（ベース・素材・設定・保存）を切り替えられること", () => {
+        render(() => <MosaicArt />);
+        const baseTab = screen.getByRole("tab", { name: "ベース" });
+        const tilesTab = screen.getByRole("tab", { name: "素材" });
+        const optionsTab = screen.getByRole("tab", { name: "設定" });
+        const saveTab = screen.getByRole("tab", { name: "保存" });
+
+        expect(baseTab).toHaveAttribute("aria-selected", "true");
+
+        fireEvent.click(tilesTab);
+        expect(tilesTab).toHaveAttribute("aria-selected", "true");
+        expect(baseTab).toHaveAttribute("aria-selected", "false");
+
+        fireEvent.click(optionsTab);
+        expect(optionsTab).toHaveAttribute("aria-selected", "true");
+
+        fireEvent.click(saveTab);
+        expect(saveTab).toHaveAttribute("aria-selected", "true");
     });
 });

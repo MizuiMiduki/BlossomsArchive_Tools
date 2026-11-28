@@ -64,6 +64,15 @@ export default function MosaicArt() {
     const [showCompare, setShowCompare] = createSignal<boolean>(false);
     const [isLightboxOpen, setIsLightboxOpen] = createSignal<boolean>(false);
     const [lightboxZoom, setLightboxZoom] = createSignal<number>(1);
+    const [activeTab, setActiveTab] = createSignal<"target" | "tiles" | "options" | "save">("target");
+    const [showSaveModal, setShowSaveModal] = createSignal<boolean>(false);
+
+    const settingTabs: { id: "target" | "tiles" | "options" | "save"; label: string }[] = [
+        { id: "target", label: "ベース" },
+        { id: "tiles", label: "素材" },
+        { id: "options", label: "設定" },
+        { id: "save", label: "保存" },
+    ];
 
     const openLightbox = () => {
         setLightboxZoom(1);
@@ -341,6 +350,7 @@ export default function MosaicArt() {
                         const url = URL.createObjectURL(blob);
                         setResultUrl(url);
                         setResultDimensions({ width: outW, height: outH });
+                        setShowSaveModal(true);
                     }
                     setIsProcessing(false);
                     setProgress(100);
@@ -375,611 +385,690 @@ export default function MosaicArt() {
     });
 
     return (
-        <div ref={containerRef} class="ba-stack-6">
+        <div ref={containerRef} class="ba-page ba-page--wide">
             {/* ヘッダーエリア */}
-            <div class="ba-card ba-card--border ba-stack-3">
-                <div class="ba-flex ba-items-center ba-gap-3">
-                    <div class="ba-icon-box ba-icon-box--primary">
-                        <ToolIcon name="grid" class="ba-icon-md" />
-                    </div>
-                    <div>
-                        <h1 class="ba-title-h1">{pageTitle()}</h1>
-                        <p class="ba-text-subtle ba-text-sm">
-                            <BudouX text={description()} />
-                        </p>
-                    </div>
-                </div>
+            <div class="ba-card ba-stack-3">
+                <h1 class="ba-title ba-flex ba-items-center ba-gap-2">
+                    <ToolIcon name="grid" class="ba-icon-md" />
+                    {pageTitle()}
+                </h1>
+                <p class="ba-text-sm ba-text-muted" style={{ margin: 0, "line-height": 1.65 }}>
+                    <BudouX text={description()} />
+                </p>
             </div>
 
-            <AdSense />
+            {/* メイン操作エリア (ExifFrameGenerator と同じフロー) */}
+            <div class="ba-card ba-w-full">
+                <form
+                    {...({
+                        toolname: "mosaic_art_generator",
+                        tooldescription:
+                            "完成させたい画像と構成画像を選択して色味加工なしのモザイクアートを生成するツール",
+                    } as Record<string, string>)}
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        generateMosaic();
+                    }}
+                >
+                    <div class="ba-exif-layout">
+                        {/* 左カラム / モバイル下部ドック: ステップ・設定パネル */}
+                        <div class="ba-exif-sidebar">
+                            <div class="ba-exif-settings">
+                                <div role="tablist" aria-label="設定カテゴリ" class="ba-exif-dock">
+                                    <div class="ba-exif-dock-inner">
+                                        <For each={settingTabs}>
+                                            {(tab) => (
+                                                <button
+                                                    type="button"
+                                                    role="tab"
+                                                    aria-selected={activeTab() === tab.id ? "true" : "false"}
+                                                    class={`ba-exif-dock-btn ${activeTab() === tab.id ? "is-active" : ""}`}
+                                                    onClick={() => setActiveTab(tab.id)}
+                                                >
+                                                    <span style={{ "font-size": "0.875rem", "font-weight": "700" }}>{tab.label}</span>
+                                                </button>
+                                            )}
+                                        </For>
+                                        <Show when={targetImage() && tiles().length > 0}>
+                                            <button
+                                                type="submit"
+                                                disabled={isProcessing()}
+                                                class="ba-exif-dock-gen"
+                                                aria-label="モザイクアートをクイック生成"
+                                            >
+                                                {isProcessing() ? `${progress()}%` : "生成"}
+                                            </button>
+                                        </Show>
+                                    </div>
+                                </div>
 
-            {/* メイン操作エリア */}
-            <form
-                {...({
-                    toolname: "mosaic_art_generator",
-                    tooldescription:
-                        "完成させたい画像と構成画像を選択して色味加工なしのモザイクアートを生成するツール",
-                } as Record<string, string>)}
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    generateMosaic();
-                }}
-                class="ba-stack-6"
-            >
-                {/* 2カラム構成：ターゲット画像 ＆ 構成画像 */}
-                <div class="ba-grid ba-grid-cols-1 md:ba-grid-cols-2 ba-gap-4">
-                    {/* ステップ1: 完成させたい画像 */}
-                    <div class="ba-card ba-card--border ba-stack-4">
-                        <div class="ba-flex ba-items-center ba-justify-between">
-                            <h2 class="ba-title-h2 ba-text-base">
-                                1. 完成させたい画像（ターゲット）
-                            </h2>
-                            <Show when={targetImage()}>
-                                <button
-                                    type="button"
-                                    class="ba-btn ba-btn--ghost ba-btn--xs"
-                                    onClick={clearTargetImage}
-                                    aria-label="選択画像をクリア"
-                                >
-                                    クリア
-                                </button>
-                            </Show>
+                                {/* タブ1: ベース画像 */}
+                                <div role="tabpanel" hidden={activeTab() !== "target"} class="ba-stack-4">
+                                    <div class="ba-flex ba-items-center ba-justify-between">
+                                        <h2 class="ba-title-h2 ba-text-base">1. 完成させたい画像（ターゲット）</h2>
+                                        <Show when={targetImage()}>
+                                            <button
+                                                type="button"
+                                                class="ba-btn ba-btn--ghost ba-btn--xs"
+                                                onClick={clearTargetImage}
+                                                aria-label="選択画像をクリア"
+                                            >
+                                                クリア
+                                            </button>
+                                        </Show>
+                                    </div>
+
+                                    <Show
+                                        when={targetImage()}
+                                        fallback={
+                                            <div
+                                                class="ba-border-dashed ba-p-6 ba-text-center ba-rounded-lg ba-stack-2"
+                                                onDragOver={(e) => e.preventDefault()}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    if (e.dataTransfer?.files?.[0]) {
+                                                        handleTargetFile(e.dataTransfer.files[0]);
+                                                    }
+                                                }}
+                                            >
+                                                <div class="ba-flex ba-justify-center">
+                                                    <ToolIcon name="image" class="ba-icon-xl ba-text-subtle" />
+                                                </div>
+                                                <p class="ba-text-sm ba-font-medium">完成目標のメイン画像をドロップ</p>
+                                                <p class="ba-text-xs ba-text-subtle">PNG, JPG, WebP に対応</p>
+                                                <div>
+                                                    <button
+                                                        type="button"
+                                                        class="ba-btn ba-btn--secondary ba-btn--sm"
+                                                        onClick={() => targetInputRef?.click()}
+                                                        aria-label="完成させたい画像を選択"
+                                                    >
+                                                        画像ファイルを選択
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+                                    >
+                                        {(target) => (
+                                            <div class="ba-stack-3">
+                                                <div class="ba-flex ba-items-center ba-justify-between ba-text-xs ba-text-subtle">
+                                                    <span>{target().file.name}</span>
+                                                    <span>
+                                                        {target().width} × {target().height} px
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    class="ba-btn ba-btn--outline ba-btn--sm ba-w-full"
+                                                    onClick={() => targetInputRef?.click()}
+                                                    aria-label="完成させたい画像を変更"
+                                                >
+                                                    別の画像に変更
+                                                </button>
+                                            </div>
+                                        )}
+                                    </Show>
+
+                                    <input
+                                        ref={targetInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        class="ba-hidden"
+                                        onChange={(e) => {
+                                            if (e.currentTarget.files?.[0]) {
+                                                handleTargetFile(e.currentTarget.files[0]);
+                                            }
+                                        }}
+                                        aria-label="ターゲット画像ファイル"
+                                    />
+                                </div>
+
+                                {/* タブ2: 構成する画像群 */}
+                                <div role="tabpanel" hidden={activeTab() !== "tiles"} class="ba-stack-4">
+                                    <div class="ba-flex ba-items-center ba-justify-between">
+                                        <div>
+                                            <h2 class="ba-title-h2 ba-text-base">2. 構成する画像（タイル素材）</h2>
+                                            <span class="ba-text-xs ba-text-subtle">{tiles().length} 枚選択中</span>
+                                        </div>
+                                        <Show when={tiles().length > 0}>
+                                            <button
+                                                type="button"
+                                                class="ba-btn ba-btn--ghost ba-btn--xs ba-text-danger"
+                                                onClick={clearAllTiles}
+                                                aria-label="構成画像をすべてクリア"
+                                            >
+                                                全削除
+                                            </button>
+                                        </Show>
+                                    </div>
+
+                                    <div
+                                        class="ba-border-dashed ba-p-4 ba-text-center ba-rounded-lg ba-stack-2"
+                                        onDragOver={(e) => e.preventDefault()}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            if (e.dataTransfer?.files) {
+                                                handleTileFiles(e.dataTransfer.files);
+                                            }
+                                        }}
+                                    >
+                                        <p class="ba-text-xs ba-text-subtle">
+                                            複数枚の写真をドラッグ＆ドロップまたはファイル選択（何十枚でも追加可能）
+                                        </p>
+                                        <div class="ba-flex ba-flex-wrap ba-justify-center ba-gap-2">
+                                            <button
+                                                type="button"
+                                                class="ba-btn ba-btn--secondary ba-btn--sm"
+                                                onClick={() => tilesInputRef?.click()}
+                                                aria-label="構成画像を追加選択"
+                                            >
+                                                画像を追加選択（複数可）
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <input
+                                        ref={tilesInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        style={{ display: "none" }}
+                                        onChange={(e) => {
+                                            if (e.currentTarget.files) {
+                                                handleTileFiles(e.currentTarget.files);
+                                            }
+                                        }}
+                                        aria-label="構成画像ファイル群"
+                                    />
+
+                                    <Show when={tiles().length > 0}>
+                                        <div class="ba-stack-2">
+                                            <div class="ba-flex ba-items-center ba-justify-between ba-gap-2 ba-text-xs ba-text-subtle">
+                                                <span>素材サムネイル一覧（{tiles().length}枚）</span>
+                                                <button
+                                                    type="button"
+                                                    class="ba-btn ba-btn--ghost ba-btn--xs"
+                                                    onClick={() => setShowTileThumbnails((v) => !v)}
+                                                >
+                                                    {showTileThumbnails() ? "一覧を折りたたむ" : "一覧を表示する"}
+                                                </button>
+                                            </div>
+                                            <Show when={showTileThumbnails()}>
+                                                <div
+                                                    class="ba-p-2 ba-bg-surface-2 ba-rounded-md"
+                                                    style={{
+                                                        display: "grid",
+                                                        "grid-template-columns": "repeat(auto-fill, minmax(56px, 1fr))",
+                                                        gap: "0.4rem",
+                                                        "max-height": "180px",
+                                                        "overflow-y": "auto",
+                                                    }}
+                                                >
+                                                    <For each={tiles()}>
+                                                        {(tile) => (
+                                                            <div
+                                                                class="ba-relative ba-rounded ba-overflow-hidden ba-bg-surface-3"
+                                                                style={{
+                                                                    position: "relative",
+                                                                    "aspect-ratio": "1 / 1",
+                                                                    width: "100%",
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src={tile.previewUrl}
+                                                                    alt={tile.name}
+                                                                    style={{
+                                                                        width: "100%",
+                                                                        height: "100%",
+                                                                        "object-fit": "cover",
+                                                                        display: "block",
+                                                                    }}
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeTile(tile.id)}
+                                                                    aria-label={`${tile.name}を削除`}
+                                                                    style={{
+                                                                        position: "absolute",
+                                                                        top: "2px",
+                                                                        right: "2px",
+                                                                        width: "18px",
+                                                                        height: "18px",
+                                                                        "border-radius": "9999px",
+                                                                        background: "rgba(0, 0, 0, 0.72)",
+                                                                        color: "#ffffff",
+                                                                        border: "none",
+                                                                        "font-size": "12px",
+                                                                        "line-height": "1",
+                                                                        display: "flex",
+                                                                        "align-items": "center",
+                                                                        "justify-content": "center",
+                                                                        cursor: "pointer",
+                                                                    }}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </For>
+                                                </div>
+                                            </Show>
+                                        </div>
+                                    </Show>
+                                </div>
+
+                                {/* タブ3: 生成設定オプション */}
+                                <div role="tabpanel" hidden={activeTab() !== "options"} class="ba-stack-4">
+                                    <h2 class="ba-title-h2 ba-text-base">3. 生成オプション</h2>
+
+                                    <div class="ba-stack-2">
+                                        <div class="ba-flex ba-items-center ba-justify-between">
+                                            <label for="input-mosaic-columns" class="ba-label ba-text-xs ba-font-medium">
+                                                タイルの分割数（横の列数）
+                                            </label>
+                                            <span class="ba-badge ba-badge--neutral ba-text-xs">{columns()} 列</span>
+                                        </div>
+                                        <input
+                                            id="input-mosaic-columns"
+                                            type="range"
+                                            min="10"
+                                            max="200"
+                                            step="5"
+                                            value={columns()}
+                                            onInput={(e) => {
+                                                const val = Number(e.currentTarget.value);
+                                                if (Number.isFinite(val)) {
+                                                    setColumns(Math.max(10, Math.min(200, Math.round(val))));
+                                                }
+                                            }}
+                                            class="ba-range"
+                                            aria-label="タイルの分割数"
+                                        />
+                                        <p class="ba-text-xs ba-text-subtle">
+                                            多いほど細密に、少ないほど個々の写真が見やすくなります。
+                                        </p>
+                                    </div>
+
+                                    <div class="ba-stack-2">
+                                        <label for="select-mosaic-width" class="ba-label ba-text-xs ba-font-medium">
+                                            出力画像サイズ（横幅）
+                                        </label>
+                                        <select
+                                            id="select-mosaic-width"
+                                            value={outputWidth()}
+                                            onChange={(e) => {
+                                                const val = Number(e.currentTarget.value);
+                                                if (Number.isFinite(val)) setOutputWidth(val);
+                                            }}
+                                            class="ba-select ba-w-full"
+                                            aria-label="出力画像サイズ"
+                                        >
+                                            <option value="1200">標準 (1200 px)</option>
+                                            <option value="1800">高画質 (1800 px - 推奨)</option>
+                                            <option value="2400">超高画質 (2400 px)</option>
+                                            <option value="3200">ポスター級 (3200 px)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="ba-stack-2">
+                                        <label for="select-mosaic-penalty" class="ba-label ba-text-xs ba-font-medium">
+                                            重複利用の制限
+                                        </label>
+                                        <select
+                                            id="select-mosaic-penalty"
+                                            value={duplicatePenalty()}
+                                            onChange={(e) => {
+                                                const val = Number(e.currentTarget.value);
+                                                if (Number.isFinite(val)) setDuplicatePenalty(val);
+                                            }}
+                                            class="ba-select ba-w-full"
+                                            aria-label="重複利用の制限"
+                                        >
+                                            <option value="0">重複制限なし（色の再現度優先）</option>
+                                            <option value="1">バランス（推奨）</option>
+                                            <option value="3">均等配置（全画像をまんべんなく使用）</option>
+                                            <option value="-1">同一画像を再利用しない（各画像1回まで）</option>
+                                        </select>
+                                        <Show
+                                            when={
+                                                duplicatePenalty() < 0 &&
+                                                estimatedTotalCells() !== null &&
+                                                tiles().length > 0 &&
+                                                tiles().length < (estimatedTotalCells() ?? 0)
+                                            }
+                                        >
+                                            <p class="ba-text-xs ba-text-warning">
+                                                ※ 総セル数（{estimatedTotalCells()}個）に対して構成画像（{tiles().length}枚）が不足しているため、全画像を使い切った後は最小回数で均等補完されます。分割数を下げると重複なしで生成できます。
+                                            </p>
+                                        </Show>
+                                        <div class="ba-flex ba-items-center ba-gap-2 ba-mt-1">
+                                            <input
+                                                type="checkbox"
+                                                id="checkbox-avoid-adjacent"
+                                                checked={avoidAdjacent()}
+                                                onChange={(e) => setAvoidAdjacent(e.currentTarget.checked)}
+                                                class="ba-checkbox"
+                                                aria-label="隣接セルでの同一画像重複を防止"
+                                            />
+                                            <label for="checkbox-avoid-adjacent" class="ba-text-xs">
+                                                隣接セルで同じ画像の連続を防止
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="ba-stack-2">
+                                        <label for="select-mosaic-tile-aspect" class="ba-label ba-text-xs ba-font-medium">
+                                            タイル形状（縦横比）
+                                        </label>
+                                        <select
+                                            id="select-mosaic-tile-aspect"
+                                            value={tileAspect()}
+                                            onChange={(e) => setTileAspect(e.currentTarget.value as TileAspectRatio)}
+                                            class="ba-select ba-w-full"
+                                        >
+                                            <option value="square">正方形 (1:1 - 標準)</option>
+                                            <option value="landscape">横長 (4:3 - 風景写真向け)</option>
+                                            <option value="portrait">縦長 (3:4 - ポートレート向け)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* タブ4: 保存設定 */}
+                                <div role="tabpanel" hidden={activeTab() !== "save"} class="ba-stack-4">
+                                    <h2 class="ba-title-h2 ba-text-base">4. 保存形式</h2>
+                                    <div class="ba-stack-2">
+                                        <label for="select-result-format" class="ba-label ba-text-xs ba-font-medium">
+                                            保存形式
+                                        </label>
+                                        <select
+                                            id="select-result-format"
+                                            value={outputFormat()}
+                                            onChange={(e) => setOutputFormat(e.currentTarget.value)}
+                                            class="ba-select ba-w-full"
+                                            aria-label="画像保存形式"
+                                        >
+                                            <option value="image/png">PNG（最高画質）</option>
+                                            <option value="image/jpeg">JPEG（ファイル軽量）</option>
+                                            <option value="image/webp">WebP（次世代形式）</option>
+                                        </select>
+                                    </div>
+                                    <Show when={resultUrl()}>
+                                        {(url) => (
+                                            <a
+                                                href={url()}
+                                                download={downloadFileName()}
+                                                class="ba-btn ba-btn--success ba-btn--md ba-w-full"
+                                            >
+                                                <ToolIcon name="download" class="ba-icon-sm" />
+                                                画像をダウンロード
+                                            </a>
+                                        )}
+                                    </Show>
+                                </div>
+                            </div>
                         </div>
 
-                        <Show
-                            when={targetImage()}
-                            fallback={
-                                <div
-                                    class="ba-border-dashed ba-p-6 ba-text-center ba-rounded-lg ba-stack-2"
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={(e) => {
-                                        e.preventDefault();
-                                        if (e.dataTransfer?.files?.[0]) {
-                                            handleTargetFile(e.dataTransfer.files[0]);
-                                        }
-                                    }}
-                                >
-                                    <div class="ba-flex ba-justify-center">
-                                        <ToolIcon name="image" class="ba-icon-xl ba-text-subtle" />
-                                    </div>
-                                    <p class="ba-text-sm ba-font-medium">
-                                        完成目標のメイン画像をドロップ
-                                    </p>
-                                    <p class="ba-text-xs ba-text-subtle">
-                                        PNG, JPG, WebP に対応
-                                    </p>
-                                    <div>
+                        {/* 右カラム: プレビューステージ ＆ 生成ボタン */}
+                        <div class="ba-stack-3" style={{ "min-width": 0 }}>
+                            <Show when={resultUrl()}>
+                                <div class="ba-flex ba-items-center ba-justify-between ba-flex-wrap ba-gap-2">
+                                    <div class="ba-flex ba-items-center ba-gap-2">
                                         <button
                                             type="button"
                                             class="ba-btn ba-btn--secondary ba-btn--sm"
-                                            onClick={() => targetInputRef?.click()}
-                                            aria-label="完成させたい画像を選択"
+                                            onClick={() => setShowCompare(!showCompare())}
+                                            aria-label="元画像と比較表示"
                                         >
-                                            画像ファイルを選択
+                                            {showCompare() ? "モザイクのみ表示" : "元画像と比較"}
                                         </button>
-                                    </div>
-                                </div>
-                            }
-                        >
-                            {(target) => (
-                                <div class="ba-stack-3">
-                                    <div
-                                        class="ba-relative ba-rounded-md ba-overflow-hidden ba-bg-surface-2 ba-flex ba-items-center ba-justify-center"
-                                        style={{ "max-height": "220px" }}
-                                    >
-                                        <img
-                                            src={target().previewUrl}
-                                            alt="ターゲット画像プレビュー"
-                                            style={{
-                                                "max-height": "220px",
-                                                "max-width": "100%",
-                                                width: "auto",
-                                                "object-fit": "contain",
-                                            }}
-                                        />
-                                    </div>
-                                    <div class="ba-flex ba-items-center ba-justify-between ba-text-xs ba-text-subtle">
-                                        <span>{target().file.name}</span>
-                                        <span>
-                                            {target().width} × {target().height} px
-                                        </span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="ba-btn ba-btn--outline ba-btn--sm ba-w-full"
-                                        onClick={() => targetInputRef?.click()}
-                                        aria-label="完成させたい画像を変更"
-                                    >
-                                        別の画像に変更
-                                    </button>
-                                </div>
-                            )}
-                        </Show>
-
-                        <input
-                            ref={targetInputRef}
-                            type="file"
-                            accept="image/*"
-                            class="ba-hidden"
-                            onChange={(e) => {
-                                if (e.currentTarget.files?.[0]) {
-                                    handleTargetFile(e.currentTarget.files[0]);
-                                }
-                            }}
-                            aria-label="ターゲット画像ファイル"
-                        />
-                    </div>
-
-                    {/* ステップ2: 構成する画像群 */}
-                    <div class="ba-card ba-card--border ba-stack-4">
-                        <div class="ba-flex ba-items-center ba-justify-between">
-                            <div>
-                                <h2 class="ba-title-h2 ba-text-base">
-                                    2. 構成する画像（タイル素材）
-                                </h2>
-                                <span class="ba-text-xs ba-text-subtle">
-                                    {tiles().length} 枚選択中
-                                </span>
-                            </div>
-                            <Show when={tiles().length > 0}>
-                                <button
-                                    type="button"
-                                    class="ba-btn ba-btn--ghost ba-btn--xs ba-text-danger"
-                                    onClick={clearAllTiles}
-                                    aria-label="構成画像をすべてクリア"
-                                >
-                                    全削除
-                                </button>
-                            </Show>
-                        </div>
-
-                        <div
-                            class="ba-border-dashed ba-p-4 ba-text-center ba-rounded-lg ba-stack-2"
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => {
-                                e.preventDefault();
-                                if (e.dataTransfer?.files) {
-                                    handleTileFiles(e.dataTransfer.files);
-                                }
-                            }}
-                        >
-                            <p class="ba-text-xs ba-text-subtle">
-                                複数枚の写真をドラッグ＆ドロップまたはファイル選択（何十枚でも追加可能）
-                            </p>
-                            <div class="ba-flex ba-flex-wrap ba-justify-center ba-gap-2">
-                                <button
-                                    type="button"
-                                    class="ba-btn ba-btn--secondary ba-btn--sm"
-                                    onClick={() => tilesInputRef?.click()}
-                                    aria-label="構成画像を追加選択"
-                                >
-                                    画像を追加選択（複数可）
-                                </button>
-                            </div>
-                        </div>
-
-                        <input
-                            ref={tilesInputRef}
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            style={{ display: "none" }}
-                            onChange={(e) => {
-                                if (e.currentTarget.files) {
-                                    handleTileFiles(e.currentTarget.files);
-                                }
-                            }}
-                            aria-label="構成画像ファイル群"
-                        />
-
-                        {/* サムネイル一覧 */}
-                        <Show when={tiles().length > 0}>
-                            <div class="ba-stack-2">
-                                <div class="ba-flex ba-items-center ba-justify-between ba-gap-2 ba-text-xs ba-text-subtle">
-                                    <span>素材サムネイル一覧（{tiles().length}枚）</span>
-                                    <button
-                                        type="button"
-                                        class="ba-btn ba-btn--ghost ba-btn--xs"
-                                        onClick={() => setShowTileThumbnails((v) => !v)}
-                                    >
-                                        {showTileThumbnails() ? "一覧を折りたたむ" : "一覧を表示する"}
-                                    </button>
-                                </div>
-                                <Show when={showTileThumbnails()}>
-                                    <div
-                                        class="ba-p-2 ba-bg-surface-2 ba-rounded-md"
-                                        style={{
-                                            display: "grid",
-                                            "grid-template-columns": "repeat(auto-fill, minmax(56px, 1fr))",
-                                            gap: "0.4rem",
-                                            "max-height": "180px",
-                                            "overflow-y": "auto",
-                                        }}
-                                    >
-                                        <For each={tiles()}>
-                                            {(tile) => (
-                                                <div
-                                                    class="ba-relative ba-rounded ba-overflow-hidden ba-bg-surface-3"
-                                                    style={{
-                                                        position: "relative",
-                                                        "aspect-ratio": "1 / 1",
-                                                        width: "100%",
-                                                    }}
-                                                >
-                                                    <img
-                                                        src={tile.previewUrl}
-                                                        alt={tile.name}
-                                                        style={{
-                                                            width: "100%",
-                                                            height: "100%",
-                                                            "object-fit": "cover",
-                                                            display: "block",
-                                                        }}
-                                                    />
+                                        <div class="ba-flex ba-items-center ba-gap-1 ba-border ba-rounded-md ba-p-1">
+                                            <span class="ba-text-xs ba-text-subtle ba-px-1">ズーム:</span>
+                                            <For each={[1, 2, 3]}>
+                                                {(lvl) => (
                                                     <button
                                                         type="button"
-                                                        onClick={() => removeTile(tile.id)}
-                                                        aria-label={`${tile.name}を削除`}
+                                                        class={`ba-btn ba-btn--xs ${
+                                                            zoomLevel() === lvl ? "ba-btn--primary" : "ba-btn--ghost"
+                                                        }`}
+                                                        onClick={() => setZoomLevel(lvl)}
+                                                        aria-label={`拡大率 ${lvl}倍`}
+                                                    >
+                                                        {lvl}x
+                                                    </button>
+                                                )}
+                                            </For>
+                                        </div>
+                                    </div>
+                                    <Show when={resultDimensions()}>
+                                        {(dims) => (
+                                            <span class="ba-text-xs ba-text-subtle">
+                                                解像度: {dims().width} × {dims().height} px
+                                            </span>
+                                        )}
+                                    </Show>
+                                </div>
+                            </Show>
+
+                            <div class="ba-exif-preview" style={{ overflow: "auto" }}>
+                                <Show
+                                    when={resultUrl() || targetImage()}
+                                    fallback={
+                                        <div
+                                            class="ba-text-muted ba-text-center ba-text-sm ba-flex-col ba-items-center ba-gap-2"
+                                            style={{ padding: "1rem" }}
+                                        >
+                                            <ToolIcon name="grid" class="ba-icon-xl" />
+                                            <span>完成目標の画像と素材画像を読み込むと、ここにプレビューと完成品が表示されます。</span>
+                                        </div>
+                                    }
+                                >
+                                    <Show
+                                        when={resultUrl()}
+                                        fallback={
+                                            <Show when={targetImage()}>
+                                                {(target) => (
+                                                    <img
+                                                        src={target().previewUrl}
+                                                        alt="ターゲット画像プレビュー"
                                                         style={{
-                                                            position: "absolute",
-                                                            top: "2px",
-                                                            right: "2px",
-                                                            width: "18px",
-                                                            height: "18px",
-                                                            "border-radius": "9999px",
-                                                            background: "rgba(0, 0, 0, 0.72)",
-                                                            color: "#ffffff",
+                                                            "max-width": "100%",
+                                                            "max-height": "100%",
+                                                            width: "auto",
+                                                            height: "auto",
+                                                            "object-fit": "contain",
+                                                            "box-shadow": "var(--ba-shadow-md)",
+                                                        }}
+                                                    />
+                                                )}
+                                            </Show>
+                                        }
+                                    >
+                                        {(url) => (
+                                            <Show
+                                                when={!showCompare()}
+                                                fallback={
+                                                    <div class="ba-grid ba-grid-cols-2 ba-gap-2 ba-w-full" style={{ padding: "0.75rem" }}>
+                                                        <div class="ba-stack-1 ba-text-center">
+                                                            <span class="ba-text-xs ba-text-subtle">元画像</span>
+                                                            <img
+                                                                src={targetImage()?.previewUrl}
+                                                                alt="元画像"
+                                                                style={{
+                                                                    "max-height": "460px",
+                                                                    "max-width": "100%",
+                                                                    margin: "0 auto",
+                                                                    "object-fit": "contain",
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div class="ba-stack-1 ba-text-center">
+                                                            <span class="ba-text-xs ba-text-subtle">モザイクアート</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={openLightbox}
+                                                                aria-label="生成モザイクアートをライトボックスで拡大表示"
+                                                                style={{
+                                                                    padding: 0,
+                                                                    border: "none",
+                                                                    background: "transparent",
+                                                                    cursor: "zoom-in",
+                                                                    width: "100%",
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src={url()}
+                                                                    alt="生成モザイクアート"
+                                                                    style={{
+                                                                        "max-height": "460px",
+                                                                        "max-width": "100%",
+                                                                        margin: "0 auto",
+                                                                        "object-fit": "contain",
+                                                                    }}
+                                                                />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            >
+                                                <div
+                                                    class="ba-transition-transform ba-origin-center"
+                                                    style={{
+                                                        transform: `scale(${zoomLevel()})`,
+                                                        "transform-origin": "top center",
+                                                    }}
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        onClick={openLightbox}
+                                                        aria-label="完成モザイクアートをライトボックスで拡大表示"
+                                                        style={{
+                                                            padding: 0,
                                                             border: "none",
-                                                            "font-size": "12px",
-                                                            "line-height": "1",
-                                                            display: "flex",
-                                                            "align-items": "center",
-                                                            "justify-content": "center",
-                                                            cursor: "pointer",
+                                                            background: "transparent",
+                                                            cursor: "zoom-in",
+                                                            display: "block",
                                                         }}
                                                     >
-                                                        ×
+                                                        <img
+                                                            src={url()}
+                                                            alt="完成モザイクアートプレビュー"
+                                                            style={{
+                                                                "max-height": "480px",
+                                                                "max-width": "100%",
+                                                                "object-fit": "contain",
+                                                                display: "block",
+                                                                "box-shadow": "var(--ba-shadow-md)",
+                                                            }}
+                                                        />
                                                     </button>
                                                 </div>
-                                            )}
-                                        </For>
-                                    </div>
+                                            </Show>
+                                        )}
+                                    </Show>
                                 </Show>
                             </div>
-                        </Show>
-                    </div>
-                </div>
 
-                {/* 生成設定オプション */}
-                <div class="ba-card ba-card--border ba-stack-4">
-                    <h2 class="ba-title-h2 ba-text-base">3. 生成オプション</h2>
-
-                    <div class="ba-grid ba-grid-cols-1 md:ba-grid-cols-3 ba-gap-4">
-                        {/* 分割数 */}
-                        <div class="ba-stack-2">
-                            <div class="ba-flex ba-items-center ba-justify-between">
-                                <label for="input-mosaic-columns" class="ba-label ba-text-xs ba-font-medium">
-                                    タイルの分割数（横の列数）
-                                </label>
-                                <span class="ba-badge ba-badge--neutral ba-text-xs">
-                                    {columns()} 列
-                                </span>
-                            </div>
-                            <input
-                                id="input-mosaic-columns"
-                                type="range"
-                                min="10"
-                                max="200"
-                                step="5"
-                                value={columns()}
-                                onInput={(e) => {
-                                    const val = Number(e.currentTarget.value);
-                                    if (Number.isFinite(val)) {
-                                        setColumns(Math.max(10, Math.min(200, Math.round(val))));
-                                    }
-                                }}
-                                class="ba-range"
-                                aria-label="タイルの分割数"
-                            />
-                            <p class="ba-text-xs ba-text-subtle">
-                                多いほど細密に、少ないほど個々の写真が見やすくなります。
-                            </p>
-                        </div>
-
-                        {/* 出力解像度 */}
-                        <div class="ba-stack-2">
-                            <label for="select-mosaic-width" class="ba-label ba-text-xs ba-font-medium">
-                                出力画像サイズ（横幅）
-                            </label>
-                            <select
-                                id="select-mosaic-width"
-                                value={outputWidth()}
-                                onChange={(e) => {
-                                    const val = Number(e.currentTarget.value);
-                                    if (Number.isFinite(val)) setOutputWidth(val);
-                                }}
-                                class="ba-select ba-w-full"
-                                aria-label="出力画像サイズ"
-                            >
-                                <option value="1200">標準 (1200 px)</option>
-                                <option value="1800">高画質 (1800 px - 推奨)</option>
-                                <option value="2400">超高画質 (2400 px)</option>
-                                <option value="3200">ポスター級 (3200 px)</option>
-                            </select>
-                            <p class="ba-text-xs ba-text-subtle">
-                                高解像度にするほど個々のタイルが拡大しても鮮明になります。
-                            </p>
-                        </div>
-
-                        {/* 重複設定 */}
-                        <div class="ba-stack-2">
-                            <label for="select-mosaic-penalty" class="ba-label ba-text-xs ba-font-medium">
-                                重複利用の制限
-                            </label>
-                            <select
-                                id="select-mosaic-penalty"
-                                value={duplicatePenalty()}
-                                onChange={(e) => {
-                                    const val = Number(e.currentTarget.value);
-                                    if (Number.isFinite(val)) setDuplicatePenalty(val);
-                                }}
-                                class="ba-select ba-w-full"
-                                aria-label="重複利用の制限"
-                            >
-                                <option value="0">重複制限なし（色の再現度優先）</option>
-                                <option value="1">バランス（推奨）</option>
-                                <option value="3">均等配置（全画像をまんべんなく使用）</option>
-                                <option value="-1">同一画像を再利用しない（各画像1回まで）</option>
-                            </select>
-                            <Show
-                                when={
-                                    duplicatePenalty() < 0 &&
-                                    estimatedTotalCells() !== null &&
-                                    tiles().length > 0 &&
-                                    tiles().length < (estimatedTotalCells() ?? 0)
-                                }
-                            >
-                                <p class="ba-text-xs ba-text-warning">
-                                    ※ 総セル数（{estimatedTotalCells()}個）に対して構成画像（{tiles().length}枚）が不足しているため、全画像を使い切った後は最小回数で均等補完されます。分割数を下げると重複なしで生成できます。
+                            <Show when={resultUrl()}>
+                                <p class="ba-text-xs ba-text-subtle ba-text-center" style={{ margin: 0 }}>
+                                    画像をタップすると全画面ライトボックスで拡大表示できます
                                 </p>
                             </Show>
-                            <div class="ba-flex ba-items-center ba-gap-2 ba-mt-1">
-                                <input
-                                    type="checkbox"
-                                    id="checkbox-avoid-adjacent"
-                                    checked={avoidAdjacent()}
-                                    onChange={(e) => setAvoidAdjacent(e.currentTarget.checked)}
-                                    class="ba-checkbox"
-                                    aria-label="隣接セルでの同一画像重複を防止"
-                                />
-                                <label for="checkbox-avoid-adjacent" class="ba-text-xs">
-                                    隣接セルで同じ画像の連続を防止
-                                </label>
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* 追加オプション: タイル形状 */}
-                    <div class="ba-pt-2 ba-border-t ba-border-base-300">
-                        <div class="ba-stack-2" style={{ "max-width": "360px" }}>
-                            <label for="select-mosaic-tile-aspect" class="ba-label ba-text-xs ba-font-medium">
-                                タイル形状（縦横比）
-                            </label>
-                            <select
-                                id="select-mosaic-tile-aspect"
-                                value={tileAspect()}
-                                onChange={(e) => setTileAspect(e.currentTarget.value as TileAspectRatio)}
-                                class="ba-select ba-w-full"
+                            <button
+                                type="submit"
+                                disabled={!targetImage() || tiles().length === 0 || isProcessing()}
+                                class="ba-btn ba-btn--primary ba-btn--lg ba-w-full"
+                                aria-label="モザイクアートを生成"
                             >
-                                <option value="square">正方形 (1:1 - 標準)</option>
-                                <option value="landscape">横長 (4:3 - 風景写真向け)</option>
-                                <option value="portrait">縦長 (3:4 - ポートレート向け)</option>
-                            </select>
-                            <p class="ba-text-xs ba-text-subtle">
-                                素材写真の向きに合わせてタイルの切り抜き比率を調整できます。
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 生成アクションボタン＆プログレス */}
-                <div class="ba-stack-3">
-                    <button
-                        type="submit"
-                        disabled={!targetImage() || tiles().length === 0 || isProcessing()}
-                        class="ba-btn ba-btn--primary ba-btn--lg ba-w-full"
-                        aria-label="モザイクアートを生成"
-                    >
-                        <Show
-                            when={!isProcessing()}
-                            fallback={`生成処理中 (${progress()}%)...`}
-                        >
-                            モザイクアートを生成する
-                        </Show>
-                    </button>
-
-                    <Show when={isProcessing()}>
-                        <div class="ba-stack-2 ba-p-4 ba-bg-surface-2 ba-rounded-md ba-text-center">
-                            <div class="ba-flex ba-items-center ba-justify-between ba-text-xs ba-text-subtle">
-                                <span>{statusMessage()}</span>
-                                <span>{progress()}%</span>
-                            </div>
-                            <div class="ba-w-full ba-h-2 ba-bg-surface-3 ba-rounded-full ba-overflow-hidden">
-                                <div
-                                    class="ba-h-full ba-bg-primary ba-transition-all"
-                                    style={{ width: `${progress()}%` }}
-                                />
-                            </div>
-                        </div>
-                    </Show>
-                </div>
-            </form>
-
-            {/* 生成結果エリア */}
-            <Show when={resultUrl()}>
-                {(url) => (
-                    <div class="ba-card ba-card--border ba-stack-4">
-                        <div class="ba-flex ba-items-center ba-justify-between ba-flex-wrap ba-gap-2">
-                            <div>
-                                <h2 class="ba-title-h2 ba-text-lg">生成完了！モザイクアート</h2>
-                                <Show when={resultDimensions()}>
-                                    {(dims) => (
-                                        <p class="ba-text-xs ba-text-subtle">
-                                            解像度: {dims().width} × {dims().height} px
-                                        </p>
-                                    )}
+                                <Show when={!isProcessing()} fallback={`生成処理中 (${progress()}%)...`}>
+                                    モザイクアートを生成する
                                 </Show>
-                            </div>
+                            </button>
 
-                            {/* ズーム & 比較コントロール */}
-                            <div class="ba-flex ba-items-center ba-gap-2">
-                                <button
-                                    type="button"
-                                    class="ba-btn ba-btn--secondary ba-btn--sm"
-                                    onClick={() => setShowCompare(!showCompare())}
-                                    aria-label="元画像と比較表示"
-                                >
-                                    {showCompare() ? "モザイクのみ表示" : "元画像と比較"}
-                                </button>
-
-                                <div class="ba-flex ba-items-center ba-gap-1 ba-border ba-rounded-md ba-p-1">
-                                    <span class="ba-text-xs ba-text-subtle ba-px-1">ズーム:</span>
-                                    <For each={[1, 2, 3]}>
-                                        {(lvl) => (
-                                            <button
-                                                type="button"
-                                                class={`ba-btn ba-btn--xs ${
-                                                    zoomLevel() === lvl
-                                                        ? "ba-btn--primary"
-                                                        : "ba-btn--ghost"
-                                                }`}
-                                                onClick={() => setZoomLevel(lvl)}
-                                                aria-label={`拡大率 ${lvl}倍`}
-                                            >
-                                                {lvl}x
-                                            </button>
-                                        )}
-                                    </For>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* プレビュー表示枠 */}
-                        <div
-                            class="ba-relative ba-rounded-lg ba-bg-surface-2 ba-border ba-p-2 ba-flex ba-items-center ba-justify-center"
-                            style={{ "max-height": "600px", overflow: "auto" }}
-                        >
-                            <Show
-                                when={!showCompare()}
-                                fallback={
-                                    <div class="ba-grid ba-grid-cols-2 ba-gap-2 ba-w-full">
-                                        <div class="ba-stack-1 ba-text-center">
-                                            <span class="ba-text-xs ba-text-subtle">元画像</span>
-                                            <img
-                                                src={targetImage()?.previewUrl}
-                                                alt="元画像"
-                                                style={{
-                                                    "max-height": "500px",
-                                                    "max-width": "100%",
-                                                    margin: "0 auto",
-                                                    "object-fit": "contain",
-                                                }}
-                                            />
-                                        </div>
-                                        <div class="ba-stack-1 ba-text-center">
-                                            <span class="ba-text-xs ba-text-subtle">モザイクアート</span>
-                                            <button
-                                                type="button"
-                                                onClick={openLightbox}
-                                                aria-label="生成モザイクアートをライトボックスで拡大表示"
-                                                style={{
-                                                    padding: 0,
-                                                    border: "none",
-                                                    background: "transparent",
-                                                    cursor: "zoom-in",
-                                                    width: "100%",
-                                                }}
-                                            >
-                                                <img
-                                                    src={url()}
-                                                    alt="生成モザイクアート"
-                                                    style={{
-                                                        "max-height": "500px",
-                                                        "max-width": "100%",
-                                                        margin: "0 auto",
-                                                        "object-fit": "contain",
-                                                    }}
-                                                />
-                                            </button>
-                                        </div>
+                            <Show when={isProcessing()}>
+                                <div class="ba-stack-2 ba-p-4 ba-bg-surface-2 ba-rounded-md ba-text-center">
+                                    <div class="ba-flex ba-items-center ba-justify-between ba-text-xs ba-text-subtle">
+                                        <span>{statusMessage()}</span>
+                                        <span>{progress()}%</span>
                                     </div>
-                                }
-                            >
-                                <div
-                                    class="ba-transition-transform ba-origin-center"
-                                    style={{
-                                        transform: `scale(${zoomLevel()})`,
-                                        "transform-origin": "top center",
-                                    }}
-                                >
-                                    <button
-                                        type="button"
-                                        onClick={openLightbox}
-                                        aria-label="完成モザイクアートをライトボックスで拡大表示"
-                                        style={{
-                                            padding: 0,
-                                            border: "none",
-                                            background: "transparent",
-                                            cursor: "zoom-in",
-                                            display: "block",
-                                        }}
-                                    >
-                                        <img
-                                            src={url()}
-                                            alt="完成モザイクアートプレビュー"
-                                            style={{
-                                                "max-height": "550px",
-                                                "max-width": "100%",
-                                                "object-fit": "contain",
-                                                display: "block",
-                                            }}
-                                        />
-                                    </button>
+                                    <div class="ba-w-full ba-h-2 ba-bg-surface-3 ba-rounded-full ba-overflow-hidden">
+                                        <div class="ba-h-full ba-bg-primary ba-transition-all" style={{ width: `${progress()}%` }} />
+                                    </div>
                                 </div>
                             </Show>
                         </div>
-                        <p class="ba-text-xs ba-text-subtle ba-text-center" style={{ margin: 0 }}>
-                            画像をタップすると全画面ライトボックスで拡大表示できます
-                        </p>
+                    </div>
+                </form>
+            </div>
 
-                        {/* ダウンロードエリア */}
-                        <div class="ba-flex ba-items-center ba-justify-between ba-flex-wrap ba-gap-3 ba-pt-2">
-                            <div class="ba-flex ba-items-center ba-gap-2">
-                                <label for="select-result-format" class="ba-text-xs ba-text-subtle">
-                                    保存形式:
-                                </label>
-                                <select
-                                    id="select-result-format"
-                                    value={outputFormat()}
-                                    onChange={(e) => setOutputFormat(e.currentTarget.value)}
-                                    class="ba-select ba-select--sm"
-                                    aria-label="画像保存形式"
-                                >
-                                    <option value="image/png">PNG（最高画質）</option>
-                                    <option value="image/jpeg">JPEG（ファイル軽量）</option>
-                                    <option value="image/webp">WebP（次世代形式）</option>
-                                </select>
+            {/* 生成完了モーダル (ExifFrameGenerator と同じ保存導線) */}
+            <Show when={showSaveModal() && resultUrl()}>
+                {(url) => (
+                    <div
+                        class="ba-modal is-open"
+                        style={{ "z-index": 10000 }}
+                        onClick={() => setShowSaveModal(false)}
+                    >
+                        <div
+                            class="ba-modal-box ba-stack-4 ba-text-center"
+                            style={{ "max-width": "28rem" }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div class="ba-flex ba-items-center ba-justify-center ba-gap-2 ba-text-success">
+                                <ToolIcon name="check" class="ba-icon-md" />
+                                <h2 class="ba-title-h2 ba-text-lg" style={{ margin: 0 }}>
+                                    生成完了！モザイクアート
+                                </h2>
                             </div>
+                            <Show when={resultDimensions()}>
+                                {(dims) => (
+                                    <p class="ba-text-xs ba-text-subtle" style={{ margin: 0 }}>
+                                        解像度: {dims().width} × {dims().height} px
+                                    </p>
+                                )}
+                            </Show>
 
-                            <a
-                                href={url()}
-                                download={downloadFileName()}
-                                class="ba-btn ba-btn--success ba-btn--md"
-                                aria-label="モザイクアート画像をダウンロード"
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowSaveModal(false);
+                                    openLightbox();
+                                }}
+                                class="ba-flex ba-justify-center ba-w-full"
+                                style={{ border: "none", background: "transparent", padding: 0, cursor: "zoom-in" }}
+                                aria-label="生成画像をライトボックスで拡大表示"
                             >
-                                <ToolIcon name="download" class="ba-icon-sm" />
-                                画像をダウンロード
-                            </a>
+                                <img
+                                    src={url()}
+                                    alt="生成されたモザイクアート（保存プレビュー）"
+                                    style={{
+                                        "max-height": "45dvh",
+                                        "max-width": "100%",
+                                        "object-fit": "contain",
+                                        "border-radius": "var(--ba-radius-md)",
+                                        "box-shadow": "var(--ba-shadow-md)",
+                                    }}
+                                />
+                            </button>
+
+                            <div class="ba-stack-2">
+                                <a
+                                    href={url()}
+                                    download={downloadFileName()}
+                                    class="ba-btn ba-btn--success ba-btn--lg ba-w-full"
+                                    aria-label="モザイクアート画像をダウンロード"
+                                >
+                                    <ToolIcon name="download" class="ba-icon-sm" />
+                                    画像をダウンロード
+                                </a>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--ghost ba-btn--sm ba-w-full"
+                                    onClick={() => setShowSaveModal(false)}
+                                >
+                                    プレビュー画面へ戻る
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -1000,7 +1089,7 @@ export default function MosaicArt() {
                         style={{
                             position: "fixed",
                             inset: "0",
-                            "z-index": "70",
+                            "z-index": "10010",
                             background: "rgba(10, 15, 28, 0.92)",
                             display: "flex",
                             "flex-direction": "column",
@@ -1083,6 +1172,7 @@ export default function MosaicArt() {
             </Show>
 
             <AdSense />
+            <div class="ba-exif-dock-spacer" aria-hidden="true" />
         </div>
     );
 }
