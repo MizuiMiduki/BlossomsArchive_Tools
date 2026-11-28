@@ -132,13 +132,8 @@ describe("MosaicArt Page Component", () => {
         }
     });
 
-    it("色味ブレンド強度スライダーとタイル形状セレクトを変更できること", () => {
+    it("タイル形状セレクトを変更できること", () => {
         render(() => <MosaicArt />);
-
-        const blendSlider = screen.getByLabelText("元画像の色味ブレンド強度") as HTMLInputElement;
-        expect(blendSlider.value).toBe("20");
-        fireEvent.input(blendSlider, { target: { value: "45" } });
-        expect(screen.getByText("45%")).toBeInTheDocument();
 
         const aspectSelect = screen.getByLabelText("タイル形状（縦横比）") as HTMLSelectElement;
         expect(aspectSelect.value).toBe("square");

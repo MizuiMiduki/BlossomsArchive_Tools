@@ -15,7 +15,6 @@ import {
     generateMosaicGridIndices,
     calculateCoverCrop,
     calculateGridDimensions,
-    clampFinite,
     createSafeObjectUrl,
     type MosaicTile,
     type ColorRgb,
@@ -50,7 +49,6 @@ export default function MosaicArt() {
     const [outputWidth, setOutputWidth] = createSignal<number>(1800);
     const [avoidAdjacent, setAvoidAdjacent] = createSignal<boolean>(true);
     const [duplicatePenalty, setDuplicatePenalty] = createSignal<number>(1);
-    const [colorBlend, setColorBlend] = createSignal<number>(20);
     const [tileAspect, setTileAspect] = createSignal<TileAspectRatio>("square");
     const [showTileThumbnails, setShowTileThumbnails] = createSignal<boolean>(true);
     const [outputFormat, setOutputFormat] = createSignal<string>("image/png");
@@ -302,19 +300,6 @@ export default function MosaicArt() {
                             cellW,
                             cellH,
                         );
-
-                        // 色味馴染ませブレンド（0% の場合は完全無加工）
-                        const blendAlpha = clampFinite(colorBlend(), 0, 60, 0) / 100;
-                        if (blendAlpha > 0) {
-                            const targetCellColor = cellColors[idx];
-                            if (targetCellColor) {
-                                outCtx.save?.();
-                                outCtx.globalAlpha = blendAlpha;
-                                outCtx.fillStyle = `rgb(${targetCellColor.r}, ${targetCellColor.g}, ${targetCellColor.b})`;
-                                outCtx.fillRect(dx, dy, cellW, cellH);
-                                outCtx.restore?.();
-                            }
-                        }
                     }
                 }
 
@@ -757,35 +742,9 @@ export default function MosaicArt() {
                         </div>
                     </div>
 
-                    {/* 追加オプション: 色味ブレンド & タイル形状 */}
-                    <div class="ba-grid ba-grid-cols-1 md:ba-grid-cols-2 ba-gap-4 ba-pt-2 ba-border-t ba-border-base-300">
-                        <div class="ba-stack-2">
-                            <div class="ba-flex ba-items-center ba-justify-between">
-                                <label for="input-mosaic-color-blend" class="ba-label ba-text-xs ba-font-medium">
-                                    元画像の色味ブレンド強度
-                                </label>
-                                <span class="ba-badge ba-badge--neutral ba-text-xs">
-                                    {colorBlend()}%
-                                </span>
-                            </div>
-                            <input
-                                id="input-mosaic-color-blend"
-                                type="range"
-                                min="0"
-                                max="60"
-                                step="5"
-                                value={colorBlend()}
-                                onInput={(e) => {
-                                    setColorBlend(clampFinite(Number(e.currentTarget.value), 0, 60, 20));
-                                }}
-                                class="ba-range"
-                            />
-                            <p class="ba-text-xs ba-text-subtle">
-                                0%で素材写真そのままの色、数値を上げるほど元画像の輪郭や色調がくっきり再現されます。
-                            </p>
-                        </div>
-
-                        <div class="ba-stack-2">
+                    {/* 追加オプション: タイル形状 */}
+                    <div class="ba-pt-2 ba-border-t ba-border-base-300">
+                        <div class="ba-stack-2" style={{ "max-width": "360px" }}>
                             <label for="select-mosaic-tile-aspect" class="ba-label ba-text-xs ba-font-medium">
                                 タイル形状（縦横比）
                             </label>
