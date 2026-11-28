@@ -190,14 +190,14 @@ export default function HyperfocalCalculator() {
             <div class="ba-card ba-stack-6 ba-w-full">
                 <div style={{ "border-bottom": "2px solid var(--ba-border)", "padding-bottom": "1rem" }}>
                     <h1 class="ba-title ba-flex ba-items-center ba-gap-2">
-                        <BudouX text={title()} />
+                        {title()}
                     </h1>
-                    <BudouX
-                        as="p"
+                    <p
                         class="ba-text-xs ba-text-muted ba-font-bold"
                         style={{ "margin-top": "0.5rem", "margin-bottom": 0, "line-height": 1.65 }}
-                        text={description()}
-                    />
+                    >
+                        {description()}
+                    </p>
                 </div>
 
                 <div class="ba-grid-2" style={{ gap: "1.5rem", "align-items": "stretch" }}>
