@@ -1,6 +1,5 @@
 import { createSignal, createMemo, onSettled, For } from "solid-js";
 import AdSense from "../components/AdSense";
-import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
 import { usePageI18n } from "../i18n/index";
 
@@ -168,7 +167,7 @@ export default function TimelapseCalculator() {
                     {/* ヘッダー */}
                     <div style={{ "border-bottom": "1px solid var(--ba-border)", "padding-bottom": "1rem" }}>
                         <h1 class="ba-title">
-                            <BudouX text={title()} />
+                            {title()}
                         </h1>
                         <p
                             class="ba-text-xs ba-text-muted ba-font-bold"
