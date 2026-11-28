@@ -20,6 +20,7 @@ import {
     estimateEnvironmentLighting,
     calculateProjectedShadowTransform,
     calculateGyroParallaxOffset,
+    smoothDeviceOrientation,
     createShadowSilhouettePixels,
     createSafeObjectUrl,
     isSupportedImageFile,
@@ -217,6 +218,16 @@ export default function ArCameraOverlay() {
         }
     };
 
+    const getScreenOrientationAngle = (): number => {
+        if (typeof window === "undefined") return 0;
+        const angle =
+            window.screen?.orientation?.angle ??
+            (typeof (window as unknown as { orientation?: number }).orientation === "number"
+                ? (window as unknown as { orientation: number }).orientation
+                : 0);
+        return Number.isFinite(angle) ? angle : 0;
+    };
+
     const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
         if (
             event.alpha === null ||
@@ -229,36 +240,17 @@ export default function ArCameraOverlay() {
             alpha: event.alpha,
             beta: event.beta,
             gamma: event.gamma,
+            screenAngleDeg: getScreenOrientationAngle(),
         };
         if (!baseGyro()) {
-            setBaseGyro(raw);
-            setCurrentGyro(raw);
+            const initialized = smoothDeviceOrientation(null, raw, 1.0);
+            setBaseGyro(initialized);
+            setCurrentGyro(initialized);
             return;
         }
-        const prev = currentGyro();
-        if (!prev) {
-            setCurrentGyro(raw);
-            return;
-        }
-        // 指数移動平均フィルタでセンサーノイズ・ジッターを平滑化（コンパスドリフトの飛びを抑制）
-        const smooth = 0.28;
-        const dA = shortestAngleDeltaDelta(raw.alpha, prev.alpha);
-        const nextAlpha = normalizeGyroAngle(prev.alpha + dA * smooth);
-        const nextBeta = prev.beta + (raw.beta - prev.beta) * smooth;
-        const nextGamma = prev.gamma + (raw.gamma - prev.gamma) * smooth;
-        setCurrentGyro({ alpha: nextAlpha, beta: nextBeta, gamma: nextGamma });
-    };
-
-    const normalizeGyroAngle = (deg: number): number => {
-        const m = deg % 360;
-        return m < 0 ? m + 360 : m;
-    };
-
-    const shortestAngleDeltaDelta = (next: number, prev: number): number => {
-        let d = (next - prev) % 360;
-        if (d > 180) d -= 360;
-        if (d < -180) d += 360;
-        return d;
+        // クォータニオン空間で最短経路平滑化し、beta≈90°付近のオイラー角フリップ・ジンバルロックによる飛びを防止
+        const smoothed = smoothDeviceOrientation(currentGyro(), raw, 0.35);
+        setCurrentGyro(smoothed);
     };
 
     const disableGyro = () => {
@@ -715,7 +707,15 @@ export default function ArCameraOverlay() {
         const curG = currentGyro();
         const baseG = baseGyro();
         if (gyroEnabled() && curG && baseG) {
-            const parallax = calculateGyroParallaxOffset(curG, baseG, width, height, 1.0);
+            const parallax = calculateGyroParallaxOffset(
+                curG,
+                baseG,
+                width,
+                height,
+                1.0,
+                baseX / Math.max(1, width),
+                baseY / Math.max(1, height),
+            );
             gyroX = parallax.offsetX;
             gyroY = parallax.offsetY;
             gyroTilt = parallax.tiltSkewDeg;

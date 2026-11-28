@@ -7,6 +7,7 @@ import {
     estimateEnvironmentLighting,
     calculateProjectedShadowTransform,
     calculateGyroParallaxOffset,
+    smoothDeviceOrientation,
     createShadowSilhouettePixels,
     isSupportedImageFile,
     normalizeDepthMap,
@@ -146,6 +147,34 @@ describe("arCameraOverlay utilities", () => {
         );
         expect(Number.isFinite(portraitOffset.offsetX)).toBe(true);
         expect(portraitOffset.offsetX).toBeLessThan(0);
+
+        // 端末を垂直から大きく傾けた状態(beta=35°, gamma=25°)や非中心アンカーでも破綻せず透視投影されること
+        const tiltedBase = { alpha: 30, beta: 45, gamma: 15 };
+        const tiltedSame = calculateGyroParallaxOffset(
+            tiltedBase,
+            tiltedBase,
+            720,
+            1280,
+            1.0,
+            0.35,
+            0.8,
+        );
+        expect(Math.abs(tiltedSame.offsetX)).toBeLessThan(1e-6);
+        expect(Math.abs(tiltedSame.offsetY)).toBeLessThan(1e-6);
+        expect(Math.abs(tiltedSame.tiltSkewDeg)).toBeLessThan(1e-6);
+    });
+
+    it("smoothDeviceOrientation: avoids euler flip jumps near beta=90deg using quaternion smoothing", () => {
+        const base = smoothDeviceOrientation(null, { alpha: 355, beta: 89, gamma: 15 }, 1.0);
+        // beta≈90°付近では alpha と gamma が同一軸に重なり、alpha+gamma が同じなら物理的にほぼ同じ姿勢
+        const equivalentNearGimbal = smoothDeviceOrientation(
+            base,
+            { alpha: 15, beta: 91, gamma: -5 },
+            0.35,
+        );
+        const offset = calculateGyroParallaxOffset(equivalentNearGimbal, base, 720, 1280, 1.0);
+        expect(Math.abs(offset.offsetX)).toBeLessThan(20);
+        expect(Math.abs(offset.offsetY)).toBeLessThan(40);
     });
 
     it("createShadowSilhouettePixels: preserves alpha channel and replaces RGB with shadow color", () => {

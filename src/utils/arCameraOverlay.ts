@@ -66,10 +66,21 @@ export interface ProjectedShadowResult {
     contactOpacity: number;
 }
 
+export interface GyroQuaternion {
+    x: number;
+    y: number;
+    z: number;
+    w: number;
+}
+
 export interface GyroOrientation {
     alpha: number;
     beta: number;
     gamma: number;
+    /** 画面の回転角 (0, 90, 180, 270) */
+    screenAngleDeg?: number;
+    /** ジンバルロックフリーの単位クォータニオン（平滑化済み姿勢） */
+    q?: GyroQuaternion;
 }
 
 /**
@@ -380,11 +391,93 @@ function deviceOrientationForwardVector(o: GyroOrientation): [number, number, nu
     return [vx, vy, vz];
 }
 
+function basisToQuaternion(basis: {
+    right: [number, number, number];
+    up: [number, number, number];
+    forward: [number, number, number];
+}): GyroQuaternion {
+    // R の列は [right, up, back] (back = -forward)
+    const r00 = basis.right[0];
+    const r10 = basis.right[1];
+    const r20 = basis.right[2];
+    const r01 = basis.up[0];
+    const r11 = basis.up[1];
+    const r21 = basis.up[2];
+    const r02 = -basis.forward[0];
+    const r12 = -basis.forward[1];
+    const r22 = -basis.forward[2];
+
+    const trace = r00 + r11 + r22;
+    let x = 0;
+    let y = 0;
+    let z = 0;
+    let w = 1;
+    if (trace > 0) {
+        const s = 2 * Math.sqrt(trace + 1);
+        w = 0.25 * s;
+        x = (r21 - r12) / s;
+        y = (r02 - r20) / s;
+        z = (r10 - r01) / s;
+    } else if (r00 > r11 && r00 > r22) {
+        const s = 2 * Math.sqrt(Math.max(1e-8, 1 + r00 - r11 - r22));
+        w = (r21 - r12) / s;
+        x = 0.25 * s;
+        y = (r01 + r10) / s;
+        z = (r02 + r20) / s;
+    } else if (r11 > r22) {
+        const s = 2 * Math.sqrt(Math.max(1e-8, 1 + r11 - r00 - r22));
+        w = (r02 - r20) / s;
+        x = (r01 + r10) / s;
+        y = 0.25 * s;
+        z = (r12 + r21) / s;
+    } else {
+        const s = 2 * Math.sqrt(Math.max(1e-8, 1 + r22 - r00 - r11));
+        w = (r10 - r01) / s;
+        x = (r02 + r20) / s;
+        y = (r12 + r21) / s;
+        z = 0.25 * s;
+    }
+    const norm = Math.hypot(x, y, z, w) || 1;
+    return { x: x / norm, y: y / norm, z: z / norm, w: w / norm };
+}
+
+function quaternionToBasis(q: GyroQuaternion): {
+    right: [number, number, number];
+    up: [number, number, number];
+    forward: [number, number, number];
+} {
+    const norm = Math.hypot(q.x, q.y, q.z, q.w) || 1;
+    const x = q.x / norm;
+    const y = q.y / norm;
+    const z = q.z / norm;
+    const w = q.w / norm;
+
+    const right: [number, number, number] = [
+        1 - 2 * (y * y + z * z),
+        2 * (x * y + z * w),
+        2 * (x * z - y * w),
+    ];
+    const up: [number, number, number] = [
+        2 * (x * y - z * w),
+        1 - 2 * (x * x + z * z),
+        2 * (y * z + x * w),
+    ];
+    const forward: [number, number, number] = [
+        -2 * (x * z + y * w),
+        -2 * (y * z - x * w),
+        -(1 - 2 * (x * x + y * y)),
+    ];
+    return { right, up, forward };
+}
+
 function deviceOrientationBasis(o: GyroOrientation): {
     right: [number, number, number];
     up: [number, number, number];
     forward: [number, number, number];
 } {
+    if (o.q) {
+        return quaternionToBasis(o.q);
+    }
     const deg2rad = Math.PI / 180;
     const a = normalizeAngleDeg(o.alpha) * deg2rad;
     const b = clampFinite(o.beta, -180, 180, 0) * deg2rad;
@@ -398,23 +491,86 @@ function deviceOrientationBasis(o: GyroOrientation): {
     const sG = Math.sin(g);
 
     // R = Rz(a) * Rx(b) * Ry(g) の各列ベクトル
-    const right: [number, number, number] = [
+    const devRight: [number, number, number] = [
         cA * cG - sA * sB * sG,
         sA * cG + cA * sB * sG,
         -cB * sG,
     ];
-    const up: [number, number, number] = [
+    const devUp: [number, number, number] = [
         -sA * cB,
         cA * cB,
         sB,
     ];
     const forward = deviceOrientationForwardVector(o);
+
+    const screenRad = normalizeAngleDeg(o.screenAngleDeg ?? 0) * deg2rad;
+    if (Math.abs(screenRad) < 1e-4) {
+        return { right: devRight, up: devUp, forward };
+    }
+    // 画面回転角 screenAngleDeg に合わせてカメラローカルの right/up を補正
+    const cs = Math.cos(-screenRad);
+    const ss = Math.sin(-screenRad);
+    const right: [number, number, number] = [
+        devRight[0] * cs + devUp[0] * ss,
+        devRight[1] * cs + devUp[1] * ss,
+        devRight[2] * cs + devUp[2] * ss,
+    ];
+    const up: [number, number, number] = [
+        -devRight[0] * ss + devUp[0] * cs,
+        -devRight[1] * ss + devUp[1] * cs,
+        -devRight[2] * ss + devUp[2] * cs,
+    ];
     return { right, up, forward };
 }
 
 /**
- * ジャイロセンサー（DeviceOrientation）の3D回転行列差分（ジンバルロック耐性）から、
- * AR空間アンカー用の視差オフセットを計算する
+ * ジャイロセンサー姿勢をクォータニオン空間で最短経路平滑化する（beta≈90°付近のジンバルロック・±180°フリップ防止）
+ */
+export function smoothDeviceOrientation(
+    prev: GyroOrientation | null,
+    nextRaw: GyroOrientation,
+    smoothFactor = 0.35,
+): GyroOrientation {
+    const rawBasis = deviceOrientationBasis({
+        alpha: nextRaw.alpha,
+        beta: nextRaw.beta,
+        gamma: nextRaw.gamma,
+        screenAngleDeg: nextRaw.screenAngleDeg,
+    });
+    const qNext = basisToQuaternion(rawBasis);
+    if (!prev) {
+        return {
+            alpha: normalizeAngleDeg(nextRaw.alpha),
+            beta: clampFinite(nextRaw.beta, -180, 180, 0),
+            gamma: clampFinite(nextRaw.gamma, -90, 90, 0),
+            screenAngleDeg: nextRaw.screenAngleDeg ?? 0,
+            q: qNext,
+        };
+    }
+
+    const qPrev = prev.q ?? basisToQuaternion(deviceOrientationBasis(prev));
+    const t = clampFinite(smoothFactor, 0.05, 1, 0.35);
+    const dot = qPrev.x * qNext.x + qPrev.y * qNext.y + qPrev.z * qNext.z + qPrev.w * qNext.w;
+    const sign = dot < 0 ? -1 : 1;
+
+    const ix = qPrev.x * (1 - t) + qNext.x * sign * t;
+    const iy = qPrev.y * (1 - t) + qNext.y * sign * t;
+    const iz = qPrev.z * (1 - t) + qNext.z * sign * t;
+    const iw = qPrev.w * (1 - t) + qNext.w * sign * t;
+    const norm = Math.hypot(ix, iy, iz, iw) || 1;
+
+    return {
+        alpha: normalizeAngleDeg(nextRaw.alpha),
+        beta: clampFinite(nextRaw.beta, -180, 180, 0),
+        gamma: clampFinite(nextRaw.gamma, -90, 90, 0),
+        screenAngleDeg: nextRaw.screenAngleDeg ?? 0,
+        q: { x: ix / norm, y: iy / norm, z: iz / norm, w: iw / norm },
+    };
+}
+
+/**
+ * ジャイロセンサー（DeviceOrientation）の3D回転行列差分・クォータニオン（ジンバルロック耐性）から、
+ * 現在のカメラ画面（任意の傾き・縦横向き）への正確な透視投影オフセットを計算する
  */
 export function calculateGyroParallaxOffset(
     current: GyroOrientation,
@@ -422,40 +578,67 @@ export function calculateGyroParallaxOffset(
     canvasWidth: number,
     canvasHeight: number,
     sensitivity = 1.0,
+    anchorRatioX = 0.5,
+    anchorRatioY = 0.5,
 ): { offsetX: number; offsetY: number; tiltSkewDeg: number } {
     const safeW = clampFinite(canvasWidth, 100, 8000, 1280);
     const safeH = clampFinite(canvasHeight, 100, 8000, 720);
     const sens = clampFinite(sensitivity, 0.1, 3.0, 1.0);
+    const ax = clampFinite(anchorRatioX, -0.5, 1.5, 0.5);
+    const ay = clampFinite(anchorRatioY, -0.5, 1.5, 0.5);
 
     const baseBasis = deviceOrientationBasis(base);
-    const curFwd = deviceOrientationForwardVector(current);
+    const curBasis = deviceOrientationBasis(current);
 
-    // 基準カメラ座標系に投影した現在の視線ベクトル
+    // 縦持ちスマホ(約72°) / 横持ち(約52°)の実画角に合わせた正方形ピクセル焦点距離
+    const verticalFovDeg = safeH > safeW ? 72 : 52;
+    const focalPx = ((safeH * 0.5) / Math.tan((verticalFovDeg * Math.PI) / 360)) * sens;
+
+    // 基準姿勢でアンカー(ax, ay)が指していたワールド空間方向ベクトル
+    const localAx = ((ax - 0.5) * safeW) / focalPx;
+    const localAy = -((ay - 0.5) * safeH) / focalPx;
+    const localNorm = Math.hypot(localAx, localAy, 1) || 1;
+    const ldx = localAx / localNorm;
+    const ldy = localAy / localNorm;
+    const ldz = 1 / localNorm;
+
+    const anchorWorld: [number, number, number] = [
+        ldx * baseBasis.right[0] + ldy * baseBasis.up[0] + ldz * baseBasis.forward[0],
+        ldx * baseBasis.right[1] + ldy * baseBasis.up[1] + ldz * baseBasis.forward[1],
+        ldx * baseBasis.right[2] + ldy * baseBasis.up[2] + ldz * baseBasis.forward[2],
+    ];
+
+    // 現在のカメラ座標系（端末の傾き・ロールを含む）へ透視投影
     const relX =
-        curFwd[0] * baseBasis.right[0] +
-        curFwd[1] * baseBasis.right[1] +
-        curFwd[2] * baseBasis.right[2];
+        anchorWorld[0] * curBasis.right[0] +
+        anchorWorld[1] * curBasis.right[1] +
+        anchorWorld[2] * curBasis.right[2];
     const relY =
-        curFwd[0] * baseBasis.up[0] +
-        curFwd[1] * baseBasis.up[1] +
-        curFwd[2] * baseBasis.up[2];
+        anchorWorld[0] * curBasis.up[0] +
+        anchorWorld[1] * curBasis.up[1] +
+        anchorWorld[2] * curBasis.up[2];
     const relZ =
-        curFwd[0] * baseBasis.forward[0] +
-        curFwd[1] * baseBasis.forward[1] +
-        curFwd[2] * baseBasis.forward[2];
+        anchorWorld[0] * curBasis.forward[0] +
+        anchorWorld[1] * curBasis.forward[1] +
+        anchorWorld[2] * curBasis.forward[2];
 
-    const yawDeg = (Math.atan2(relX, Math.max(0.15, relZ)) * 180) / Math.PI;
-    const pitchDeg = (Math.atan2(relY, Math.max(0.15, relZ)) * 180) / Math.PI;
+    const denom = Math.max(0.2, relZ);
+    const projOffsetX = focalPx * (relX / denom) - (ax - 0.5) * safeW;
+    const projOffsetY = -focalPx * (relY / denom) - (ay - 0.5) * safeH;
 
-    const pxPerDegX = (safeW / 60) * sens;
-    const pxPerDegY = (safeH / 45) * sens;
+    const offsetX = clampFinite(projOffsetX, -safeW * 1.5, safeW * 1.5, 0);
+    const offsetY = clampFinite(projOffsetY, -safeH * 1.5, safeH * 1.5, 0);
 
-    // カメラが右を向くと(yawDeg > 0)、空間上のアンカーは左(-)へ移動する
-    const offsetX = clampFinite(-yawDeg * pxPerDegX, -safeW * 1.5, safeW * 1.5, 0);
-    const offsetY = clampFinite(pitchDeg * pxPerDegY, -safeH * 1.5, safeH * 1.5, 0);
-
-    const dGamma = shortestAngleDeltaDeg(current.gamma, base.gamma);
-    const tiltSkewDeg = clampFinite(-dGamma * 0.18 * sens, -15, 15, 0);
+    // 相対回転クォータニオン q_rel = q_cur^-1 * q_base の視線軸(Z) Twist 成分から純粋なロール傾きを抽出
+    const qBase = base.q ?? basisToQuaternion(baseBasis);
+    const qCur = current.q ?? basisToQuaternion(curBasis);
+    // q_cur^-1 = (-x, -y, -z, w)
+    const relQw = qCur.w * qBase.w + qCur.x * qBase.x + qCur.y * qBase.y + qCur.z * qBase.z;
+    const relQz = qCur.w * qBase.z - qCur.x * qBase.y + qCur.y * qBase.x - qCur.z * qBase.w;
+    const twistNorm = Math.hypot(relQz, relQw) || 1;
+    const signW = relQw < 0 ? -1 : 1;
+    const twistRad = 2 * Math.atan2((relQz / twistNorm) * signW, (relQw / twistNorm) * signW);
+    const tiltSkewDeg = clampFinite(-(twistRad * 180) / Math.PI, -45, 45, 0);
 
     return {
         offsetX,
