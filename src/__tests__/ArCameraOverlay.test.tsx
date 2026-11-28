@@ -297,4 +297,21 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.click(afCheck);
         expect(afCheck.checked).toBe(false);
     });
+
+    it("煽り・俯瞰アングル（ローアングル〜ハイアングル）スライダーとジャイロ連動トグルを操作できること", () => {
+        render(() => <ArCameraOverlay />);
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
+
+        const pitchSlider = screen.getByLabelText(/煽り・俯瞰アングル/) as HTMLInputElement;
+        fireEvent.input(pitchSlider, { target: { value: "-35" } });
+        expect(screen.getByText("ローアングル 35°")).toBeInTheDocument();
+
+        fireEvent.input(pitchSlider, { target: { value: "40" } });
+        expect(screen.getByText("ハイアングル 40°")).toBeInTheDocument();
+
+        const autoPitchCheck = screen.getByLabelText("スマホの上下傾きに煽り・俯瞰パースを自動連動") as HTMLInputElement;
+        expect(autoPitchCheck.checked).toBe(true);
+        fireEvent.click(autoPitchCheck);
+        expect(autoPitchCheck.checked).toBe(false);
+    });
 });

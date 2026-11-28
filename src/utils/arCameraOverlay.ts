@@ -1693,3 +1693,49 @@ export function generateDofOutOfFocusMaskPixels(
     }
     return out;
 }
+
+export interface PerspectivePitchParams {
+    /** 射影台形係数 (-0.38=ローアングル煽り .. +0.38=ハイアングル俯瞰) */
+    perspectiveK: number;
+    /** 縦方向の見かけ圧縮率 (0.65..1.0) */
+    heightCompression: number;
+}
+
+/**
+ * カメラの煽り・俯瞰角 (-60=ローアングル見上げ .. +60=ハイアングル見下げ) から、
+ * 2.5D透視投影台形パラメータを算出する
+ */
+export function calculatePerspectivePitchParams(pitchDeg: number): PerspectivePitchParams {
+    const safePitch = clampFinite(pitchDeg, -60, 60, 0);
+    const rad = (safePitch * Math.PI) / 180;
+    const perspectiveK = clampFinite(Math.sin(rad) * 0.44, -0.38, 0.38, 0);
+    const heightCompression = clampFinite(Math.cos(rad * 0.7), 0.65, 1.0, 1.0);
+    return {
+        perspectiveK,
+        heightCompression,
+    };
+}
+
+/**
+ * 足元(t=0)から頭頂(t=1)までの正規化縦位置に対して、
+ * 透視投影パラメータ k に応じた非線形射影位置 (0..1) を返す
+ */
+export function projectVerticalPerspectiveT(t01: number, perspectiveK: number): number {
+    const t = clampFinite(t01, 0, 1, 0);
+    const k = clampFinite(perspectiveK, -0.45, 0.45, 0);
+    if (Math.abs(k) < 1e-4) return t;
+    const denom = 1 + k * t;
+    if (denom <= 0.05) return t;
+    return clampFinite((t * (1 + k)) / denom, 0, 1, t);
+}
+
+/**
+ * ジャイロ姿勢のワールド視線Z成分から、カメラの煽り・俯瞰アングル(度: -60=ローアングル .. +60=ハイアングル)を推定する
+ */
+export function estimateCameraPitchFromGyro(gyro: GyroOrientation): number {
+    const basis = deviceOrientationBasis(gyro);
+    const fz = clampFinite(basis.forward[2], -1, 1, 0);
+    // ワールドZが上向き(+1)のとき見上げ(ローアングル=負)、下向き(-1)のとき見下げ(ハイアングル=正)
+    const pitchDeg = -(Math.asin(fz) * 180) / Math.PI;
+    return Math.round(clampFinite(pitchDeg, -60, 60, 0) * 10) / 10;
+}

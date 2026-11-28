@@ -23,6 +23,9 @@ import {
     generateSurfaceOverlayPixels,
     calculateApertureMaxBlurPx,
     generateDofOutOfFocusMaskPixels,
+    calculatePerspectivePitchParams,
+    projectVerticalPerspectiveT,
+    estimateCameraPitchFromGyro,
     sampleDepthAtNormalizedPoint,
     calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
@@ -532,5 +535,21 @@ describe("arCameraOverlay utilities", () => {
         // ピントから外れた奥(0.1)と手前(0.9)は alpha > 0 (ボケる)
         expect(wideMask[0 * 4 + 3]).toBeGreaterThan(200);
         expect(wideMask[2 * 4 + 3]).toBeGreaterThan(200);
+    });
+
+    it("calculatePerspectivePitchParams & estimateCameraPitchFromGyro: computes low-angle and high-angle perspective", () => {
+        const lowAngle = calculatePerspectivePitchParams(-45);
+        const highAngle = calculatePerspectivePitchParams(45);
+        expect(lowAngle.perspectiveK).toBeLessThan(-0.15);
+        expect(highAngle.perspectiveK).toBeGreaterThan(0.15);
+        expect(lowAngle.heightCompression).toBeLessThan(1);
+        expect(projectVerticalPerspectiveT(0, lowAngle.perspectiveK)).toBe(0);
+        expect(projectVerticalPerspectiveT(1, lowAngle.perspectiveK)).toBe(1);
+        expect(projectVerticalPerspectiveT(0.5, lowAngle.perspectiveK)).toBeLessThan(0.5);
+        expect(projectVerticalPerspectiveT(0.5, highAngle.perspectiveK)).toBeGreaterThan(0.5);
+
+        expect(estimateCameraPitchFromGyro({ alpha: 0, beta: 90, gamma: 0 })).toBeCloseTo(0, 1);
+        expect(estimateCameraPitchFromGyro({ alpha: 0, beta: 125, gamma: 0 })).toBeLessThan(-25);
+        expect(estimateCameraPitchFromGyro({ alpha: 0, beta: 45, gamma: 0 })).toBeGreaterThan(35);
     });
 });

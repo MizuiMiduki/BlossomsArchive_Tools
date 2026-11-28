@@ -31,6 +31,9 @@ import {
     generateSurfaceOverlayPixels,
     calculateApertureMaxBlurPx,
     generateDofOutOfFocusMaskPixels,
+    calculatePerspectivePitchParams,
+    projectVerticalPerspectiveT,
+    estimateCameraPitchFromGyro,
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
@@ -151,6 +154,8 @@ export default function ArCameraOverlay() {
     // バックグラウンド復帰時にカメラを自動再開するためのフラグ
     let shouldResumeCamera = false;
     const [rotationDeg, setRotationDeg] = createSignal<number>(0);
+    const [cameraPitchDeg, setCameraPitchDeg] = createSignal<number>(0);
+    const [autoPitchFromGyro, setAutoPitchFromGyro] = createSignal<boolean>(true);
     const [opacity, setOpacity] = createSignal<number>(1.0);
     const [flipHorizontal, setFlipHorizontal] = createSignal<boolean>(false);
 
@@ -844,6 +849,15 @@ export default function ArCameraOverlay() {
             gyroY = parallax.offsetY;
             gyroTilt = parallax.tiltSkewDeg;
         }
+        const effectivePitchDeg = clampFinite(
+            mode() === "ar" && gyroEnabled() && autoPitchFromGyro() && curG
+                ? estimateCameraPitchFromGyro(curG) + cameraPitchDeg()
+                : cameraPitchDeg(),
+            -60,
+            60,
+            0,
+        );
+        const pitchParams = calculatePerspectivePitchParams(effectivePitchDeg);
 
         const anchoredX = baseX + gyroX;
         const anchoredY = baseY + gyroY;
@@ -867,7 +881,7 @@ export default function ArCameraOverlay() {
         const shadow = calculateProjectedShadowTransform({
             azimuthDeg: lightAzimuthDeg(),
             elevationDeg: lightElevationDeg(),
-            groundTiltDeg: groundTiltDeg(),
+            groundTiltDeg: clampFinite(groundTiltDeg() + effectivePitchDeg * 0.45, 10, 78, 34),
             shadowOpacity: shadowOpacity(),
             shadowSoftness: shadowSoftness(),
             characterHeightPx: drawH,
@@ -993,17 +1007,44 @@ export default function ArCameraOverlay() {
         ctx.rotate(totalRotRad);
         ctx.globalAlpha = charOpacity;
 
+        const renderHeight = drawH * pitchParams.heightCompression;
+        const renderTopOffset = -renderHeight * footAnchorYRatio;
+        const srcW =
+            charSource === litCharCanvas && litCharCanvas ? litCharCanvas.width : asset.width;
+        const srcH =
+            charSource === litCharCanvas && litCharCanvas ? litCharCanvas.height : asset.height;
+
+        const drawCharacterProjected = () => {
+            if (Math.abs(pitchParams.perspectiveK) < 0.015) {
+                ctx.drawImage(charSource, -drawW * footAnchorXRatio, imgTopOffset, drawW, drawH);
+                return;
+            }
+            const strips = 28;
+            for (let i = 0; i < strips; i++) {
+                // i=0 が頭頂(t=1)、i=strips が足元(t=0) になるように分割
+                const tTop = 1 - i / strips;
+                const tBot = 1 - (i + 1) / strips;
+                const uTop = 1 - projectVerticalPerspectiveT(tTop, pitchParams.perspectiveK);
+                const uBot = 1 - projectVerticalPerspectiveT(tBot, pitchParams.perspectiveK);
+                const tMid = (tTop + tBot) * 0.5;
+                const stripScaleW = clampFinite(1 + pitchParams.perspectiveK * tMid, 0.55, 1.5, 1);
+
+                const sy = (i / strips) * srcH;
+                const sh = srcH / strips;
+                const dyTop = renderTopOffset + uTop * renderHeight;
+                const dh = Math.max(0.5, (uBot - uTop) * renderHeight + 0.6);
+                const dw = drawW * stripScaleW;
+                const dx = -dw * footAnchorXRatio;
+
+                ctx.drawImage(charSource, 0, sy, srcW, sh, dx, dyTop, dw, dh);
+            }
+        };
+
         if (flipHorizontal()) {
             ctx.scale(-1, 1);
-            ctx.drawImage(
-                charSource,
-                -drawW * asset.alphaBounds.footCenterXRatio,
-                imgTopOffset,
-                drawW,
-                drawH,
-            );
+            drawCharacterProjected();
         } else {
-            ctx.drawImage(charSource, imgLeftOffset, imgTopOffset, drawW, drawH);
+            drawCharacterProjected();
         }
         ctx.restore();
     };
@@ -2185,6 +2226,7 @@ export default function ArCameraOverlay() {
                                             setPosYPercent(mode() === "ar" ? 78 : 50);
                                             setScale(0.65);
                                             setRotationDeg(0);
+                                            setCameraPitchDeg(0);
                                             setOpacity(1);
                                             setFlipHorizontal(false);
                                         }}
@@ -2385,6 +2427,43 @@ export default function ArCameraOverlay() {
                                             }
                                         />
                                     </div>
+                                </div>
+
+                                {/* ローアングル煽り・ハイアングル俯瞰パース */}
+                                <div>
+                                    <label for="camera-pitch-range" class="ba-label">
+                                        <span>煽り・俯瞰アングル (ロー ↔ ハイ)</span>
+                                        <span>
+                                            {cameraPitchDeg() === 0
+                                                ? "水平 0°"
+                                                : cameraPitchDeg() < 0
+                                                    ? `ローアングル ${Math.abs(cameraPitchDeg())}°`
+                                                    : `ハイアングル ${cameraPitchDeg()}°`}
+                                        </span>
+                                    </label>
+                                    <input
+                                        id="camera-pitch-range"
+                                        type="range"
+                                        min="-60"
+                                        max="60"
+                                        step="1"
+                                        class="ba-range"
+                                        value={cameraPitchDeg()}
+                                        onInput={(e) =>
+                                            setCameraPitchDeg(clampFinite(Number(e.currentTarget.value), -60, 60, 0))
+                                        }
+                                    />
+                                    <Show when={mode() === "ar"}>
+                                        <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer" style={{ "margin-top": "0.35rem" }}>
+                                            <input
+                                                type="checkbox"
+                                                class="ba-checkbox"
+                                                checked={autoPitchFromGyro()}
+                                                onChange={(e) => setAutoPitchFromGyro(e.currentTarget.checked)}
+                                            />
+                                            <span>スマホの上下傾きに煽り・俯瞰パースを自動連動</span>
+                                        </label>
+                                    </Show>
                                 </div>
 
                                 {/* 被写界深度（DoF）・フォーカス操作 */}
