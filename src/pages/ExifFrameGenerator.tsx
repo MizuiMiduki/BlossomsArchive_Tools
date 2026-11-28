@@ -15,7 +15,7 @@ export default function ExifFrame() {
     const { title, description } = usePageI18n("/exif-frame", {
         defaultTitle: "EXIFフレーム生成",
         defaultDescription:
-            "写真に撮影日時、カメラ機種、レンズ名、焦点距離、F値、シャッタースピード、ISO感度などのEXIF情報を美しくレイアウトしたフレーム画像をブラウザ完結で生成・保存できる無料ツールです。完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。",
+            "写真に撮影日時、カメラ機種、レンズ名、焦点距離、F値、シャッタースピード、ISO感度などのEXIF情報をレイアウトしたフレーム画像をブラウザ完結で生成・保存できます。",
     });
     const [fileName, setFileName] = createSignal("");
     const [customExportName, setCustomExportName] = createSignal("");

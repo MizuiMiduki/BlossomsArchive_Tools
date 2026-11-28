@@ -40,7 +40,7 @@ export default function ExposureCalculator() {
     const { title, description } = usePageI18n("/exposure-calculator", {
         defaultTitle: "カメラ露出計算機",
         defaultDescription:
-            "スマホカメラでのリアルタイム露出計(測光)からND長秒露光・星空撮影まで、絞り(F値)・シャッター速度・ISO・NDの適正露出をシミュレーション・換算できる無料Webツールです。 完全無料で登録不要、すべての処理はお使いのブラウザ上で安全かつ高速に実行されます。PCやスマートフォンの大画面・小画面どちらでも快適にご利用いただけます。",
+            "リアルタイム露出計(測光)からND長秒露光・星空撮影まで、絞り(F値)・シャッター速度・ISO・NDの適正露出をシミュレーション・換算できます。",
     });
     let containerRef: HTMLDivElement | undefined;
     let videoRef: HTMLVideoElement | undefined;

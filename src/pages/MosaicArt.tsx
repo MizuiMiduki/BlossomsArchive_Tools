@@ -937,25 +937,6 @@ export default function MosaicArt() {
                 )}
             </Show>
 
-            {/* 使い方＆Tipsガイド */}
-            <div class="ba-card ba-card--border ba-stack-3">
-                <h2 class="ba-title-h2 ba-text-base">綺麗に作るためのポイント</h2>
-                <ul class="ba-stack-2 ba-text-xs ba-text-subtle ba-list-disc ba-pl-4">
-                    <li>
-                        <strong>構成画像の枚数を増やす：</strong>
-                        色味の加工（着色オーバーレイ）を一切行わないため、構成画像が多様な色合い（明るい写真、暗い写真、赤系、青系、緑系など）を多く含んでいるほど、完成画像の色が忠実に再現されます（目安：30枚〜100枚以上）。
-                    </li>
-                    <li>
-                        <strong>タイルの分割数の調整：</strong>
-                        遠目で見たときの再現度を高めたい場合は列数を多め（50〜80列）に、1枚1枚の写真の内容を楽しみたい場合は列数を少なめ（25〜40列）に設定するのがおすすめです。
-                    </li>
-                    <li>
-                        <strong>完全ブラウザ完結：</strong>
-                        すべての画像解析・モザイク生成処理はお使いの端末（ブラウザ）上で実行され、外部サーバーへ写真が送信されることはありません。
-                    </li>
-                </ul>
-            </div>
-
             <AdSense />
         </div>
     );

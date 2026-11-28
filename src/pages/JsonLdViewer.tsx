@@ -1034,35 +1034,6 @@ export default function JsonLdViewer() {
                 </Show>
             </div>
 
-            {/* ガイド・解説カード */}
-            <div class="ba-card ba-stack-3">
-                <h2 class="ba-section-title">
-                    JSON-LD (構造化データ) とは？
-                </h2>
-                <div class="ba-stack-3 ba-text-sm ba-text-muted">
-                    <p style={{ margin: 0 }}>
-                        JSON-LD (JavaScript Object Notation for Linked Data) は、Webページのコンテンツの意味や構造を検索エンジン（Googleなど）に正確に伝えるためのデータ形式です。Googleのリッチリザルト（記事カルーセル、商品情報、パンくず、FAQアコーディオン等）を検索結果に表示させるための推奨フォーマットとなっています。
-                    </p>
-                    <h3 class="ba-font-bold ba-text-base" style={{ color: "var(--ba-text)", "margin-top": "0.5rem", "margin-bottom": 0 }}>
-                        本ツールの特徴・活用ポイント
-                    </h3>
-                    <ul class="ba-stack-1" style={{ "padding-left": "1.25rem", margin: 0 }}>
-                        <li>
-                            <strong>HTMLコードからの自動抽出:</strong> WebページのHTMLソース全体を貼り付けるだけで、<code>&lt;script type="application/ld+json"&gt;</code> 内の構造化データを自動検出・抽出します。
-                        </li>
-                        <li>
-                            <strong>@graph 複合構造の展開:</strong> 1つのスクリプトにまとめられた複数のエンティティを個別に可視化し、階層関係を整理します。
-                        </li>
-                        <li>
-                            <strong>リアルタイム構文・推奨項目診断:</strong> Schema.orgの主要型（Article, Product, BreadcrumbList, FAQPage等）における必須・推奨プロパティの抜け漏れをブラウザ上で即座にチェックできます。
-                        </li>
-                        <li>
-                            <strong>完全ローカル処理:</strong> 入力されたJSONやHTMLが外部サーバーに送信されることは一切なく、安全にご利用いただけます。
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
             <AdSense />
         </div>
     );
