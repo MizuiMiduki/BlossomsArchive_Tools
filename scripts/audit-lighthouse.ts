@@ -2,6 +2,7 @@ import { spawn, execFile } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import zlib from "node:zlib";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
@@ -142,9 +143,23 @@ const STATIC_MIME_TYPES: Record<string, string> = {
     ".wasm": "application/wasm",
 };
 
+const COMPRESSIBLE_EXTS = new Set([
+    ".html",
+    ".js",
+    ".mjs",
+    ".css",
+    ".json",
+    ".svg",
+    ".txt",
+    ".xml",
+    ".webmanifest",
+]);
+
 async function startPreviewServer() {
-    console.log("🚀 Starting lightweight static preview server on port 4173...");
+    console.log("🚀 Starting lightweight gzip static preview server on port 4173...");
     const distDir = path.resolve(ROOT_DIR, "dist");
+    const gzipCache = new Map<string, Buffer>();
+    const rawCache = new Map<string, Buffer>();
 
     const server = http.createServer((req, res) => {
         const reqUrl = (req.url || "/").split("?")[0];
@@ -180,11 +195,38 @@ async function startPreviewServer() {
         const ext = path.extname(targetPath).toLowerCase();
         const contentType = STATIC_MIME_TYPES[ext] || "application/octet-stream";
         const isImmutableAsset = decodedPath.startsWith("/assets/");
+        const acceptEncoding = String(req.headers["accept-encoding"] || "");
+        const canGzip = COMPRESSIBLE_EXTS.has(ext) && acceptEncoding.includes("gzip");
+
+        let rawBuf = rawCache.get(targetPath);
+        if (!rawBuf) {
+            rawBuf = fs.readFileSync(targetPath);
+            rawCache.set(targetPath, rawBuf);
+        }
+
+        if (canGzip) {
+            let gzBuf = gzipCache.get(targetPath);
+            if (!gzBuf) {
+                gzBuf = zlib.gzipSync(rawBuf, { level: 6 });
+                gzipCache.set(targetPath, gzBuf);
+            }
+            res.writeHead(200, {
+                "Content-Type": contentType,
+                "Content-Encoding": "gzip",
+                "Vary": "Accept-Encoding",
+                "Content-Length": gzBuf.length,
+                "Cache-Control": isImmutableAsset ? "public, max-age=31536000, immutable" : "no-cache",
+            });
+            res.end(gzBuf);
+            return;
+        }
+
         res.writeHead(200, {
             "Content-Type": contentType,
+            "Content-Length": rawBuf.length,
             "Cache-Control": isImmutableAsset ? "public, max-age=31536000, immutable" : "no-cache",
         });
-        fs.createReadStream(targetPath).pipe(res);
+        res.end(rawBuf);
     });
 
     await new Promise<void>((resolve, reject) => {
