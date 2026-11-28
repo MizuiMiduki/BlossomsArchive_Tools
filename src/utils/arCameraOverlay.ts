@@ -1337,13 +1337,16 @@ export function estimateBackgroundOpticalShift(
 /**
  * 基準グレースケールフレームと現在フレームを照合し、
  * 平行移動 (dx, dy) とカメラの近づき・離れに伴う放射拡大縮小率 (scale) を推定する
+ * （3段階 Coarse-to-Fine 探索 + キャラクター足元アンカー重み付けにより高さ変更時の上下追従も高速高精度化）
  */
 export function estimateBackgroundScaleAndShift(
     prevGray: Uint8Array,
     currGray: Uint8Array,
     width: number,
     height: number,
-    maxShiftPx = 8,
+    maxShiftPx = 18,
+    anchorXRatio = 0.5,
+    anchorYRatio = 0.78,
 ): { dx: number; dy: number; scale: number; confidence: number } {
     const safeW = Math.max(16, Math.floor(clampFinite(width, 16, 512, 64)));
     const safeH = Math.max(16, Math.floor(clampFinite(height, 16, 512, 64)));
@@ -1352,10 +1355,13 @@ export function estimateBackgroundScaleAndShift(
         return { dx: 0, dy: 0, scale: 1, confidence: 0 };
     }
 
-    const search = Math.floor(clampFinite(maxShiftPx, 2, 24, 8));
-    const margin = Math.max(4, Math.floor(Math.min(safeW, safeH) * 0.16));
+    const search = Math.floor(clampFinite(maxShiftPx, 2, 32, 18));
+    const margin = Math.max(3, Math.floor(Math.min(safeW, safeH) * 0.12));
     const cx = (safeW - 1) * 0.5;
     const cy = (safeH - 1) * 0.5;
+    const ax = clampFinite(anchorXRatio, 0.05, 0.95, 0.5) * (safeW - 1);
+    const ay = clampFinite(anchorYRatio, 0.05, 0.95, 0.78) * (safeH - 1);
+    const invTwoSigmaSq = 1 / (2 * Math.pow(Math.max(8, Math.min(safeW, safeH) * 0.35), 2));
 
     let mean = 0;
     let count = 0;
@@ -1379,36 +1385,45 @@ export function estimateBackgroundScaleAndShift(
         return { dx: 0, dy: 0, scale: 1, confidence: 0 };
     }
 
-    const evalCandidate = (s: number, dx: number, dy: number): number => {
-        let sad = 0;
+    const evalCandidate = (s: number, dx: number, dy: number, pxStep: number): number => {
+        let weightedSad = 0;
+        let weightSum = 0;
         let samples = 0;
-        for (let y = margin; y < safeH - margin; y += 2) {
+        const expectedCount =
+            Math.ceil((safeH - margin * 2) / pxStep) * Math.ceil((safeW - margin * 2) / pxStep);
+        for (let y = margin; y < safeH - margin; y += pxStep) {
             const sy = Math.round(cy + (y - cy) * s + dy);
             if (sy < 1 || sy >= safeH - 1) continue;
             const pRow = y * safeW;
             const cRow = sy * safeW;
-            for (let x = margin; x < safeW - margin; x += 2) {
+            const dyA = y - ay;
+            for (let x = margin; x < safeW - margin; x += pxStep) {
                 const sx = Math.round(cx + (x - cx) * s + dx);
                 if (sx < 1 || sx >= safeW - 1) continue;
-                sad += Math.abs(currGray[cRow + sx] - prevGray[pRow + x]);
+                const dxA = x - ax;
+                const w = 1 + 1.8 * Math.exp(-(dxA * dxA + dyA * dyA) * invTwoSigmaSq);
+                weightedSad += w * Math.abs(currGray[cRow + sx] - prevGray[pRow + x]);
+                weightSum += w;
                 samples++;
             }
         }
-        if (samples < Math.max(12, count * 0.4)) return Infinity;
-        return sad / samples;
+        if (samples < Math.max(10, expectedCount * 0.32) || weightSum <= 0) return Infinity;
+        return weightedSad / weightSum;
     };
 
-    const zeroSad = evalCandidate(1.0, 0, 0);
+    const zeroSad = evalCandidate(1.0, 0, 0, 2);
     let bestScale = 1.0;
     let bestDx = 0;
     let bestDy = 0;
-    let bestSad = zeroSad;
+    let bestSad = Infinity;
 
-    const coarseScales = [0.68, 0.78, 0.88, 0.95, 1.0, 1.06, 1.15, 1.28, 1.45, 1.65];
+    // Stage 1: 広域粗探索 (上下高さ変化による大きいシフトもカバー)
+    const coarseStep = search > 10 ? 3 : 2;
+    const coarseScales = [0.72, 0.86, 1.0, 1.15, 1.35, 1.6];
     for (const s of coarseScales) {
-        for (let dy = -search; dy <= search; dy += 2) {
-            for (let dx = -search; dx <= search; dx += 2) {
-                const avgSad = evalCandidate(s, dx, dy);
+        for (let dy = -search; dy <= search; dy += coarseStep) {
+            for (let dx = -search; dx <= search; dx += coarseStep) {
+                const avgSad = evalCandidate(s, dx, dy, 3);
                 if (avgSad < bestSad) {
                     bestSad = avgSad;
                     bestScale = s;
@@ -1419,15 +1434,35 @@ export function estimateBackgroundScaleAndShift(
         }
     }
 
-    // 精密探索
-    const refineCenterS = bestScale;
-    const refineCenterDx = bestDx;
-    const refineCenterDy = bestDy;
-    for (let ds = -0.04; ds <= 0.041; ds += 0.02) {
-        const s = clampFinite(refineCenterS + ds, 0.55, 1.85, 1.0);
-        for (let dy = refineCenterDy - 1; dy <= refineCenterDy + 1; dy++) {
-            for (let dx = refineCenterDx - 1; dx <= refineCenterDx + 1; dx++) {
-                const avgSad = evalCandidate(s, dx, dy);
+    // Stage 2: 中間探索
+    const midCenterS = bestScale;
+    const midCenterDx = bestDx;
+    const midCenterDy = bestDy;
+    bestSad = Infinity;
+    for (let ds = -0.08; ds <= 0.081; ds += 0.04) {
+        const s = clampFinite(midCenterS + ds, 0.55, 1.85, 1.0);
+        for (let dy = midCenterDy - coarseStep; dy <= midCenterDy + coarseStep; dy += 2) {
+            for (let dx = midCenterDx - coarseStep; dx <= midCenterDx + coarseStep; dx += 2) {
+                const avgSad = evalCandidate(s, dx, dy, 2);
+                if (avgSad < bestSad) {
+                    bestSad = avgSad;
+                    bestScale = s;
+                    bestDx = dx;
+                    bestDy = dy;
+                }
+            }
+        }
+    }
+
+    // Stage 3: 1px精度の精密探索
+    const fineCenterS = bestScale;
+    const fineCenterDx = bestDx;
+    const fineCenterDy = bestDy;
+    for (let ds = -0.03; ds <= 0.031; ds += 0.015) {
+        const s = clampFinite(fineCenterS + ds, 0.55, 1.85, 1.0);
+        for (let dy = fineCenterDy - 1; dy <= fineCenterDy + 1; dy++) {
+            for (let dx = fineCenterDx - 1; dx <= fineCenterDx + 1; dx++) {
+                const avgSad = evalCandidate(s, dx, dy, 2);
                 if (avgSad < bestSad) {
                     bestSad = avgSad;
                     bestScale = s;

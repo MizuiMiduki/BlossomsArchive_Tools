@@ -632,12 +632,14 @@ export default function ArCameraOverlay() {
                                 currGray,
                                 trackW,
                                 trackH,
-                                8,
+                                18,
+                                clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
+                                clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
                             );
                             if (transform.confidence > 0.18) {
-                                const smooth = 0.28;
-                                const targetX = clampFinite(transform.dx / trackW, -0.35, 0.35, 0);
-                                const targetY = clampFinite(transform.dy / trackH, -0.35, 0.35, 0);
+                                const smooth = 0.34;
+                                const targetX = clampFinite(transform.dx / trackW, -0.65, 0.65, 0);
+                                const targetY = clampFinite(transform.dy / trackH, -0.65, 0.65, 0);
                                 const targetScale = clampFinite(transform.scale, 0.55, 1.85, 1);
                                 visualOffsetRatioX = visualOffsetRatioX * (1 - smooth) + targetX * smooth;
                                 visualOffsetRatioY = visualOffsetRatioY * (1 - smooth) + targetY * smooth;

@@ -423,6 +423,27 @@ describe("arCameraOverlay utilities", () => {
         const resRetreat = estimateBackgroundScaleAndShift(prev, currRetreat, w, h, 4);
         expect(resRetreat.scale).toBeLessThan(0.92);
         expect(resRetreat.confidence).toBeGreaterThan(0.18);
+
+        // スマホ高さ変化による大きい上下移動(dy=-11px)でもアンカー重み付け＋広域探索で追従できること
+        const hTall = 64;
+        const prevTall = new Uint8Array(w * hTall);
+        const currRaised = new Uint8Array(w * hTall);
+        const nonPeriodic = (x: number, y: number) =>
+            Math.round(
+                128 +
+                    50 * Math.sin(x * 0.31) * Math.cos(y * 0.29) +
+                    45 * Math.cos(x * 0.13 + y * 0.11),
+            );
+        for (let y = 0; y < hTall; y++) {
+            for (let x = 0; x < w; x++) {
+                prevTall[y * w + x] = nonPeriodic(x, y);
+                // 画面全体が -11px 上へシフト（カメラを下げた状態）
+                currRaised[y * w + x] = nonPeriodic(x, y + 11);
+            }
+        }
+        const resHeightShift = estimateBackgroundScaleAndShift(prevTall, currRaised, w, hTall, 18, 0.5, 0.78);
+        expect(resHeightShift.dy).toBeLessThanOrEqual(-9);
+        expect(resHeightShift.confidence).toBeGreaterThan(0.18);
     });
 
     it("sampleDepthAtNormalizedPoint: averages 3x3 region around normalized coordinates", () => {
