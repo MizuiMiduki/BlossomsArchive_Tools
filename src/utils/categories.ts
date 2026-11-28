@@ -36,6 +36,7 @@ export const TOOL_CATEGORIES_CONFIG: Record<string, { category: ToolCategoryId; 
     "/hyperfocal": { category: "camera", icon: "ruler" },
     "/image_conversion": { category: "camera", icon: "image" },
     "/video-compressor": { category: "camera", icon: "video" },
+    "/mosaic-art": { category: "camera", icon: "grid" },
 
     // 開発者・Web制作
     "/json-formatter": { category: "developer", icon: "code" },

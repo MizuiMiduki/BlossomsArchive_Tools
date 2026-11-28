@@ -1038,6 +1038,44 @@ export const ROUTE_TRANSLATIONS: RouteTranslationsMap = {
             keywords: ["лицензии", "open source", "благодарности", "авторские права"],
         },
     },
+    "/mosaic-art": {
+        ja: {
+            title: "モザイクアート作成",
+            description:
+                "お好みの完成画像と複数の構成画像から、色味の加工なしで素材本来の写真を並べた高精細モザイクアート（フォトモザイク）をブラウザ完結で安全に生成できる無料ツールです。",
+            keywords: ["モザイクアート", "フォトモザイク", "モザイク写真", "モザイクアート作成", "画像生成"],
+        },
+        en: {
+            title: "Mosaic Art Generator",
+            description:
+                "Create stunning photomosaics from your target image and multiple photo tiles without any color modification or tinting, entirely in your browser.",
+            keywords: ["mosaic art", "photomosaic", "mosaic generator", "photo tile", "image tool"],
+        },
+        ko: {
+            title: "모자이크 아트 생성기",
+            description:
+                "목표 이미지와 여러 장의 구성 사진을 사용하여 색상 왜곡이나 보정 없이 본래의 색감 그대로 고화질 포토모자이크를 브라우저에서 안전하게 생성합니다.",
+            keywords: ["모자이크 아트", "포토모자이크", "사진 모자이크", "모자이크 생성기", "이미지 도구"],
+        },
+        "zh-hans": {
+            title: "马赛克拼图生成器",
+            description:
+                "使用目标图片与多张构图照片，完全不修改素材原本色彩，在浏览器端安全生成高质量照片马赛克（Photomosaic）艺术拼图。",
+            keywords: ["马赛克拼图", "照片拼贴", "照片马赛克", "拼图生成器", "图像工具"],
+        },
+        "zh-hant": {
+            title: "馬賽克拼圖生成器",
+            description:
+                "使用目標圖片與多張構圖照片，完全不修改素材原本色彩，在瀏覽器端安全生成高品質照片馬賽克（Photomosaic）藝術拼圖。",
+            keywords: ["馬賽克拼圖", "照片拼貼", "照片馬賽克", "拼圖生成器", "圖像工具"],
+        },
+        ru: {
+            title: "Генератор мозаики из фото",
+            description:
+                "Создавайте фотомозаику из целевого изображения и набора фотографий без изменения исходных цветов и оттенков прямо в браузере.",
+            keywords: ["мозаика из фото", "фотомозаика", "генератор мозаики", "обработка фото"],
+        },
+    },
 };
 
 export function getLocalizedRouteMeta(

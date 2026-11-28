@@ -31,6 +31,7 @@ const WordCounter = lazy(() => import("./pages/WordCounter"));
 const TierMaker = lazy(() => import("./pages/TierMaker"));
 const JsonLdViewer = lazy(() => import("./pages/JsonLdViewer"));
 const SitemapVisualizer = lazy(() => import("./pages/SitemapVisualizer"));
+const MosaicArt = lazy(() => import("./pages/MosaicArt"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const baseRoutes = [
@@ -61,6 +62,7 @@ const baseRoutes = [
     { path: "/tier-maker", component: TierMaker },
     { path: "/json-ld-viewer", component: JsonLdViewer },
     { path: "/sitemap-visualizer", component: SitemapVisualizer },
+    { path: "/mosaic-art", component: MosaicArt },
 ];
 
 const allRoutes = [...baseRoutes];

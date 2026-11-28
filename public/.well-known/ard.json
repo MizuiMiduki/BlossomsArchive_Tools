@@ -646,6 +646,33 @@
         "多言語サイトのhreflang対応状況や翻訳漏れを一覧表で確認したい",
         "sitemapindexを持つ大規模サイトのURL構造を解析してCSVやTSVで出力したい"
       ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:mosaic-art",
+      "displayName": "モザイクアート作成 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/mosaic-art",
+      "description": "完成させたい画像と複数の構成画像から、色味の加工なしで素材本来の色彩を活かした高精細フォトモザイクをブラウザ内で安全に生成できる無料Webツール。",
+      "capabilities": [
+        "PhotomosaicGeneration",
+        "ColorAnalysisWithoutTinting",
+        "TileCoverCrop",
+        "HighResolutionExport"
+      ],
+      "tags": [
+        "モザイクアート",
+        "フォトモザイク",
+        "モザイク写真",
+        "モザイクアート作成",
+        "画像生成"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-28T00:00:00Z",
+      "representativeQueries": [
+        "複数の写真を使って色味を変えずにモザイクアートを作りたい",
+        "完成させたい画像に合わせてタイル写真を並べるフォトモザイクツール",
+        "ブラウザ完結で安全に高解像度モザイクアートを生成したい"
+      ]
     }
   ]
 }

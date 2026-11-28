@@ -28,6 +28,8 @@ import WordCounter from "../pages/WordCounter";
 import TierMaker from "../pages/TierMaker";
 import JsonLdViewer from "../pages/JsonLdViewer";
 import SitemapVisualizer from "../pages/SitemapVisualizer";
+import MosaicArt from "../pages/MosaicArt";
+import ArCameraOverlay from "../pages/ArCameraOverlay";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import Credits from "../pages/Credits";
 import NotFound from "../pages/NotFound";
@@ -117,6 +119,16 @@ const PAGE_ENTRIES: Array<{ path: string; name: string; component: Component }> 
         path: "/sitemap-visualizer",
         name: "SitemapVisualizer",
         component: SitemapVisualizer,
+    },
+    {
+        path: "/mosaic-art",
+        name: "MosaicArt",
+        component: MosaicArt,
+    },
+    {
+        path: "/ar-camera",
+        name: "ArCameraOverlay",
+        component: ArCameraOverlay,
     },
     { path: "/privacy", name: "PrivacyPolicy", component: PrivacyPolicy },
     { path: "/credits", name: "Credits", component: Credits },

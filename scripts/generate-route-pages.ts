@@ -185,6 +185,7 @@ const ROUTE_CHUNK_PREFIX: Record<string, string> = {
     "/tier-maker": "TierMaker",
     "/json-ld-viewer": "JsonLdViewer",
     "/sitemap-visualizer": "SitemapVisualizer",
+    "/mosaic-art": "MosaicArt",
 };
 
 function findRouteChunk(routePath: string): string | undefined {

@@ -267,6 +267,20 @@ export const routes: Route[] = [
         ],
     },
     {
+        path: "/mosaic-art",
+        title: "モザイクアート作成",
+        description:
+            "お好みの完成画像と複数の構成画像から、色味の加工なしで素材本来の写真を並べた高精細モザイクアート（フォトモザイク）をブラウザ完結で安全に生成できる無料ツールです。",
+        applicationCategory: "DesignApplication",
+        keywords: [
+            "モザイクアート",
+            "フォトモザイク",
+            "モザイク写真",
+            "モザイクアート作成",
+            "画像生成",
+        ],
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",
