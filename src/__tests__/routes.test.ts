@@ -109,5 +109,20 @@ describe("routes", () => {
             expect(breadcrumb).toBeDefined();
             expect(breadcrumb.itemListElement[1].name).toBe("プライバシーポリシー");
         });
+
+        it("トップページに WebSite SearchAction と CollectionPage + ItemList が含まれること", () => {
+            const schema = getPageJsonLd("/");
+            const website = schema["@graph"].find(
+                (item) => item["@type"] === "WebSite",
+            );
+            expect(website?.potentialAction?.["@type"]).toBe("SearchAction");
+            expect(website?.potentialAction?.target?.urlTemplate).toContain("?q={search_term_string}");
+
+            const webpage = schema["@graph"].find(
+                (item) => item["@type"] === "WebPage",
+            );
+            expect(webpage?.mainEntity?.["@type"]).toBe("ItemList");
+            expect(webpage?.mainEntity?.itemListElement?.length).toBeGreaterThanOrEqual(20);
+        });
     });
 });

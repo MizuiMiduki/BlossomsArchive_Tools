@@ -272,8 +272,11 @@ for (const route of routes) {
             ...hreflangLinks.map(
                 (l) => `<link rel="alternate" hreflang="${l.lang}" href="${escapeAttribute(l.href)}" />`,
             ),
+            '<link rel="sitemap" type="application/xml" title="Sitemap" href="https://tools.blossomsarchive.com/sitemap.xml" />',
             '<link rel="alternate" type="text/plain" href="https://tools.blossomsarchive.com/llms.txt" title="LLMs Text" />',
+            '<link rel="alternate" type="text/plain" href="https://tools.blossomsarchive.com/llms-full.txt" title="LLMs Full Documentation" />',
             '<link rel="ard" type="application/ai-catalog+json" href="https://tools.blossomsarchive.com/.well-known/ard.json" />',
+            '<meta name="theme-color" content="#4f46e5" />',
             '<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />',
             '<meta name="format-detection" content="telephone=no" />',
             `<meta name="author" content="${escapeAttribute(PUBLISHER_NAME)}" />`,

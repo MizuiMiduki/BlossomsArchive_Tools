@@ -135,3 +135,43 @@ BlossomsArchive Tools (https://tools.blossomsarchive.com/) は、Web制作者・
   - プレーンテキスト → Markdown
   - 特殊文字エスケープ (`&` `<` `>` `"` `'`) / アンエスケープ
   - URLエンコード / URLデコード
+
+### 17. カメラ露出計算機 (/exposure-calculator/)
+- URL: https://tools.blossomsarchive.com/exposure-calculator/
+- 機能: スマホカメラを用いたリアルタイム露出計（スポット・中央重点・平均測光）、適正露出シミュレーション、NDフィルター長秒露光換算、星空撮影シャッター限界（500ルール / NPFルール）、バルブタイマー。
+
+### 18. タイムラプス撮影計算機 (/timelapse-calculator/)
+- URL: https://tools.blossomsarchive.com/timelapse-calculator/
+- 機能: 完成動画の長さ・フレームレート・撮影間隔・実撮影時間から総撮影枚数と必要ストレージ容量を相互シミュレーション。
+
+### 19. BPMディレイ換算機 (/bpm-calculator/)
+- URL: https://tools.blossomsarchive.com/bpm-calculator/
+- 機能: テンポ（BPM）から音符ごとのディレイタイム（ms）やLFO周波数（Hz）を算出。タップテンポ機能搭載。
+
+### 20. JSON整形・検証ツール (/json-formatter/)
+- URL: https://tools.blossomsarchive.com/json-formatter/
+- 機能: JSON構文エラー検証、インデント整形（2スペース/4スペース/タブ）、1行圧縮（Minify）、キー・要素数統計。
+
+### 21. 文字数カウント・原稿用紙換算 (/word-counter/)
+- URL: https://tools.blossomsarchive.com/word-counter/
+- 機能: 文字数（空白あり/なし）、行数、バイト数、400字詰め原稿用紙換算枚数、読了時間、文字種別割合をリアルタイム集計。
+
+### 22. ティア表作成ツール (/tier-maker/)
+- URL: https://tools.blossomsarchive.com/tier-maker/
+- 機能: 画像やテキストアイテムをドラッグ＆ドロップでランク分けし、段数・配色変更や上下微調整、高画質PNGエクスポートに対応。
+
+### 23. JSON-LD構造可視化・検証 (/json-ld-viewer/)
+- URL: https://tools.blossomsarchive.com/json-ld-viewer/
+- 機能: WebページURLやHTMLソースからJSON-LD構造化データを自動抽出し、ツリー構造・テーブル・エンティティカード・構文診断を表示。TSVコピー対応。
+
+### 24. サイトマップ構造可視化 (/sitemap-visualizer/)
+- URL: https://tools.blossomsarchive.com/sitemap-visualizer/
+- 機能: `sitemap.xml` やサイトURLからディレクトリツリー・URL一覧表・多言語（hreflang）対応表を可視化。`sitemapindex` 再帰展開・CSV/TSV出力対応。
+
+### 25. モザイクアート作成 (/mosaic-art/)
+- URL: https://tools.blossomsarchive.com/mosaic-art/
+- 機能: ターゲット画像と複数の構成写真から、知覚色差（Redmean）と重複制御（同一画像再利用禁止オプション含む）を用いて高精細フォトモザイクをブラウザ完結で生成。
+
+### 26. ARカメラ・立ち絵重ね撮影 (/ar-camera/)
+- URL: https://tools.blossomsarchive.com/ar-camera/
+- 機能: カメラ映像に透過画像を重ねて全画面カメラUIで撮影。物理ベースの接地影・投影影計算、環境光推定、ジャイロ空間アンカー（ARモード）と自由固定モードの両方に対応。

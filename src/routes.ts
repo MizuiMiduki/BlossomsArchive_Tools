@@ -412,10 +412,19 @@ export function getPageJsonLd(
                 "@id": `${PUBLISHER_URL}#organization`,
             },
             inLanguage: localeConfig.langTag,
+            potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                    "@type": "EntryPoint",
+                    urlTemplate: `${SITE_URL}/?q={search_term_string}`,
+                },
+                "query-input": "required name=search_term_string",
+            },
         },
     ];
 
     if (internalPath === "/") {
+        const publicTools = routes.filter((r) => r.path !== "/" && !r.hidden);
         // トップページ
         graph.push({
             "@type": "WebPage",
@@ -438,18 +447,30 @@ export function getPageJsonLd(
             about: {
                 "@id": `${PUBLISHER_URL}#organization`,
             },
-            hasPart: routes
-                .filter((r) => r.path !== "/" && !r.hidden)
-                .map((r) => {
+            mainEntity: {
+                "@type": "ItemList",
+                numberOfItems: publicTools.length,
+                itemListElement: publicTools.map((r, index) => {
                     const itemMeta = ROUTE_TRANSLATIONS[r.path]?.[locale];
                     const itemUrl = `${SITE_URL}${getPathWithLocale(r.path, locale)}`;
                     return {
-                        "@type": "WebApplication",
-                        name: itemMeta?.title ?? r.title,
+                        "@type": "ListItem",
+                        position: index + 1,
                         url: itemUrl,
-                        description: itemMeta?.description ?? r.description,
+                        name: itemMeta?.title ?? r.title,
                     };
                 }),
+            },
+            hasPart: publicTools.map((r) => {
+                const itemMeta = ROUTE_TRANSLATIONS[r.path]?.[locale];
+                const itemUrl = `${SITE_URL}${getPathWithLocale(r.path, locale)}`;
+                return {
+                    "@type": "WebApplication",
+                    name: itemMeta?.title ?? r.title,
+                    url: itemUrl,
+                    description: itemMeta?.description ?? r.description,
+                };
+            }),
         });
 
         return {

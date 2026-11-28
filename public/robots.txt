@@ -7,16 +7,25 @@ Allow: /
 User-agent: GPTBot
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
 User-agent: ChatGPT-User
 Allow: /
 
 User-agent: ClaudeBot
 Allow: /
 
+User-agent: Claude-Web
+Allow: /
+
 User-agent: anthropic-ai
 Allow: /
 
 User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
 Allow: /
 
 User-agent: PerplexityBot
@@ -28,6 +37,21 @@ Allow: /
 User-agent: Amazonbot
 Allow: /
 
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
 User-agent: CCBot
 Allow: /
 
@@ -37,3 +61,5 @@ Allow: /
 # Sitemaps & LLM documentation
 Sitemap: https://tools.blossomsarchive.com/sitemap.xml
 # LLMs.txt: https://tools.blossomsarchive.com/llms.txt
+# LLMs-full.txt: https://tools.blossomsarchive.com/llms-full.txt
+# ARD Catalog: https://tools.blossomsarchive.com/.well-known/ard.json

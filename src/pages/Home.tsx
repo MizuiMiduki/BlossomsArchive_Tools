@@ -37,7 +37,11 @@ export default function Home() {
     const currentLocale = createMemo<SupportedLocale>(() => getLocaleFromPath(location.pathname));
     const ui = createMemo(() => getUiTranslations(currentLocale()));
 
-    const [searchQuery, setSearchQuery] = createSignal("");
+    const initialQuery =
+        typeof window !== "undefined"
+            ? (new URLSearchParams(window.location.search).get("q") ?? "").slice(0, 100)
+            : "";
+    const [searchQuery, setSearchQuery] = createSignal(initialQuery);
     const [selectedCategory, setSelectedCategory] = createSignal<ToolCategoryId>("all");
 
     const availableRoutes = createMemo(() =>
