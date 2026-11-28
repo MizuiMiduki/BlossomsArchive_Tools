@@ -1,6 +1,8 @@
 allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true
+  onnxruntime-node: false
+  protobufjs: false
 minimumReleaseAgeExclude:
   - seroval@1.7.3
   - '@solidjs/compiler-darwin-arm64@2.0.0'
