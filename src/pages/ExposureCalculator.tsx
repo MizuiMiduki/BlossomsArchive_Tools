@@ -8,7 +8,6 @@ import {
 } from "solid-js";
 import AdSense from "../components/AdSense";
 import ToolIcon from "../components/ToolIcon";
-import BudouX from "../components/BudouX";
 import { playPageEntrance, animatePop } from "../utils/animations";
 import { initAudio, closeAudio, playNotificationSound } from "../utils/sound";
 import { usePageI18n } from "../i18n/index";
