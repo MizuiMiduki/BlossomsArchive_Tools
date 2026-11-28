@@ -10,8 +10,10 @@ describe("PhotoComposite", () => {
     it("初期画面で見出し・アップロードボタン・レイヤー管理・書き出しボタンが表示されること", () => {
         render(() => <PhotoComposite />);
         expect(screen.getByRole("heading", { level: 1, name: "写真・立ち絵合成スタジオ" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "背景写真を選択" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "立ち絵を追加（複数可）" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "背景写真を選択（ドライブ対応）" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "立ち絵を追加（複数・ドライブ対応）" })).toBeInTheDocument();
+        expect(screen.getByLabelText("写真ライブラリやドライブから背景写真を選択")).not.toHaveAttribute("accept");
+        expect(screen.getByLabelText("写真ライブラリやドライブから立ち絵を追加（複数選択可）")).not.toHaveAttribute("accept");
         expect(screen.getByRole("button", { name: "AI自動馴染ませ（奥行き・地面壁・距離）" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "合成画像を保存" })).toBeInTheDocument();
         expect(screen.getByRole("region", { name: "立ち絵レイヤー管理" })).toBeInTheDocument();

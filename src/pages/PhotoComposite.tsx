@@ -269,7 +269,10 @@ export default function PhotoComposite() {
     };
 
     const handleBackgroundFile = (file: File) => {
-        if (!isSupportedImageFile(file.name, file.type)) return;
+        if (!isSupportedImageFile(file.name, file.type)) {
+            setAiDepthStatus("背景写真は PNG / JPEG / WebP などの画像ファイルを選択してください。");
+            return;
+        }
         const prev = bgAsset();
         if (prev?.previewUrl) URL.revokeObjectURL(prev.previewUrl);
         const previewUrl = createSafeObjectUrl(file);
@@ -319,6 +322,10 @@ export default function PhotoComposite() {
 
     const addCharacterFiles = (files: FileList | File[]) => {
         const arr = Array.from(files).filter((f) => isSupportedImageFile(f.name, f.type));
+        if (arr.length === 0 && files.length > 0) {
+            setAiDepthStatus("立ち絵は PNG / WebP などの画像ファイルを選択してください。");
+            return;
+        }
         arr.forEach((file, idx) => {
             const previewUrl = createSafeObjectUrl(file);
             const img = new Image();
@@ -1142,9 +1149,8 @@ export default function PhotoComposite() {
                             <input
                                 ref={bgInputRef}
                                 type="file"
-                                accept="image/*"
                                 class="ba-sr-only"
-                                aria-label="背景写真を選択"
+                                aria-label="写真ライブラリやドライブから背景写真を選択"
                                 onChange={(e) => {
                                     const file = e.currentTarget.files?.[0];
                                     if (file) handleBackgroundFile(file);
@@ -1156,16 +1162,15 @@ export default function PhotoComposite() {
                                 class="ba-btn ba-btn--primary ba-btn--sm"
                                 onClick={() => bgInputRef?.click()}
                             >
-                                背景写真を選択
+                                背景写真を選択（ドライブ対応）
                             </button>
 
                             <input
                                 ref={charInputRef}
                                 type="file"
                                 multiple
-                                accept="image/*"
                                 class="ba-sr-only"
-                                aria-label="立ち絵を追加（複数選択可）"
+                                aria-label="写真ライブラリやドライブから立ち絵を追加（複数選択可）"
                                 onChange={(e) => {
                                     if (e.currentTarget.files?.length) {
                                         addCharacterFiles(e.currentTarget.files);
@@ -1178,7 +1183,7 @@ export default function PhotoComposite() {
                                 class="ba-btn ba-btn--secondary ba-btn--sm"
                                 onClick={() => charInputRef?.click()}
                             >
-                                立ち絵を追加（複数可）
+                                立ち絵を追加（複数・ドライブ対応）
                             </button>
                         </div>
 
@@ -1281,7 +1286,7 @@ export default function PhotoComposite() {
                             when={characters().length > 0}
                             fallback={
                                 <p class="ba-text-xs ba-text-subtle">
-                                    「立ち絵を追加（複数可）」から透過PNG画像を追加してください。
+                                    「立ち絵を追加（複数・ドライブ対応）」から透過PNG画像を追加してください。
                                 </p>
                             }
                         >
