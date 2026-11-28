@@ -6,7 +6,6 @@ import {
     Show,
 } from "solid-js";
 import AdSense from "../components/AdSense";
-import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
 import { usePageI18n } from "../i18n/index";
@@ -212,12 +211,12 @@ export default function HyperfocalCalculator() {
                                 <span class="ba-font-black ba-text-sm">
                                     1. カメラのセンサーサイズを選ぶ
                                 </span>
-                                <BudouX
-                                    as="span"
+                                <span
                                     class="ba-text-muted"
                                     style={{ "font-size": "0.6875rem", "font-weight": 600, "line-height": 1.4 }}
-                                    text="お使いのカメラの種類を選んでください。ピントの合う範囲に影響します。"
-                                />
+                                >
+                                    お使いのカメラの種類を選んでください。ピントの合う範囲に影響します。
+                                </span>
                             </label>
                             <select
                                 value={sensorType()}
@@ -605,13 +604,13 @@ export default function HyperfocalCalculator() {
                                     <strong class="ba-text-primary">
                                         過焦点距離（お勧めピント位置）
                                     </strong>{" "}
-                                    <BudouX text="にピントを合わせると、手前から奥（無限遠）まで全てクッキリ写るようになります。" />
+                                    にピントを合わせると、手前から奥（無限遠）まで全てクッキリ写るようになります。
                                 </p>
                                 <p class="ba-text-muted" style={{ margin: 0, "word-break": "keep-all", "overflow-wrap": "anywhere" }}>
                                     <strong class="ba-text-primary">
                                         実際のピント合わせ位置
                                     </strong>{" "}
-                                    <BudouX text="は、撮影者が「直接狙った特定の被写体（人物）」の位置です。その前後どこまでピントが合うかをシミュレーションしています。" />
+                                    は、撮影者が「直接狙った特定の被写体（人物）」の位置です。その前後どこまでピントが合うかをシミュレーションしています。
                                 </p>
                             </div>
 
@@ -829,11 +828,11 @@ export default function HyperfocalCalculator() {
                                         class="ba-font-bold ba-text-muted"
                                         style={{ "font-size": "0.6875rem", "line-height": 1.55, "word-break": "keep-all", "overflow-wrap": "anywhere" }}
                                     >
-                                        <BudouX text="カメラをマニュアルフォーカス（MF）にして、この距離（約 " />
+                                        カメラをマニュアルフォーカス（MF）にして、この距離（約{" "}
                                         <strong style={{ color: "var(--ba-text)" }}>
                                             {hyperfocalData().distanceM.toFixed(1)}m 先
                                         </strong>
-                                        <BudouX text=" の地面や木にピントを合わせます。" />
+                                        {" "}の地面や木にピントを合わせます。
                                     </span>
                                 </div>
 
@@ -868,11 +867,11 @@ export default function HyperfocalCalculator() {
                                             "overflow-wrap": "anywhere",
                                         }}
                                     >
-                                        <BudouX text="上記のお勧め距離に合わせるだけで、手前約 " />
+                                        上記のお勧め距離に合わせるだけで、手前約{" "}
                                         <strong>
                                             {hyperfocalData().nearLimitM.toFixed(1)}m
                                         </strong>
-                                        <BudouX text=" から、一番奥の山や星空の背景まですべてが鮮明に写ります！" />
+                                        {" "}から、一番奥の山や星空の背景まですべてが鮮明に写ります！
                                     </span>
                                 </div>
                             </div>

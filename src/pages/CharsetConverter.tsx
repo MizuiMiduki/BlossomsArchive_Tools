@@ -1,6 +1,5 @@
 import { createSignal, createMemo, createEffect, onSettled, Show, For } from "solid-js";
 import AdSense from "../components/AdSense";
-import BudouX from "../components/BudouX";
 import ToolIcon from "../components/ToolIcon";
 import { playPageEntrance } from "../utils/animations";
 import { usePageI18n } from "../i18n/index";
@@ -431,13 +430,13 @@ export default function CharsetConverter() {
             {/* ヘッダー */}
             <div class="ba-text-center ba-stack-3">
                 <h1 class="ba-title">
-                    <BudouX text={title()} />
+                    {title()}
                 </h1>
                 <p
                     class="ba-text-muted ba-text-sm"
                     style={{ "max-width": "42rem", "margin-inline": "auto", "margin-block": 0 }}
                 >
-                    <BudouX text={description()} />
+                    {description()}
                 </p>
                 <div class="ba-flex ba-items-center ba-justify-center ba-gap-2 ba-text-xs ba-font-bold ba-text-success">
                     <span
