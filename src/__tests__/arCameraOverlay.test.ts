@@ -9,6 +9,8 @@ import {
     calculateGyroParallaxOffset,
     createShadowSilhouettePixels,
     isSupportedImageFile,
+    normalizeDepthMap,
+    generateDepthOcclusionMaskPixels,
 } from "../utils/arCameraOverlay";
 
 describe("arCameraOverlay utilities", () => {
@@ -147,5 +149,18 @@ describe("arCameraOverlay utilities", () => {
         expect(isSupportedImageFile("photo", "image/jpeg")).toBe(true);
         expect(isSupportedImageFile("notes.txt", "text/plain")).toBe(false);
         expect(isSupportedImageFile("archive.zip", "")).toBe(false);
+    });
+
+    it("normalizeDepthMap & generateDepthOcclusionMaskPixels: generates foreground occlusion alpha only for pixels closer than threshold", () => {
+        const raw = [10, 50, 90, 100];
+        const norm = normalizeDepthMap(raw, 2, 2);
+        expect(norm[0]).toBeCloseTo(0, 4);
+        expect(norm[3]).toBeCloseTo(1, 4);
+
+        const mask = generateDepthOcclusionMaskPixels(norm, 2, 2, 0.5, 0.02);
+        // ピクセル0 (depth=0.0, 奥) は透明
+        expect(mask[3]).toBe(0);
+        // ピクセル3 (depth=1.0, 手前) は不透明 (255)
+        expect(mask[3 * 4 + 3]).toBe(255);
     });
 });

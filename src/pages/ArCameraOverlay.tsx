@@ -23,6 +23,7 @@ import {
     createShadowSilhouettePixels,
     createSafeObjectUrl,
     isSupportedImageFile,
+    generateDepthOcclusionMaskPixels,
 } from "../utils/arCameraOverlay";
 
 interface OverlayImageAsset {
@@ -89,6 +90,14 @@ export default function ArCameraOverlay() {
     const [occlusionEraser, setOcclusionEraser] = createSignal<boolean>(false);
     const [occlusionBrushPx, setOcclusionBrushPx] = createSignal<number>(48);
     const [hasOcclusion, setHasOcclusion] = createSignal<boolean>(false);
+    const [aiDepthMap, setAiDepthMap] = createSignal<{
+        data: Float32Array;
+        width: number;
+        height: number;
+    } | null>(null);
+    const [aiDepthThreshold, setAiDepthThreshold] = createSignal<number>(0.55);
+    const [aiDepthBusy, setAiDepthBusy] = createSignal<boolean>(false);
+    const [aiDepthStatus, setAiDepthStatus] = createSignal<string>("");
     const OCCLUSION_MASK_SIZE = 512;
     let occlusionCanvas: HTMLCanvasElement | undefined;
     let characterLayerCanvas: HTMLCanvasElement | undefined;
@@ -777,6 +786,77 @@ export default function ArCameraOverlay() {
         setHasOcclusion(false);
     };
 
+    const applyDepthMaskToOcclusion = (
+        depthMap: { data: Float32Array; width: number; height: number },
+        threshold01: number,
+    ) => {
+        const mctx = ensureOcclusionCanvas();
+        if (!mctx) return;
+        const pixels = generateDepthOcclusionMaskPixels(
+            depthMap.data,
+            depthMap.width,
+            depthMap.height,
+            threshold01,
+        );
+        const tmpCanvas = document.createElement("canvas");
+        tmpCanvas.width = depthMap.width;
+        tmpCanvas.height = depthMap.height;
+        const tctx = tmpCanvas.getContext("2d");
+        if (!tctx) return;
+        tctx.putImageData(
+            new ImageData(new Uint8ClampedArray(pixels), depthMap.width, depthMap.height),
+            0,
+            0,
+        );
+        mctx.clearRect(0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
+        mctx.drawImage(tmpCanvas, 0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
+        setHasOcclusion(true);
+    };
+
+    const runAiDepthOcclusion = async () => {
+        if (aiDepthBusy()) return;
+        const activeCam = isCameraActive() && videoRef && videoRef.readyState >= 2;
+        const bg = bgAsset();
+        if (!activeCam && !bg) {
+            setAiDepthStatus("カメラを起動するか背景画像を選択してから実行してください。");
+            return;
+        }
+
+        const srcCanvas = document.createElement("canvas");
+        if (activeCam && videoRef) {
+            srcCanvas.width = videoRef.videoWidth || 640;
+            srcCanvas.height = videoRef.videoHeight || 360;
+            srcCanvas.getContext("2d")?.drawImage(videoRef, 0, 0, srcCanvas.width, srcCanvas.height);
+        } else if (bg) {
+            srcCanvas.width = Math.min(1024, bg.width);
+            srcCanvas.height = Math.round((srcCanvas.width / Math.max(1, bg.width)) * bg.height);
+            srcCanvas.getContext("2d")?.drawImage(bg.imgElement, 0, 0, srcCanvas.width, srcCanvas.height);
+        }
+
+        setAiDepthBusy(true);
+        try {
+            const { estimateDepthMapFromCanvas } = await import("../utils/arDepthEstimator");
+            const estimated = await estimateDepthMapFromCanvas(srcCanvas, (msg) =>
+                setAiDepthStatus(msg),
+            );
+            const mapData = {
+                data: estimated.data,
+                width: estimated.width,
+                height: estimated.height,
+            };
+            setAiDepthMap(mapData);
+            applyDepthMaskToOcclusion(mapData, aiDepthThreshold());
+            setAiDepthStatus(
+                `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で奥行き解析完了・スライダーで前後調整できます`,
+            );
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "解析に失敗しました";
+            setAiDepthStatus(`AI解析エラー: ${message}`);
+        } finally {
+            setAiDepthBusy(false);
+        }
+    };
+
     const startRenderLoop = () => {
         if (rafId !== null) cancelAnimationFrame(rafId);
         const render = () => {
@@ -1013,6 +1093,9 @@ export default function ArCameraOverlay() {
                             </h1>
                             <p class="ba-text-xs ba-text-subtle" style={{ margin: 0 }}>
                                 {description()}
+                            </p>
+                            <p class="ba-text-xs ba-text-success" style={{ margin: "0.2rem 0 0", "font-weight": 600 }}>
+                                全処理（WebGPUローカルAI解析を含む）は端末内で完結し、映像や立ち絵が外部送信・AI学習に使われることはありません。
                             </p>
                         </div>
                     </div>
@@ -1313,6 +1396,35 @@ export default function ArCameraOverlay() {
                                 </label>
                                 <button
                                     type="button"
+                                    class="ba-btn ba-btn--primary ba-btn--xs"
+                                    disabled={aiDepthBusy()}
+                                    onClick={() => void runAiDepthOcclusion()}
+                                >
+                                    {aiDepthBusy() ? "AI解析中..." : "AI自動判定 (WebGPU)"}
+                                </button>
+                                <Show when={aiDepthMap()}>
+                                    {(map) => (
+                                        <label class="ba-flex ba-items-center ba-gap-1">
+                                            <span>奥行き</span>
+                                            <input
+                                                type="range"
+                                                min="0.05"
+                                                max="0.95"
+                                                step="0.01"
+                                                aria-label="AI奥行き前後位置"
+                                                value={aiDepthThreshold()}
+                                                onInput={(e) => {
+                                                    const v = clampFinite(Number(e.currentTarget.value), 0.05, 0.95, 0.55);
+                                                    setAiDepthThreshold(v);
+                                                    applyDepthMaskToOcclusion(map(), v);
+                                                }}
+                                                style={{ width: "80px" }}
+                                            />
+                                        </label>
+                                    )}
+                                </Show>
+                                <button
+                                    type="button"
                                     class="ba-btn ba-btn--outline ba-btn--xs"
                                     style={{ color: "#f8fafc", "border-color": "rgba(255,255,255,0.4)" }}
                                     onClick={clearOcclusion}
@@ -1326,6 +1438,9 @@ export default function ArCameraOverlay() {
                                 >
                                     完了
                                 </button>
+                                <div style={{ width: "100%", "text-align": "center", "font-size": "0.6875rem", color: "#cbd5e1" }}>
+                                    {aiDepthStatus() || "端末内（WebGPU）のみで解析・外部送信やAI学習には一切使用されません"}
+                                </div>
                             </div>
                         </Show>
 

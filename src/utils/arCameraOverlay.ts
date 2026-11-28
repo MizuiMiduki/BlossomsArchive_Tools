@@ -451,3 +451,76 @@ export function isSupportedImageFile(fileName: string, mimeType: string): boolea
     const ext = fileName.slice(lastDot + 1).toLowerCase();
     return IMAGE_FILE_EXTENSIONS.has(ext);
 }
+
+/**
+ * 生の深度配列を 0..1（0=最も奥、1=最も手前）へ min-max 正規化する
+ */
+export function normalizeDepthMap(
+    rawValues: ArrayLike<number>,
+    width: number,
+    height: number,
+): Float32Array {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    const total = Math.min(safeW * safeH, rawValues.length);
+    const out = new Float32Array(safeW * safeH);
+    if (total === 0) return out;
+
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+    for (let i = 0; i < total; i++) {
+        const v = rawValues[i];
+        if (!Number.isFinite(v)) continue;
+        if (v < minVal) minVal = v;
+        if (v > maxVal) maxVal = v;
+    }
+
+    if (!Number.isFinite(minVal) || !Number.isFinite(maxVal) || maxVal - minVal < 1e-6) {
+        return out;
+    }
+
+    const span = maxVal - minVal;
+    for (let i = 0; i < total; i++) {
+        const v = rawValues[i];
+        out[i] = Number.isFinite(v) ? clampFinite((v - minVal) / span, 0, 1, 0) : 0;
+    }
+    return out;
+}
+
+/**
+ * 正規化深度マップ（0=奥 .. 1=手前）とキャラクターの前後しきい値から、
+ * キャラクターより手前にある物体を隠すための遮蔽マスク RGBA ピクセル配列を生成する
+ */
+export function generateDepthOcclusionMaskPixels(
+    normalizedDepth: ArrayLike<number>,
+    width: number,
+    height: number,
+    threshold01: number,
+    feather = 0.04,
+): Uint8ClampedArray {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    const total = safeW * safeH;
+    const out = new Uint8ClampedArray(total * 4);
+    const threshold = clampFinite(threshold01, 0, 1, 0.55);
+    const safeFeather = clampFinite(feather, 0.001, 0.25, 0.04);
+
+    for (let i = 0; i < total && i < normalizedDepth.length; i++) {
+        const d = clampFinite(normalizedDepth[i], 0, 1, 0);
+        if (d <= threshold - safeFeather) continue;
+
+        let alphaRatio = 1;
+        if (d < threshold + safeFeather) {
+            alphaRatio = (d - (threshold - safeFeather)) / (safeFeather * 2);
+        }
+        const alpha = Math.round(clampFinite(alphaRatio, 0, 1, 0) * 255);
+        if (alpha > 0) {
+            const p = i * 4;
+            out[p] = 255;
+            out[p + 1] = 0;
+            out[p + 2] = 0;
+            out[p + 3] = alpha;
+        }
+    }
+    return out;
+}

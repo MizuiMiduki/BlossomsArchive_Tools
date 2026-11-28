@@ -210,4 +210,17 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.click(screen.getByRole("button", { name: "ジャイロON" }));
         expect(screen.getByRole("button", { name: "ジャイロOFF" })).toBeInTheDocument();
     });
+
+    it("AI自動判定(WebGPU)ボタンと完全端末内処理・AI学習不使用の明記が表示されること", () => {
+        render(() => <ArCameraOverlay />);
+        expect(
+            screen.getByText(/外部送信・AI学習に使われることはありません/),
+        ).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: "奥に隠す" }));
+        expect(screen.getByRole("button", { name: "AI自動判定 (WebGPU)" })).toBeInTheDocument();
+        expect(
+            screen.getByText(/端末内（WebGPU）のみで解析・外部送信やAI学習には一切使用されません/),
+        ).toBeInTheDocument();
+    });
 });
