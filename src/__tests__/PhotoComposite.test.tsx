@@ -60,4 +60,12 @@ describe("PhotoComposite", () => {
         fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
         expect(screen.queryByRole("dialog", { name: "合成画像保存プレビュー" })).not.toBeInTheDocument();
     });
+
+    it("非対応のファイル形式が選択された場合に案内メッセージを表示すること", () => {
+        render(() => <PhotoComposite />);
+        const bgInput = screen.getByLabelText("写真ライブラリやドライブから背景写真を選択") as HTMLInputElement;
+        const badFile = new File(["hello"], "notes.txt", { type: "text/plain" });
+        fireEvent.change(bgInput, { target: { files: [badFile] } });
+        expect(screen.getByText("背景写真は PNG / JPEG / WebP などの画像ファイルを選択してください。")).toBeInTheDocument();
+    });
 });
