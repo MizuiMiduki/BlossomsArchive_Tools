@@ -62,13 +62,31 @@ export default function MosaicArt() {
     const [resultDimensions, setResultDimensions] = createSignal<{ width: number; height: number } | null>(null);
     const [zoomLevel, setZoomLevel] = createSignal<number>(1);
     const [showCompare, setShowCompare] = createSignal<boolean>(false);
+    const [isLightboxOpen, setIsLightboxOpen] = createSignal<boolean>(false);
+    const [lightboxZoom, setLightboxZoom] = createSignal<number>(1);
+
+    const openLightbox = () => {
+        setLightboxZoom(1);
+        setIsLightboxOpen(true);
+    };
 
     // リソース解放
     onSettled(() => {
         if (containerRef) {
             playPageEntrance(containerRef, ".ba-card");
         }
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && isLightboxOpen()) {
+                setIsLightboxOpen(false);
+            }
+        };
+        if (typeof window !== "undefined") {
+            window.addEventListener("keydown", handleKeyDown);
+        }
         return () => {
+            if (typeof window !== "undefined") {
+                window.removeEventListener("keydown", handleKeyDown);
+            }
             const currentTarget = targetImage();
             if (currentTarget?.previewUrl) {
                 URL.revokeObjectURL(currentTarget.previewUrl);
@@ -870,16 +888,29 @@ export default function MosaicArt() {
                                         </div>
                                         <div class="ba-stack-1 ba-text-center">
                                             <span class="ba-text-xs ba-text-subtle">モザイクアート</span>
-                                            <img
-                                                src={url()}
-                                                alt="生成モザイクアート"
+                                            <button
+                                                type="button"
+                                                onClick={openLightbox}
+                                                aria-label="生成モザイクアートをライトボックスで拡大表示"
                                                 style={{
-                                                    "max-height": "500px",
-                                                    "max-width": "100%",
-                                                    margin: "0 auto",
-                                                    "object-fit": "contain",
+                                                    padding: 0,
+                                                    border: "none",
+                                                    background: "transparent",
+                                                    cursor: "zoom-in",
+                                                    width: "100%",
                                                 }}
-                                            />
+                                            >
+                                                <img
+                                                    src={url()}
+                                                    alt="生成モザイクアート"
+                                                    style={{
+                                                        "max-height": "500px",
+                                                        "max-width": "100%",
+                                                        margin: "0 auto",
+                                                        "object-fit": "contain",
+                                                    }}
+                                                />
+                                            </button>
                                         </div>
                                     </div>
                                 }
@@ -891,18 +922,35 @@ export default function MosaicArt() {
                                         "transform-origin": "top center",
                                     }}
                                 >
-                                    <img
-                                        src={url()}
-                                        alt="完成モザイクアートプレビュー"
+                                    <button
+                                        type="button"
+                                        onClick={openLightbox}
+                                        aria-label="完成モザイクアートをライトボックスで拡大表示"
                                         style={{
-                                            "max-height": "550px",
-                                            "max-width": "100%",
-                                            "object-fit": "contain",
+                                            padding: 0,
+                                            border: "none",
+                                            background: "transparent",
+                                            cursor: "zoom-in",
+                                            display: "block",
                                         }}
-                                    />
+                                    >
+                                        <img
+                                            src={url()}
+                                            alt="完成モザイクアートプレビュー"
+                                            style={{
+                                                "max-height": "550px",
+                                                "max-width": "100%",
+                                                "object-fit": "contain",
+                                                display: "block",
+                                            }}
+                                        />
+                                    </button>
                                 </div>
                             </Show>
                         </div>
+                        <p class="ba-text-xs ba-text-subtle ba-text-center" style={{ margin: 0 }}>
+                            画像をタップすると全画面ライトボックスで拡大表示できます
+                        </p>
 
                         {/* ダウンロードエリア */}
                         <div class="ba-flex ba-items-center ba-justify-between ba-flex-wrap ba-gap-3 ba-pt-2">
@@ -932,6 +980,103 @@ export default function MosaicArt() {
                                 <ToolIcon name="download" class="ba-icon-sm" />
                                 画像をダウンロード
                             </a>
+                        </div>
+                    </div>
+                )}
+            </Show>
+
+            {/* ライトボックス拡大モーダル */}
+            <Show when={isLightboxOpen() && resultUrl()}>
+                {(url) => (
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="モザイクアート拡大ライトボックス"
+                        onClick={(e) => {
+                            if (e.target === e.currentTarget) {
+                                setIsLightboxOpen(false);
+                            }
+                        }}
+                        style={{
+                            position: "fixed",
+                            inset: "0",
+                            "z-index": "70",
+                            background: "rgba(10, 15, 28, 0.92)",
+                            display: "flex",
+                            "flex-direction": "column",
+                            padding: "1rem",
+                            gap: "0.75rem",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                "align-items": "center",
+                                "justify-content": "space-between",
+                                "flex-wrap": "wrap",
+                                gap: "0.5rem",
+                                color: "#f8fafc",
+                            }}
+                        >
+                            <div class="ba-flex ba-items-center ba-gap-2">
+                                <span class="ba-text-xs ba-font-bold">拡大ズーム:</span>
+                                <For each={[1, 2, 3, 4]}>
+                                    {(lvl) => (
+                                        <button
+                                            type="button"
+                                            class={`ba-btn ba-btn--xs ${
+                                                lightboxZoom() === lvl ? "ba-btn--primary" : "ba-btn--secondary"
+                                            }`}
+                                            onClick={() => setLightboxZoom(lvl)}
+                                        >
+                                            {lvl}x
+                                        </button>
+                                    )}
+                                </For>
+                            </div>
+                            <div class="ba-flex ba-items-center ba-gap-2">
+                                <a
+                                    href={url()}
+                                    download={downloadFileName()}
+                                    class="ba-btn ba-btn--success ba-btn--xs"
+                                >
+                                    保存
+                                </a>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--secondary ba-btn--xs"
+                                    onClick={() => setIsLightboxOpen(false)}
+                                >
+                                    閉じる
+                                </button>
+                            </div>
+                        </div>
+
+                        <div
+                            onClick={(e) => {
+                                if (e.target === e.currentTarget) {
+                                    setIsLightboxOpen(false);
+                                }
+                            }}
+                            style={{
+                                flex: "1 1 0%",
+                                overflow: "auto",
+                                display: "flex",
+                                "align-items": lightboxZoom() > 1 ? "flex-start" : "center",
+                                "justify-content": lightboxZoom() > 1 ? "flex-start" : "center",
+                            }}
+                        >
+                            <img
+                                src={url()}
+                                alt="モザイクアート拡大表示"
+                                style={{
+                                    width: lightboxZoom() === 1 ? "auto" : `${lightboxZoom() * 100}%`,
+                                    "max-width": lightboxZoom() === 1 ? "100%" : "none",
+                                    "max-height": lightboxZoom() === 1 ? "100%" : "none",
+                                    "object-fit": "contain",
+                                    "border-radius": "6px",
+                                }}
+                            />
                         </div>
                     </div>
                 )}

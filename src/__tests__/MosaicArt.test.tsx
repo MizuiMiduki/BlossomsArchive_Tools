@@ -129,6 +129,24 @@ describe("MosaicArt Page Component", () => {
             expect(downloadLink).toBeInTheDocument();
             // 余分な出力用 <canvas> がDOM上に重複表示されていないこと
             expect(container.querySelector("canvas")).toBeNull();
+
+            // 完成品画像をタップするとライトボックスが開き、ズームや閉じ操作ができること
+            const lightboxTrigger = screen.getByRole("button", {
+                name: "完成モザイクアートをライトボックスで拡大表示",
+            });
+            fireEvent.click(lightboxTrigger);
+            expect(
+                screen.getByRole("dialog", { name: "モザイクアート拡大ライトボックス" }),
+            ).toBeInTheDocument();
+
+            const zoom4xBtn = screen.getByRole("button", { name: "4x" });
+            fireEvent.click(zoom4xBtn);
+
+            const closeBtn = screen.getByRole("button", { name: "閉じる" });
+            fireEvent.click(closeBtn);
+            expect(
+                screen.queryByRole("dialog", { name: "モザイクアート拡大ライトボックス" }),
+            ).not.toBeInTheDocument();
         } finally {
             globalThis.Image = OriginalImage;
         }
