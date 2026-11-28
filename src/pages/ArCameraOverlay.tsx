@@ -29,6 +29,7 @@ import {
     generateGroundShadowMaskPixels,
     estimateBackgroundOpticalShift,
     sampleDepthAtNormalizedPoint,
+    calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
 
 interface OverlayImageAsset {
@@ -106,6 +107,7 @@ export default function ArCameraOverlay() {
     const [hasShadowCatcher, setHasShadowCatcher] = createSignal<boolean>(false);
     let shadowCatcherCanvas: HTMLCanvasElement | undefined;
     let shadowLayerCanvas: HTMLCanvasElement | undefined;
+    let litCharCanvas: HTMLCanvasElement | undefined;
     let trackCanvas: HTMLCanvasElement | undefined;
     let prevGrayFrame: Uint8Array | null = null;
     let visualOffsetRatioX = 0;
@@ -806,7 +808,52 @@ export default function ArCameraOverlay() {
             drawProjectedShadow(ctx);
         }
 
-        // キャラクター本体
+        // キャラクター本体（環境光・背景色・光源方向に合わせた色馴染ませ）
+        const drawWInt = Math.max(1, Math.min(2048, Math.round(drawW)));
+        const drawHInt = Math.max(1, Math.min(2048, Math.round(drawH)));
+        let charSource: CanvasImageSource = asset.imgElement;
+
+        if (autoAmbientMatch()) {
+            const adapt = calculateCharacterColorAdaptation(envLighting(), lightAzimuthDeg());
+            if (!litCharCanvas) {
+                litCharCanvas = document.createElement("canvas");
+            }
+            if (litCharCanvas.width !== drawWInt || litCharCanvas.height !== drawHInt) {
+                litCharCanvas.width = drawWInt;
+                litCharCanvas.height = drawHInt;
+            }
+            const lCtx = litCharCanvas.getContext("2d");
+            if (lCtx) {
+                lCtx.clearRect(0, 0, drawWInt, drawHInt);
+                lCtx.save();
+                if ("filter" in lCtx) {
+                    lCtx.filter = `brightness(${adapt.brightness.toFixed(2)}) saturate(${adapt.saturate.toFixed(2)})`;
+                }
+                lCtx.drawImage(asset.imgElement, 0, 0, drawWInt, drawHInt);
+                lCtx.restore();
+
+                // 1. 背景の環境光色（色温度）を立ち絵のピクセルへ馴染ませる
+                lCtx.save();
+                lCtx.globalCompositeOperation = "source-atop";
+                lCtx.fillStyle = `rgba(${adapt.tintRgb.r}, ${adapt.tintRgb.g}, ${adapt.tintRgb.b}, ${adapt.tintAlpha.toFixed(3)})`;
+                lCtx.fillRect(0, 0, drawWInt, drawHInt);
+
+                // 2. 光源方向に応じた片側ハイライト＆反対側の立体陰影を付与
+                const dir = flipHorizontal() ? -adapt.rimDirX : adapt.rimDirX;
+                const xStart = dir >= 0 ? drawWInt : 0;
+                const xEnd = dir >= 0 ? 0 : drawWInt;
+                const shadeGrad = lCtx.createLinearGradient(xStart, 0, xEnd, 0);
+                shadeGrad.addColorStop(0, "rgba(255, 252, 242, 0.08)");
+                shadeGrad.addColorStop(0.45, "rgba(0, 0, 0, 0)");
+                shadeGrad.addColorStop(1, `rgba(10, 16, 30, ${adapt.shadeAlpha.toFixed(3)})`);
+                lCtx.fillStyle = shadeGrad;
+                lCtx.fillRect(0, 0, drawWInt, drawHInt);
+                lCtx.restore();
+
+                charSource = litCharCanvas;
+            }
+        }
+
         ctx.save();
         ctx.translate(footX, footY);
         const totalRotRad =
@@ -814,22 +861,17 @@ export default function ArCameraOverlay() {
         ctx.rotate(totalRotRad);
         ctx.globalAlpha = charOpacity;
 
-        if (autoAmbientMatch() && "filter" in ctx) {
-            const lighting = envLighting();
-            ctx.filter = `brightness(${lighting.brightnessMultiplier.toFixed(2)})`;
-        }
-
         if (flipHorizontal()) {
             ctx.scale(-1, 1);
             ctx.drawImage(
-                asset.imgElement,
+                charSource,
                 -drawW * asset.alphaBounds.footCenterXRatio,
                 imgTopOffset,
                 drawW,
                 drawH,
             );
         } else {
-            ctx.drawImage(asset.imgElement, imgLeftOffset, imgTopOffset, drawW, drawH);
+            ctx.drawImage(charSource, imgLeftOffset, imgTopOffset, drawW, drawH);
         }
         ctx.restore();
     };
@@ -2118,7 +2160,7 @@ export default function ArCameraOverlay() {
                                                 checked={autoAmbientMatch()}
                                                 onChange={(e) => setAutoAmbientMatch(e.currentTarget.checked)}
                                             />
-                                            <span>環境光に合わせて明るさを自動馴染ませ</span>
+                                            <span>環境光・背景色・光源に合わせて立ち絵の色を自動馴染ませ</span>
                                         </label>
                                         <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
                                             <input

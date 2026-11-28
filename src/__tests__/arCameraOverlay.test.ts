@@ -16,6 +16,7 @@ import {
     generateGroundShadowMaskPixels,
     estimateBackgroundOpticalShift,
     sampleDepthAtNormalizedPoint,
+    calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
 
 describe("arCameraOverlay utilities", () => {
@@ -280,5 +281,35 @@ describe("arCameraOverlay utilities", () => {
         ]);
         expect(sampleDepthAtNormalizedPoint(depth, 4, 4, 0.5, 0.9)).toBeCloseTo(0.8, 4);
         expect(sampleDepthAtNormalizedPoint(depth, 4, 4, 0.5, 0.1)).toBeCloseTo(0.1, 4);
+    });
+
+    it("calculateCharacterColorAdaptation: adapts tint color, brightness, saturate, and rim direction to background lighting", () => {
+        const warmDark = calculateCharacterColorAdaptation(
+            {
+                luminance: 0.25,
+                ambientColor: { r: 220, g: 130, b: 60 },
+                suggestedAzimuthDeg: 90,
+                suggestedShadowOpacity: 0.3,
+                brightnessMultiplier: 0.78,
+            },
+            90,
+        );
+        const coolBright = calculateCharacterColorAdaptation(
+            {
+                luminance: 0.85,
+                ambientColor: { r: 170, g: 205, b: 245 },
+                suggestedAzimuthDeg: 270,
+                suggestedShadowOpacity: 0.55,
+                brightnessMultiplier: 1.1,
+            },
+            270,
+        );
+
+        expect(warmDark.tintRgb.r).toBeGreaterThan(warmDark.tintRgb.b);
+        expect(coolBright.tintRgb.b).toBeGreaterThan(coolBright.tintRgb.r);
+        expect(warmDark.saturate).toBeLessThan(coolBright.saturate);
+        expect(warmDark.tintAlpha).toBeGreaterThan(coolBright.tintAlpha);
+        expect(warmDark.rimDirX).toBeCloseTo(1, 3);
+        expect(coolBright.rimDirX).toBeCloseTo(-1, 3);
     });
 });

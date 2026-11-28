@@ -661,6 +661,61 @@ export function calculateScaleForCharacterHeight(params: CharacterHeightScalePar
     return Math.round(clampFinite(rawScale, 0.1, 4.0, 0.65) * 100) / 100;
 }
 
+export interface CharacterColorAdaptation {
+    /** 明るさ補正係数 (0.55..1.18) */
+    brightness: number;
+    /** 彩度補正係数 (0.72..1.05) */
+    saturate: number;
+    /** 環境光の馴染ませ色 */
+    tintRgb: { r: number; g: number; b: number };
+    /** 環境光ティントの不透明度 (0.08..0.34) */
+    tintAlpha: number;
+    /** 光源の左右方向 (-1=左, +1=右) */
+    rimDirX: number;
+    /** 反対側の立体陰影の強さ (0.06..0.22) */
+    shadeAlpha: number;
+}
+
+/**
+ * 背景から推定した環境光（輝度・RGB平均色）と光源方位角から、
+ * 立ち絵を背景の空気感・色温度に馴染ませる色補正パラメータを算出する
+ */
+export function calculateCharacterColorAdaptation(
+    lighting: EnvironmentLighting,
+    azimuthDeg: number,
+): CharacterColorAdaptation {
+    const lum = clampFinite(lighting.luminance, 0, 1, 0.5);
+    const brightness = clampFinite(lighting.brightnessMultiplier, 0.55, 1.18, 1.0);
+    // 暗い環境ほど少し彩度を落として馴染ませる
+    const saturate = clampFinite(0.74 + lum * 0.30, 0.72, 1.05, 0.95);
+
+    const ar = clampFinite(lighting.ambientColor?.r ?? 128, 0, 255, 128);
+    const ag = clampFinite(lighting.ambientColor?.g ?? 128, 0, 255, 128);
+    const ab = clampFinite(lighting.ambientColor?.b ?? 128, 0, 255, 128);
+
+    // 極端な原色被りを防ぐため、背景色とニュートラル寄りを適度にブレンド
+    const tintRgb = {
+        r: Math.round(ar * 0.78 + 255 * 0.22 * lum),
+        g: Math.round(ag * 0.78 + 255 * 0.22 * lum),
+        b: Math.round(ab * 0.78 + 255 * 0.22 * lum),
+    };
+
+    // 暗い・色被りの強い環境ほど馴染ませ強度を強める
+    const tintAlpha = clampFinite(0.14 + (1 - lum) * 0.18, 0.10, 0.34, 0.20);
+    const azRad = (normalizeAngleDeg(azimuthDeg) * Math.PI) / 180;
+    const rimDirX = Math.sin(azRad); // 90°=右(+1), 270°=左(-1)
+    const shadeAlpha = clampFinite(0.08 + (1 - lum) * 0.12, 0.06, 0.22, 0.12);
+
+    return {
+        brightness,
+        saturate,
+        tintRgb,
+        tintAlpha,
+        rimDirX,
+        shadeAlpha,
+    };
+}
+
 /**
  * 正規化深度マップ（0=奥 .. 1=手前）の下半分（床領域）の奥行き勾配から
  * カメラの見下ろし角度（18..72度）を推定する
