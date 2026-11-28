@@ -15,6 +15,7 @@ import {
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
     estimateBackgroundOpticalShift,
+    sampleDepthAtNormalizedPoint,
 } from "../utils/arCameraOverlay";
 
 describe("arCameraOverlay utilities", () => {
@@ -258,5 +259,16 @@ describe("arCameraOverlay utilities", () => {
         const shift = estimateBackgroundOpticalShift(prev, curr, w, h, 6);
         expect(shift.dx).toBe(3);
         expect(shift.dy).toBe(2);
+    });
+
+    it("sampleDepthAtNormalizedPoint: averages 3x3 region around normalized coordinates", () => {
+        const depth = new Float32Array([
+            0.1, 0.1, 0.1, 0.1,
+            0.1, 0.1, 0.1, 0.1,
+            0.8, 0.8, 0.8, 0.8,
+            0.8, 0.8, 0.8, 0.8,
+        ]);
+        expect(sampleDepthAtNormalizedPoint(depth, 4, 4, 0.5, 0.9)).toBeCloseTo(0.8, 4);
+        expect(sampleDepthAtNormalizedPoint(depth, 4, 4, 0.5, 0.1)).toBeCloseTo(0.1, 4);
     });
 });

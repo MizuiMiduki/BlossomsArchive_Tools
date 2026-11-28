@@ -568,14 +568,14 @@ export function generateDepthOcclusionMaskPixels(
     width: number,
     height: number,
     threshold01: number,
-    feather = 0.04,
+    feather = 0.015,
 ): Uint8ClampedArray {
     const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
     const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
     const total = safeW * safeH;
     const out = new Uint8ClampedArray(total * 4);
     const threshold = clampFinite(threshold01, 0, 1, 0.55);
-    const safeFeather = clampFinite(feather, 0.001, 0.25, 0.04);
+    const safeFeather = clampFinite(feather, 0.001, 0.25, 0.015);
 
     for (let i = 0; i < total && i < normalizedDepth.length; i++) {
         const d = clampFinite(normalizedDepth[i], 0, 1, 0);
@@ -595,6 +595,38 @@ export function generateDepthOcclusionMaskPixels(
         }
     }
     return out;
+}
+
+/**
+ * 正規化深度マップの指定位置 (nx, ny: 0..1) 周辺 3x3 の平均深度を取得する
+ */
+export function sampleDepthAtNormalizedPoint(
+    normalizedDepth: ArrayLike<number>,
+    width: number,
+    height: number,
+    nx: number,
+    ny: number,
+): number {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    if (normalizedDepth.length < safeW * safeH) return 0.5;
+
+    const fx = Math.round(clampFinite(nx, 0, 1, 0.5) * (safeW - 1));
+    const fy = Math.round(clampFinite(ny, 0, 1, 0.78) * (safeH - 1));
+    let sum = 0;
+    let count = 0;
+    for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+            const sx = Math.min(safeW - 1, Math.max(0, fx + dx));
+            const sy = Math.min(safeH - 1, Math.max(0, fy + dy));
+            const v = normalizedDepth[sy * safeW + sx];
+            if (Number.isFinite(v)) {
+                sum += v;
+                count++;
+            }
+        }
+    }
+    return count > 0 ? clampFinite(sum / count, 0, 1, 0.5) : 0.5;
 }
 
 export interface CharacterHeightScaleParams {

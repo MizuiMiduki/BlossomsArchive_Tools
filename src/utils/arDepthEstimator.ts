@@ -97,8 +97,8 @@ export async function estimateDepthMapFromCanvas(
             : "端末内CPU(WASM)で奥行きを解析中...",
     );
 
-    // 推論高速化のため長辺384pxに縮小した一時キャンバスを作成
-    const maxSide = 384;
+    // Depth Anything V2 のネイティブ解像度(518px)に合わせて高精細に推論
+    const maxSide = 518;
     const srcW = Math.max(1, sourceCanvas.width);
     const srcH = Math.max(1, sourceCanvas.height);
     const ratio = Math.min(1, maxSide / Math.max(srcW, srcH));

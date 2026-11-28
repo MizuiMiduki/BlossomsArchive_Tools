@@ -28,6 +28,7 @@ import {
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
     estimateBackgroundOpticalShift,
+    sampleDepthAtNormalizedPoint,
 } from "../utils/arCameraOverlay";
 
 interface OverlayImageAsset {
@@ -741,29 +742,28 @@ export default function ArCameraOverlay() {
 
         const charOpacity = clampFinite(opacity(), 0, 1, 1);
 
-        const drawShadows = (sCtx: CanvasRenderingContext2D) => {
-            // 接地コンタクトシャドウ
-            sCtx.save();
-            sCtx.translate(footX, footY);
-            const contactGrad = sCtx.createRadialGradient(
-                0,
-                0,
-                shadow.contactWidthPx * 0.08,
-                0,
-                0,
-                shadow.contactWidthPx * 0.52,
-            );
-            contactGrad.addColorStop(0, `rgba(10, 14, 24, ${shadow.contactOpacity * charOpacity})`);
-            contactGrad.addColorStop(0.55, `rgba(10, 14, 24, ${shadow.contactOpacity * 0.45 * charOpacity})`);
-            contactGrad.addColorStop(1, "rgba(10, 14, 24, 0)");
-            sCtx.scale(1, shadow.contactHeightPx / Math.max(1, shadow.contactWidthPx));
-            sCtx.fillStyle = contactGrad;
-            sCtx.beginPath();
-            sCtx.arc(0, 0, shadow.contactWidthPx * 0.52, 0, Math.PI * 2);
-            sCtx.fill();
-            sCtx.restore();
+        // 接地コンタクトシャドウは常に足元へ描画し、キャラクターの接地感を維持
+        ctx.save();
+        ctx.translate(footX, footY);
+        const contactGrad = ctx.createRadialGradient(
+            0,
+            0,
+            shadow.contactWidthPx * 0.08,
+            0,
+            0,
+            shadow.contactWidthPx * 0.52,
+        );
+        contactGrad.addColorStop(0, `rgba(10, 14, 24, ${Math.max(0.28, shadow.contactOpacity) * charOpacity})`);
+        contactGrad.addColorStop(0.55, `rgba(10, 14, 24, ${Math.max(0.28, shadow.contactOpacity) * 0.45 * charOpacity})`);
+        contactGrad.addColorStop(1, "rgba(10, 14, 24, 0)");
+        ctx.scale(1, shadow.contactHeightPx / Math.max(1, shadow.contactWidthPx));
+        ctx.fillStyle = contactGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, shadow.contactWidthPx * 0.52, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
 
-            // 投影シルエット影
+        const drawProjectedShadow = (sCtx: CanvasRenderingContext2D) => {
             sCtx.save();
             sCtx.translate(footX + shadow.offsetX, footY + shadow.offsetY);
             sCtx.transform(1, 0, shadow.skewXRatio, shadow.scaleYRatio, 0, 0);
@@ -780,7 +780,7 @@ export default function ArCameraOverlay() {
             sCtx.restore();
         };
 
-        // 深度AIが解析済みの場合は床面・机面以外に影がはみ出さないようシャドウキャッチャーマスクを適用
+        // 深度AIが解析済みの場合は床面・机面以外に投影影がはみ出さないようシャドウキャッチャーマスクを適用
         if (hasShadowCatcher() && shadowCatcherCanvas && width > 0 && height > 0) {
             if (!shadowLayerCanvas) {
                 shadowLayerCanvas = document.createElement("canvas");
@@ -793,17 +793,17 @@ export default function ArCameraOverlay() {
             if (slCtx) {
                 const { dx, dy } = getMaskShiftOffset(width, height);
                 slCtx.clearRect(0, 0, width, height);
-                drawShadows(slCtx);
+                drawProjectedShadow(slCtx);
                 slCtx.save();
                 slCtx.globalCompositeOperation = "destination-in";
                 slCtx.drawImage(shadowCatcherCanvas, dx, dy, width, height);
                 slCtx.restore();
                 ctx.drawImage(shadowLayerCanvas, 0, 0, width, height);
             } else {
-                drawShadows(ctx);
+                drawProjectedShadow(ctx);
             }
         } else {
-            drawShadows(ctx);
+            drawProjectedShadow(ctx);
         }
 
         // キャラクター本体
@@ -996,15 +996,42 @@ export default function ArCameraOverlay() {
             return;
         }
 
+        // プレビュー画面と完全に同じアスペクト比・cover切り抜き範囲で解析用キャンバスを生成（位置ズレ防止）
+        const viewW = previewCanvasRef && previewCanvasRef.width > 0 ? previewCanvasRef.width : 720;
+        const viewH = previewCanvasRef && previewCanvasRef.height > 0 ? previewCanvasRef.height : 1280;
+        const fitRatio = Math.min(1, 560 / Math.max(viewW, viewH));
         const srcCanvas = document.createElement("canvas");
+        srcCanvas.width = Math.max(32, Math.round(viewW * fitRatio));
+        srcCanvas.height = Math.max(32, Math.round(viewH * fitRatio));
+        const sctx = srcCanvas.getContext("2d");
+        if (!sctx) return;
+
         if (activeCam && videoRef) {
-            srcCanvas.width = videoRef.videoWidth || 640;
-            srcCanvas.height = videoRef.videoHeight || 360;
-            srcCanvas.getContext("2d")?.drawImage(videoRef, 0, 0, srcCanvas.width, srcCanvas.height);
+            const vw = videoRef.videoWidth || srcCanvas.width;
+            const vh = videoRef.videoHeight || srcCanvas.height;
+            const coverRatio = Math.max(srcCanvas.width / vw, srcCanvas.height / vh);
+            const drawW = vw * coverRatio;
+            const drawH = vh * coverRatio;
+            const drawX = (srcCanvas.width - drawW) / 2;
+            const drawY = (srcCanvas.height - drawH) / 2;
+            sctx.save();
+            if (cameraFacing() === "user" && mirrorSelfie()) {
+                sctx.translate(srcCanvas.width, 0);
+                sctx.scale(-1, 1);
+            }
+            sctx.drawImage(videoRef, drawX, drawY, drawW, drawH);
+            sctx.restore();
         } else if (bg) {
-            srcCanvas.width = Math.min(1024, bg.width);
-            srcCanvas.height = Math.round((srcCanvas.width / Math.max(1, bg.width)) * bg.height);
-            srcCanvas.getContext("2d")?.drawImage(bg.imgElement, 0, 0, srcCanvas.width, srcCanvas.height);
+            const coverRatio = Math.max(srcCanvas.width / bg.width, srcCanvas.height / bg.height);
+            const drawW = bg.width * coverRatio;
+            const drawH = bg.height * coverRatio;
+            sctx.drawImage(
+                bg.imgElement,
+                (srcCanvas.width - drawW) / 2,
+                (srcCanvas.height - drawH) / 2,
+                drawW,
+                drawH,
+            );
         }
 
         setAiDepthBusy(true);
@@ -1019,7 +1046,18 @@ export default function ArCameraOverlay() {
                 height: estimated.height,
             };
             setAiDepthMap(mapData);
-            applyDepthMaskToOcclusion(mapData, aiDepthThreshold());
+
+            // キャラクター足元の深度を基準にしきい値を自動設定
+            const footDepth = sampleDepthAtNormalizedPoint(
+                estimated.data,
+                estimated.width,
+                estimated.height,
+                clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
+                clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
+            );
+            const autoThreshold = Math.round(clampFinite(footDepth + 0.03, 0.12, 0.92, 0.55) * 100) / 100;
+            setAiDepthThreshold(autoThreshold);
+            applyDepthMaskToOcclusion(mapData, autoThreshold);
             const estimatedTilt = estimateGroundTiltFromDepthMap(
                 estimated.data,
                 estimated.width,
