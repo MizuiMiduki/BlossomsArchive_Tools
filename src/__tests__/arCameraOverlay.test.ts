@@ -12,6 +12,7 @@ import {
     isSupportedImageFile,
     normalizeDepthMap,
     generateDepthOcclusionMaskPixels,
+    estimateCharacterGroundDepth,
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
@@ -208,6 +209,57 @@ describe("arCameraOverlay utilities", () => {
         expect(mask[3]).toBe(0);
         // ピクセル3 (depth=1.0, 手前) は不透明 (255)
         expect(mask[3 * 4 + 3]).toBe(255);
+    });
+
+    it("generateDepthOcclusionMaskPixels: preserves thin fence ridges & bridges 1px gaps with guide refinement", () => {
+        // 7x7 深度マップ: 背景0.30、中央列(x=3)に細い柵(0.54)、y=3だけ0.48に抜けた状態
+        const depth = new Float32Array(7 * 7).fill(0.3);
+        for (let y = 0; y < 7; y++) {
+            depth[y * 7 + 3] = y === 3 ? 0.48 : 0.54;
+        }
+        // threshold=0.55 だと通常は全透明だが、preserveThinStructures=true で局所ピーク強調＋1pxギャップ補完が効く
+        const plainMask = generateDepthOcclusionMaskPixels(depth, 7, 7, 0.55, 0.01);
+        expect(plainMask[(2 * 7 + 3) * 4 + 3]).toBe(0);
+
+        const fenceMask = generateDepthOcclusionMaskPixels(depth, 7, 7, 0.55, 0.01, {
+            preserveThinStructures: true,
+        });
+        expect(fenceMask[(2 * 7 + 3) * 4 + 3]).toBeGreaterThan(128);
+        // y=3 の1px途切れも上下からブリッジ補完される
+        expect(fenceMask[(3 * 7 + 3) * 4 + 3]).toBeGreaterThan(128);
+
+        // ガイドRGBA付きアップサンプリング(14x14)で正しいサイズが出力されること
+        const guide = new Uint8ClampedArray(14 * 14 * 4).fill(200);
+        for (let gy = 0; gy < 14; gy++) {
+            for (let gx = 6; gx <= 7; gx++) {
+                const p = (gy * 14 + gx) * 4;
+                guide[p] = 40;
+                guide[p + 1] = 40;
+                guide[p + 2] = 40;
+                guide[p + 3] = 255;
+            }
+        }
+        const guidedMask = generateDepthOcclusionMaskPixels(depth, 7, 7, 0.55, 0.01, {
+            preserveThinStructures: true,
+            guideRgba: guide,
+            guideWidth: 14,
+            guideHeight: 14,
+        });
+        expect(guidedMask.length).toBe(14 * 14 * 4);
+        // 柵の色(40)を持つ中央はマスクされ、背景色(200)の端(gx=0)は透明のまま
+        expect(guidedMask[(7 * 14 + 6) * 4 + 3]).toBeGreaterThan(128);
+        expect(guidedMask[(7 * 14 + 0) * 4 + 3]).toBe(0);
+    });
+
+    it("estimateCharacterGroundDepth: ignores foreground fence outliers near character feet", () => {
+        const depth = new Float32Array(20 * 20).fill(0.4);
+        // 足元中心付近に手前の柵(0.85)がかぶっている状態
+        for (let y = 14; y <= 17; y++) {
+            depth[y * 20 + 10] = 0.85;
+            depth[y * 20 + 11] = 0.85;
+        }
+        const ground = estimateCharacterGroundDepth(depth, 20, 20, 0.5, 0.78);
+        expect(ground).toBeCloseTo(0.4, 2);
     });
 
     it("calculateScaleForCharacterHeight: calculates realistic scale from height(cm), distance(m), and alpha ratio", () => {

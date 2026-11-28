@@ -25,11 +25,11 @@ import {
     createSafeObjectUrl,
     isSupportedImageFile,
     generateDepthOcclusionMaskPixels,
+    estimateCharacterGroundDepth,
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
     estimateBackgroundOpticalShift,
-    sampleDepthAtNormalizedPoint,
     calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
 
@@ -98,6 +98,9 @@ export default function ArCameraOverlay() {
         data: Float32Array;
         width: number;
         height: number;
+        guideRgba?: Uint8ClampedArray;
+        guideWidth?: number;
+        guideHeight?: number;
     } | null>(null);
     const [aiDepthThreshold, setAiDepthThreshold] = createSignal<number>(0.55);
     const [aiDepthBusy, setAiDepthBusy] = createSignal<boolean>(false);
@@ -972,29 +975,45 @@ export default function ArCameraOverlay() {
     };
 
     const applyDepthMaskToOcclusion = (
-        depthMap: { data: Float32Array; width: number; height: number },
+        depthMap: {
+            data: Float32Array;
+            width: number;
+            height: number;
+            guideRgba?: Uint8ClampedArray;
+            guideWidth?: number;
+            guideHeight?: number;
+        },
         threshold01: number,
     ) => {
         const mctx = ensureOcclusionCanvas();
-        if (!mctx) return;
+        if (!mctx || !occlusionCanvas) return;
+        const outW =
+            depthMap.guideWidth && depthMap.guideWidth >= 8 ? depthMap.guideWidth : depthMap.width;
+        const outH =
+            depthMap.guideHeight && depthMap.guideHeight >= 8 ? depthMap.guideHeight : depthMap.height;
         const pixels = generateDepthOcclusionMaskPixels(
             depthMap.data,
             depthMap.width,
             depthMap.height,
             threshold01,
+            0.012,
+            {
+                preserveThinStructures: true,
+                guideRgba: depthMap.guideRgba,
+                guideWidth: outW,
+                guideHeight: outH,
+            },
         );
-        const tmpCanvas = document.createElement("canvas");
-        tmpCanvas.width = depthMap.width;
-        tmpCanvas.height = depthMap.height;
-        const tctx = tmpCanvas.getContext("2d");
-        if (!tctx) return;
-        tctx.putImageData(
-            new ImageData(new Uint8ClampedArray(pixels), depthMap.width, depthMap.height),
+        if (occlusionCanvas.width !== outW || occlusionCanvas.height !== outH) {
+            occlusionCanvas.width = outW;
+            occlusionCanvas.height = outH;
+        }
+        mctx.clearRect(0, 0, outW, outH);
+        mctx.putImageData(
+            new ImageData(new Uint8ClampedArray(pixels), outW, outH),
             0,
             0,
         );
-        mctx.clearRect(0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
-        mctx.drawImage(tmpCanvas, 0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
         captureMaskAnchor();
         setHasOcclusion(true);
     };
@@ -1041,14 +1060,14 @@ export default function ArCameraOverlay() {
             return;
         }
 
-        // プレビュー画面と完全に同じアスペクト比・cover切り抜き範囲で解析用キャンバスを生成（位置ズレ防止）
+        // プレビュー画面と完全に同じアスペクト比・cover切り抜き範囲で解析用キャンバスを生成（位置ズレ防止・ガイド画像高精細化）
         const viewW = previewCanvasRef && previewCanvasRef.width > 0 ? previewCanvasRef.width : 720;
         const viewH = previewCanvasRef && previewCanvasRef.height > 0 ? previewCanvasRef.height : 1280;
-        const fitRatio = Math.min(1, 560 / Math.max(viewW, viewH));
+        const fitRatio = Math.min(1, 720 / Math.max(viewW, viewH));
         const srcCanvas = document.createElement("canvas");
         srcCanvas.width = Math.max(32, Math.round(viewW * fitRatio));
         srcCanvas.height = Math.max(32, Math.round(viewH * fitRatio));
-        const sctx = srcCanvas.getContext("2d");
+        const sctx = srcCanvas.getContext("2d", { willReadFrequently: true });
         if (!sctx) return;
 
         if (activeCam && videoRef) {
@@ -1085,22 +1104,33 @@ export default function ArCameraOverlay() {
             const estimated = await estimateDepthMapFromCanvas(srcCanvas, (msg) =>
                 setAiDepthStatus(msg),
             );
+            let guideRgba: Uint8ClampedArray | undefined;
+            try {
+                guideRgba = new Uint8ClampedArray(
+                    sctx.getImageData(0, 0, srcCanvas.width, srcCanvas.height).data,
+                );
+            } catch {
+                guideRgba = undefined;
+            }
             const mapData = {
                 data: estimated.data,
                 width: estimated.width,
                 height: estimated.height,
+                guideRgba,
+                guideWidth: srcCanvas.width,
+                guideHeight: srcCanvas.height,
             };
             setAiDepthMap(mapData);
 
-            // キャラクター足元の深度を基準にしきい値を自動設定
-            const footDepth = sampleDepthAtNormalizedPoint(
+            // 足元に手前の柵がかぶっても引っ張られないよう、足元周辺の床面深度（下位30%点）を基準にする
+            const groundDepth = estimateCharacterGroundDepth(
                 estimated.data,
                 estimated.width,
                 estimated.height,
                 clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
                 clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
             );
-            const autoThreshold = Math.round(clampFinite(footDepth + 0.03, 0.12, 0.92, 0.55) * 100) / 100;
+            const autoThreshold = Math.round(clampFinite(groundDepth + 0.02, 0.12, 0.92, 0.55) * 100) / 100;
             setAiDepthThreshold(autoThreshold);
             applyDepthMaskToOcclusion(mapData, autoThreshold);
             const estimatedTilt = estimateGroundTiltFromDepthMap(

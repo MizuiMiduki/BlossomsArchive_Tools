@@ -742,6 +742,84 @@ export function normalizeDepthMap(
     return out;
 }
 
+export interface DepthOcclusionMaskOptions {
+    /** 細い手前構造（柵・手すり・支柱）の局所ピーク強調と微小ギャップ補完を有効にする */
+    preserveThinStructures?: boolean;
+    /** 元映像のガイドRGBA配列（指定時は深度境界を元映像の輪郭に追従させる） */
+    guideRgba?: Uint8ClampedArray;
+    /** ガイド画像の幅 */
+    guideWidth?: number;
+    /** ガイド画像の高さ */
+    guideHeight?: number;
+}
+
+/**
+ * 細い手前構造（柵・手すり・支柱など）の局所ピーク強調と1pxギャップ補完を適用した深度配列を生成する
+ */
+function enhanceThinStructuresInDepth(
+    normalizedDepth: ArrayLike<number>,
+    width: number,
+    height: number,
+    threshold: number,
+): Float32Array {
+    const total = width * height;
+    const boosted = new Float32Array(total);
+
+    // 1. 5x5 近傍平均との差分から局所的な手前突出（細い柵・棒）を強調
+    for (let y = 0; y < height; y++) {
+        const y0 = Math.max(0, y - 2);
+        const y1 = Math.min(height - 1, y + 2);
+        for (let x = 0; x < width; x++) {
+            const idx = y * width + x;
+            const d = idx < normalizedDepth.length ? clampFinite(normalizedDepth[idx], 0, 1, 0) : 0;
+            const x0 = Math.max(0, x - 2);
+            const x1 = Math.min(width - 1, x + 2);
+            let sum = 0;
+            let cnt = 0;
+            for (let sy = y0; sy <= y1; sy++) {
+                const row = sy * width;
+                for (let sx = x0; sx <= x1; sx++) {
+                    const sIdx = row + sx;
+                    sum += sIdx < normalizedDepth.length ? clampFinite(normalizedDepth[sIdx], 0, 1, 0) : 0;
+                    cnt++;
+                }
+            }
+            const localAvg = sum / Math.max(1, cnt);
+            const ridge = d - localAvg;
+            // 背景より手前に突き出た細い構造は境界ボケで値が下がりやすいため局所ピークを補正
+            boosted[idx] = ridge > 0.008 ? clampFinite(d + Math.min(0.055, ridge * 0.85), 0, 1, d) : d;
+        }
+    }
+
+    // 2. 細い柵の1px途切れを防ぐ方向性ギャップ補完（左右・上下・対角のいずれかが両方閾値超えなら補完）
+    const closed = new Float32Array(boosted);
+    for (let y = 1; y < height - 1; y++) {
+        const row = y * width;
+        for (let x = 1; x < width - 1; x++) {
+            const idx = row + x;
+            if (boosted[idx] > threshold) continue;
+            const l = boosted[idx - 1];
+            const r = boosted[idx + 1];
+            const u = boosted[idx - width];
+            const dn = boosted[idx + width];
+            const ul = boosted[idx - width - 1];
+            const dr = boosted[idx + width + 1];
+            const ur = boosted[idx - width + 1];
+            const dl = boosted[idx + width - 1];
+
+            let bridgeVal = 0;
+            if (l > threshold && r > threshold) bridgeVal = Math.max(bridgeVal, Math.min(l, r));
+            if (u > threshold && dn > threshold) bridgeVal = Math.max(bridgeVal, Math.min(u, dn));
+            if (ul > threshold && dr > threshold) bridgeVal = Math.max(bridgeVal, Math.min(ul, dr));
+            if (ur > threshold && dl > threshold) bridgeVal = Math.max(bridgeVal, Math.min(ur, dl));
+            if (bridgeVal > 0) {
+                closed[idx] = bridgeVal;
+            }
+        }
+    }
+    return closed;
+}
+
 /**
  * 正規化深度マップ（0=奥 .. 1=手前）とキャラクターの前後しきい値から、
  * キャラクターより手前にある物体を隠すための遮蔽マスク RGBA ピクセル配列を生成する
@@ -752,16 +830,93 @@ export function generateDepthOcclusionMaskPixels(
     height: number,
     threshold01: number,
     feather = 0.015,
+    options?: DepthOcclusionMaskOptions,
 ): Uint8ClampedArray {
     const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
     const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
     const total = safeW * safeH;
-    const out = new Uint8ClampedArray(total * 4);
     const threshold = clampFinite(threshold01, 0, 1, 0.55);
     const safeFeather = clampFinite(feather, 0.001, 0.25, 0.015);
 
-    for (let i = 0; i < total && i < normalizedDepth.length; i++) {
-        const d = clampFinite(normalizedDepth[i], 0, 1, 0);
+    const depthSource: ArrayLike<number> =
+        options?.preserveThinStructures && safeW >= 5 && safeH >= 5
+            ? enhanceThinStructuresInDepth(normalizedDepth, safeW, safeH, threshold)
+            : normalizedDepth;
+
+    const guide = options?.guideRgba;
+    const guideW = Math.floor(clampFinite(options?.guideWidth ?? 0, 0, 4096, 0));
+    const guideH = Math.floor(clampFinite(options?.guideHeight ?? 0, 0, 4096, 0));
+    const useGuide =
+        Boolean(guide) &&
+        guideW >= 8 &&
+        guideH >= 8 &&
+        guide!.length >= guideW * guideH * 4;
+
+    if (useGuide && guide) {
+        const out = new Uint8ClampedArray(guideW * guideH * 4);
+        // ガイド色類似度に基づく Joint Bilateral アップサンプリングで、柵や手すりの輪郭にピタッと追従させる
+        const invTwoSigmaColorSq = 1 / (2 * 28 * 28);
+        const scaleX = safeW / guideW;
+        const scaleY = safeH / guideH;
+
+        for (let gy = 0; gy < guideH; gy++) {
+            const fy = (gy + 0.5) * scaleY - 0.5;
+            const cy = Math.round(fy);
+            for (let gx = 0; gx < guideW; gx++) {
+                const gIdx = (gy * guideW + gx) * 4;
+                const r0 = guide[gIdx];
+                const g0 = guide[gIdx + 1];
+                const b0 = guide[gIdx + 2];
+
+                const fx = (gx + 0.5) * scaleX - 0.5;
+                const cx = Math.round(fx);
+
+                let wSum = 0;
+                let dSum = 0;
+                for (let oy = -1; oy <= 1; oy++) {
+                    const sy = Math.min(safeH - 1, Math.max(0, cy + oy));
+                    const sgy = Math.min(guideH - 1, Math.max(0, Math.round(((sy + 0.5) / safeH) * guideH - 0.5)));
+                    for (let ox = -1; ox <= 1; ox++) {
+                        const sx = Math.min(safeW - 1, Math.max(0, cx + ox));
+                        const sgx = Math.min(guideW - 1, Math.max(0, Math.round(((sx + 0.5) / safeW) * guideW - 0.5)));
+
+                        const sgIdx = (sgy * guideW + sgx) * 4;
+                        const dr = r0 - guide[sgIdx];
+                        const dg = g0 - guide[sgIdx + 1];
+                        const db = b0 - guide[sgIdx + 2];
+                        const colorSq = dr * dr + dg * dg + db * db;
+                        const spatialW = ox === 0 && oy === 0 ? 1.0 : ox === 0 || oy === 0 ? 0.72 : 0.48;
+                        const w = spatialW * Math.exp(-colorSq * invTwoSigmaColorSq);
+
+                        const dIdx = sy * safeW + sx;
+                        const dVal = dIdx < depthSource.length ? clampFinite(depthSource[dIdx], 0, 1, 0) : 0;
+                        wSum += w;
+                        dSum += w * dVal;
+                    }
+                }
+
+                const d = wSum > 1e-6 ? dSum / wSum : 0;
+                if (d <= threshold - safeFeather) continue;
+
+                let alphaRatio = 1;
+                if (d < threshold + safeFeather) {
+                    alphaRatio = (d - (threshold - safeFeather)) / (safeFeather * 2);
+                }
+                const alpha = Math.round(clampFinite(alphaRatio, 0, 1, 0) * 255);
+                if (alpha > 0) {
+                    out[gIdx] = 255;
+                    out[gIdx + 1] = 0;
+                    out[gIdx + 2] = 0;
+                    out[gIdx + 3] = alpha;
+                }
+            }
+        }
+        return out;
+    }
+
+    const out = new Uint8ClampedArray(total * 4);
+    for (let i = 0; i < total && i < depthSource.length; i++) {
+        const d = clampFinite(depthSource[i], 0, 1, 0);
         if (d <= threshold - safeFeather) continue;
 
         let alphaRatio = 1;
@@ -778,6 +933,43 @@ export function generateDepthOcclusionMaskPixels(
         }
     }
     return out;
+}
+
+/**
+ * キャラクター足元周辺の深度サンプルから接地床面（下位30%点）を推定する。
+ * 足元に手前の柵や手すりが重なっていても、手前の外れ値に引きずられず奥の床深度を拾える。
+ */
+export function estimateCharacterGroundDepth(
+    normalizedDepth: ArrayLike<number>,
+    width: number,
+    height: number,
+    nx: number,
+    ny: number,
+): number {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    if (normalizedDepth.length < safeW * safeH) return 0.5;
+
+    const cx = clampFinite(nx, 0.05, 0.95, 0.5);
+    const cy = clampFinite(ny, 0.05, 0.95, 0.78);
+    const samples: number[] = [];
+
+    for (let iy = -2; iy <= 2; iy++) {
+        const syNorm = clampFinite(cy + iy * 0.025, 0, 1, cy);
+        const py = Math.round(syNorm * (safeH - 1));
+        for (let ix = -2; ix <= 2; ix++) {
+            const sxNorm = clampFinite(cx + ix * 0.04, 0, 1, cx);
+            const px = Math.round(sxNorm * (safeW - 1));
+            const v = normalizedDepth[py * safeW + px];
+            if (Number.isFinite(v)) {
+                samples.push(clampFinite(v, 0, 1, 0.5));
+            }
+        }
+    }
+    if (samples.length === 0) return 0.5;
+    samples.sort((a, b) => a - b);
+    const percentileIdx = Math.min(samples.length - 1, Math.floor(samples.length * 0.3));
+    return samples[percentileIdx];
 }
 
 /**
