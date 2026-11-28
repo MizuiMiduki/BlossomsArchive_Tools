@@ -28,6 +28,10 @@ describe("ArCameraOverlay Page", () => {
         expect(screen.getByRole("button", { name: "カメラを起動" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "撮影する (シャッター)" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "全画面" })).toHaveAttribute("aria-pressed", "false");
+        expect(screen.getByRole("button", { name: "ドライブ・ファイル" })).toBeInTheDocument();
+        expect(
+            screen.getByLabelText("ドライブやファイルアプリから透過画像を選択"),
+        ).not.toHaveAttribute("accept");
     });
 
     it("toggles fullscreen camera mode and settings drawer", async () => {

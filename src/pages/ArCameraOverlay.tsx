@@ -22,6 +22,7 @@ import {
     calculateGyroParallaxOffset,
     createShadowSilhouettePixels,
     createSafeObjectUrl,
+    isSupportedImageFile,
 } from "../utils/arCameraOverlay";
 
 interface OverlayImageAsset {
@@ -54,6 +55,7 @@ export default function ArCameraOverlay() {
     let videoRef: HTMLVideoElement | undefined;
     let previewCanvasRef: HTMLCanvasElement | undefined;
     let overlayInputRef: HTMLInputElement | undefined;
+    let overlayDriveInputRef: HTMLInputElement | undefined;
     let bgInputRef: HTMLInputElement | undefined;
     let lightSampleCanvas: HTMLCanvasElement | undefined;
 
@@ -317,7 +319,7 @@ export default function ArCameraOverlay() {
     };
 
     const handleOverlayFile = (file: File) => {
-        if (!file.type.startsWith("image/")) return;
+        if (!isSupportedImageFile(file.name, file.type)) return;
         const prev = overlayAsset();
         if (prev?.previewUrl) {
             URL.revokeObjectURL(prev.previewUrl);
@@ -331,7 +333,7 @@ export default function ArCameraOverlay() {
     };
 
     const handleBgFile = (file: File) => {
-        if (!file.type.startsWith("image/")) return;
+        if (!isSupportedImageFile(file.name, file.type)) return;
         const prev = bgAsset();
         if (prev?.previewUrl) {
             URL.revokeObjectURL(prev.previewUrl);
@@ -1108,17 +1110,25 @@ export default function ArCameraOverlay() {
                                 <p class="ba-text-xs" style={{ margin: "0 0 0.5rem" }}>
                                     立ち絵などの透過画像を選んでください（ドラッグ移動・2本指ピンチで拡大縮小）
                                 </p>
-                                <div class="ba-flex ba-justify-center ba-gap-2">
+                                <div class="ba-flex ba-flex-wrap ba-justify-center ba-gap-2">
                                     <button
                                         type="button"
                                         class="ba-btn ba-btn--primary ba-btn--xs"
                                         onClick={() => overlayInputRef?.click()}
                                     >
-                                        画像を選択
+                                        写真から選択
                                     </button>
                                     <button
                                         type="button"
                                         class="ba-btn ba-btn--secondary ba-btn--xs"
+                                        onClick={() => overlayDriveInputRef?.click()}
+                                    >
+                                        ドライブ・ファイルから
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        style={{ color: "#f8fafc", "border-color": "rgba(255,255,255,0.4)" }}
                                         onClick={loadSampleCharacter}
                                     >
                                         サンプル立ち絵
@@ -1178,7 +1188,14 @@ export default function ArCameraOverlay() {
                                 class="ba-btn ba-btn--secondary ba-btn--sm"
                                 onClick={() => overlayInputRef?.click()}
                             >
-                                立ち絵選択
+                                写真から選択
+                            </button>
+                            <button
+                                type="button"
+                                class="ba-btn ba-btn--secondary ba-btn--sm"
+                                onClick={() => overlayDriveInputRef?.click()}
+                            >
+                                ドライブ・ファイル
                             </button>
                             <button
                                 type="button"
@@ -1247,21 +1264,33 @@ export default function ArCameraOverlay() {
                         type="file"
                         accept="image/*"
                         class="ba-sr-only"
-                        aria-label="重ねる透過画像を選択"
+                        aria-label="写真ライブラリから透過画像を選択"
                         onChange={(e) => {
                             const file = e.currentTarget.files?.[0];
                             if (file) handleOverlayFile(file);
+                            e.currentTarget.value = "";
+                        }}
+                    />
+                    <input
+                        ref={overlayDriveInputRef}
+                        type="file"
+                        class="ba-sr-only"
+                        aria-label="ドライブやファイルアプリから透過画像を選択"
+                        onChange={(e) => {
+                            const file = e.currentTarget.files?.[0];
+                            if (file) handleOverlayFile(file);
+                            e.currentTarget.value = "";
                         }}
                     />
                     <input
                         ref={bgInputRef}
                         type="file"
-                        accept="image/*"
                         class="ba-sr-only"
                         aria-label="テスト用背景画像を選択"
                         onChange={(e) => {
                             const file = e.currentTarget.files?.[0];
                             if (file) handleBgFile(file);
+                            e.currentTarget.value = "";
                         }}
                     />
 

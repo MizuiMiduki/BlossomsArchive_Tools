@@ -426,3 +426,28 @@ export function createSafeObjectUrl(blob: Blob): string {
     }
     return url;
 }
+
+const IMAGE_FILE_EXTENSIONS = new Set([
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
+    "gif",
+    "bmp",
+    "svg",
+    "avif",
+]);
+
+/**
+ * クラウドドライブ等から選択されたファイル（MIMEタイプが空やoctet-streamになる場合を含む）が
+ * 画像ファイルとして扱えるか判定する
+ */
+export function isSupportedImageFile(fileName: string, mimeType: string): boolean {
+    if (mimeType && mimeType.toLowerCase().startsWith("image/")) {
+        return true;
+    }
+    const lastDot = fileName.lastIndexOf(".");
+    if (lastDot === -1) return false;
+    const ext = fileName.slice(lastDot + 1).toLowerCase();
+    return IMAGE_FILE_EXTENSIONS.has(ext);
+}

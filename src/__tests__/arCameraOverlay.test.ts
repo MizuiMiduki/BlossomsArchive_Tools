@@ -8,6 +8,7 @@ import {
     calculateProjectedShadowTransform,
     calculateGyroParallaxOffset,
     createShadowSilhouettePixels,
+    isSupportedImageFile,
 } from "../utils/arCameraOverlay";
 
 describe("arCameraOverlay utilities", () => {
@@ -138,5 +139,13 @@ describe("arCameraOverlay utilities", () => {
             15, 20, 35, 200,
             0, 0, 0, 0,
         ]);
+    });
+
+    it("isSupportedImageFile: accepts cloud drive files with empty or octet-stream MIME types by extension", () => {
+        expect(isSupportedImageFile("chara.png", "")).toBe(true);
+        expect(isSupportedImageFile("chara.WEBP", "application/octet-stream")).toBe(true);
+        expect(isSupportedImageFile("photo", "image/jpeg")).toBe(true);
+        expect(isSupportedImageFile("notes.txt", "text/plain")).toBe(false);
+        expect(isSupportedImageFile("archive.zip", "")).toBe(false);
     });
 });
