@@ -1,5 +1,6 @@
 import { spawn, execFile } from "node:child_process";
 import fs from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -123,52 +124,80 @@ async function getRoutesToAudit(): Promise<string[]> {
     return uniquePaths.filter((p) => p !== "*");
 }
 
-async function startPreviewServer() {
-    console.log("🚀 Starting vite preview server on port 4173...");
-    const viteJs = path.join(ROOT_DIR, "node_modules", "vite", "bin", "vite.js");
-    const viteBin = path.join(ROOT_DIR, "node_modules", ".bin", "vite");
-    const useDirectNode = fs.existsSync(viteJs);
-    const cmd = useDirectNode ? process.execPath : viteBin;
-    const args = useDirectNode
-        ? [viteJs, "preview", "--port", "4173", "--host", "127.0.0.1"]
-        : ["preview", "--port", "4173", "--host", "127.0.0.1"];
+const STATIC_MIME_TYPES: Record<string, string> = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".mjs": "application/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+    ".txt": "text/plain; charset=utf-8",
+    ".xml": "application/xml; charset=utf-8",
+    ".webmanifest": "application/manifest+json; charset=utf-8",
+    ".wasm": "application/wasm",
+};
 
-    const serverProcess = spawn(cmd, args, {
-        cwd: ROOT_DIR,
-        stdio: ["ignore", "pipe", "pipe"],
+async function startPreviewServer() {
+    console.log("🚀 Starting lightweight static preview server on port 4173...");
+    const distDir = path.resolve(ROOT_DIR, "dist");
+
+    const server = http.createServer((req, res) => {
+        const reqUrl = (req.url || "/").split("?")[0];
+        let decodedPath = "/";
+        try {
+            decodedPath = decodeURIComponent(reqUrl);
+        } catch {
+            decodedPath = "/";
+        }
+
+        const relPath = decodedPath.replace(/^\/+/, "");
+        let targetPath = path.resolve(distDir, relPath);
+        if (!targetPath.startsWith(distDir + path.sep) && targetPath !== distDir) {
+            res.writeHead(403);
+            res.end("Forbidden");
+            return;
+        }
+
+        if (fs.existsSync(targetPath) && fs.statSync(targetPath).isDirectory()) {
+            targetPath = path.join(targetPath, "index.html");
+        } else if (!fs.existsSync(targetPath)) {
+            const htmlCandidate = `${targetPath}.html`;
+            const indexCandidate = path.join(targetPath, "index.html");
+            if (fs.existsSync(htmlCandidate) && fs.statSync(htmlCandidate).isFile()) {
+                targetPath = htmlCandidate;
+            } else if (fs.existsSync(indexCandidate) && fs.statSync(indexCandidate).isFile()) {
+                targetPath = indexCandidate;
+            } else {
+                targetPath = path.join(distDir, "index.html");
+            }
+        }
+
+        const ext = path.extname(targetPath).toLowerCase();
+        const contentType = STATIC_MIME_TYPES[ext] || "application/octet-stream";
+        const isImmutableAsset = decodedPath.startsWith("/assets/");
+        res.writeHead(200, {
+            "Content-Type": contentType,
+            "Cache-Control": isImmutableAsset ? "public, max-age=31536000, immutable" : "no-cache",
+        });
+        fs.createReadStream(targetPath).pipe(res);
     });
 
-    await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            serverProcess.kill();
-            reject(new Error("Vite preview server startup timed out"));
-        }, 15000);
-
-        serverProcess.on("error", (err) => {
-            clearTimeout(timeout);
-            reject(err);
-        });
-
-        serverProcess.stdout.on("data", (data) => {
-            if (data.toString().includes("4173")) {
-                clearTimeout(timeout);
-                resolve(null);
-            }
-        });
-
-        serverProcess.stderr.on("data", (data) => {
-            const msg = data.toString();
-            if (msg.includes("4173")) {
-                clearTimeout(timeout);
-                resolve(null);
-            } else {
-                console.error("[vite preview stderr]", msg.trim());
-            }
-        });
+    await new Promise<void>((resolve, reject) => {
+        server.once("error", reject);
+        server.listen(4173, "127.0.0.1", () => resolve());
     });
 
     console.log("✅ Preview server ready at http://127.0.0.1:4173");
-    return serverProcess;
+    return {
+        kill: () => {
+            server.close();
+        },
+    };
 }
 
 async function auditUrl(

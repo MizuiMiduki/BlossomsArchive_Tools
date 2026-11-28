@@ -172,13 +172,13 @@ jobs:
                     echo "dist/indexnow.json not found, skipping IndexNow submission"
                   fi
 
-    # ─── 4. Lighthouse 並列分散監査 (8シャード均等分散でキュー待ちゼロ・即時並列実行) ───
+    # ─── 4. Lighthouse 並列分散監査 (16シャード均等分散 + pnpm/node_modules不要の高速実行) ───
     lighthouse-audit:
         needs: [build]
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                shard: [1, 2, 3, 4, 5, 6, 7, 8]
+                shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
             fail-fast: false
         steps:
             - name: Checkout repository
@@ -189,24 +189,6 @@ jobs:
               with:
                   node-version: "24"
                   package-manager-cache: false
-
-            - name: Install pnpm
-              uses: pnpm/action-setup@v5
-
-            - name: Get pnpm store directory
-              shell: bash
-              run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-            - name: Setup pnpm cache
-              uses: actions/cache@v5
-              with:
-                  path: ${{ env.STORE_PATH }}
-                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-                  restore-keys: |
-                      ${{ runner.os }}-pnpm-store-
-
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
 
             - name: Download Build Artifacts
               uses: actions/download-artifact@v8
@@ -231,7 +213,7 @@ jobs:
             - name: Run Sharded Lighthouse Audit
               run: |
                   export PATH="/home/runner/.npm-global/bin:$PATH"
-                  npx tsx scripts/audit-lighthouse.ts --shard=${{ matrix.shard }}/8 --report-json=dist-reports/shard-${{ matrix.shard }}.json
+                  node scripts/audit-lighthouse.ts --shard=${{ matrix.shard }}/16 --report-json=dist-reports/shard-${{ matrix.shard }}.json
 
             - name: Upload Shard Report
               uses: actions/upload-artifact@v7
@@ -266,7 +248,7 @@ jobs:
             - name: Aggregate Reports
               id: aggregate
               run: |
-                  npx tsx scripts/audit-lighthouse.ts --aggregate=dist-shards
+                  node scripts/audit-lighthouse.ts --aggregate=dist-shards
 
             - name: Create Issue on PageSpeed Regression
               if: steps.aggregate.outputs.has_issues == 'true'
