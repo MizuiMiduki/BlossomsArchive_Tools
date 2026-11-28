@@ -904,11 +904,14 @@ export default function ArCameraOverlay() {
             asset && asset.alphaBounds.hasOpaquePixels && asset.height > 0
                 ? clampFinite(asset.alphaBounds.height / asset.height, 0.1, 1.0, 1.0)
                 : 1.0;
+        const isPortraitView =
+            !previewCanvasRef || previewCanvasRef.height >= previewCanvasRef.width;
         setScale(
             calculateScaleForCharacterHeight({
                 characterHeightCm: heightCm,
                 distanceMeters: distanceM,
                 opaqueHeightRatio: opaqueRatio,
+                verticalFovDeg: isPortraitView ? 74 : 52,
             }),
         );
     };

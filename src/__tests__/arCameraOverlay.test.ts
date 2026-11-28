@@ -210,6 +210,16 @@ describe("arCameraOverlay utilities", () => {
         expect(Number.isFinite(sInvalid)).toBe(true);
         expect(sInvalid).toBeGreaterThanOrEqual(0.1);
         expect(sInvalid).toBeLessThanOrEqual(4.0);
+
+        // 縦持ちスマホ広角(74°)・身長160cm・距離2.0mで画面占有率が約50〜55%(scale 0.8〜0.95)に収まること
+        const sPortrait2m = calculateScaleForCharacterHeight({
+            characterHeightCm: 160,
+            distanceMeters: 2.0,
+            opaqueHeightRatio: 1.0,
+            verticalFovDeg: 74,
+        });
+        expect(sPortrait2m).toBeGreaterThanOrEqual(0.75);
+        expect(sPortrait2m).toBeLessThanOrEqual(0.95);
     });
 
     it("estimateGroundTiltFromDepthMap: estimates steeper tilt for stronger foreground-to-midground gradient", () => {

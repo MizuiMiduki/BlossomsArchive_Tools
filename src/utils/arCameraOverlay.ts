@@ -650,7 +650,7 @@ export function calculateScaleForCharacterHeight(params: CharacterHeightScalePar
     const heightM = clampFinite(params.characterHeightCm, 20, 350, 160) / 100;
     const distM = clampFinite(params.distanceMeters, 0.3, 30, 2.5);
     const opaqueRatio = clampFinite(params.opaqueHeightRatio ?? 1.0, 0.1, 1.0, 1.0);
-    const fovRad = (clampFinite(params.verticalFovDeg ?? 60, 25, 110, 60) * Math.PI) / 180;
+    const fovRad = (clampFinite(params.verticalFovDeg ?? 72, 25, 110, 72) * Math.PI) / 180;
     const baseRatio = clampFinite(params.baseCanvasHeightRatio ?? 0.62, 0.1, 1.0, 0.62);
 
     const viewHeightM = 2 * distM * Math.tan(fovRad / 2);
