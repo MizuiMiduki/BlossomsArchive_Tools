@@ -32,6 +32,7 @@ const TierMaker = lazy(() => import("./pages/TierMaker"));
 const JsonLdViewer = lazy(() => import("./pages/JsonLdViewer"));
 const SitemapVisualizer = lazy(() => import("./pages/SitemapVisualizer"));
 const MosaicArt = lazy(() => import("./pages/MosaicArt"));
+const ArCameraOverlay = lazy(() => import("./pages/ArCameraOverlay"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const baseRoutes = [
@@ -63,6 +64,7 @@ const baseRoutes = [
     { path: "/json-ld-viewer", component: JsonLdViewer },
     { path: "/sitemap-visualizer", component: SitemapVisualizer },
     { path: "/mosaic-art", component: MosaicArt },
+    { path: "/ar-camera", component: ArCameraOverlay },
 ];
 
 const allRoutes = [...baseRoutes];

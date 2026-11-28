@@ -673,6 +673,33 @@
         "完成させたい画像に合わせてタイル写真を並べるフォトモザイクツール",
         "ブラウザ完結で安全に高解像度モザイクアートを生成したい"
       ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:ar-camera",
+      "displayName": "ARカメラ・立ち絵重ね撮影 | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/ar-camera",
+      "description": "カメラ映像に立ち絵などの透過画像を重ねて撮影できる無料Webツール。リアルな接地・投影影を計算するARモードと、画面上の自由な位置に固定できるオーバーレイモードに対応。",
+      "capabilities": [
+        "LiveCameraOverlay",
+        "RealisticProjectedShadow",
+        "AmbientLightEstimation",
+        "GyroSpaceAnchor"
+      ],
+      "tags": [
+        "ARカメラ",
+        "立ち絵合成",
+        "透過画像",
+        "オーバーレイカメラ",
+        "リアル影計算"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-28T00:00:00Z",
+      "representativeQueries": [
+        "スマホやPCのカメラ映像に立ち絵などの透過PNGを重ねて撮影したい",
+        "リアルな地面の影を計算してキャラクターがその場にいるようなAR写真を撮りたい",
+        "画面上の自由な位置に透過画像を固定したままカメラで撮影したい"
+      ]
     }
   ]
 }

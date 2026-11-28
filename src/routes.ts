@@ -281,6 +281,21 @@ export const routes: Route[] = [
         ],
     },
     {
+        path: "/ar-camera",
+        title: "ARカメラ・立ち絵重ね撮影",
+        description:
+            "カメラ映像に立ち絵などの透過画像を重ねて撮影できる無料Webツールです。リアルな接地・投影影を計算するARモードと、画面上の自由な位置に固定できるオーバーレイモードの両方に対応しています。",
+        applicationCategory: "MultimediaApplication",
+        keywords: [
+            "ARカメラ",
+            "立ち絵合成",
+            "透過画像",
+            "オーバーレイカメラ",
+            "リアル影計算",
+            "ブラウザカメラ",
+        ],
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",

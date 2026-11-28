@@ -1076,6 +1076,44 @@ export const ROUTE_TRANSLATIONS: RouteTranslationsMap = {
             keywords: ["мозаика из фото", "фотомозаика", "генератор мозаики", "обработка фото"],
         },
     },
+    "/ar-camera": {
+        ja: {
+            title: "ARカメラ・立ち絵重ね撮影",
+            description:
+                "カメラ映像に立ち絵などの透過画像を重ねて撮影できる無料Webツールです。リアルな接地・投影影を計算するARモードと、画面上の自由な位置に固定できるオーバーレイモードの両方に対応しています。",
+            keywords: ["ARカメラ", "立ち絵合成", "透過画像", "オーバーレイカメラ", "リアル影計算"],
+        },
+        en: {
+            title: "AR Camera Character Overlay",
+            description:
+                "Overlay transparent character art onto your live camera feed with realistic AR ground shadows, ambient lighting, or fixed screen positioning.",
+            keywords: ["AR camera", "character overlay", "transparent PNG", "realistic shadow", "photo studio"],
+        },
+        ko: {
+            title: "AR 카메라 캐릭터 오버레이",
+            description:
+                "카메라 화면에 투명 배경 캐릭터 이미지를 겹쳐 촬영할 수 있는 무료 웹 도구입니다. 실제 같은 그림자를 계산하는 AR 모드와 자유 위치 고정 모드를 모두 지원합니다.",
+            keywords: ["AR 카메라", "캐릭터 합성", "투명 PNG", "그림자 계산", "오버레이 카메라"],
+        },
+        "zh-hans": {
+            title: "AR相机与立绘叠加拍摄",
+            description:
+                "在相机画面上叠加透明立绘图像的免费在线工具。支持物理投影阴影与环境光适配的 AR 模式，以及自由固定画面位置的叠加模式。",
+            keywords: ["AR相机", "立绘合成", "透明图片", "阴影计算", "叠加拍摄"],
+        },
+        "zh-hant": {
+            title: "AR相機與立繪疊加拍攝",
+            description:
+                "在相機畫面上疊加透明立繪圖像的免費線上工具。支援物理投影陰影與環境光適配的 AR 模式，以及自由固定畫面位置的疊加模式。",
+            keywords: ["AR相機", "立繪合成", "透明圖片", "陰影計算", "疊加拍攝"],
+        },
+        ru: {
+            title: "AR-камера с наложением спрайтов",
+            description:
+                "Наложение прозрачных изображений и персонажей на живую камеру. Режим AR с расчетом реалистичных теней на земле и режим свободной фиксации на экране.",
+            keywords: ["AR камера", "наложение изображений", "прозрачный PNG", "реалистичные тени"],
+        },
+    },
 };
 
 export function getLocalizedRouteMeta(
