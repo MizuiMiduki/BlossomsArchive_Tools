@@ -111,6 +111,9 @@ export default function ArCameraOverlay() {
     let prevGrayFrame: Uint8Array | null = null;
     let visualOffsetRatioX = 0;
     let visualOffsetRatioY = 0;
+    let maskBaseGyro: GyroOrientation | null = null;
+    let maskBaseVisualX = 0;
+    let maskBaseVisualY = 0;
     const OCCLUSION_MASK_SIZE = 512;
     let occlusionCanvas: HTMLCanvasElement | undefined;
     let characterLayerCanvas: HTMLCanvasElement | undefined;
@@ -684,11 +687,12 @@ export default function ArCameraOverlay() {
 
         drawCharacterWithOcclusion(ctx, width, height);
 
-        // 遮蔽ペイント中は塗った範囲を半透明の赤で可視化（保存画像には含めない）
+        // 遮蔽ペイント中は塗った範囲を半透明の赤で可視化（保存画像には含めない・画角追従）
         if (!isExport && occlusionPaintMode() && hasOcclusion() && occlusionCanvas) {
+            const { dx, dy } = getMaskShiftOffset(width, height);
             ctx.save();
             ctx.globalAlpha = 0.35;
-            ctx.drawImage(occlusionCanvas, 0, 0, width, height);
+            ctx.drawImage(occlusionCanvas, dx, dy, width, height);
             ctx.restore();
         }
     };
@@ -801,11 +805,12 @@ export default function ArCameraOverlay() {
             }
             const slCtx = shadowLayerCanvas.getContext("2d");
             if (slCtx) {
+                const { dx, dy } = getMaskShiftOffset(width, height);
                 slCtx.clearRect(0, 0, width, height);
                 drawShadows(slCtx);
                 slCtx.save();
                 slCtx.globalCompositeOperation = "destination-in";
-                slCtx.drawImage(shadowCatcherCanvas, 0, 0, width, height);
+                slCtx.drawImage(shadowCatcherCanvas, dx, dy, width, height);
                 slCtx.restore();
                 ctx.drawImage(shadowLayerCanvas, 0, 0, width, height);
             } else {
@@ -843,7 +848,30 @@ export default function ArCameraOverlay() {
         ctx.restore();
     };
 
-    /** 遮蔽マスクを考慮して立ち絵（影含む）を描画する。マスクがなければ直接描画 */
+    const captureMaskAnchor = () => {
+        const curG = currentGyro();
+        maskBaseGyro = curG ? { ...curG } : null;
+        maskBaseVisualX = visualOffsetRatioX;
+        maskBaseVisualY = visualOffsetRatioY;
+    };
+
+    const getMaskShiftOffset = (width: number, height: number): { dx: number; dy: number } => {
+        if (mode() !== "ar") return { dx: 0, dy: 0 };
+        const curG = currentGyro();
+        if (gyroEnabled() && curG && maskBaseGyro) {
+            const p = calculateGyroParallaxOffset(curG, maskBaseGyro, width, height, 1.0);
+            return { dx: p.offsetX, dy: p.offsetY };
+        }
+        if (visualTrackingEnabled()) {
+            return {
+                dx: (visualOffsetRatioX - maskBaseVisualX) * width,
+                dy: (visualOffsetRatioY - maskBaseVisualY) * height,
+            };
+        }
+        return { dx: 0, dy: 0 };
+    };
+
+    /** 遮蔽マスクを考慮して立ち絵（影含む）を描画する。マスクもAR画角に追従させる */
     const drawCharacterWithOcclusion = (
         ctx: CanvasRenderingContext2D,
         width: number,
@@ -865,11 +893,12 @@ export default function ArCameraOverlay() {
             drawCharacter(ctx, width, height);
             return;
         }
+        const { dx, dy } = getMaskShiftOffset(width, height);
         layerCtx.clearRect(0, 0, width, height);
         drawCharacter(layerCtx, width, height);
         layerCtx.save();
         layerCtx.globalCompositeOperation = "destination-out";
-        layerCtx.drawImage(occlusionCanvas, 0, 0, width, height);
+        layerCtx.drawImage(occlusionCanvas, dx, dy, width, height);
         layerCtx.restore();
         ctx.drawImage(characterLayerCanvas, 0, 0, width, height);
     };
@@ -884,8 +913,10 @@ export default function ArCameraOverlay() {
     };
 
     const stampOcclusion = (nx: number, ny: number, rectW: number, rectH: number) => {
+        const wasEmpty = !hasOcclusion();
         const mctx = ensureOcclusionCanvas();
         if (!mctx || rectW <= 0 || rectH <= 0) return;
+        if (wasEmpty) captureMaskAnchor();
         const brush = clampFinite(occlusionBrushPx(), 8, 160, 48);
         const rx = Math.max(1, (brush / rectW) * OCCLUSION_MASK_SIZE);
         const ry = Math.max(1, (brush / rectH) * OCCLUSION_MASK_SIZE);
@@ -931,6 +962,9 @@ export default function ArCameraOverlay() {
         if (occlusionCanvas) {
             occlusionCanvas.getContext("2d")?.clearRect(0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
         }
+        maskBaseGyro = null;
+        maskBaseVisualX = 0;
+        maskBaseVisualY = 0;
         setHasOcclusion(false);
     };
 
@@ -958,6 +992,7 @@ export default function ArCameraOverlay() {
         );
         mctx.clearRect(0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
         mctx.drawImage(tmpCanvas, 0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
+        captureMaskAnchor();
         setHasOcclusion(true);
     };
 
@@ -1127,8 +1162,9 @@ export default function ArCameraOverlay() {
         if (!previewCanvasRef) return;
         const rect = previewCanvasRef.getBoundingClientRect();
         if (rect.width <= 0 || rect.height <= 0) return;
-        const nx = clampFinite((e.clientX - rect.left) / rect.width, 0, 1, 0.5);
-        const ny = clampFinite((e.clientY - rect.top) / rect.height, 0, 1, 0.5);
+        const { dx, dy } = getMaskShiftOffset(rect.width, rect.height);
+        const nx = clampFinite((e.clientX - rect.left - dx) / rect.width, 0, 1, 0.5);
+        const ny = clampFinite((e.clientY - rect.top - dy) / rect.height, 0, 1, 0.5);
         stampOcclusion(nx, ny, rect.width, rect.height);
     };
 

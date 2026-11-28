@@ -255,4 +255,41 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.click(trackingBtn);
         expect(screen.getByRole("button", { name: "映像追従OFF" })).toBeInTheDocument();
     });
+
+    it("前後合成マスクペイント後にジャイロ画角が変化してもエラーなく追従し、マスク消去できること", async () => {
+        const { container } = render(() => <ArCameraOverlay />);
+        const canvas = container.querySelector("canvas") as HTMLCanvasElement;
+        vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+            left: 0,
+            top: 0,
+            width: 320,
+            height: 480,
+            right: 320,
+            bottom: 480,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: "奥に配置" }));
+        fireEvent.pointerDown(canvas, { clientX: 160, clientY: 240, pointerId: 1 });
+        fireEvent.pointerMove(canvas, { clientX: 180, clientY: 250, pointerId: 1 });
+        fireEvent.pointerUp(canvas, { pointerId: 1 });
+
+        // ジャイロによる画角変化をシミュレート
+        const ev1 = new Event("deviceorientation") as DeviceOrientationEvent;
+        Object.defineProperty(ev1, "alpha", { value: 10 });
+        Object.defineProperty(ev1, "beta", { value: 80 });
+        Object.defineProperty(ev1, "gamma", { value: 0 });
+        window.dispatchEvent(ev1);
+
+        const ev2 = new Event("deviceorientation") as DeviceOrientationEvent;
+        Object.defineProperty(ev2, "alpha", { value: 25 });
+        Object.defineProperty(ev2, "beta", { value: 78 });
+        Object.defineProperty(ev2, "gamma", { value: 2 });
+        window.dispatchEvent(ev2);
+
+        fireEvent.click(screen.getByRole("button", { name: "マスク消去" }));
+        expect(screen.getByRole("button", { name: "完了" })).toBeInTheDocument();
+    });
 });
