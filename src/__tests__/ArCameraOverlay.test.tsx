@@ -223,4 +223,26 @@ describe("ArCameraOverlay Page", () => {
             screen.getByText(/端末内（WebGPU）のみで解析・外部送信やAI学習には一切使用されません/),
         ).toBeInTheDocument();
     });
+
+    it("キャラクターの身長(cm)とカメラ距離(m)を入力して実寸サイズを自動計算・反映できること", () => {
+        render(() => <ArCameraOverlay />);
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
+
+        const heightInput = screen.getByLabelText("身長 (cm)") as HTMLInputElement;
+        const distanceInput = screen.getByLabelText("距離 (m)") as HTMLInputElement;
+        const scaleSlider = screen.getByLabelText(/サイズ/) as HTMLInputElement;
+
+        fireEvent.input(heightInput, { target: { value: "180" } });
+        fireEvent.input(distanceInput, { target: { value: "2.0" } });
+
+        const scaledHigh = Number(scaleSlider.value);
+        expect(scaledHigh).toBeGreaterThan(0.65);
+
+        fireEvent.input(distanceInput, { target: { value: "5.0" } });
+        const scaledFar = Number(scaleSlider.value);
+        expect(scaledFar).toBeLessThan(scaledHigh);
+
+        fireEvent.click(screen.getByRole("button", { name: "サイズを合わせる" }));
+        expect(Number(scaleSlider.value)).toBe(scaledFar);
+    });
 });

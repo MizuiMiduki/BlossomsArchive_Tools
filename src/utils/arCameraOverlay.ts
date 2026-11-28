@@ -524,3 +524,35 @@ export function generateDepthOcclusionMaskPixels(
     }
     return out;
 }
+
+export interface CharacterHeightScaleParams {
+    /** キャラクターの設定身長 (cm) */
+    characterHeightCm: number;
+    /** カメラからキャラクターまでの想定距離 (m) */
+    distanceMeters: number;
+    /** 画像高さに対する不透明キャラクター領域の高さ比率 (0.1..1.0) */
+    opaqueHeightRatio?: number;
+    /** カメラの垂直画角 (度, スマホ広角標準 ~60度) */
+    verticalFovDeg?: number;
+    /** scale=1.0 時のキャンバス高さ基準比率 (0.62) */
+    baseCanvasHeightRatio?: number;
+}
+
+/**
+ * キャラクターの設定身長(cm)とカメラからの距離(m)に基づき、
+ * 透視投影（ピンホールカメラモデル）で実寸に近い表示拡大率(scale: 0.1..4.0)を算出する
+ */
+export function calculateScaleForCharacterHeight(params: CharacterHeightScaleParams): number {
+    const heightM = clampFinite(params.characterHeightCm, 20, 350, 160) / 100;
+    const distM = clampFinite(params.distanceMeters, 0.3, 30, 2.5);
+    const opaqueRatio = clampFinite(params.opaqueHeightRatio ?? 1.0, 0.1, 1.0, 1.0);
+    const fovRad = (clampFinite(params.verticalFovDeg ?? 60, 25, 110, 60) * Math.PI) / 180;
+    const baseRatio = clampFinite(params.baseCanvasHeightRatio ?? 0.62, 0.1, 1.0, 0.62);
+
+    const viewHeightM = 2 * distM * Math.tan(fovRad / 2);
+    if (viewHeightM <= 0) return 0.65;
+
+    const screenHeightRatio = heightM / viewHeightM;
+    const rawScale = screenHeightRatio / (baseRatio * opaqueRatio);
+    return Math.round(clampFinite(rawScale, 0.1, 4.0, 0.65) * 100) / 100;
+}

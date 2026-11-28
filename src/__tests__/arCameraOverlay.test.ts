@@ -11,6 +11,7 @@ import {
     isSupportedImageFile,
     normalizeDepthMap,
     generateDepthOcclusionMaskPixels,
+    calculateScaleForCharacterHeight,
 } from "../utils/arCameraOverlay";
 
 describe("arCameraOverlay utilities", () => {
@@ -162,5 +163,37 @@ describe("arCameraOverlay utilities", () => {
         expect(mask[3]).toBe(0);
         // ピクセル3 (depth=1.0, 手前) は不透明 (255)
         expect(mask[3 * 4 + 3]).toBe(255);
+    });
+
+    it("calculateScaleForCharacterHeight: calculates realistic scale from height(cm), distance(m), and alpha ratio", () => {
+        const sClose = calculateScaleForCharacterHeight({
+            characterHeightCm: 160,
+            distanceMeters: 2.0,
+            opaqueHeightRatio: 1.0,
+        });
+        const sFar = calculateScaleForCharacterHeight({
+            characterHeightCm: 160,
+            distanceMeters: 4.0,
+            opaqueHeightRatio: 1.0,
+        });
+        expect(sClose).toBeGreaterThan(sFar);
+        expect(sClose).toBeCloseTo(sFar * 2, 1);
+
+        // 透過余白が多い画像（不透明領域50%）ではより大きいscaleになること
+        const sPadded = calculateScaleForCharacterHeight({
+            characterHeightCm: 160,
+            distanceMeters: 4.0,
+            opaqueHeightRatio: 0.5,
+        });
+        expect(sPadded).toBeCloseTo(sFar * 2, 1);
+
+        // NaNフォールバック・クランプ確認
+        const sInvalid = calculateScaleForCharacterHeight({
+            characterHeightCm: NaN,
+            distanceMeters: Infinity,
+        });
+        expect(Number.isFinite(sInvalid)).toBe(true);
+        expect(sInvalid).toBeGreaterThanOrEqual(0.1);
+        expect(sInvalid).toBeLessThanOrEqual(4.0);
     });
 });

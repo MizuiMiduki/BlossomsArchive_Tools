@@ -24,6 +24,7 @@ import {
     createSafeObjectUrl,
     isSupportedImageFile,
     generateDepthOcclusionMaskPixels,
+    calculateScaleForCharacterHeight,
 } from "../utils/arCameraOverlay";
 
 interface OverlayImageAsset {
@@ -98,6 +99,8 @@ export default function ArCameraOverlay() {
     const [aiDepthThreshold, setAiDepthThreshold] = createSignal<number>(0.55);
     const [aiDepthBusy, setAiDepthBusy] = createSignal<boolean>(false);
     const [aiDepthStatus, setAiDepthStatus] = createSignal<string>("");
+    const [characterHeightCm, setCharacterHeightCm] = createSignal<number>(160);
+    const [cameraDistanceM, setCameraDistanceM] = createSignal<number>(2.5);
     const OCCLUSION_MASK_SIZE = 512;
     let occlusionCanvas: HTMLCanvasElement | undefined;
     let characterLayerCanvas: HTMLCanvasElement | undefined;
@@ -777,6 +780,21 @@ export default function ArCameraOverlay() {
         mctx.restore();
         lastPaintPoint = { nx, ny };
         if (!erase) setHasOcclusion(true);
+    };
+
+    const applyHeightScale = (heightCm: number, distanceM: number) => {
+        const asset = overlayAsset();
+        const opaqueRatio =
+            asset && asset.alphaBounds.hasOpaquePixels && asset.height > 0
+                ? clampFinite(asset.alphaBounds.height / asset.height, 0.1, 1.0, 1.0)
+                : 1.0;
+        setScale(
+            calculateScaleForCharacterHeight({
+                characterHeightCm: heightCm,
+                distanceMeters: distanceM,
+                opaqueHeightRatio: opaqueRatio,
+            }),
+        );
     };
 
     const clearOcclusion = () => {
@@ -1747,6 +1765,71 @@ export default function ArCameraOverlay() {
                                             setScale(clampFinite(Number(e.currentTarget.value), 0.1, 4.0, 0.65))
                                         }
                                     />
+                                </div>
+
+                                {/* 身長・距離による実寸サイズ計算 */}
+                                <div
+                                    class="ba-stack-2"
+                                    style={{
+                                        padding: "0.6rem 0.75rem",
+                                        "border-radius": "var(--ba-radius)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                        <span class="ba-text-xs ba-font-bold">身長・距離から実寸合わせ</span>
+                                        <button
+                                            type="button"
+                                            class="ba-btn ba-btn--primary ba-btn--xs"
+                                            onClick={() => applyHeightScale(characterHeightCm(), cameraDistanceM())}
+                                        >
+                                            サイズを合わせる
+                                        </button>
+                                    </div>
+                                    <div class="ba-grid ba-grid-cols-2 ba-gap-2">
+                                        <div>
+                                            <label for="character-height-input" class="ba-label">
+                                                <span>身長 (cm)</span>
+                                            </label>
+                                            <input
+                                                id="character-height-input"
+                                                type="number"
+                                                min="20"
+                                                max="350"
+                                                step="1"
+                                                class="ba-input ba-input--sm"
+                                                value={characterHeightCm()}
+                                                onInput={(e) => {
+                                                    const raw = Number(e.currentTarget.value);
+                                                    if (!Number.isFinite(raw)) return;
+                                                    const next = clampFinite(raw, 20, 350, 160);
+                                                    setCharacterHeightCm(next);
+                                                    applyHeightScale(next, cameraDistanceM());
+                                                }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label for="camera-distance-input" class="ba-label">
+                                                <span>距離 (m)</span>
+                                            </label>
+                                            <input
+                                                id="camera-distance-input"
+                                                type="number"
+                                                min="0.3"
+                                                max="30"
+                                                step="0.1"
+                                                class="ba-input ba-input--sm"
+                                                value={cameraDistanceM()}
+                                                onInput={(e) => {
+                                                    const raw = Number(e.currentTarget.value);
+                                                    if (!Number.isFinite(raw)) return;
+                                                    const next = clampFinite(raw, 0.3, 30, 2.5);
+                                                    setCameraDistanceM(next);
+                                                    applyHeightScale(characterHeightCm(), next);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="ba-grid ba-grid-cols-2 ba-gap-2">
