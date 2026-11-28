@@ -1329,3 +1329,128 @@ export function estimateBackgroundOpticalShift(
         confidence: clampFinite(improvement * 2, 0.1, 1, 0.5),
     };
 }
+
+/**
+ * 基準グレースケールフレームと現在フレームを照合し、
+ * 平行移動 (dx, dy) とカメラの近づき・離れに伴う放射拡大縮小率 (scale) を推定する
+ */
+export function estimateBackgroundScaleAndShift(
+    prevGray: Uint8Array,
+    currGray: Uint8Array,
+    width: number,
+    height: number,
+    maxShiftPx = 8,
+): { dx: number; dy: number; scale: number; confidence: number } {
+    const safeW = Math.max(16, Math.floor(clampFinite(width, 16, 512, 64)));
+    const safeH = Math.max(16, Math.floor(clampFinite(height, 16, 512, 64)));
+    const total = safeW * safeH;
+    if (prevGray.length < total || currGray.length < total) {
+        return { dx: 0, dy: 0, scale: 1, confidence: 0 };
+    }
+
+    const search = Math.floor(clampFinite(maxShiftPx, 2, 24, 8));
+    const margin = Math.max(4, Math.floor(Math.min(safeW, safeH) * 0.16));
+    const cx = (safeW - 1) * 0.5;
+    const cy = (safeH - 1) * 0.5;
+
+    let mean = 0;
+    let count = 0;
+    for (let y = margin; y < safeH - margin; y += 2) {
+        for (let x = margin; x < safeW - margin; x += 2) {
+            mean += prevGray[y * safeW + x];
+            count++;
+        }
+    }
+    mean /= Math.max(1, count);
+
+    let variance = 0;
+    for (let y = margin; y < safeH - margin; y += 2) {
+        for (let x = margin; x < safeW - margin; x += 2) {
+            const diff = prevGray[y * safeW + x] - mean;
+            variance += diff * diff;
+        }
+    }
+    variance /= Math.max(1, count);
+    if (variance < 16 || count < 16) {
+        return { dx: 0, dy: 0, scale: 1, confidence: 0 };
+    }
+
+    const evalCandidate = (s: number, dx: number, dy: number): number => {
+        let sad = 0;
+        let samples = 0;
+        for (let y = margin; y < safeH - margin; y += 2) {
+            const sy = Math.round(cy + (y - cy) * s + dy);
+            if (sy < 1 || sy >= safeH - 1) continue;
+            const pRow = y * safeW;
+            const cRow = sy * safeW;
+            for (let x = margin; x < safeW - margin; x += 2) {
+                const sx = Math.round(cx + (x - cx) * s + dx);
+                if (sx < 1 || sx >= safeW - 1) continue;
+                sad += Math.abs(currGray[cRow + sx] - prevGray[pRow + x]);
+                samples++;
+            }
+        }
+        if (samples < Math.max(12, count * 0.4)) return Infinity;
+        return sad / samples;
+    };
+
+    const zeroSad = evalCandidate(1.0, 0, 0);
+    let bestScale = 1.0;
+    let bestDx = 0;
+    let bestDy = 0;
+    let bestSad = zeroSad;
+
+    const coarseScales = [0.68, 0.78, 0.88, 0.95, 1.0, 1.06, 1.15, 1.28, 1.45, 1.65];
+    for (const s of coarseScales) {
+        for (let dy = -search; dy <= search; dy += 2) {
+            for (let dx = -search; dx <= search; dx += 2) {
+                const avgSad = evalCandidate(s, dx, dy);
+                if (avgSad < bestSad) {
+                    bestSad = avgSad;
+                    bestScale = s;
+                    bestDx = dx;
+                    bestDy = dy;
+                }
+            }
+        }
+    }
+
+    // 精密探索
+    const refineCenterS = bestScale;
+    const refineCenterDx = bestDx;
+    const refineCenterDy = bestDy;
+    for (let ds = -0.04; ds <= 0.041; ds += 0.02) {
+        const s = clampFinite(refineCenterS + ds, 0.55, 1.85, 1.0);
+        for (let dy = refineCenterDy - 1; dy <= refineCenterDy + 1; dy++) {
+            for (let dx = refineCenterDx - 1; dx <= refineCenterDx + 1; dx++) {
+                const avgSad = evalCandidate(s, dx, dy);
+                if (avgSad < bestSad) {
+                    bestSad = avgSad;
+                    bestScale = s;
+                    bestDx = dx;
+                    bestDy = dy;
+                }
+            }
+        }
+    }
+
+    if (!Number.isFinite(bestSad) || bestSad > 34) {
+        return { dx: 0, dy: 0, scale: 1, confidence: 0 };
+    }
+
+    const improvement =
+        Number.isFinite(zeroSad) && zeroSad > 0
+            ? clampFinite((zeroSad - bestSad) / zeroSad, 0, 1, 0)
+            : 0;
+    const confidence =
+        bestScale === 1.0 && bestDx === 0 && bestDy === 0
+            ? 0.5
+            : clampFinite(improvement * 2.2, 0.1, 1, 0.5);
+
+    return {
+        dx: bestDx,
+        dy: bestDy,
+        scale: Math.round(clampFinite(bestScale, 0.55, 1.85, 1.0) * 1000) / 1000,
+        confidence,
+    };
+}

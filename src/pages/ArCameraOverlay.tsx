@@ -30,7 +30,7 @@ import {
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
-    estimateBackgroundOpticalShift,
+    estimateBackgroundScaleAndShift,
     calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
 
@@ -118,9 +118,13 @@ export default function ArCameraOverlay() {
     let prevGrayFrame: Uint8Array | null = null;
     let visualOffsetRatioX = 0;
     let visualOffsetRatioY = 0;
+    let visualZoomScale = 1;
+    let visualBaseGyro: GyroOrientation | null = null;
+    let lastVisualTrackTime = 0;
     let maskBaseGyro: GyroOrientation | null = null;
     let maskBaseVisualX = 0;
     let maskBaseVisualY = 0;
+    let maskBaseZoomScale = 1;
     const OCCLUSION_MASK_SIZE = 512;
     let occlusionCanvas: HTMLCanvasElement | undefined;
     let characterLayerCanvas: HTMLCanvasElement | undefined;
@@ -315,9 +319,13 @@ export default function ArCameraOverlay() {
         const cur = currentGyro();
         if (cur) {
             setBaseGyro({ ...cur });
+            visualBaseGyro = { ...cur };
+        } else {
+            visualBaseGyro = null;
         }
         visualOffsetRatioX = 0;
         visualOffsetRatioY = 0;
+        visualZoomScale = 1;
         prevGrayFrame = null;
         setGyroStatus("空間アンカーの基準位置をリセットしました");
     };
@@ -560,24 +568,42 @@ export default function ArCameraOverlay() {
             ctx.drawImage(videoRef, drawX, drawY, drawW, drawH);
             ctx.restore();
 
-            // 背景ビジュアルトラッキング（ジャイロ未動作端末向けの基準フレーム直接照合。ジャイロ動作中の積分ドリフトを防止）
+            // 回転補償付きビジュアルトラッキング（近づき・離れの拡大縮小 + 平行移動を基準フレームと照合）
             if (
                 !isExport &&
                 mode() === "ar" &&
                 visualTrackingEnabled() &&
                 !isDragging &&
-                !(gyroEnabled() && currentGyro())
+                performance.now() - lastVisualTrackTime > 45
             ) {
+                lastVisualTrackTime = performance.now();
                 const trackW = 64;
-                const trackH = 36;
+                const trackH = Math.max(36, Math.min(96, Math.round(64 * (height / Math.max(1, width)))));
                 if (!trackCanvas) {
                     trackCanvas = document.createElement("canvas");
+                }
+                if (trackCanvas.width !== trackW || trackCanvas.height !== trackH) {
                     trackCanvas.width = trackW;
                     trackCanvas.height = trackH;
+                    prevGrayFrame = null;
                 }
                 const tctx = trackCanvas.getContext("2d", { willReadFrequently: true });
                 if (tctx) {
+                    tctx.clearRect(0, 0, trackW, trackH);
+                    tctx.save();
+                    const curG = currentGyro();
+                    if (gyroEnabled() && curG && visualBaseGyro && prevGrayFrame) {
+                        const rotShift = calculateGyroParallaxOffset(
+                            curG,
+                            visualBaseGyro,
+                            trackW,
+                            trackH,
+                            1.0,
+                        );
+                        tctx.translate(-rotShift.offsetX, -rotShift.offsetY);
+                    }
                     tctx.drawImage(ctx.canvas, 0, 0, trackW, trackH);
+                    tctx.restore();
                     try {
                         const frameData = tctx.getImageData(0, 0, trackW, trackH).data;
                         const currGray = new Uint8Array(trackW * trackH);
@@ -588,38 +614,31 @@ export default function ArCameraOverlay() {
                             );
                         }
                         if (!prevGrayFrame) {
-                            // 基準アンカーフレームとして保持（毎フレーム上書きして足し算するとドリフトするため固定）
                             prevGrayFrame = currGray;
+                            const curG = currentGyro();
+                            visualBaseGyro = curG ? { ...curG } : null;
                         } else {
-                            const shift = estimateBackgroundOpticalShift(
+                            const transform = estimateBackgroundScaleAndShift(
                                 prevGrayFrame,
                                 currGray,
                                 trackW,
                                 trackH,
                                 8,
                             );
-                            if (shift.confidence > 0.2) {
-                                visualOffsetRatioX = clampFinite(
-                                    shift.dx / trackW,
-                                    -0.35,
-                                    0.35,
-                                    0,
-                                );
-                                visualOffsetRatioY = clampFinite(
-                                    shift.dy / trackH,
-                                    -0.35,
-                                    0.35,
-                                    0,
-                                );
+                            if (transform.confidence > 0.18) {
+                                const smooth = 0.28;
+                                const targetX = clampFinite(transform.dx / trackW, -0.35, 0.35, 0);
+                                const targetY = clampFinite(transform.dy / trackH, -0.35, 0.35, 0);
+                                const targetScale = clampFinite(transform.scale, 0.55, 1.85, 1);
+                                visualOffsetRatioX = visualOffsetRatioX * (1 - smooth) + targetX * smooth;
+                                visualOffsetRatioY = visualOffsetRatioY * (1 - smooth) + targetY * smooth;
+                                visualZoomScale = visualZoomScale * (1 - smooth) + targetScale * smooth;
                             }
                         }
                     } catch {
                         // トラッキングスキップ
                     }
                 }
-            } else if (gyroEnabled() && currentGyro()) {
-                visualOffsetRatioX = 0;
-                visualOffsetRatioY = 0;
             }
         } else if (bg) {
             const coverRatio = Math.max(width / bg.width, height / bg.height);
@@ -687,7 +706,8 @@ export default function ArCameraOverlay() {
         const asset = overlayAsset();
         if (!asset) return;
 
-        const baseTargetHeight = height * 0.62 * clampFinite(scale(), 0.1, 4.0, 0.65);
+        const activeVisualZoom = mode() === "ar" && visualTrackingEnabled() ? visualZoomScale : 1;
+        const baseTargetHeight = height * 0.62 * clampFinite(scale(), 0.1, 4.0, 0.65) * activeVisualZoom;
         const aspect = asset.width / Math.max(1, asset.height);
         const drawH = baseTargetHeight;
         const drawW = drawH * aspect;
@@ -726,8 +746,16 @@ export default function ArCameraOverlay() {
             gyroTilt = parallax.tiltSkewDeg;
         }
 
-        const footX = baseX + gyroX + (mode() === "ar" && visualTrackingEnabled() ? visualOffsetRatioX * width : 0);
-        const footY = baseY + gyroY + (mode() === "ar" && visualTrackingEnabled() ? visualOffsetRatioY * height : 0);
+        const anchoredX = baseX + gyroX;
+        const anchoredY = baseY + gyroY;
+        const footX =
+            width * 0.5 +
+            (anchoredX - width * 0.5) * activeVisualZoom +
+            (mode() === "ar" && visualTrackingEnabled() ? visualOffsetRatioX * width : 0);
+        const footY =
+            height * 0.5 +
+            (anchoredY - height * 0.5) * activeVisualZoom +
+            (mode() === "ar" && visualTrackingEnabled() ? visualOffsetRatioY * height : 0);
 
         const footAnchorXRatio = flipHorizontal()
             ? 1 - asset.alphaBounds.footCenterXRatio
@@ -886,6 +914,7 @@ export default function ArCameraOverlay() {
         maskBaseGyro = curG ? { ...curG } : null;
         maskBaseVisualX = visualOffsetRatioX;
         maskBaseVisualY = visualOffsetRatioY;
+        maskBaseZoomScale = visualZoomScale;
     };
 
     const getMaskShiftOffset = (width: number, height: number): { dx: number; dy: number } => {
@@ -927,11 +956,17 @@ export default function ArCameraOverlay() {
             return;
         }
         const { dx, dy } = getMaskShiftOffset(width, height);
+        const relMaskZoom =
+            mode() === "ar" && visualTrackingEnabled()
+                ? clampFinite(visualZoomScale / Math.max(0.25, maskBaseZoomScale), 0.4, 2.5, 1)
+                : 1;
         layerCtx.clearRect(0, 0, width, height);
         drawCharacter(layerCtx, width, height);
         layerCtx.save();
         layerCtx.globalCompositeOperation = "destination-out";
-        layerCtx.drawImage(occlusionCanvas, dx, dy, width, height);
+        layerCtx.translate(width * 0.5 + dx, height * 0.5 + dy);
+        layerCtx.scale(relMaskZoom, relMaskZoom);
+        layerCtx.drawImage(occlusionCanvas, -width * 0.5, -height * 0.5, width, height);
         layerCtx.restore();
         ctx.drawImage(characterLayerCanvas, 0, 0, width, height);
     };
@@ -1310,10 +1345,21 @@ export default function ArCameraOverlay() {
         if (activePointers.size === 0) {
             isDragging = false;
         }
-        if (wasSingleDragging && mode() === "ar" && autoDistanceFromAr()) {
-            const map = aiDepthMap();
-            if (map) {
-                syncDistanceAndScaleFromDepth(map);
+        if (wasSingleDragging && mode() === "ar") {
+            const cur = currentGyro();
+            if (cur) {
+                setBaseGyro({ ...cur });
+                visualBaseGyro = { ...cur };
+            }
+            visualOffsetRatioX = 0;
+            visualOffsetRatioY = 0;
+            visualZoomScale = 1;
+            prevGrayFrame = null;
+            if (autoDistanceFromAr()) {
+                const map = aiDepthMap();
+                if (map) {
+                    syncDistanceAndScaleFromDepth(map);
+                }
             }
         }
         (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);

@@ -18,6 +18,7 @@ import {
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
     estimateBackgroundOpticalShift,
+    estimateBackgroundScaleAndShift,
     sampleDepthAtNormalizedPoint,
     calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
@@ -380,6 +381,35 @@ describe("arCameraOverlay utilities", () => {
         const shift = estimateBackgroundOpticalShift(prev, curr, w, h, 6);
         expect(shift.dx).toBe(3);
         expect(shift.dy).toBe(2);
+    });
+
+    it("estimateBackgroundScaleAndShift: detects camera approach (zoom in > 1.0) and retreat (zoom out < 1.0)", () => {
+        const w = 48;
+        const h = 48;
+        const cx = (w - 1) * 0.5;
+        const cy = (h - 1) * 0.5;
+        const prev = new Uint8Array(w * h);
+        const currApproach = new Uint8Array(w * h);
+        const currRetreat = new Uint8Array(w * h);
+
+        const pattern = (x: number, y: number) =>
+            Math.round(128 + 80 * Math.sin(x * 0.35) * Math.cos(y * 0.35));
+
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                prev[y * w + x] = pattern(x - cx, y - cy);
+                currApproach[y * w + x] = pattern((x - cx) / 1.25, (y - cy) / 1.25);
+                currRetreat[y * w + x] = pattern((x - cx) / 0.8, (y - cy) / 0.8);
+            }
+        }
+
+        const resApproach = estimateBackgroundScaleAndShift(prev, currApproach, w, h, 4);
+        expect(resApproach.scale).toBeGreaterThan(1.12);
+        expect(resApproach.confidence).toBeGreaterThan(0.18);
+
+        const resRetreat = estimateBackgroundScaleAndShift(prev, currRetreat, w, h, 4);
+        expect(resRetreat.scale).toBeLessThan(0.92);
+        expect(resRetreat.confidence).toBeGreaterThan(0.18);
     });
 
     it("sampleDepthAtNormalizedPoint: averages 3x3 region around normalized coordinates", () => {
