@@ -1,6 +1,5 @@
 import { createSignal, createMemo, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
-import BudouX from "../components/BudouX";
 import { playPageEntrance } from "../utils/animations";
 import { usePageI18n } from "../i18n/index";
 import {
@@ -400,13 +399,13 @@ export default function TierMaker() {
             {/* ページタイトル & 概要 */}
             <div class="ba-card ba-text-center ba-stack-2">
                 <h1 class="ba-title">
-                    <BudouX text={pageTitle()} />
+                    {pageTitle()}
                 </h1>
                 <p
                     class="ba-text-sm ba-text-muted"
                     style={{ "max-width": "42rem", margin: "0 auto", "font-weight": 600, "line-height": 1.6 }}
                 >
-                    <BudouX text={description()} />
+                    {description()}
                 </p>
             </div>
 
