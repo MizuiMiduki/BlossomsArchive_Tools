@@ -121,7 +121,6 @@ export default function ArCameraOverlay() {
     const [rotationDeg, setRotationDeg] = createSignal<number>(0);
     const [opacity, setOpacity] = createSignal<number>(1.0);
     const [flipHorizontal, setFlipHorizontal] = createSignal<boolean>(false);
-    const [isPositionLocked, setIsPositionLocked] = createSignal<boolean>(false);
 
     // ARモード専用パラメータ（リアル影・接地・環境光・ジャイロ）
     const [lightAzimuthDeg, setLightAzimuthDeg] = createSignal<number>(315);
@@ -1118,7 +1117,7 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerDown = (e: PointerEvent) => {
-        if (isPositionLocked() || !previewCanvasRef) return;
+        if (!previewCanvasRef) return;
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
 
@@ -1137,7 +1136,7 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerMove = (e: PointerEvent) => {
-        if (isPositionLocked() || !previewCanvasRef) return;
+        if (!previewCanvasRef) return;
         if (!activePointers.has(e.pointerId)) return;
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
@@ -1171,7 +1170,6 @@ export default function ArCameraOverlay() {
     };
 
     const handleCanvasWheel = (e: WheelEvent) => {
-        if (isPositionLocked()) return;
         e.preventDefault();
         const delta = e.deltaY > 0 ? -0.04 : 0.04;
         setScale((prev) => Math.round(clampFinite(prev + delta, 0.1, 4.0, 0.65) * 100) / 100);
@@ -1303,7 +1301,7 @@ export default function ArCameraOverlay() {
                             height: "100%",
                             display: "block",
                             "touch-action": "none",
-                            cursor: isPositionLocked() ? "default" : "grab",
+                            cursor: "grab",
                         }}
                         aria-label="カメラと透過画像の合成プレビューキャンバス"
                         onPointerDown={handlePointerDown}
@@ -1560,7 +1558,7 @@ export default function ArCameraOverlay() {
                             </div>
                         </Show>
 
-                        {/* 上段：画像選択・位置ロック・遮蔽・調整ボタン（狭い画面でも折り返して収まる） */}
+                        {/* 上段：画像選択・奥に配置・調整ボタン（狭い画面でも折り返して収まる） */}
                         <div
                             style={{
                                 display: "flex",
@@ -1592,14 +1590,6 @@ export default function ArCameraOverlay() {
                                 onClick={() => setOcclusionPaintMode((v) => !v)}
                             >
                                 {occlusionPaintMode() ? "奥に配置(開)" : "奥に配置"}
-                            </button>
-                            <button
-                                type="button"
-                                class={`ba-btn ba-btn--xs ${isPositionLocked() ? "ba-btn--warning" : "ba-btn--secondary"}`}
-                                aria-pressed={isPositionLocked() ? "true" : "false"}
-                                onClick={() => setIsPositionLocked((v) => !v)}
-                            >
-                                {isPositionLocked() ? "固定ロック中" : "位置ロック"}
                             </button>
                             <button
                                 type="button"
@@ -1799,7 +1789,6 @@ export default function ArCameraOverlay() {
                                         max="200"
                                         step="0.5"
                                         class="ba-range"
-                                        disabled={isPositionLocked()}
                                         value={posXPercent()}
                                         onInput={(e) =>
                                             setPosXPercent(clampFinite(Number(e.currentTarget.value), -100, 200, 50))
@@ -1819,7 +1808,6 @@ export default function ArCameraOverlay() {
                                         max="200"
                                         step="0.5"
                                         class="ba-range"
-                                        disabled={isPositionLocked()}
                                         value={posYPercent()}
                                         onInput={(e) =>
                                             setPosYPercent(clampFinite(Number(e.currentTarget.value), -100, 200, 78))

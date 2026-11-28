@@ -62,11 +62,7 @@ describe("ArCameraOverlay Page", () => {
 
         fireEvent.input(posXSlider, { target: { value: "75" } });
         expect(screen.getByText("75.0%")).toBeInTheDocument();
-
-        const lockBtn = screen.getByRole("button", { name: "位置ロック" });
-        fireEvent.click(lockBtn);
-        expect(screen.getByRole("button", { name: "固定ロック中" })).toHaveAttribute("aria-pressed", "true");
-        expect(posXSlider.disabled).toBe(true);
+        expect(screen.queryByRole("button", { name: "位置ロック" })).not.toBeInTheDocument();
     });
 
     it("shows friendly error message when camera API is unavailable", async () => {
@@ -91,8 +87,8 @@ describe("ArCameraOverlay Page", () => {
         expect(shutterBtn.style.justifySelf).toBe("center");
         expect(shutterBtn.parentElement?.style.gridTemplateColumns).toBe("1fr auto 1fr");
 
-        const lockBtn = screen.getByRole("button", { name: "位置ロック" });
-        expect(lockBtn.parentElement?.style.flexWrap).toBe("wrap");
+        const occlusionBtn = screen.getByRole("button", { name: "奥に配置" });
+        expect(occlusionBtn.parentElement?.style.flexWrap).toBe("wrap");
     });
 
     it("影の方向（光源方向自動推定）がデフォルトで有効であり、手動スライダー操作で自動推定が解除されること", () => {
