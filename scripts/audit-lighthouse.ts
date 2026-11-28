@@ -462,21 +462,28 @@ async function main(): Promise<void> {
             allTasks.push({ route, preset: "desktop", theme: "dark" });
         }
 
-        // シャード分割 (--shard=INDEX/TOTAL)
+        // シャード分割 (--shard=INDEX/TOTAL): mobile(重い)とdesktop(軽い)を全シャードへ均等配分
         let tasks = allTasks;
         if (shardArg) {
             const [shardIdxStr, totalShardsStr] = shardArg.split("/");
             const shardIdx = parseInt(shardIdxStr, 10);
             const totalShards = parseInt(totalShardsStr, 10);
             if (Number.isFinite(shardIdx) && Number.isFinite(totalShards) && totalShards > 0) {
-                tasks = allTasks.filter((_, idx) => idx % totalShards === shardIdx - 1);
-                console.log(`⚡ Shard mode [${shardIdx}/${totalShards}]: Auditing ${tasks.length} / ${allTasks.length} audits`);
+                const mobileTasks = allTasks.filter((t) => t.preset === "mobile");
+                const desktopTasks = allTasks.filter((t) => t.preset === "desktop");
+                const pickedMobile = mobileTasks.filter((_, idx) => idx % totalShards === shardIdx - 1);
+                const pickedDesktop = desktopTasks.filter((_, idx) => idx % totalShards === shardIdx - 1);
+                tasks = [...pickedMobile, ...pickedDesktop];
+                console.log(
+                    `⚡ Shard mode [${shardIdx}/${totalShards}]: Auditing ${tasks.length} / ${allTasks.length} audits (mobile:${pickedMobile.length}, desktop:${pickedDesktop.length})`,
+                );
             }
         }
 
         const regressions: RegressionItem[] = [];
         const totalAudits = tasks.length;
-        console.log(`Starting ${totalAudits} audits with concurrency 2...`);
+        const concurrency = shardArg && totalAudits <= 16 ? 1 : 2;
+        console.log(`Starting ${totalAudits} audits with concurrency ${concurrency}...`);
 
         let completed = 0;
         async function worker(): Promise<void> {
@@ -535,7 +542,11 @@ async function main(): Promise<void> {
             }
         }
 
-        await Promise.all([worker(), worker()]);
+        if (concurrency === 1) {
+            await worker();
+        } else {
+            await Promise.all([worker(), worker()]);
+        }
 
         // 単独再検証（CPU競合による一時的ブレ・偽陽性の排除）
         if (regressions.length > 0) {
