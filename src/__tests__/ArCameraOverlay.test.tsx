@@ -279,4 +279,22 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.click(autoDistToggle);
         expect(autoDistToggle.checked).toBe(false);
     });
+
+    it("被写界深度・フォーカス操作（ボケON/OFF・絞りF値・オートフォーカス追従）を操作できること", () => {
+        render(() => <ArCameraOverlay />);
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
+
+        const dofBtn = screen.getByRole("button", { name: "ボケOFF" });
+        fireEvent.click(dofBtn);
+        expect(screen.getByRole("button", { name: "ボケON" })).toBeInTheDocument();
+
+        const fSlider = screen.getByLabelText(/絞り \(F値/) as HTMLInputElement;
+        fireEvent.input(fSlider, { target: { value: "1.6" } });
+        expect(screen.getByText("f/1.6")).toBeInTheDocument();
+
+        const afCheck = screen.getByLabelText("立ち絵の位置にオートフォーカス追従") as HTMLInputElement;
+        expect(afCheck.checked).toBe(true);
+        fireEvent.click(afCheck);
+        expect(afCheck.checked).toBe(false);
+    });
 });

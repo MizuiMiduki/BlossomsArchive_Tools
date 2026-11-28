@@ -1637,3 +1637,59 @@ export function generateSurfaceOverlayPixels(
     }
     return out;
 }
+
+/**
+ * 絞り(F値)と被写体距離(m)に基づき、背景ボケの最大ブラー半径(px)を算出する
+ */
+export function calculateApertureMaxBlurPx(
+    apertureF: number,
+    distanceMeters = 2.5,
+): number {
+    const f = clampFinite(apertureF, 1.2, 22, 2.8);
+    const dist = clampFinite(distanceMeters, 0.3, 30, 2.5);
+    const apertureFactor = Math.max(0, 1 - (f - 1.4) / 9.6);
+    const distFactor = clampFinite(2.5 / dist, 0.55, 1.45, 1);
+    const rawBlur = 18 * Math.pow(apertureFactor, 1.35) * distFactor;
+    return Math.round(clampFinite(rawBlur, 0, 24, 0) * 10) / 10;
+}
+
+/**
+ * 正規化深度マップ（0=奥 .. 1=手前）とピント位置・絞り(F値)から、
+ * ピントが合っていない領域（ボケを適用する領域）のアルファマスク RGBA を生成する
+ */
+export function generateDofOutOfFocusMaskPixels(
+    normalizedDepth: ArrayLike<number>,
+    width: number,
+    height: number,
+    focusDepth01: number,
+    apertureF: number,
+): Uint8ClampedArray {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    const total = safeW * safeH;
+    const out = new Uint8ClampedArray(total * 4);
+    if (normalizedDepth.length < total) return out;
+
+    const focus = clampFinite(focusDepth01, 0, 1, 0.55);
+    const f = clampFinite(apertureF, 1.2, 22, 2.8);
+    const inFocusHalfBand = clampFinite(0.03 + (f - 1.4) * 0.024, 0.03, 0.45, 0.06);
+    const transitionSpan = clampFinite(0.08 + (f - 1.4) * 0.015, 0.08, 0.35, 0.1);
+
+    for (let i = 0; i < total; i++) {
+        const d = clampFinite(normalizedDepth[i], 0, 1, focus);
+        const diff = Math.abs(d - focus);
+        if (diff <= inFocusHalfBand) continue;
+
+        const ratio = clampFinite((diff - inFocusHalfBand) / transitionSpan, 0, 1, 0);
+        const smoothRatio = ratio * ratio * (3 - 2 * ratio);
+        const alpha = Math.round(smoothRatio * 255);
+        if (alpha > 0) {
+            const p = i * 4;
+            out[p] = 255;
+            out[p + 1] = 255;
+            out[p + 2] = 255;
+            out[p + 3] = alpha;
+        }
+    }
+    return out;
+}

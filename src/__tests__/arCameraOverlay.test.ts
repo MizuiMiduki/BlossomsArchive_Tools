@@ -21,6 +21,8 @@ import {
     estimateBackgroundScaleAndShift,
     analyzeGroundAndWallPlanes,
     generateSurfaceOverlayPixels,
+    calculateApertureMaxBlurPx,
+    generateDofOutOfFocusMaskPixels,
     sampleDepthAtNormalizedPoint,
     calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
@@ -510,5 +512,25 @@ describe("arCameraOverlay utilities", () => {
         expect(overlay[(4 * w + 4) * 4 + 3]).toBeGreaterThan(0);
         // 地面領域 (y=18, x=4) はエメラルド系 alpha > 0
         expect(overlay[(18 * w + 4) * 4 + 3]).toBeGreaterThan(0);
+    });
+
+    it("calculateApertureMaxBlurPx & generateDofOutOfFocusMaskPixels: blurs out-of-focus regions based on aperture F-stop", () => {
+        const wideBlur = calculateApertureMaxBlurPx(1.4, 2.0);
+        const narrowBlur = calculateApertureMaxBlurPx(8.0, 2.0);
+        expect(wideBlur).toBeGreaterThan(narrowBlur);
+        expect(wideBlur).toBeGreaterThan(10);
+        expect(narrowBlur).toBeLessThan(5);
+
+        const depth = new Float32Array([
+            0.1, 0.55, 0.9,
+            0.2, 0.55, 0.85,
+        ]);
+        const wideMask = generateDofOutOfFocusMaskPixels(depth, 3, 2, 0.55, 1.4);
+        // ピント位置(0.55)は alpha = 0 (ボケない)
+        expect(wideMask[1 * 4 + 3]).toBe(0);
+        expect(wideMask[4 * 4 + 3]).toBe(0);
+        // ピントから外れた奥(0.1)と手前(0.9)は alpha > 0 (ボケる)
+        expect(wideMask[0 * 4 + 3]).toBeGreaterThan(200);
+        expect(wideMask[2 * 4 + 3]).toBeGreaterThan(200);
     });
 });

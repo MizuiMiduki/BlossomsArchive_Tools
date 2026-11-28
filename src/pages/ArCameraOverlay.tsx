@@ -29,6 +29,8 @@ import {
     estimateDistanceFromArDepth,
     analyzeGroundAndWallPlanes,
     generateSurfaceOverlayPixels,
+    calculateApertureMaxBlurPx,
+    generateDofOutOfFocusMaskPixels,
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
@@ -136,6 +138,15 @@ export default function ArCameraOverlay() {
     const OCCLUSION_MASK_SIZE = 512;
     let occlusionCanvas: HTMLCanvasElement | undefined;
     let characterLayerCanvas: HTMLCanvasElement | undefined;
+    let dofBlurCanvas: HTMLCanvasElement | undefined;
+    let dofMaskCanvas: HTMLCanvasElement | undefined;
+
+    // 被写界深度（DoF）・フォーカス操作
+    const [dofEnabled, setDofEnabled] = createSignal<boolean>(false);
+    const [dofApertureF, setDofApertureF] = createSignal<number>(2.4);
+    const [dofFocusDepth, setDofFocusDepth] = createSignal<number>(0.55);
+    const [autoFocusOnCharacter, setAutoFocusOnCharacter] = createSignal<boolean>(true);
+    const [hasDofMask, setHasDofMask] = createSignal<boolean>(false);
 
     // バックグラウンド復帰時にカメラを自動再開するためのフラグ
     let shouldResumeCamera = false;
@@ -713,6 +724,51 @@ export default function ArCameraOverlay() {
             }
         }
 
+        // 被写界深度（DoF）背景ボケ合成（立ち絵にフォーカスを当て、F値に応じて背景・ピント外をボカす）
+        if (dofEnabled() && width > 0 && height > 0) {
+            const blurPx = calculateApertureMaxBlurPx(dofApertureF(), cameraDistanceM());
+            if (blurPx >= 0.4) {
+                const blurScale = isExport ? 1.0 : 0.5;
+                const bw = Math.max(16, Math.round(width * blurScale));
+                const bh = Math.max(16, Math.round(height * blurScale));
+                if (!dofBlurCanvas) {
+                    dofBlurCanvas = document.createElement("canvas");
+                }
+                if (dofBlurCanvas.width !== bw || dofBlurCanvas.height !== bh) {
+                    dofBlurCanvas.width = bw;
+                    dofBlurCanvas.height = bh;
+                }
+                const bCtx = dofBlurCanvas.getContext("2d");
+                if (bCtx) {
+                    bCtx.clearRect(0, 0, bw, bh);
+                    bCtx.save();
+                    if ("filter" in bCtx) {
+                        bCtx.filter = `blur(${(blurPx * blurScale).toFixed(1)}px)`;
+                    }
+                    bCtx.drawImage(ctx.canvas, 0, 0, bw, bh);
+                    bCtx.restore();
+
+                    if (hasDofMask() && dofMaskCanvas) {
+                        const { dx, dy } = getMaskShiftOffset(bw, bh);
+                        const relZoom =
+                            mode() === "ar" && visualTrackingEnabled()
+                                ? clampFinite(visualZoomScale / Math.max(0.25, maskBaseZoomScale), 0.4, 2.5, 1)
+                                : 1;
+                        bCtx.save();
+                        bCtx.globalCompositeOperation = "destination-in";
+                        bCtx.translate(bw * 0.5 + dx, bh * 0.5 + dy);
+                        bCtx.scale(relZoom, relZoom);
+                        bCtx.drawImage(dofMaskCanvas, -bw * 0.5, -bh * 0.5, bw, bh);
+                        bCtx.restore();
+                    }
+
+                    ctx.save();
+                    ctx.drawImage(dofBlurCanvas, 0, 0, width, height);
+                    ctx.restore();
+                }
+            }
+        }
+
         if (!isExport && mode() === "ar" && showArGrid()) {
             const detectedSurface = surfaceInfo();
             if (detectedSurface && surfaceOverlayCanvas) {
@@ -1070,14 +1126,67 @@ export default function ArCameraOverlay() {
         if (surfaceOverlayCanvas) {
             surfaceOverlayCanvas.getContext("2d")?.clearRect(0, 0, surfaceOverlayCanvas.width, surfaceOverlayCanvas.height);
         }
+        if (dofMaskCanvas) {
+            dofMaskCanvas.getContext("2d")?.clearRect(0, 0, dofMaskCanvas.width, dofMaskCanvas.height);
+        }
         maskBaseGyro = null;
         maskBaseVisualX = 0;
         maskBaseVisualY = 0;
         setHasOcclusion(false);
         setHasShadowCatcher(false);
+        setHasDofMask(false);
         setSurfaceInfo(null);
         setAiDepthMap(null);
         setAiDepthStatus("");
+    };
+
+    const updateDofFocusMask = (
+        depthMap: { data: Float32Array; width: number; height: number },
+        focusDepth01: number,
+        apertureF: number,
+    ) => {
+        if (!dofMaskCanvas) {
+            dofMaskCanvas = document.createElement("canvas");
+        }
+        if (dofMaskCanvas.width !== depthMap.width || dofMaskCanvas.height !== depthMap.height) {
+            dofMaskCanvas.width = depthMap.width;
+            dofMaskCanvas.height = depthMap.height;
+        }
+        const dCtx = dofMaskCanvas.getContext("2d");
+        if (!dCtx) return;
+        const pixels = generateDofOutOfFocusMaskPixels(
+            depthMap.data,
+            depthMap.width,
+            depthMap.height,
+            focusDepth01,
+            apertureF,
+        );
+        dCtx.putImageData(
+            new ImageData(new Uint8ClampedArray(pixels), depthMap.width, depthMap.height),
+            0,
+            0,
+        );
+        setHasDofMask(true);
+    };
+
+    const focusOnCharacter = () => {
+        setDofEnabled(true);
+        setAutoFocusOnCharacter(true);
+        const map = aiDepthMap();
+        if (map) {
+            const charDepth = estimateCharacterGroundDepth(
+                map.data,
+                map.width,
+                map.height,
+                clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
+                clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
+            );
+            const rounded = Math.round(charDepth * 100) / 100;
+            setDofFocusDepth(rounded);
+            updateDofFocusMask(map, rounded, dofApertureF());
+        } else {
+            void runAiDepthOcclusion();
+        }
     };
 
     const applyDepthMaskToOcclusion = (
@@ -1287,6 +1396,13 @@ export default function ArCameraOverlay() {
             );
             setGroundTiltDeg(estimatedTilt);
             updateGroundShadowCatcher(mapData);
+            if (autoFocusOnCharacter()) {
+                const roundedFocus = Math.round(groundDepth * 100) / 100;
+                setDofFocusDepth(roundedFocus);
+                updateDofFocusMask(mapData, roundedFocus, dofApertureF());
+            } else {
+                updateDofFocusMask(mapData, dofFocusDepth(), dofApertureF());
+            }
             if (autoDistanceFromAr()) {
                 const estimatedDist = syncDistanceAndScaleFromDepth(mapData);
                 setAiDepthStatus(
@@ -1448,6 +1564,21 @@ export default function ArCameraOverlay() {
                 const map = aiDepthMap();
                 if (map) {
                     syncDistanceAndScaleFromDepth(map);
+                }
+            }
+            if (autoFocusOnCharacter()) {
+                const map = aiDepthMap();
+                if (map) {
+                    const charDepth = estimateCharacterGroundDepth(
+                        map.data,
+                        map.width,
+                        map.height,
+                        clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
+                        clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
+                    );
+                    const rounded = Math.round(charDepth * 100) / 100;
+                    setDofFocusDepth(rounded);
+                    updateDofFocusMask(map, rounded, dofApertureF());
                 }
             }
         }
@@ -2254,6 +2385,121 @@ export default function ArCameraOverlay() {
                                             }
                                         />
                                     </div>
+                                </div>
+
+                                {/* 被写界深度（DoF）・フォーカス操作 */}
+                                <div
+                                    class="ba-stack-2"
+                                    style={{
+                                        padding: "0.6rem 0.75rem",
+                                        "border-radius": "var(--ba-radius)",
+                                        border: "1px solid var(--ba-border)",
+                                    }}
+                                >
+                                    <div class="ba-flex ba-items-center ba-justify-between ba-gap-2 ba-flex-wrap">
+                                        <span class="ba-text-xs ba-font-bold">被写界深度・フォーカス操作</span>
+                                        <div class="ba-flex ba-items-center ba-gap-1">
+                                            <button
+                                                type="button"
+                                                class="ba-btn ba-btn--secondary ba-btn--xs"
+                                                disabled={aiDepthBusy()}
+                                                onClick={focusOnCharacter}
+                                            >
+                                                {aiDepthBusy() ? "解析中..." : "立ち絵にピント合わせ"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class={`ba-btn ba-btn--xs ${dofEnabled() ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                                aria-pressed={dofEnabled() ? "true" : "false"}
+                                                onClick={() => setDofEnabled((v) => !v)}
+                                            >
+                                                {dofEnabled() ? "ボケON" : "ボケOFF"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="dof-aperture-range" class="ba-label">
+                                            <span>絞り (F値 / ボケの強さ)</span>
+                                            <span>f/{dofApertureF().toFixed(1)}</span>
+                                        </label>
+                                        <input
+                                            id="dof-aperture-range"
+                                            type="range"
+                                            min="1.4"
+                                            max="16"
+                                            step="0.2"
+                                            class="ba-range"
+                                            value={dofApertureF()}
+                                            onInput={(e) => {
+                                                const nextF = clampFinite(Number(e.currentTarget.value), 1.4, 16, 2.4);
+                                                setDofApertureF(nextF);
+                                                if (!dofEnabled()) setDofEnabled(true);
+                                                const map = aiDepthMap();
+                                                if (map) {
+                                                    updateDofFocusMask(map, dofFocusDepth(), nextF);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            class="ba-checkbox"
+                                            checked={autoFocusOnCharacter()}
+                                            onChange={(e) => {
+                                                const checked = e.currentTarget.checked;
+                                                setAutoFocusOnCharacter(checked);
+                                                if (checked) {
+                                                    const map = aiDepthMap();
+                                                    if (map) {
+                                                        const charDepth = estimateCharacterGroundDepth(
+                                                            map.data,
+                                                            map.width,
+                                                            map.height,
+                                                            clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
+                                                            clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
+                                                        );
+                                                        const rounded = Math.round(charDepth * 100) / 100;
+                                                        setDofFocusDepth(rounded);
+                                                        updateDofFocusMask(map, rounded, dofApertureF());
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <span>立ち絵の位置にオートフォーカス追従</span>
+                                    </label>
+                                    <Show when={hasDofMask() || !autoFocusOnCharacter()}>
+                                        <div>
+                                            <label for="dof-focus-depth-range" class="ba-label">
+                                                <span>ピント位置 (奥 ↔ 手前)</span>
+                                                <span>{Math.round(dofFocusDepth() * 100)}%</span>
+                                            </label>
+                                            <input
+                                                id="dof-focus-depth-range"
+                                                type="range"
+                                                min="0.05"
+                                                max="0.95"
+                                                step="0.01"
+                                                class="ba-range"
+                                                value={dofFocusDepth()}
+                                                onInput={(e) => {
+                                                    const nextFocus = clampFinite(
+                                                        Number(e.currentTarget.value),
+                                                        0.05,
+                                                        0.95,
+                                                        0.55,
+                                                    );
+                                                    setAutoFocusOnCharacter(false);
+                                                    setDofFocusDepth(nextFocus);
+                                                    if (!dofEnabled()) setDofEnabled(true);
+                                                    const map = aiDepthMap();
+                                                    if (map) {
+                                                        updateDofFocusMask(map, nextFocus, dofApertureF());
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    </Show>
                                 </div>
 
                                 {/* ARモード専用パラメータ */}
