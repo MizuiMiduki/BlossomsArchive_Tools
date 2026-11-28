@@ -1246,12 +1246,22 @@ export default function ArCameraOverlay() {
                                 "z-index": "20",
                                 width: "min(360px, calc(100% - 1.5rem))",
                                 "max-height": "calc(100% - 9.5rem)",
-                                "overflow-y": "auto",
-                                padding: "1rem",
+                                display: "flex",
+                                "flex-direction": "column",
+                                overflow: "hidden",
+                                padding: "0",
                                 "box-shadow": "0 16px 40px rgba(0,0,0,0.45)",
                             }}
                         >
-                            <div class="ba-flex ba-items-center ba-justify-between ba-mb-3">
+                            {/* 固定ヘッダー（スクロールしても閉じるボタンが残る） */}
+                            <div
+                                class="ba-flex ba-items-center ba-justify-between"
+                                style={{
+                                    "flex-shrink": 0,
+                                    padding: "0.75rem 1rem",
+                                    "border-bottom": "1px solid var(--ba-border)",
+                                }}
+                            >
                                 <h2 class="ba-card-title" style={{ "font-size": "0.95rem", margin: 0 }}>
                                     配置・影・保存設定
                                 </h2>
@@ -1261,11 +1271,19 @@ export default function ArCameraOverlay() {
                                     onClick={() => setShowSettingsDrawer(false)}
                                     aria-label="調整パネルを閉じる"
                                 >
-                                    ×
+                                    閉じる ×
                                 </button>
                             </div>
 
-                            <div class="ba-stack-3">
+                            {/* スクロール可能な設定項目エリア */}
+                            <div
+                                class="ba-stack-3"
+                                style={{
+                                    flex: "1 1 0%",
+                                    "overflow-y": "auto",
+                                    padding: "0.85rem 1rem 1rem",
+                                }}
+                            >
                                 {/* 立ち絵クイック操作 */}
                                 <div class="ba-flex ba-flex-wrap ba-gap-2">
                                     <button

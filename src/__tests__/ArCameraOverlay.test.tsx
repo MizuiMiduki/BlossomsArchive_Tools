@@ -108,4 +108,19 @@ describe("ArCameraOverlay Page", () => {
         expect(azimuthSlider.value).toBe("90");
         expect(autoLightCheckbox.checked).toBe(false);
     });
+
+    it("設定ドロワーの閉じるボタンがスクロール領域外の固定ヘッダーに配置されていること", () => {
+        render(() => <ArCameraOverlay />);
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
+
+        const closeBtn = screen.getByRole("button", { name: "調整パネルを閉じる" });
+        const header = closeBtn.parentElement as HTMLElement;
+        const drawer = header.parentElement as HTMLElement;
+        expect(drawer.style.display).toBe("flex");
+        expect(drawer.style.flexDirection).toBe("column");
+        expect(header.style.flexShrink).toBe("0");
+
+        fireEvent.click(closeBtn);
+        expect(screen.queryByRole("button", { name: "調整パネルを閉じる" })).not.toBeInTheDocument();
+    });
 });
