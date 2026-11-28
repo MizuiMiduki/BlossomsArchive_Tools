@@ -1527,11 +1527,11 @@ export default function ArCameraOverlay() {
                             "box-sizing": "border-box",
                         }}
                     >
-                        {/* 遮蔽ペイントツールバー（物の奥に立っている表現用） */}
+                        {/* 前後合成（奥に配置）ツールバー */}
                         <Show when={occlusionPaintMode()}>
                             <div
                                 role="region"
-                                aria-label="遮蔽マスクペイント操作"
+                                aria-label="前後合成マスク操作"
                                 style={{
                                     background: "rgba(15, 23, 42, 0.88)",
                                     color: "#f8fafc",
@@ -1545,7 +1545,7 @@ export default function ArCameraOverlay() {
                                     "font-size": "0.75rem",
                                 }}
                             >
-                                <span>手前の物をなぞって隠す:</span>
+                                <span>手前の物をなぞる:</span>
                                 <button
                                     type="button"
                                     class={`ba-btn ba-btn--xs ${!occlusionEraser() ? "ba-btn--primary" : "ba-btn--secondary"}`}
@@ -1656,7 +1656,7 @@ export default function ArCameraOverlay() {
                                 aria-pressed={occlusionPaintMode() ? "true" : "false"}
                                 onClick={() => setOcclusionPaintMode((v) => !v)}
                             >
-                                {occlusionPaintMode() ? "奥に隠す(編集中)" : "奥に隠す"}
+                                {occlusionPaintMode() ? "奥に配置(編集中)" : "奥に配置"}
                             </button>
                             <button
                                 type="button"

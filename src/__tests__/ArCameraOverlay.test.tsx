@@ -142,12 +142,12 @@ describe("ArCameraOverlay Page", () => {
         expect(scaleSlider.value).toBe("3.5");
     });
 
-    it("物の奥に立たせる遮蔽マスク（奥に隠す）ペイントUIを操作できること", () => {
+    it("物の奥に立たせる前後合成（奥に配置）ペイントUIを操作できること", () => {
         render(() => <ArCameraOverlay />);
-        const occlusionBtn = screen.getByRole("button", { name: "奥に隠す" });
+        const occlusionBtn = screen.getByRole("button", { name: "奥に配置" });
         fireEvent.click(occlusionBtn);
 
-        expect(screen.getByRole("region", { name: "遮蔽マスクペイント操作" })).toBeInTheDocument();
+        expect(screen.getByRole("region", { name: "前後合成マスク操作" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "塗る" })).toBeInTheDocument();
         const eraserBtn = screen.getByRole("button", { name: "消しゴム" });
         fireEvent.click(eraserBtn);
@@ -157,7 +157,7 @@ describe("ArCameraOverlay Page", () => {
         expect(brushSlider.value).toBe("80");
 
         fireEvent.click(screen.getByRole("button", { name: "完了" }));
-        expect(screen.queryByRole("region", { name: "遮蔽マスクペイント操作" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("region", { name: "前後合成マスク操作" })).not.toBeInTheDocument();
     });
 
     it("バックグラウンドから復帰した際に起動中だったカメラが自動で再取得されること", async () => {
@@ -217,7 +217,7 @@ describe("ArCameraOverlay Page", () => {
             screen.getByText(/外部送信・AI学習に使われることはありません/),
         ).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole("button", { name: "奥に隠す" }));
+        fireEvent.click(screen.getByRole("button", { name: "奥に配置" }));
         expect(screen.getByRole("button", { name: "AI自動判定 (WebGPU)" })).toBeInTheDocument();
         expect(
             screen.getByText(/端末内（WebGPU）のみで解析・外部送信やAI学習には一切使用されません/),
