@@ -88,10 +88,8 @@ export default function ArCameraOverlay() {
     const [posYPercent, setPosYPercent] = createSignal<number>(78);
     const [scale, setScale] = createSignal<number>(0.65);
 
-    // 遮蔽（物の奥に立つ表現）用: 手前の物体をペイントして立ち絵を隠す
+    // 前後配置（物の奥に立つ表現・ローカルWebGPU AI専用）
     const [occlusionPaintMode, setOcclusionPaintMode] = createSignal<boolean>(false);
-    const [occlusionEraser, setOcclusionEraser] = createSignal<boolean>(false);
-    const [occlusionBrushPx, setOcclusionBrushPx] = createSignal<number>(48);
     const [hasOcclusion, setHasOcclusion] = createSignal<boolean>(false);
     const [aiDepthMap, setAiDepthMap] = createSignal<{
         data: Float32Array;
@@ -117,8 +115,6 @@ export default function ArCameraOverlay() {
     const OCCLUSION_MASK_SIZE = 512;
     let occlusionCanvas: HTMLCanvasElement | undefined;
     let characterLayerCanvas: HTMLCanvasElement | undefined;
-    let isPaintingOcclusion = false;
-    let lastPaintPoint: { nx: number; ny: number } | null = null;
 
     // バックグラウンド復帰時にカメラを自動再開するためのフラグ
     let shouldResumeCamera = false;
@@ -686,15 +682,6 @@ export default function ArCameraOverlay() {
         }
 
         drawCharacterWithOcclusion(ctx, width, height);
-
-        // 遮蔽ペイント中は塗った範囲を半透明の赤で可視化（保存画像には含めない・画角追従）
-        if (!isExport && occlusionPaintMode() && hasOcclusion() && occlusionCanvas) {
-            const { dx, dy } = getMaskShiftOffset(width, height);
-            ctx.save();
-            ctx.globalAlpha = 0.35;
-            ctx.drawImage(occlusionCanvas, dx, dy, width, height);
-            ctx.restore();
-        }
     };
 
     const drawCharacter = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
@@ -912,37 +899,6 @@ export default function ArCameraOverlay() {
         return occlusionCanvas.getContext("2d");
     };
 
-    const stampOcclusion = (nx: number, ny: number, rectW: number, rectH: number) => {
-        const wasEmpty = !hasOcclusion();
-        const mctx = ensureOcclusionCanvas();
-        if (!mctx || rectW <= 0 || rectH <= 0) return;
-        if (wasEmpty) captureMaskAnchor();
-        const brush = clampFinite(occlusionBrushPx(), 8, 160, 48);
-        const rx = Math.max(1, (brush / rectW) * OCCLUSION_MASK_SIZE);
-        const ry = Math.max(1, (brush / rectH) * OCCLUSION_MASK_SIZE);
-        const erase = occlusionEraser();
-        mctx.save();
-        mctx.globalCompositeOperation = erase ? "destination-out" : "source-over";
-        mctx.fillStyle = "rgba(255, 0, 0, 1)";
-
-        const from = lastPaintPoint ?? { nx, ny };
-        const dx = (nx - from.nx) * OCCLUSION_MASK_SIZE;
-        const dy = (ny - from.ny) * OCCLUSION_MASK_SIZE;
-        const dist = Math.hypot(dx, dy);
-        const steps = Math.max(1, Math.ceil(dist / Math.max(1, Math.min(rx, ry) * 0.5)));
-        for (let i = 1; i <= steps; i++) {
-            const t = i / steps;
-            const px = (from.nx + (nx - from.nx) * t) * OCCLUSION_MASK_SIZE;
-            const py = (from.ny + (ny - from.ny) * t) * OCCLUSION_MASK_SIZE;
-            mctx.beginPath();
-            mctx.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2);
-            mctx.fill();
-        }
-        mctx.restore();
-        lastPaintPoint = { nx, ny };
-        if (!erase) setHasOcclusion(true);
-    };
-
     const applyHeightScale = (heightCm: number, distanceM: number) => {
         const asset = overlayAsset();
         const opaqueRatio =
@@ -966,6 +922,9 @@ export default function ArCameraOverlay() {
         maskBaseVisualX = 0;
         maskBaseVisualY = 0;
         setHasOcclusion(false);
+        setHasShadowCatcher(false);
+        setAiDepthMap(null);
+        setAiDepthStatus("");
     };
 
     const applyDepthMaskToOcclusion = (
@@ -1158,26 +1117,8 @@ export default function ArCameraOverlay() {
         a.click();
     };
 
-    const paintAtPointer = (e: PointerEvent) => {
-        if (!previewCanvasRef) return;
-        const rect = previewCanvasRef.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) return;
-        const { dx, dy } = getMaskShiftOffset(rect.width, rect.height);
-        const nx = clampFinite((e.clientX - rect.left - dx) / rect.width, 0, 1, 0.5);
-        const ny = clampFinite((e.clientY - rect.top - dy) / rect.height, 0, 1, 0.5);
-        stampOcclusion(nx, ny, rect.width, rect.height);
-    };
-
     const handlePointerDown = (e: PointerEvent) => {
-        if (!previewCanvasRef) return;
-        if (occlusionPaintMode()) {
-            (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-            isPaintingOcclusion = true;
-            lastPaintPoint = null;
-            paintAtPointer(e);
-            return;
-        }
-        if (isPositionLocked()) return;
+        if (isPositionLocked() || !previewCanvasRef) return;
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
 
@@ -1196,10 +1137,6 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerMove = (e: PointerEvent) => {
-        if (isPaintingOcclusion && occlusionPaintMode()) {
-            paintAtPointer(e);
-            return;
-        }
         if (isPositionLocked() || !previewCanvasRef) return;
         if (!activePointers.has(e.pointerId)) return;
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1223,12 +1160,6 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-        if (isPaintingOcclusion) {
-            isPaintingOcclusion = false;
-            lastPaintPoint = null;
-            (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
-            return;
-        }
         activePointers.delete(e.pointerId);
         if (activePointers.size < 2) {
             pinchStartDistance = 0;
@@ -1372,11 +1303,7 @@ export default function ArCameraOverlay() {
                             height: "100%",
                             display: "block",
                             "touch-action": "none",
-                            cursor: occlusionPaintMode()
-                                ? "crosshair"
-                                : isPositionLocked()
-                                  ? "default"
-                                  : "grab",
+                            cursor: isPositionLocked() ? "default" : "grab",
                         }}
                         aria-label="カメラと透過画像の合成プレビューキャンバス"
                         onPointerDown={handlePointerDown}
@@ -1563,11 +1490,11 @@ export default function ArCameraOverlay() {
                             "box-sizing": "border-box",
                         }}
                     >
-                        {/* 前後合成（奥に配置）ツールバー */}
+                        {/* ローカルAI奥に配置パネル */}
                         <Show when={occlusionPaintMode()}>
                             <div
                                 role="region"
-                                aria-label="前後合成マスク操作"
+                                aria-label="ローカルAI奥に配置パネル"
                                 style={{
                                     background: "rgba(15, 23, 42, 0.88)",
                                     color: "#f8fafc",
@@ -1581,36 +1508,6 @@ export default function ArCameraOverlay() {
                                     "font-size": "0.75rem",
                                 }}
                             >
-                                <span>手前の物をなぞる:</span>
-                                <button
-                                    type="button"
-                                    class={`ba-btn ba-btn--xs ${!occlusionEraser() ? "ba-btn--primary" : "ba-btn--secondary"}`}
-                                    onClick={() => setOcclusionEraser(false)}
-                                >
-                                    塗る
-                                </button>
-                                <button
-                                    type="button"
-                                    class={`ba-btn ba-btn--xs ${occlusionEraser() ? "ba-btn--warning" : "ba-btn--secondary"}`}
-                                    onClick={() => setOcclusionEraser(true)}
-                                >
-                                    消しゴム
-                                </button>
-                                <label class="ba-flex ba-items-center ba-gap-1">
-                                    <span>太さ</span>
-                                    <input
-                                        type="range"
-                                        min="12"
-                                        max="140"
-                                        step="4"
-                                        aria-label="遮蔽ブラシの太さ"
-                                        value={occlusionBrushPx()}
-                                        onInput={(e) =>
-                                            setOcclusionBrushPx(clampFinite(Number(e.currentTarget.value), 12, 140, 48))
-                                        }
-                                        style={{ width: "70px" }}
-                                    />
-                                </label>
                                 <button
                                     type="button"
                                     class="ba-btn ba-btn--primary ba-btn--xs"
@@ -1640,14 +1537,16 @@ export default function ArCameraOverlay() {
                                         </label>
                                     )}
                                 </Show>
-                                <button
-                                    type="button"
-                                    class="ba-btn ba-btn--outline ba-btn--xs"
-                                    style={{ color: "#f8fafc", "border-color": "rgba(255,255,255,0.4)" }}
-                                    onClick={clearOcclusion}
-                                >
-                                    マスク消去
-                                </button>
+                                <Show when={hasOcclusion()}>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        style={{ color: "#f8fafc", "border-color": "rgba(255,255,255,0.4)" }}
+                                        onClick={clearOcclusion}
+                                    >
+                                        解除
+                                    </button>
+                                </Show>
                                 <button
                                     type="button"
                                     class="ba-btn ba-btn--success ba-btn--xs"
@@ -1692,7 +1591,7 @@ export default function ArCameraOverlay() {
                                 aria-pressed={occlusionPaintMode() ? "true" : "false"}
                                 onClick={() => setOcclusionPaintMode((v) => !v)}
                             >
-                                {occlusionPaintMode() ? "奥に配置(編集中)" : "奥に配置"}
+                                {occlusionPaintMode() ? "奥に配置(開)" : "奥に配置"}
                             </button>
                             <button
                                 type="button"

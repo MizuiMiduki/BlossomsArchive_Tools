@@ -142,22 +142,18 @@ describe("ArCameraOverlay Page", () => {
         expect(scaleSlider.value).toBe("3.5");
     });
 
-    it("物の奥に立たせる前後合成（奥に配置）ペイントUIを操作できること", () => {
+    it("物の奥に立たせる操作は全てローカルAI(WebGPU)パネルで行われ手動ブラシUIが無いこと", () => {
         render(() => <ArCameraOverlay />);
         const occlusionBtn = screen.getByRole("button", { name: "奥に配置" });
         fireEvent.click(occlusionBtn);
 
-        expect(screen.getByRole("region", { name: "前後合成マスク操作" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "塗る" })).toBeInTheDocument();
-        const eraserBtn = screen.getByRole("button", { name: "消しゴム" });
-        fireEvent.click(eraserBtn);
-
-        const brushSlider = screen.getByLabelText("遮蔽ブラシの太さ") as HTMLInputElement;
-        fireEvent.input(brushSlider, { target: { value: "80" } });
-        expect(brushSlider.value).toBe("80");
+        expect(screen.getByRole("region", { name: "ローカルAI奥に配置パネル" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "AI自動判定 (WebGPU)" })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "塗る" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "消しゴム" })).not.toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: "完了" }));
-        expect(screen.queryByRole("region", { name: "前後合成マスク操作" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("region", { name: "ローカルAI奥に配置パネル" })).not.toBeInTheDocument();
     });
 
     it("バックグラウンドから復帰した際に起動中だったカメラが自動で再取得されること", async () => {
@@ -256,27 +252,10 @@ describe("ArCameraOverlay Page", () => {
         expect(screen.getByRole("button", { name: "映像追従OFF" })).toBeInTheDocument();
     });
 
-    it("前後合成マスクペイント後にジャイロ画角が変化してもエラーなく追従し、マスク消去できること", async () => {
-        const { container } = render(() => <ArCameraOverlay />);
-        const canvas = container.querySelector("canvas") as HTMLCanvasElement;
-        vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
-            left: 0,
-            top: 0,
-            width: 320,
-            height: 480,
-            right: 320,
-            bottom: 480,
-            x: 0,
-            y: 0,
-            toJSON: () => ({}),
-        });
-
+    it("ローカルAI奥に配置パネル表示中にジャイロ画角が変化しても安全に動作すること", async () => {
+        render(() => <ArCameraOverlay />);
         fireEvent.click(screen.getByRole("button", { name: "奥に配置" }));
-        fireEvent.pointerDown(canvas, { clientX: 160, clientY: 240, pointerId: 1 });
-        fireEvent.pointerMove(canvas, { clientX: 180, clientY: 250, pointerId: 1 });
-        fireEvent.pointerUp(canvas, { pointerId: 1 });
 
-        // ジャイロによる画角変化をシミュレート
         const ev1 = new Event("deviceorientation") as DeviceOrientationEvent;
         Object.defineProperty(ev1, "alpha", { value: 10 });
         Object.defineProperty(ev1, "beta", { value: 80 });
@@ -289,7 +268,6 @@ describe("ArCameraOverlay Page", () => {
         Object.defineProperty(ev2, "gamma", { value: 2 });
         window.dispatchEvent(ev2);
 
-        fireEvent.click(screen.getByRole("button", { name: "マスク消去" }));
         expect(screen.getByRole("button", { name: "完了" })).toBeInTheDocument();
     });
 });
