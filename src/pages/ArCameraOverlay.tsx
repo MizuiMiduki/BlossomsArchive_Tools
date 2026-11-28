@@ -50,6 +50,7 @@ export default function ArCameraOverlay() {
     });
 
     let containerRef: HTMLDivElement | undefined;
+    let cameraStageRef: HTMLDivElement | undefined;
     let videoRef: HTMLVideoElement | undefined;
     let previewCanvasRef: HTMLCanvasElement | undefined;
     let overlayInputRef: HTMLInputElement | undefined;
@@ -66,6 +67,11 @@ export default function ArCameraOverlay() {
     const [isCameraActive, setIsCameraActive] = createSignal<boolean>(false);
     const [mirrorSelfie, setMirrorSelfie] = createSignal<boolean>(true);
     const [cameraError, setCameraError] = createSignal<string | null>(null);
+
+    // カメラアプリ風UI状態（全画面・設定ドロワー・撮影プレビューモーダル）
+    const [isFullscreen, setIsFullscreen] = createSignal<boolean>(false);
+    const [showSettingsDrawer, setShowSettingsDrawer] = createSignal<boolean>(false);
+    const [showCaptureModal, setShowCaptureModal] = createSignal<boolean>(false);
 
     // 画像アセット
     const [overlayAsset, setOverlayAsset] = createSignal<OverlayImageAsset | null>(null);
@@ -110,12 +116,15 @@ export default function ArCameraOverlay() {
     const [captureFormat, setCaptureFormat] = createSignal<"image/png" | "image/jpeg" | "image/webp">("image/png");
     const [isFlashActive, setIsFlashActive] = createSignal<boolean>(false);
 
-    // ドラッグ操作状態
+    // マルチタッチ・ドラッグ操作状態
+    const activePointers = new Map<number, { x: number; y: number }>();
     let isDragging = false;
     let dragStartClientX = 0;
     let dragStartClientY = 0;
     let dragStartPosX = 50;
     let dragStartPosY = 78;
+    let pinchStartDistance = 0;
+    let pinchStartScale = 0.65;
 
     const currentShadowPreview = createMemo(() =>
         calculateProjectedShadowTransform({
@@ -140,6 +149,27 @@ export default function ArCameraOverlay() {
             videoRef.srcObject = null;
         }
         setIsCameraActive(false);
+    };
+
+    const toggleFullscreen = async () => {
+        const next = !isFullscreen();
+        setIsFullscreen(next);
+        try {
+            if (next && cameraStageRef?.requestFullscreen && !document.fullscreenElement) {
+                await cameraStageRef.requestFullscreen();
+            } else if (!next && document.fullscreenElement) {
+                await document.exitFullscreen();
+            }
+        } catch {
+            // iOS Safari 等で Fullscreen API 非対応の場合は CSS フルスクリーン（position: fixed）で動作
+        }
+    };
+
+    const handleFullscreenChange = () => {
+        if (typeof document !== "undefined" && !document.fullscreenElement && isFullscreen()) {
+            // OSフルスクリーンがEsc等で解除された場合もCSS状態と同期
+            setIsFullscreen(false);
+        }
     };
 
     const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
@@ -406,7 +436,7 @@ export default function ArCameraOverlay() {
             !navigator.mediaDevices.getUserMedia
         ) {
             setCameraError(
-                "お使いのブラウザまたは端末はカメラアクセスAPI（getUserMedia）に対応していません。背景画像をアップロードしてテストできます。",
+                "お使いのブラウザまたは端末はカメラアクセスAPI（getUserMedia）に対応していません。背景画像を選択してテストできます。",
             );
             return;
         }
@@ -415,8 +445,8 @@ export default function ArCameraOverlay() {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: { ideal: targetFacing },
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
                 },
                 audio: false,
             });
@@ -442,6 +472,23 @@ export default function ArCameraOverlay() {
         setCameraFacing(next);
         if (isCameraActive()) {
             void startCamera(next);
+        }
+    };
+
+    const syncCanvasDisplaySize = () => {
+        if (!previewCanvasRef || !cameraStageRef) return;
+        const rect = cameraStageRef.getBoundingClientRect();
+        if (rect.width > 50 && rect.height > 50) {
+            const dpr = Math.min(2, window.devicePixelRatio || 1);
+            const targetW = Math.round(rect.width * dpr);
+            const targetH = Math.round(rect.height * dpr);
+            if (
+                Math.abs(previewCanvasRef.width - targetW) > 4 ||
+                Math.abs(previewCanvasRef.height - targetH) > 4
+            ) {
+                previewCanvasRef.width = targetW;
+                previewCanvasRef.height = targetH;
+            }
         }
     };
 
@@ -479,9 +526,9 @@ export default function ArCameraOverlay() {
             ctx.drawImage(bg.imgElement, (width - drawW) / 2, (height - drawH) / 2, drawW, drawH);
         } else {
             const grad = ctx.createLinearGradient(0, 0, 0, height);
-            grad.addColorStop(0, "#e2e8f0");
-            grad.addColorStop(0.62, "#cbd5e1");
-            grad.addColorStop(1, "#94a3b8");
+            grad.addColorStop(0, "#1e293b");
+            grad.addColorStop(0.6, "#334155");
+            grad.addColorStop(1, "#0f172a");
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, width, height);
         }
@@ -513,14 +560,14 @@ export default function ArCameraOverlay() {
         if (!isExport && mode() === "ar" && showArGrid()) {
             const horizonY = height * clampFinite(0.55 - (groundTiltDeg() - 30) * 0.004, 0.25, 0.72, 0.55);
             ctx.save();
-            ctx.strokeStyle = "rgba(99, 102, 241, 0.28)";
+            ctx.strokeStyle = "rgba(129, 140, 248, 0.25)";
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(0, horizonY);
             ctx.lineTo(width, horizonY);
             for (let i = -4; i <= 4; i++) {
                 ctx.moveTo(width / 2 + i * 35, horizonY);
-                ctx.lineTo(width / 2 + i * 190, height);
+                ctx.lineTo(width / 2 + i * 240, height);
             }
             for (let row = 1; row <= 4; row++) {
                 const y = horizonY + ((height - horizonY) * (row * row)) / 16;
@@ -534,7 +581,7 @@ export default function ArCameraOverlay() {
         const asset = overlayAsset();
         if (!asset) return;
 
-        const baseTargetHeight = height * 0.65 * clampFinite(scale(), 0.1, 3.0, 0.65);
+        const baseTargetHeight = height * 0.62 * clampFinite(scale(), 0.1, 3.0, 0.65);
         const aspect = asset.width / Math.max(1, asset.height);
         const drawH = baseTargetHeight;
         const drawW = drawH * aspect;
@@ -656,6 +703,7 @@ export default function ArCameraOverlay() {
     const startRenderLoop = () => {
         if (rafId !== null) cancelAnimationFrame(rafId);
         const render = () => {
+            syncCanvasDisplaySize();
             if (previewCanvasRef) {
                 const ctx = previewCanvasRef.getContext("2d");
                 if (ctx) {
@@ -686,6 +734,9 @@ export default function ArCameraOverlay() {
             exportCanvas.height = Math.round(
                 (exportCanvas.width / Math.max(1, bg.width)) * bg.height,
             );
+        } else if (previewCanvasRef && previewCanvasRef.width > 0) {
+            exportCanvas.width = previewCanvasRef.width;
+            exportCanvas.height = previewCanvasRef.height;
         } else {
             exportCanvas.width = 1280;
             exportCanvas.height = 720;
@@ -705,6 +756,7 @@ export default function ArCameraOverlay() {
                     URL.revokeObjectURL(prev);
                 }
                 setCapturedUrl(createSafeObjectUrl(blob));
+                setShowCaptureModal(true);
             },
             mime,
             quality,
@@ -727,18 +779,38 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerDown = (e: PointerEvent) => {
-        if (isPositionLocked()) return;
-        if (!previewCanvasRef) return;
-        isDragging = true;
-        dragStartClientX = e.clientX;
-        dragStartClientY = e.clientY;
-        dragStartPosX = posXPercent();
-        dragStartPosY = posYPercent();
+        if (isPositionLocked() || !previewCanvasRef) return;
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+
+        if (activePointers.size === 1) {
+            isDragging = true;
+            dragStartClientX = e.clientX;
+            dragStartClientY = e.clientY;
+            dragStartPosX = posXPercent();
+            dragStartPosY = posYPercent();
+        } else if (activePointers.size === 2) {
+            isDragging = false;
+            const pts = Array.from(activePointers.values());
+            pinchStartDistance = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+            pinchStartScale = scale();
+        }
     };
 
     const handlePointerMove = (e: PointerEvent) => {
-        if (!isDragging || isPositionLocked() || !previewCanvasRef) return;
+        if (isPositionLocked() || !previewCanvasRef) return;
+        if (!activePointers.has(e.pointerId)) return;
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        if (activePointers.size === 2 && pinchStartDistance > 10) {
+            const pts = Array.from(activePointers.values());
+            const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+            const ratio = dist / pinchStartDistance;
+            setScale(Math.round(clampFinite(pinchStartScale * ratio, 0.15, 2.5, 0.65) * 100) / 100);
+            return;
+        }
+
+        if (!isDragging || activePointers.size !== 1) return;
         const rect = previewCanvasRef.getBoundingClientRect();
         if (rect.width <= 0 || rect.height <= 0) return;
 
@@ -749,7 +821,13 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-        isDragging = false;
+        activePointers.delete(e.pointerId);
+        if (activePointers.size < 2) {
+            pinchStartDistance = 0;
+        }
+        if (activePointers.size === 0) {
+            isDragging = false;
+        }
         (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
     };
 
@@ -764,12 +842,18 @@ export default function ArCameraOverlay() {
         if (containerRef) {
             playPageEntrance(containerRef, ".ba-card");
         }
+        if (typeof document !== "undefined") {
+            document.addEventListener("fullscreenchange", handleFullscreenChange);
+        }
         startRenderLoop();
 
         return () => {
             if (rafId !== null) {
                 cancelAnimationFrame(rafId);
                 rafId = null;
+            }
+            if (typeof document !== "undefined") {
+                document.removeEventListener("fullscreenchange", handleFullscreenChange);
             }
             stopCamera();
             disableGyro();
@@ -800,19 +884,27 @@ export default function ArCameraOverlay() {
     });
 
     return (
-        <div ref={containerRef} class="ba-page-container">
-            <header class="ba-page-header">
-                <div class="ba-page-title-row">
-                    <span class="ba-page-icon-box" aria-hidden="true">
-                        <ToolIcon name="camera" class="ba-icon-md" />
-                    </span>
-                    <div>
-                        <h1 class="ba-page-title">{pageTitle()}</h1>
-                        <p class="ba-page-desc">{description()}</p>
+        <div ref={containerRef} class="ba-stack-4" style={{ width: "100%" }}>
+            {/* コンパクトヘッダー（H1・説明・A11y担保） */}
+            <header class="ba-card ba-card--border" style={{ padding: "0.75rem 1rem" }}>
+                <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
+                    <div class="ba-flex ba-items-center ba-gap-3">
+                        <span class="ba-icon-box ba-icon-box--primary" aria-hidden="true">
+                            <ToolIcon name="camera" class="ba-icon-sm" />
+                        </span>
+                        <div>
+                            <h1 class="ba-title-h1" style={{ "font-size": "1.15rem", margin: 0 }}>
+                                {pageTitle()}
+                            </h1>
+                            <p class="ba-text-xs ba-text-subtle" style={{ margin: 0 }}>
+                                {description()}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </header>
 
+            {/* スマホカメラアプリ風・全画面ビューファインダー */}
             <form
                 {...({
                     toolname: "ar_camera_overlay",
@@ -820,36 +912,86 @@ export default function ArCameraOverlay() {
                         "Overlay transparent character illustrations onto live camera feed with physically-based AR shadow calculation or fixed screen positioning.",
                 } as Record<string, string>)}
                 onSubmit={(e) => e.preventDefault()}
-                class="ba-grid ba-grid-cols-1 lg:ba-grid-cols-12 ba-gap-6"
             >
-                <div class="lg:ba-col-span-7 ba-flex ba-flex-col ba-gap-4">
-                    <section class="ba-card ba-p-4" aria-labelledby="preview-heading">
-                        <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2 ba-mb-3">
-                            <h2 id="preview-heading" class="ba-card-title">
-                                ライブプレビュー
-                            </h2>
+                <div
+                    ref={cameraStageRef}
+                    style={{
+                        position: isFullscreen() ? "fixed" : "relative",
+                        inset: isFullscreen() ? "0" : "auto",
+                        "z-index": isFullscreen() ? "60" : "1",
+                        width: "100%",
+                        height: isFullscreen() ? "100dvh" : "min(78dvh, 760px)",
+                        "min-height": "460px",
+                        "background-color": "#0b0f19",
+                        "border-radius": isFullscreen() ? "0" : "var(--ba-radius-lg, 16px)",
+                        overflow: "hidden",
+                        display: "flex",
+                        "flex-direction": "column",
+                        "justify-content": "space-between",
+                        border: isFullscreen() ? "none" : "1px solid var(--ba-border)",
+                    }}
+                >
+                    {/* ライブ合成キャンバス（背景全面） */}
+                    <video
+                        ref={videoRef}
+                        playsinline
+                        muted
+                        class="ba-sr-only"
+                        aria-hidden="true"
+                    />
+                    <canvas
+                        ref={previewCanvasRef}
+                        width={1280}
+                        height={720}
+                        style={{
+                            position: "absolute",
+                            inset: "0",
+                            width: "100%",
+                            height: "100%",
+                            display: "block",
+                            "touch-action": "none",
+                            cursor: isPositionLocked() ? "default" : "grab",
+                        }}
+                        aria-label="カメラと透過画像の合成プレビューキャンバス"
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerCancel={handlePointerUp}
+                        onWheel={handleCanvasWheel}
+                    />
 
-                            <div class="ba-flex ba-gap-2" role="group" aria-label="重ね合わせモード選択">
-                                <button
-                                    type="button"
-                                    class={`ba-btn ba-btn--sm ${mode() === "ar" ? "ba-btn--primary" : "ba-btn--secondary"}`}
-                                    aria-pressed={mode() === "ar" ? "true" : "false"}
-                                    onClick={() => handleModeChange("ar")}
-                                >
-                                    AR空間モード（リアル影）
-                                </button>
-                                <button
-                                    type="button"
-                                    class={`ba-btn ba-btn--sm ${mode() === "fixed" ? "ba-btn--primary" : "ba-btn--secondary"}`}
-                                    aria-pressed={mode() === "fixed" ? "true" : "false"}
-                                    onClick={() => handleModeChange("fixed")}
-                                >
-                                    自由固定モード
-                                </button>
-                            </div>
-                        </div>
+                    {/* シャッターフラッシュ */}
+                    <Show when={isFlashActive()}>
+                        <div
+                            style={{
+                                position: "absolute",
+                                inset: "0",
+                                "background-color": "#ffffff",
+                                opacity: "0.75",
+                                "pointer-events": "none",
+                                "z-index": "30",
+                            }}
+                            aria-hidden="true"
+                        />
+                    </Show>
 
-                        <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-2 ba-mb-3">
+                    {/* 上部フローティングHUD */}
+                    <div
+                        style={{
+                            position: "relative",
+                            "z-index": "10",
+                            padding: "0.75rem",
+                            background:
+                                "linear-gradient(180deg, rgba(10,15,28,0.78) 0%, rgba(10,15,28,0.28) 75%, rgba(10,15,28,0) 100%)",
+                            display: "flex",
+                            "flex-wrap": "wrap",
+                            "align-items": "center",
+                            "justify-content": "space-between",
+                            gap: "0.5rem",
+                        }}
+                    >
+                        {/* 左：カメラ起動・切替 */}
+                        <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-2">
                             <Show
                                 when={isCameraActive()}
                                 fallback={
@@ -880,491 +1022,642 @@ export default function ArCameraOverlay() {
                             </button>
 
                             <Show when={cameraFacing() === "user"}>
-                                <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
+                                <label
+                                    class="ba-flex ba-items-center ba-gap-1 ba-text-xs ba-cursor-pointer"
+                                    style={{ color: "#f8fafc" }}
+                                >
                                     <input
                                         type="checkbox"
                                         class="ba-checkbox"
                                         checked={mirrorSelfie()}
                                         onChange={(e) => setMirrorSelfie(e.currentTarget.checked)}
                                     />
-                                    <span>左右反転プレビュー</span>
+                                    <span>左右反転</span>
                                 </label>
                             </Show>
+                        </div>
+
+                        {/* 右：モード切替 & 全画面トグル */}
+                        <div class="ba-flex ba-flex-wrap ba-items-center ba-gap-2">
+                            <div class="ba-flex ba-gap-1" role="group" aria-label="重ね合わせモード選択">
+                                <button
+                                    type="button"
+                                    class={`ba-btn ba-btn--xs ${mode() === "ar" ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                    aria-pressed={mode() === "ar" ? "true" : "false"}
+                                    onClick={() => handleModeChange("ar")}
+                                >
+                                    AR空間モード（リアル影）
+                                </button>
+                                <button
+                                    type="button"
+                                    class={`ba-btn ba-btn--xs ${mode() === "fixed" ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                    aria-pressed={mode() === "fixed" ? "true" : "false"}
+                                    onClick={() => handleModeChange("fixed")}
+                                >
+                                    自由固定モード
+                                </button>
+                            </div>
 
                             <button
                                 type="button"
-                                class="ba-btn ba-btn--outline ba-btn--sm"
-                                onClick={() => bgInputRef?.click()}
+                                class="ba-btn ba-btn--secondary ba-btn--xs"
+                                aria-pressed={isFullscreen() ? "true" : "false"}
+                                onClick={() => void toggleFullscreen()}
                             >
-                                背景画像を選択
+                                {isFullscreen() ? "全画面終了" : "全画面"}
                             </button>
-                            <input
-                                ref={bgInputRef}
-                                type="file"
-                                accept="image/*"
-                                class="ba-sr-only"
-                                aria-label="テスト用背景画像を選択"
-                                onChange={(e) => {
-                                    const file = e.currentTarget.files?.[0];
-                                    if (file) handleBgFile(file);
-                                }}
-                            />
                         </div>
+                    </div>
 
+                    {/* 中央：エラーまたは画像未選択ガイド */}
+                    <div
+                        style={{
+                            position: "relative",
+                            "z-index": "10",
+                            padding: "0 1rem",
+                            display: "flex",
+                            "flex-direction": "column",
+                            "align-items": "center",
+                            gap: "0.5rem",
+                            "pointer-events": "none",
+                        }}
+                    >
                         <Show when={cameraError()}>
-                            <div class="ba-alert ba-alert--warning ba-mb-3" role="alert">
+                            <div
+                                class="ba-alert ba-alert--warning ba-text-xs"
+                                role="alert"
+                                style={{ "pointer-events": "auto", "max-width": "420px" }}
+                            >
                                 {cameraError()}
                             </div>
                         </Show>
 
-                        <div class="ba-relative ba-rounded-lg ba-overflow-hidden ba-border ba-border-base-300 ba-bg-base-200">
-                            <video
-                                ref={videoRef}
-                                playsinline
-                                muted
-                                class="ba-sr-only"
-                                aria-hidden="true"
-                            />
-                            <canvas
-                                ref={previewCanvasRef}
-                                width={960}
-                                height={540}
-                                class="ba-w-full ba-h-auto ba-block ba-touch-none"
+                        <Show when={!overlayAsset()}>
+                            <div
                                 style={{
-                                    cursor: isPositionLocked() ? "default" : "grab",
+                                    "pointer-events": "auto",
+                                    background: "rgba(15, 23, 42, 0.82)",
+                                    color: "#f8fafc",
+                                    padding: "0.75rem 1rem",
+                                    "border-radius": "12px",
+                                    border: "1px solid rgba(255,255,255,0.16)",
+                                    "text-align": "center",
+                                    "max-width": "360px",
                                 }}
-                                aria-label="カメラと透過画像の合成プレビューキャンバス"
-                                onPointerDown={handlePointerDown}
-                                onPointerMove={handlePointerMove}
-                                onPointerUp={handlePointerUp}
-                                onPointerCancel={handlePointerUp}
-                                onWheel={handleCanvasWheel}
-                            />
-
-                            <Show when={isFlashActive()}>
-                                <div
-                                    class="ba-absolute ba-inset-0 ba-bg-white ba-pointer-events-none"
-                                    style={{ opacity: "0.75" }}
-                                    aria-hidden="true"
-                                />
-                            </Show>
-
-                            <Show when={!overlayAsset()}>
-                                <div class="ba-p-3 ba-text-center ba-text-sm ba-border-t ba-border-base-300">
-                                    立ち絵などの透過画像を選択するか、「サンプル立ち絵」ボタンでお試しください。キャンバス上でドラッグ移動・ホイール拡大縮小ができます。
-                                </div>
-                            </Show>
-                        </div>
-
-                        <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-3 ba-mt-4">
-                            <div class="ba-flex ba-items-center ba-gap-2">
-                                <label for="capture-format-select" class="ba-text-xs ba-font-bold">
-                                    保存形式
-                                </label>
-                                <select
-                                    id="capture-format-select"
-                                    class="ba-select ba-select--sm"
-                                    style={{ width: "auto" }}
-                                    value={captureFormat()}
-                                    onChange={(e) =>
-                                        setCaptureFormat(
-                                            e.currentTarget.value as "image/png" | "image/jpeg" | "image/webp",
-                                        )
-                                    }
-                                >
-                                    <option value="image/png">PNG (高画質)</option>
-                                    <option value="image/jpeg">JPEG (軽量)</option>
-                                    <option value="image/webp">WebP (高効率)</option>
-                                </select>
-                            </div>
-
-                            <button
-                                type="button"
-                                class="ba-btn ba-btn--primary"
-                                onClick={capturePhoto}
                             >
-                                撮影する (シャッター)
-                            </button>
-                        </div>
-                    </section>
-
-                    <Show when={capturedUrl()}>
-                        {(url) => (
-                            <section class="ba-card ba-p-4" aria-labelledby="captured-heading">
-                                <div class="ba-flex ba-items-center ba-justify-between ba-gap-2 ba-mb-3">
-                                    <h2 id="captured-heading" class="ba-card-title">
-                                        撮影結果
-                                    </h2>
+                                <p class="ba-text-xs" style={{ margin: "0 0 0.5rem" }}>
+                                    立ち絵などの透過画像を選んでください（ドラッグ移動・2本指ピンチで拡大縮小）
+                                </p>
+                                <div class="ba-flex ba-justify-center ba-gap-2">
                                     <button
                                         type="button"
-                                        class="ba-btn ba-btn--success ba-btn--sm"
-                                        onClick={downloadCaptured}
+                                        class="ba-btn ba-btn--primary ba-btn--xs"
+                                        onClick={() => overlayInputRef?.click()}
                                     >
-                                        {downloadExtensionLabel()}で保存
+                                        画像を選択
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--secondary ba-btn--xs"
+                                        onClick={loadSampleCharacter}
+                                    >
+                                        サンプル立ち絵
                                     </button>
                                 </div>
-                                <img
-                                    src={url()}
-                                    alt="撮影された合成写真"
-                                    class="ba-w-full ba-h-auto ba-rounded-lg ba-border ba-border-base-300"
-                                />
-                            </section>
-                        )}
-                    </Show>
-                </div>
+                            </div>
+                        </Show>
+                    </div>
 
-                <div class="lg:ba-col-span-5 ba-flex ba-flex-col ba-gap-4">
-                    <section class="ba-card ba-p-4" aria-labelledby="overlay-asset-heading">
-                        <h2 id="overlay-asset-heading" class="ba-card-title ba-mb-3">
-                            1. 重ねる透過画像（立ち絵）
-                        </h2>
-                        <div class="ba-flex ba-flex-wrap ba-gap-2">
-                            <button
-                                type="button"
-                                class="ba-btn ba-btn--primary ba-btn--sm"
-                                onClick={() => overlayInputRef?.click()}
-                            >
-                                画像を選択 (PNG/WebP等)
-                            </button>
+                    {/* 下部：スマホカメラアプリ風シャッターバー */}
+                    <div
+                        style={{
+                            position: "relative",
+                            "z-index": "10",
+                            padding: "0.85rem 1rem 1rem",
+                            background:
+                                "linear-gradient(0deg, rgba(10,15,28,0.88) 0%, rgba(10,15,28,0.45) 70%, rgba(10,15,28,0) 100%)",
+                            display: "flex",
+                            "align-items": "center",
+                            "justify-content": "space-between",
+                            gap: "0.75rem",
+                        }}
+                    >
+                        {/* 左：画像・背景選択 & 撮影サムネイル */}
+                        <div class="ba-flex ba-items-center ba-gap-2">
+                            <Show when={capturedUrl()}>
+                                {(url) => (
+                                    <button
+                                        type="button"
+                                        aria-label="撮影した写真を確認"
+                                        onClick={() => setShowCaptureModal(true)}
+                                        style={{
+                                            width: "44px",
+                                            height: "44px",
+                                            padding: 0,
+                                            "border-radius": "8px",
+                                            overflow: "hidden",
+                                            border: "2px solid #ffffff",
+                                            cursor: "pointer",
+                                            background: "#0f172a",
+                                        }}
+                                    >
+                                        <img
+                                            src={url()}
+                                            alt="直前の撮影写真"
+                                            style={{
+                                                width: "100%",
+                                                height: "100%",
+                                                "object-fit": "cover",
+                                            }}
+                                        />
+                                    </button>
+                                )}
+                            </Show>
                             <button
                                 type="button"
                                 class="ba-btn ba-btn--secondary ba-btn--sm"
-                                onClick={loadSampleCharacter}
+                                onClick={() => overlayInputRef?.click()}
                             >
-                                サンプル立ち絵
+                                立ち絵選択
                             </button>
-                            <input
-                                ref={overlayInputRef}
-                                type="file"
-                                accept="image/*"
-                                class="ba-sr-only"
-                                aria-label="重ねる透過画像を選択"
-                                onChange={(e) => {
-                                    const file = e.currentTarget.files?.[0];
-                                    if (file) handleOverlayFile(file);
+                            <button
+                                type="button"
+                                class="ba-btn ba-btn--outline ba-btn--sm"
+                                style={{ color: "#f8fafc", "border-color": "rgba(255,255,255,0.4)" }}
+                                onClick={() => bgInputRef?.click()}
+                            >
+                                背景画像
+                            </button>
+                        </div>
+
+                        {/* 中央：スマホカメラ風シャッターボタン */}
+                        <button
+                            type="button"
+                            onClick={capturePhoto}
+                            aria-label="撮影する (シャッター)"
+                            style={{
+                                width: "64px",
+                                height: "64px",
+                                "border-radius": "9999px",
+                                border: "4px solid #ffffff",
+                                background: "rgba(255, 255, 255, 0.22)",
+                                display: "flex",
+                                "align-items": "center",
+                                "justify-content": "center",
+                                cursor: "pointer",
+                                "flex-shrink": 0,
+                            }}
+                        >
+                            <span
+                                style={{
+                                    width: "48px",
+                                    height: "48px",
+                                    "border-radius": "9999px",
+                                    "background-color": "#ffffff",
+                                    display: "block",
                                 }}
+                                aria-hidden="true"
                             />
+                        </button>
+
+                        {/* 右：位置ロック & 調整ドロワー開閉 */}
+                        <div class="ba-flex ba-items-center ba-gap-2">
+                            <button
+                                type="button"
+                                class={`ba-btn ba-btn--sm ${isPositionLocked() ? "ba-btn--warning" : "ba-btn--secondary"}`}
+                                aria-pressed={isPositionLocked() ? "true" : "false"}
+                                onClick={() => setIsPositionLocked((v) => !v)}
+                            >
+                                {isPositionLocked() ? "固定ロック中" : "位置ロック"}
+                            </button>
+                            <button
+                                type="button"
+                                class={`ba-btn ba-btn--sm ${showSettingsDrawer() ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                aria-expanded={showSettingsDrawer() ? "true" : "false"}
+                                onClick={() => setShowSettingsDrawer((v) => !v)}
+                            >
+                                {showSettingsDrawer() ? "調整を閉じる" : "影・配置調整"}
+                            </button>
                         </div>
+                    </div>
 
-                        <Show when={overlayAsset()}>
-                            {(asset) => (
-                                <div class="ba-mt-3 ba-p-2 ba-rounded ba-bg-base-200 ba-text-xs ba-flex ba-items-center ba-justify-between ba-gap-2">
-                                    <span class="ba-truncate">{asset().name} ({asset().width}×{asset().height})</span>
-                                    <span class="ba-badge ba-badge--neutral">
-                                        足元検出済
-                                    </span>
-                                </div>
-                            )}
-                        </Show>
-                    </section>
+                    {/* 隠しファイル入力 */}
+                    <input
+                        ref={overlayInputRef}
+                        type="file"
+                        accept="image/*"
+                        class="ba-sr-only"
+                        aria-label="重ねる透過画像を選択"
+                        onChange={(e) => {
+                            const file = e.currentTarget.files?.[0];
+                            if (file) handleOverlayFile(file);
+                        }}
+                    />
+                    <input
+                        ref={bgInputRef}
+                        type="file"
+                        accept="image/*"
+                        class="ba-sr-only"
+                        aria-label="テスト用背景画像を選択"
+                        onChange={(e) => {
+                            const file = e.currentTarget.files?.[0];
+                            if (file) handleBgFile(file);
+                        }}
+                    />
 
-                    <section class="ba-card ba-p-4" aria-labelledby="transform-heading">
-                        <div class="ba-flex ba-items-center ba-justify-between ba-gap-2 ba-mb-3">
-                            <h2 id="transform-heading" class="ba-card-title">
-                                2. 位置・サイズ・固定設定
-                            </h2>
-                            <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    class="ba-toggle"
-                                    checked={isPositionLocked()}
-                                    onChange={(e) => setIsPositionLocked(e.currentTarget.checked)}
-                                />
-                                <span>位置ロック</span>
-                            </label>
-                        </div>
-
-                        <div class="ba-flex ba-flex-col ba-gap-3">
-                            <div>
-                                <label for="pos-x-range" class="ba-label">
-                                    <span>横位置 (X)</span>
-                                    <span>{posXPercent().toFixed(1)}%</span>
-                                </label>
-                                <input
-                                    id="pos-x-range"
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    step="0.5"
-                                    class="ba-range"
-                                    disabled={isPositionLocked()}
-                                    value={posXPercent()}
-                                    onInput={(e) =>
-                                        setPosXPercent(clampFinite(Number(e.currentTarget.value), 0, 100, 50))
-                                    }
-                                />
-                            </div>
-
-                            <div>
-                                <label for="pos-y-range" class="ba-label">
-                                    <span>{mode() === "ar" ? "足元接地位置 (Y)" : "縦位置 (Y)"}</span>
-                                    <span>{posYPercent().toFixed(1)}%</span>
-                                </label>
-                                <input
-                                    id="pos-y-range"
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    step="0.5"
-                                    class="ba-range"
-                                    disabled={isPositionLocked()}
-                                    value={posYPercent()}
-                                    onInput={(e) =>
-                                        setPosYPercent(clampFinite(Number(e.currentTarget.value), 0, 100, 78))
-                                    }
-                                />
-                            </div>
-
-                            <div>
-                                <label for="scale-range" class="ba-label">
-                                    <span>サイズ (拡大率)</span>
-                                    <span>{Math.round(scale() * 100)}%</span>
-                                </label>
-                                <input
-                                    id="scale-range"
-                                    type="range"
-                                    min="0.15"
-                                    max="2.5"
-                                    step="0.05"
-                                    class="ba-range"
-                                    value={scale()}
-                                    onInput={(e) =>
-                                        setScale(clampFinite(Number(e.currentTarget.value), 0.15, 2.5, 0.65))
-                                    }
-                                />
-                            </div>
-
-                            <div class="ba-grid ba-grid-cols-2 ba-gap-3">
-                                <div>
-                                    <label for="rotation-range" class="ba-label">
-                                        <span>回転</span>
-                                        <span>{rotationDeg()}°</span>
-                                    </label>
-                                    <input
-                                        id="rotation-range"
-                                        type="range"
-                                        min="-180"
-                                        max="180"
-                                        step="1"
-                                        class="ba-range"
-                                        value={rotationDeg()}
-                                        onInput={(e) =>
-                                            setRotationDeg(clampFinite(Number(e.currentTarget.value), -180, 180, 0))
-                                        }
-                                    />
-                                </div>
-                                <div>
-                                    <label for="opacity-range" class="ba-label">
-                                        <span>不透明度</span>
-                                        <span>{Math.round(opacity() * 100)}%</span>
-                                    </label>
-                                    <input
-                                        id="opacity-range"
-                                        type="range"
-                                        min="0.1"
-                                        max="1"
-                                        step="0.05"
-                                        class="ba-range"
-                                        value={opacity()}
-                                        onInput={(e) =>
-                                            setOpacity(clampFinite(Number(e.currentTarget.value), 0.1, 1, 1))
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            <div class="ba-flex ba-flex-wrap ba-gap-2">
+                    {/* スライドアップ設定ドロワー（カメラ画面上に重ねて表示） */}
+                    <Show when={showSettingsDrawer()}>
+                        <div
+                            class="ba-card"
+                            role="region"
+                            aria-label="カメラ合成の配置とリアル影詳細設定"
+                            style={{
+                                position: "absolute",
+                                right: "0.75rem",
+                                bottom: "5.25rem",
+                                "z-index": "20",
+                                width: "min(360px, calc(100% - 1.5rem))",
+                                "max-height": "calc(100% - 9.5rem)",
+                                "overflow-y": "auto",
+                                padding: "1rem",
+                                "box-shadow": "0 16px 40px rgba(0,0,0,0.45)",
+                            }}
+                        >
+                            <div class="ba-flex ba-items-center ba-justify-between ba-mb-3">
+                                <h2 class="ba-card-title" style={{ "font-size": "0.95rem", margin: 0 }}>
+                                    配置・影・保存設定
+                                </h2>
                                 <button
                                     type="button"
-                                    class={`ba-btn ba-btn--sm ${flipHorizontal() ? "ba-btn--primary" : "ba-btn--secondary"}`}
-                                    onClick={() => setFlipHorizontal((v) => !v)}
+                                    class="ba-btn ba-btn--ghost ba-btn--xs"
+                                    onClick={() => setShowSettingsDrawer(false)}
+                                    aria-label="調整パネルを閉じる"
                                 >
-                                    左右反転
-                                </button>
-                                <button
-                                    type="button"
-                                    class="ba-btn ba-btn--outline ba-btn--sm"
-                                    onClick={() => {
-                                        setPosXPercent(50);
-                                        setPosYPercent(mode() === "ar" ? 78 : 50);
-                                        setScale(0.65);
-                                        setRotationDeg(0);
-                                        setOpacity(1);
-                                        setFlipHorizontal(false);
-                                    }}
-                                >
-                                    配置をリセット
+                                    ×
                                 </button>
                             </div>
-                        </div>
-                    </section>
 
-                    <Show when={mode() === "ar"}>
-                        <section class="ba-card ba-p-4" aria-labelledby="ar-shadow-heading">
-                            <h2 id="ar-shadow-heading" class="ba-card-title ba-mb-3">
-                                3. ARリアル影・空間リアリティ設定
-                            </h2>
-
-                            <div class="ba-flex ba-flex-col ba-gap-3">
-                                <div class="ba-p-3 ba-rounded ba-bg-base-200 ba-flex ba-flex-col ba-gap-2">
-                                    <div class="ba-flex ba-flex-wrap ba-items-center ba-justify-between ba-gap-2">
-                                        <span class="ba-text-xs ba-font-bold">ジャイロ空間アンカー</span>
-                                        <div class="ba-flex ba-gap-2">
-                                            <button
-                                                type="button"
-                                                class={`ba-btn ba-btn--xs ${gyroEnabled() ? "ba-btn--primary" : "ba-btn--secondary"}`}
-                                                onClick={() => void toggleGyro()}
-                                            >
-                                                {gyroEnabled() ? "ジャイロON" : "ジャイロOFF"}
-                                            </button>
-                                            <Show when={gyroEnabled()}>
-                                                <button
-                                                    type="button"
-                                                    class="ba-btn ba-btn--outline ba-btn--xs"
-                                                    onClick={resetGyroAnchor}
-                                                >
-                                                    基準リセット
-                                                </button>
-                                            </Show>
-                                        </div>
-                                    </div>
-                                    <Show when={gyroStatus()}>
-                                        <p class="ba-text-xs">{gyroStatus()}</p>
-                                    </Show>
+                            <div class="ba-stack-3">
+                                {/* 立ち絵クイック操作 */}
+                                <div class="ba-flex ba-flex-wrap ba-gap-2">
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--secondary ba-btn--xs"
+                                        onClick={loadSampleCharacter}
+                                    >
+                                        サンプル立ち絵
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class={`ba-btn ba-btn--xs ${flipHorizontal() ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                        onClick={() => setFlipHorizontal((v) => !v)}
+                                    >
+                                        左右反転
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                        onClick={() => {
+                                            setPosXPercent(50);
+                                            setPosYPercent(mode() === "ar" ? 78 : 50);
+                                            setScale(0.65);
+                                            setRotationDeg(0);
+                                            setOpacity(1);
+                                            setFlipHorizontal(false);
+                                        }}
+                                    >
+                                        配置リセット
+                                    </button>
                                 </div>
 
                                 <div>
-                                    <label for="light-azimuth-range" class="ba-label">
-                                        <span>光源の向き (方位角)</span>
-                                        <span>{lightAzimuthDeg()}°</span>
+                                    <label for="pos-x-range" class="ba-label">
+                                        <span>横位置 (X)</span>
+                                        <span>{posXPercent().toFixed(1)}%</span>
                                     </label>
                                     <input
-                                        id="light-azimuth-range"
+                                        id="pos-x-range"
                                         type="range"
                                         min="0"
-                                        max="360"
-                                        step="1"
+                                        max="100"
+                                        step="0.5"
                                         class="ba-range"
-                                        value={lightAzimuthDeg()}
+                                        disabled={isPositionLocked()}
+                                        value={posXPercent()}
                                         onInput={(e) =>
-                                            setLightAzimuthDeg(clampFinite(Number(e.currentTarget.value), 0, 360, 315))
+                                            setPosXPercent(clampFinite(Number(e.currentTarget.value), 0, 100, 50))
                                         }
                                     />
                                 </div>
 
                                 <div>
-                                    <label for="light-elevation-range" class="ba-label">
-                                        <span>光源の高さ (太陽・照明高度)</span>
-                                        <span>{lightElevationDeg()}°</span>
+                                    <label for="pos-y-range" class="ba-label">
+                                        <span>{mode() === "ar" ? "足元接地位置 (Y)" : "縦位置 (Y)"}</span>
+                                        <span>{posYPercent().toFixed(1)}%</span>
                                     </label>
                                     <input
-                                        id="light-elevation-range"
+                                        id="pos-y-range"
                                         type="range"
-                                        min="10"
-                                        max="85"
-                                        step="1"
+                                        min="0"
+                                        max="100"
+                                        step="0.5"
                                         class="ba-range"
-                                        value={lightElevationDeg()}
+                                        disabled={isPositionLocked()}
+                                        value={posYPercent()}
                                         onInput={(e) =>
-                                            setLightElevationDeg(clampFinite(Number(e.currentTarget.value), 10, 85, 42))
+                                            setPosYPercent(clampFinite(Number(e.currentTarget.value), 0, 100, 78))
                                         }
                                     />
                                 </div>
 
                                 <div>
-                                    <label for="ground-tilt-range" class="ba-label">
-                                        <span>地面の見下ろし角 (パース)</span>
-                                        <span>{groundTiltDeg()}°</span>
+                                    <label for="scale-range" class="ba-label">
+                                        <span>サイズ (拡大率)</span>
+                                        <span>{Math.round(scale() * 100)}%</span>
                                     </label>
                                     <input
-                                        id="ground-tilt-range"
+                                        id="scale-range"
                                         type="range"
-                                        min="12"
-                                        max="80"
-                                        step="1"
+                                        min="0.15"
+                                        max="2.5"
+                                        step="0.05"
                                         class="ba-range"
-                                        value={groundTiltDeg()}
+                                        value={scale()}
                                         onInput={(e) =>
-                                            setGroundTiltDeg(clampFinite(Number(e.currentTarget.value), 12, 80, 34))
+                                            setScale(clampFinite(Number(e.currentTarget.value), 0.15, 2.5, 0.65))
                                         }
                                     />
                                 </div>
 
-                                <div class="ba-grid ba-grid-cols-2 ba-gap-3">
+                                <div class="ba-grid ba-grid-cols-2 ba-gap-2">
                                     <div>
-                                        <label for="shadow-opacity-range" class="ba-label">
-                                            <span>影の濃さ</span>
-                                            <span>{Math.round(shadowOpacity() * 100)}%</span>
+                                        <label for="rotation-range" class="ba-label">
+                                            <span>回転</span>
+                                            <span>{rotationDeg()}°</span>
                                         </label>
                                         <input
-                                            id="shadow-opacity-range"
+                                            id="rotation-range"
                                             type="range"
-                                            min="0"
-                                            max="0.9"
-                                            step="0.05"
+                                            min="-180"
+                                            max="180"
+                                            step="1"
                                             class="ba-range"
-                                            value={shadowOpacity()}
+                                            value={rotationDeg()}
                                             onInput={(e) =>
-                                                setShadowOpacity(clampFinite(Number(e.currentTarget.value), 0, 0.9, 0.52))
+                                                setRotationDeg(clampFinite(Number(e.currentTarget.value), -180, 180, 0))
                                             }
                                         />
                                     </div>
                                     <div>
-                                        <label for="shadow-softness-range" class="ba-label">
-                                            <span>影のぼかし (半影)</span>
-                                            <span>{Math.round(shadowSoftness() * 100)}%</span>
+                                        <label for="opacity-range" class="ba-label">
+                                            <span>不透明度</span>
+                                            <span>{Math.round(opacity() * 100)}%</span>
                                         </label>
                                         <input
-                                            id="shadow-softness-range"
+                                            id="opacity-range"
                                             type="range"
-                                            min="0"
+                                            min="0.1"
                                             max="1"
                                             step="0.05"
                                             class="ba-range"
-                                            value={shadowSoftness()}
+                                            value={opacity()}
                                             onInput={(e) =>
-                                                setShadowSoftness(clampFinite(Number(e.currentTarget.value), 0, 1, 0.42))
+                                                setOpacity(clampFinite(Number(e.currentTarget.value), 0.1, 1, 1))
                                             }
                                         />
                                     </div>
                                 </div>
 
-                                <div class="ba-flex ba-flex-col ba-gap-2 ba-pt-1">
-                                    <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            class="ba-checkbox"
-                                            checked={autoAmbientMatch()}
-                                            onChange={(e) => setAutoAmbientMatch(e.currentTarget.checked)}
-                                        />
-                                        <span>環境光に合わせて明るさを自動馴染ませ</span>
-                                    </label>
-                                    <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            class="ba-checkbox"
-                                            checked={autoLightDirection()}
-                                            onChange={(e) => setAutoLightDirection(e.currentTarget.checked)}
-                                        />
-                                        <span>映像の明暗から光源方向を自動推定</span>
-                                    </label>
-                                    <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            class="ba-checkbox"
-                                            checked={showArGrid()}
-                                            onChange={(e) => setShowArGrid(e.currentTarget.checked)}
-                                        />
-                                        <span>地面パースガイドを表示（撮影時は非表示）</span>
-                                    </label>
-                                </div>
+                                {/* ARモード専用パラメータ */}
+                                <Show when={mode() === "ar"}>
+                                    <div class="ba-stack-2" style={{ "border-top": "1px solid var(--ba-border)", "padding-top": "0.75rem" }}>
+                                        <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                            <span class="ba-text-xs ba-font-bold">ARリアル影・ジャイロ</span>
+                                            <div class="ba-flex ba-gap-1">
+                                                <button
+                                                    type="button"
+                                                    class={`ba-btn ba-btn--xs ${gyroEnabled() ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                                    onClick={() => void toggleGyro()}
+                                                >
+                                                    {gyroEnabled() ? "ジャイロON" : "ジャイロOFF"}
+                                                </button>
+                                                <Show when={gyroEnabled()}>
+                                                    <button
+                                                        type="button"
+                                                        class="ba-btn ba-btn--outline ba-btn--xs"
+                                                        onClick={resetGyroAnchor}
+                                                    >
+                                                        基準リセット
+                                                    </button>
+                                                </Show>
+                                            </div>
+                                        </div>
+                                        <Show when={gyroStatus()}>
+                                            <p class="ba-text-xs ba-text-subtle">{gyroStatus()}</p>
+                                        </Show>
 
-                                <div class="ba-text-xs ba-p-2 ba-rounded ba-bg-base-200">
-                                    推定環境輝度: {Math.round(envLighting().luminance * 100)}% / 投影ぼかし:{" "}
-                                    {currentShadowPreview().blurPx.toFixed(1)}px
+                                        <div>
+                                            <label for="light-azimuth-range" class="ba-label">
+                                                <span>光源の向き (方位角)</span>
+                                                <span>{lightAzimuthDeg()}°</span>
+                                            </label>
+                                            <input
+                                                id="light-azimuth-range"
+                                                type="range"
+                                                min="0"
+                                                max="360"
+                                                step="1"
+                                                class="ba-range"
+                                                value={lightAzimuthDeg()}
+                                                onInput={(e) =>
+                                                    setLightAzimuthDeg(clampFinite(Number(e.currentTarget.value), 0, 360, 315))
+                                                }
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label for="light-elevation-range" class="ba-label">
+                                                <span>光源の高さ (照明高度)</span>
+                                                <span>{lightElevationDeg()}°</span>
+                                            </label>
+                                            <input
+                                                id="light-elevation-range"
+                                                type="range"
+                                                min="10"
+                                                max="85"
+                                                step="1"
+                                                class="ba-range"
+                                                value={lightElevationDeg()}
+                                                onInput={(e) =>
+                                                    setLightElevationDeg(clampFinite(Number(e.currentTarget.value), 10, 85, 42))
+                                                }
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label for="ground-tilt-range" class="ba-label">
+                                                <span>地面の見下ろし角</span>
+                                                <span>{groundTiltDeg()}°</span>
+                                            </label>
+                                            <input
+                                                id="ground-tilt-range"
+                                                type="range"
+                                                min="12"
+                                                max="80"
+                                                step="1"
+                                                class="ba-range"
+                                                value={groundTiltDeg()}
+                                                onInput={(e) =>
+                                                    setGroundTiltDeg(clampFinite(Number(e.currentTarget.value), 12, 80, 34))
+                                                }
+                                            />
+                                        </div>
+
+                                        <div class="ba-grid ba-grid-cols-2 ba-gap-2">
+                                            <div>
+                                                <label for="shadow-opacity-range" class="ba-label">
+                                                    <span>影の濃さ</span>
+                                                    <span>{Math.round(shadowOpacity() * 100)}%</span>
+                                                </label>
+                                                <input
+                                                    id="shadow-opacity-range"
+                                                    type="range"
+                                                    min="0"
+                                                    max="0.9"
+                                                    step="0.05"
+                                                    class="ba-range"
+                                                    value={shadowOpacity()}
+                                                    onInput={(e) =>
+                                                        setShadowOpacity(clampFinite(Number(e.currentTarget.value), 0, 0.9, 0.52))
+                                                    }
+                                                />
+                                            </div>
+                                            <div>
+                                                <label for="shadow-softness-range" class="ba-label">
+                                                    <span>影のぼかし</span>
+                                                    <span>{Math.round(shadowSoftness() * 100)}%</span>
+                                                </label>
+                                                <input
+                                                    id="shadow-softness-range"
+                                                    type="range"
+                                                    min="0"
+                                                    max="1"
+                                                    step="0.05"
+                                                    class="ba-range"
+                                                    value={shadowSoftness()}
+                                                    onInput={(e) =>
+                                                        setShadowSoftness(clampFinite(Number(e.currentTarget.value), 0, 1, 0.42))
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                class="ba-checkbox"
+                                                checked={autoAmbientMatch()}
+                                                onChange={(e) => setAutoAmbientMatch(e.currentTarget.checked)}
+                                            />
+                                            <span>環境光に合わせて明るさを自動馴染ませ</span>
+                                        </label>
+                                        <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                class="ba-checkbox"
+                                                checked={autoLightDirection()}
+                                                onChange={(e) => setAutoLightDirection(e.currentTarget.checked)}
+                                            />
+                                            <span>映像の明暗から光源方向を自動推定</span>
+                                        </label>
+                                        <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                class="ba-checkbox"
+                                                checked={showArGrid()}
+                                                onChange={(e) => setShowArGrid(e.currentTarget.checked)}
+                                            />
+                                            <span>地面パースガイドを表示</span>
+                                        </label>
+                                        <div class="ba-text-xs ba-text-subtle">
+                                            推定輝度: {Math.round(envLighting().luminance * 100)}% / ぼかし:{" "}
+                                            {currentShadowPreview().blurPx.toFixed(1)}px
+                                        </div>
+                                    </div>
+                                </Show>
+
+                                {/* 保存形式 */}
+                                <div class="ba-flex ba-items-center ba-justify-between ba-gap-2" style={{ "border-top": "1px solid var(--ba-border)", "padding-top": "0.5rem" }}>
+                                    <label for="capture-format-select" class="ba-text-xs ba-font-bold">
+                                        保存形式
+                                    </label>
+                                    <select
+                                        id="capture-format-select"
+                                        class="ba-select ba-select--sm"
+                                        style={{ width: "auto" }}
+                                        value={captureFormat()}
+                                        onChange={(e) =>
+                                            setCaptureFormat(
+                                                e.currentTarget.value as "image/png" | "image/jpeg" | "image/webp",
+                                            )
+                                        }
+                                    >
+                                        <option value="image/png">PNG (高画質)</option>
+                                        <option value="image/jpeg">JPEG (軽量)</option>
+                                        <option value="image/webp">WebP (高効率)</option>
+                                    </select>
                                 </div>
                             </div>
-                        </section>
+                        </div>
+                    </Show>
+
+                    {/* 撮影プレビューモーダル */}
+                    <Show when={showCaptureModal() && capturedUrl()}>
+                        <div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="撮影結果プレビュー"
+                            style={{
+                                position: "absolute",
+                                inset: "0",
+                                "z-index": "40",
+                                background: "rgba(10, 15, 28, 0.88)",
+                                display: "flex",
+                                "flex-direction": "column",
+                                "align-items": "center",
+                                "justify-content": "center",
+                                padding: "1rem",
+                                gap: "0.75rem",
+                            }}
+                        >
+                            <img
+                                src={capturedUrl()!}
+                                alt="撮影された合成写真"
+                                style={{
+                                    "max-width": "100%",
+                                    "max-height": "calc(100% - 4.5rem)",
+                                    "border-radius": "10px",
+                                    "object-fit": "contain",
+                                    border: "1px solid rgba(255,255,255,0.2)",
+                                }}
+                            />
+                            <div class="ba-flex ba-gap-2">
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--success ba-btn--sm"
+                                    onClick={downloadCaptured}
+                                >
+                                    {downloadExtensionLabel()}で保存
+                                </button>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--secondary ba-btn--sm"
+                                    onClick={() => setShowCaptureModal(false)}
+                                >
+                                    カメラに戻る
+                                </button>
+                            </div>
+                        </div>
                     </Show>
                 </div>
             </form>

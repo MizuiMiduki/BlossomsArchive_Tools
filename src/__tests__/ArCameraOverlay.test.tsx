@@ -13,7 +13,7 @@ describe("ArCameraOverlay Page", () => {
         URL.revokeObjectURL = vi.fn();
     });
 
-    it("renders main heading, mode switchers, and camera controls", () => {
+    it("renders main heading, camera app HUD controls, and shutter button", () => {
         render(() => <ArCameraOverlay />);
 
         expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
@@ -27,28 +27,31 @@ describe("ArCameraOverlay Page", () => {
         ).toHaveAttribute("aria-pressed", "false");
         expect(screen.getByRole("button", { name: "カメラを起動" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "撮影する (シャッター)" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "全画面" })).toHaveAttribute("aria-pressed", "false");
     });
 
-    it("switches between AR mode and fixed overlay mode", () => {
+    it("toggles fullscreen camera mode and settings drawer", async () => {
         render(() => <ArCameraOverlay />);
+
+        const fsBtn = screen.getByRole("button", { name: "全画面" });
+        await fireEvent.click(fsBtn);
+        expect(screen.getByRole("button", { name: "全画面終了" })).toHaveAttribute("aria-pressed", "true");
+
+        const drawerBtn = screen.getByRole("button", { name: "影・配置調整" });
+        fireEvent.click(drawerBtn);
+        expect(screen.getByRole("region", { name: "カメラ合成の配置とリアル影詳細設定" })).toBeInTheDocument();
+        expect(screen.getByText("ARリアル影・ジャイロ")).toBeInTheDocument();
 
         const fixedBtn = screen.getByRole("button", { name: "自由固定モード" });
-        const arBtn = screen.getByRole("button", { name: "AR空間モード（リアル影）" });
-
-        expect(screen.getByText("3. ARリアル影・空間リアリティ設定")).toBeInTheDocument();
-
         fireEvent.click(fixedBtn);
         expect(fixedBtn).toHaveAttribute("aria-pressed", "true");
-        expect(arBtn).toHaveAttribute("aria-pressed", "false");
-        expect(screen.queryByText("3. ARリアル影・空間リアリティ設定")).not.toBeInTheDocument();
-
-        fireEvent.click(arBtn);
-        expect(arBtn).toHaveAttribute("aria-pressed", "true");
-        expect(screen.getByText("3. ARリアル影・空間リアリティ設定")).toBeInTheDocument();
+        expect(screen.queryByText("ARリアル影・ジャイロ")).not.toBeInTheDocument();
     });
 
-    it("handles position lock toggle and range slider clamping", () => {
+    it("handles position lock toggle and range slider clamping inside settings drawer", () => {
         render(() => <ArCameraOverlay />);
+
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
 
         const posXSlider = screen.getByLabelText(/横位置 \(X\)/) as HTMLInputElement;
         expect(posXSlider.disabled).toBe(false);
@@ -56,8 +59,9 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.input(posXSlider, { target: { value: "75" } });
         expect(screen.getByText("75.0%")).toBeInTheDocument();
 
-        const lockToggle = screen.getByLabelText("位置ロック") as HTMLInputElement;
-        fireEvent.click(lockToggle);
+        const lockBtn = screen.getByRole("button", { name: "位置ロック" });
+        fireEvent.click(lockBtn);
+        expect(screen.getByRole("button", { name: "固定ロック中" })).toHaveAttribute("aria-pressed", "true");
         expect(posXSlider.disabled).toBe(true);
     });
 
