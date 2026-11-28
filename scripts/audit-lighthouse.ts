@@ -80,6 +80,8 @@ const ROUTE_SOURCE_MAP: Record<string, string> = {
     "/tier-maker": "src/pages/TierMaker.tsx",
     "/privacy": "src/pages/PrivacyPolicy.tsx",
     "/credits": "src/pages/Credits.tsx",
+    "/ar-camera": "src/pages/ArCameraOverlay.tsx",
+    "/photo-composite": "src/pages/PhotoComposite.tsx",
 };
 
 // コマンドライン引数の解析

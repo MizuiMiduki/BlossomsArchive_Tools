@@ -33,6 +33,7 @@ const JsonLdViewer = lazy(() => import("./pages/JsonLdViewer"));
 const SitemapVisualizer = lazy(() => import("./pages/SitemapVisualizer"));
 const MosaicArt = lazy(() => import("./pages/MosaicArt"));
 const ArCameraOverlay = lazy(() => import("./pages/ArCameraOverlay"));
+const PhotoComposite = lazy(() => import("./pages/PhotoComposite"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const baseRoutes = [
@@ -65,6 +66,7 @@ const baseRoutes = [
     { path: "/sitemap-visualizer", component: SitemapVisualizer },
     { path: "/mosaic-art", component: MosaicArt },
     { path: "/ar-camera", component: ArCameraOverlay },
+    { path: "/photo-composite", component: PhotoComposite },
 ];
 
 const allRoutes = [...baseRoutes];

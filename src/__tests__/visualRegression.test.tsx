@@ -30,6 +30,7 @@ import JsonLdViewer from "../pages/JsonLdViewer";
 import SitemapVisualizer from "../pages/SitemapVisualizer";
 import MosaicArt from "../pages/MosaicArt";
 import ArCameraOverlay from "../pages/ArCameraOverlay";
+import PhotoComposite from "../pages/PhotoComposite";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import Credits from "../pages/Credits";
 import NotFound from "../pages/NotFound";
@@ -129,6 +130,11 @@ const PAGE_ENTRIES: Array<{ path: string; name: string; component: Component }> 
         path: "/ar-camera",
         name: "ArCameraOverlay",
         component: ArCameraOverlay,
+    },
+    {
+        path: "/photo-composite",
+        name: "PhotoComposite",
+        component: PhotoComposite,
     },
     { path: "/privacy", name: "PrivacyPolicy", component: PrivacyPolicy },
     { path: "/credits", name: "Credits", component: Credits },

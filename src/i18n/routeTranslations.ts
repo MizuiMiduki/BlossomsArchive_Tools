@@ -1114,6 +1114,44 @@ export const ROUTE_TRANSLATIONS: RouteTranslationsMap = {
             keywords: ["AR камера", "наложение изображений", "прозрачный PNG", "реалистичные тени"],
         },
     },
+    "/photo-composite": {
+        ja: {
+            title: "写真・立ち絵合成スタジオ",
+            description:
+                "背景写真に複数体の立ち絵を後から自然に合成できる無料Webツールです。AI奥行きによる遮蔽・被写界深度ボケ・接地影・環境光馴染ませ・実寸身長調整に対応しています。",
+            keywords: ["写真合成", "立ち絵合成", "複数体", "被写界深度", "AI奥行き", "透過画像合成"],
+        },
+        en: {
+            title: "Photo Character Composite Studio",
+            description:
+                "Composite multiple transparent character illustrations onto photos with AI depth occlusion, ambient lighting, shadows, and Depth of Field.",
+            keywords: ["photo composite", "multiple characters", "transparent PNG", "depth of field", "AI depth"],
+        },
+        ko: {
+            title: "사진 캐릭터 합성 스튜디오",
+            description:
+                "배경 사진에 여러 명의 투명 캐릭터 스탠딩 이미지를 자연스럽게 합성할 수 있는 무료 웹 도구입니다. AI 깊이 가림, 심도 보케, 접지 그림자, 환경광 보정을 지원합니다.",
+            keywords: ["사진 합성", "다중 캐릭터", "투명 PNG", "피사계 심도", "AI 깊이"],
+        },
+        "zh-hans": {
+            title: "照片立绘合成工作室",
+            description:
+                "将多张透明立绘自然合成到背景照片中的免费在线工具。支持本地 AI 深度遮挡、景深虚化、落地投影、局部环境光适配与实际身高比例调整。",
+            keywords: ["照片合成", "多立绘合成", "透明图片", "景深虚化", "AI深度"],
+        },
+        "zh-hant": {
+            title: "照片立繪合成工作室",
+            description:
+                "將多張透明立繪自然合成到背景照片中的免費線上工具。支援本地 AI 深度遮擋、景深虛化、落地投影、局部環境光適配與實際身高比例調整。",
+            keywords: ["照片合成", "多立繪合成", "透明圖片", "景深虛化", "AI深度"],
+        },
+        ru: {
+            title: "Студия фотокомпозиции персонажей",
+            description:
+                "Бесплатный веб-инструмент для естественного добавления нескольких прозрачных персонажей на готовые фотографии с поддержкой глубины ИИ, теней и боке.",
+            keywords: ["фотомонтаж", "несколько персонажей", "прозрачный PNG", "глубина резкости", "ИИ глубина"],
+        },
+    },
 };
 
 export function getLocalizedRouteMeta(

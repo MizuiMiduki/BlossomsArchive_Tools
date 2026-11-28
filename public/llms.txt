@@ -37,6 +37,7 @@
 - [サイトマップ構造可視化](https://tools.blossomsarchive.com/sitemap-visualizer/): sitemap.xmlやサイトURLからサイト構造を自動解析し、ディレクトリツリー・URL一覧表・多言語(hreflang)対応状況を可視化できる無料ツール。sitemapindex再帰展開やrobots.txt自動検出、TSVコピー・CSV保存に対応。
 - [モザイクアート作成](https://tools.blossomsarchive.com/mosaic-art/): 完成させたい画像と複数の構成画像から、色味の加工なしで素材本来の写真色彩を並べた高精細フォトモザイク（モザイクアート）を完全ブラウザ完結で安全に生成できる無料Webツール。高解像度PNG保存対応。
 - [ARカメラ・立ち絵重ね撮影](https://tools.blossomsarchive.com/ar-camera/): カメラ映像に立ち絵などの透過画像を重ねて撮影できる無料Webツール。リアルな接地・投影影を計算するARモード（環境光推定・ジャイロ空間アンカー対応）と、画面上の自由な位置に固定できるオーバーレイモードに対応。
+- [写真・立ち絵合成スタジオ](https://tools.blossomsarchive.com/photo-composite/): 背景写真に複数体の立ち絵を後から自然に合成できる無料Webツール。ローカルAI奥行き解析による遮蔽・被写界深度ボケ・接地影・局所環境光馴染ませ・奥行き順整列・実寸身長調整に対応。
 
 ## 開発・運営情報
 - 運営元: BlossomsArchive (https://blossomsarchive.com)

@@ -296,6 +296,21 @@ export const routes: Route[] = [
         ],
     },
     {
+        path: "/photo-composite",
+        title: "写真・立ち絵合成スタジオ",
+        description:
+            "背景写真に複数体の立ち絵を後から自然に合成できる無料Webツールです。AI奥行きによる遮蔽・被写界深度ボケ・接地影・環境光馴染ませ・実寸身長調整に対応しています。",
+        applicationCategory: "MultimediaApplication",
+        keywords: [
+            "写真合成",
+            "立ち絵合成",
+            "複数体",
+            "被写界深度",
+            "AI奥行き",
+            "透過画像合成",
+        ],
+    },
+    {
         path: "/privacy",
         title: "プライバシーポリシー",
         description: "BlossomsArchive Toolsのプライバシーポリシーです。ユーザーの入力データやファイルの完全クライアントサイド処理および個人情報保護に関する基本方針を掲載しています。",

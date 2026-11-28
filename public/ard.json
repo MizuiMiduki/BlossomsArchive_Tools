@@ -700,6 +700,32 @@
         "リアルな地面の影を計算してキャラクターがその場にいるようなAR写真を撮りたい",
         "画面上の自由な位置に透過画像を固定したままカメラで撮影したい"
       ]
+    },
+    {
+      "identifier": "urn:air:tools.blossomsarchive.com:webtools:photo-composite",
+      "displayName": "写真・立ち絵合成スタジオ | BlossomsArchive Tools",
+      "type": "application/agent-skills+md",
+      "url": "https://tools.blossomsarchive.com/photo-composite",
+      "description": "背景写真に複数体の立ち絵を後から自然に合成できる無料Webツール。AI奥行きによる遮蔽・被写界深度ボケ・接地影・環境光馴染ませ・実寸身長調整に対応。",
+      "capabilities": [
+        "MultiCharacterCompositing",
+        "LocalAiDepthOcclusion",
+        "DepthOfFieldBlur",
+        "LocalAmbientColorAdaptation"
+      ],
+      "tags": [
+        "写真合成",
+        "立ち絵合成",
+        "複数体",
+        "被写界深度",
+        "AI奥行き"
+      ],
+      "version": "1.0.0",
+      "updatedAt": "2026-11-29T00:00:00Z",
+      "representativeQueries": [
+        "背景写真に複数体の立ち絵を後から自然に合成したい",
+        "AI奥行きや被写界深度ボケ・影を合わせて写真にキャラクターを馴染ませたい"
+      ]
     }
   ]
 }

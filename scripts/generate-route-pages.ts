@@ -187,6 +187,7 @@ const ROUTE_CHUNK_PREFIX: Record<string, string> = {
     "/sitemap-visualizer": "SitemapVisualizer",
     "/mosaic-art": "MosaicArt",
     "/ar-camera": "ArCameraOverlay",
+    "/photo-composite": "PhotoComposite",
 };
 
 function findRouteChunk(routePath: string): string | undefined {

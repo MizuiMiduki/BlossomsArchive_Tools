@@ -31,6 +31,7 @@ export const TOOL_CATEGORIES_CONFIG: Record<string, { category: ToolCategoryId; 
 
     // 写真・カメラ・メディア
     "/ar-camera": { category: "camera", icon: "camera" },
+    "/photo-composite": { category: "camera", icon: "image" },
     "/exif-frame": { category: "camera", icon: "frame" },
     "/exposure-calculator": { category: "camera", icon: "camera" },
     "/timelapse-calculator": { category: "camera", icon: "hourglass" },
