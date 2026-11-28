@@ -1,9 +1,11 @@
 /**
  * モザイクアート（フォトモザイク）生成ユーティリティ
  *
- * ユーザー指定のターゲット画像に対して、構成画像（タイル画像群）の色味加工（カラーオーバーレイや着色）を
- * 一切行わず、素材本来の色彩をそのまま活かして最適なタイルを割り当てます。
+ * ユーザー指定のターゲット画像に対して、知覚色差（Redmean）と重複ペナルティを用いて
+ * 最適な構成画像（タイル画像群）を割り当てます。
  */
+
+export type TileAspectRatio = "square" | "landscape" | "portrait";
 
 export interface ColorRgb {
     r: number;
@@ -242,4 +244,51 @@ export function calculateCoverCrop(
     }
 
     return { sx, sy, sw, sh };
+}
+
+/**
+ * 有限数値へ安全にクランプする
+ */
+export function clampFinite(
+    value: number,
+    min: number,
+    max: number,
+    fallback: number,
+): number {
+    if (!Number.isFinite(value)) return fallback;
+    return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * ターゲット画像の解像度と選択したタイル形状から、最適なグリッド列数・行数を算出する
+ */
+export function calculateGridDimensions(
+    imgWidth: number,
+    imgHeight: number,
+    columns: number,
+    tileAspect: TileAspectRatio = "square",
+): { cols: number; rows: number; tileAspectFactor: number } {
+    const safeW = Math.max(1, clampFinite(imgWidth, 1, 16384, 1));
+    const safeH = Math.max(1, clampFinite(imgHeight, 1, 16384, 1));
+    const cols = Math.round(clampFinite(columns, 5, 160, 40));
+
+    // tileAspectFactor = cellHeight / cellWidth
+    const tileAspectFactor =
+        tileAspect === "landscape" ? 3 / 4 : tileAspect === "portrait" ? 4 / 3 : 1;
+
+    const imageAspect = safeH / safeW;
+    const rows = Math.max(1, Math.round((cols * imageAspect) / tileAspectFactor));
+
+    return { cols, rows, tileAspectFactor };
+}
+
+/**
+ * 安全な Blob ObjectURL のみを生成する
+ */
+export function createSafeObjectUrl(blob: Blob): string {
+    const url = URL.createObjectURL(blob);
+    if (!url.startsWith("blob:")) {
+        throw new Error("Unsafe object URL scheme");
+    }
+    return url;
 }

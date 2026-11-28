@@ -5,6 +5,8 @@ import {
     findBestTileIndex,
     generateMosaicGridIndices,
     calculateCoverCrop,
+    calculateGridDimensions,
+    clampFinite,
     type ColorRgb,
 } from "../utils/mosaicArt";
 
@@ -160,6 +162,28 @@ describe("mosaicArt utility functions", () => {
             expect(crop.sh).toBe(100);
             expect(crop.sx).toBe(0);
             expect(crop.sy).toBe(50); // (200 - 100) / 2
+        });
+    });
+
+    describe("calculateGridDimensions & clampFinite", () => {
+        it("タイル形状に応じて行数が正しくスケーリングされること", () => {
+            const square = calculateGridDimensions(1000, 1000, 40, "square");
+            expect(square.cols).toBe(40);
+            expect(square.rows).toBe(40);
+
+            const landscape = calculateGridDimensions(1000, 1000, 40, "landscape");
+            expect(landscape.cols).toBe(40);
+            expect(landscape.rows).toBe(53);
+
+            const portrait = calculateGridDimensions(1000, 1000, 40, "portrait");
+            expect(portrait.cols).toBe(40);
+            expect(portrait.rows).toBe(30);
+        });
+
+        it("clampFinite が NaN や範囲外数値を安全に正規化すること", () => {
+            expect(clampFinite(NaN, 0, 60, 20)).toBe(20);
+            expect(clampFinite(-5, 0, 60, 20)).toBe(0);
+            expect(clampFinite(999, 0, 60, 20)).toBe(60);
         });
     });
 });

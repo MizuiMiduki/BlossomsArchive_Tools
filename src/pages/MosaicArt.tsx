@@ -14,8 +14,12 @@ import {
     calculateAverageColorFromPixels,
     generateMosaicGridIndices,
     calculateCoverCrop,
+    calculateGridDimensions,
+    clampFinite,
+    createSafeObjectUrl,
     type MosaicTile,
     type ColorRgb,
+    type TileAspectRatio,
 } from "../utils/mosaicArt";
 
 interface TargetInfo {
@@ -39,12 +43,15 @@ export default function MosaicArt() {
     let resultCanvasRef: HTMLCanvasElement | undefined;
 
     // 状態管理
+    let tileIdCounter = 0;
     const [targetImage, setTargetImage] = createSignal<TargetInfo | null>(null);
     const [tiles, setTiles] = createSignal<MosaicTile[]>([]);
     const [columns, setColumns] = createSignal<number>(40);
     const [outputWidth, setOutputWidth] = createSignal<number>(1800);
     const [avoidAdjacent, setAvoidAdjacent] = createSignal<boolean>(true);
     const [duplicatePenalty, setDuplicatePenalty] = createSignal<number>(1);
+    const [colorBlend, setColorBlend] = createSignal<number>(20);
+    const [tileAspect, setTileAspect] = createSignal<TileAspectRatio>("square");
     const [outputFormat, setOutputFormat] = createSignal<string>("image/png");
 
     // 実行・進捗状態
@@ -89,7 +96,7 @@ export default function MosaicArt() {
             URL.revokeObjectURL(prev.previewUrl);
         }
 
-        const previewUrl = URL.createObjectURL(file);
+        const previewUrl = createSafeObjectUrl(file);
         const img = new Image();
         img.onload = () => {
             setTargetImage({
@@ -119,7 +126,7 @@ export default function MosaicArt() {
 
         for (let i = 0; i < imageFiles.length; i++) {
             const file = imageFiles[i];
-            const previewUrl = URL.createObjectURL(file);
+            const previewUrl = createSafeObjectUrl(file);
 
             await new Promise<void>((resolve) => {
                 const img = new Image();
@@ -135,8 +142,9 @@ export default function MosaicArt() {
                             // フォールバック
                         }
                     }
+                    tileIdCounter += 1;
                     newTiles.push({
-                        id: `tile-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                        id: `tile-${Date.now()}-${tileIdCounter}`,
                         name: file.name,
                         avgColor,
                         previewUrl,
@@ -176,6 +184,69 @@ export default function MosaicArt() {
         setTiles([]);
     };
 
+    // サンプルタイルセット（24色）生成
+    const generateSampleTiles = async () => {
+        setIsProcessing(true);
+        setStatusMessage("サンプルタイル（24色）を生成中...");
+        const sampleColors: Array<[number, number, number]> = [];
+        // 12色相 × 明暗2パターン + モノクロ4段階 = 24枚
+        for (let h = 0; h < 10; h++) {
+            const hue = (h * 36) % 360;
+            for (const light of [38, 68]) {
+                const c = (1 - Math.abs((2 * light) / 100 - 1)) * 0.78;
+                const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+                const m = light / 100 - c / 2;
+                let r1 = 0, g1 = 0, b1 = 0;
+                if (hue < 60) { r1 = c; g1 = x; }
+                else if (hue < 120) { r1 = x; g1 = c; }
+                else if (hue < 180) { g1 = c; b1 = x; }
+                else if (hue < 240) { g1 = x; b1 = c; }
+                else if (hue < 300) { r1 = x; b1 = c; }
+                else { r1 = c; b1 = x; }
+                sampleColors.push([
+                    Math.round((r1 + m) * 255),
+                    Math.round((g1 + m) * 255),
+                    Math.round((b1 + m) * 255),
+                ]);
+            }
+        }
+        sampleColors.push([25, 25, 30], [95, 98, 105], [175, 178, 185], [242, 244, 248]);
+
+        const created: MosaicTile[] = [];
+        for (let i = 0; i < sampleColors.length; i++) {
+            const [r, g, b] = sampleColors[i];
+            const c = document.createElement("canvas");
+            c.width = 64;
+            c.height = 64;
+            const cctx = c.getContext("2d");
+            if (cctx) {
+                const grad = cctx.createLinearGradient(0, 0, 64, 64);
+                grad.addColorStop(0, `rgb(${Math.min(255, r + 18)}, ${Math.min(255, g + 18)}, ${Math.min(255, b + 18)})`);
+                grad.addColorStop(1, `rgb(${Math.max(0, r - 18)}, ${Math.max(0, g - 18)}, ${Math.max(0, b - 18)})`);
+                cctx.fillStyle = grad;
+                cctx.fillRect(0, 0, 64, 64);
+                cctx.fillStyle = "rgba(255,255,255,0.12)";
+                cctx.beginPath();
+                cctx.arc(32, 32, 18, 0, Math.PI * 2);
+                cctx.fill();
+            }
+            const blob = await new Promise<Blob | null>((res) => c.toBlob(res, "image/png"));
+            if (!blob) continue;
+            const url = createSafeObjectUrl(blob);
+            tileIdCounter += 1;
+            created.push({
+                id: `sample-tile-${tileIdCounter}`,
+                name: `sample-${i + 1}.png`,
+                avgColor: { r, g, b },
+                previewUrl: url,
+                source: c,
+            });
+        }
+        setTiles((prev) => [...prev, ...created]);
+        setIsProcessing(false);
+        setStatusMessage("");
+    };
+
     // ターゲット画像のクリア
     const clearTargetImage = () => {
         const current = targetImage();
@@ -199,9 +270,13 @@ export default function MosaicArt() {
         await new Promise((r) => setTimeout(r, 20));
 
         try {
-            const cols = Math.max(10, Math.min(120, Math.round(Number(columns()))));
+            const { cols, rows } = calculateGridDimensions(
+                target.width,
+                target.height,
+                columns(),
+                tileAspect(),
+            );
             const aspect = target.height / target.width;
-            const rows = Math.max(1, Math.round(cols * aspect));
 
             // 1. ターゲット画像のセルごとの平均色を解析
             const gridCanvas = document.createElement("canvas");
@@ -223,7 +298,7 @@ export default function MosaicArt() {
             }
 
             setProgress(25);
-            setStatusMessage("各セルに最適なタイル画像を配置中（色味加工なし）...");
+            setStatusMessage("各セルに最適なタイル画像を配置中...");
             await new Promise((r) => setTimeout(r, 20));
 
             // 2. モザイク配置インデックスの計算
@@ -276,7 +351,6 @@ export default function MosaicArt() {
                         const dx = c * cellW;
                         const dy = r * cellH;
 
-                        // 色調補正や着色・半透明オーバーレイは一切行わず、元画像のまま描画
                         outCtx.drawImage(
                             tile.source,
                             crop.sx,
@@ -288,6 +362,19 @@ export default function MosaicArt() {
                             cellW,
                             cellH,
                         );
+
+                        // 色味馴染ませブレンド（0% の場合は完全無加工）
+                        const blendAlpha = clampFinite(colorBlend(), 0, 60, 0) / 100;
+                        if (blendAlpha > 0) {
+                            const targetCellColor = cellColors[idx];
+                            if (targetCellColor) {
+                                outCtx.save?.();
+                                outCtx.globalAlpha = blendAlpha;
+                                outCtx.fillStyle = `rgb(${targetCellColor.r}, ${targetCellColor.g}, ${targetCellColor.b})`;
+                                outCtx.fillRect(dx, dy, cellW, cellH);
+                                outCtx.restore?.();
+                            }
+                        }
                     }
                 }
 
@@ -496,14 +583,24 @@ export default function MosaicArt() {
                             <p class="ba-text-xs ba-text-subtle">
                                 複数枚の写真をドラッグ＆ドロップまたはファイル選択（何十枚でも追加可能）
                             </p>
-                            <button
-                                type="button"
-                                class="ba-btn ba-btn--secondary ba-btn--sm"
-                                onClick={() => tilesInputRef?.click()}
-                                aria-label="構成画像を追加選択"
-                            >
-                                画像を追加選択（複数可）
-                            </button>
+                            <div class="ba-flex ba-flex-wrap ba-justify-center ba-gap-2">
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--secondary ba-btn--sm"
+                                    onClick={() => tilesInputRef?.click()}
+                                    aria-label="構成画像を追加選択"
+                                >
+                                    画像を追加選択（複数可）
+                                </button>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--outline ba-btn--sm"
+                                    disabled={isProcessing()}
+                                    onClick={() => void generateSampleTiles()}
+                                >
+                                    サンプルタイル(24枚)を追加
+                                </button>
+                            </div>
                         </div>
 
                         <input
@@ -646,6 +743,54 @@ export default function MosaicArt() {
                                     隣接セルで同じ画像の連続を防止
                                 </label>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* 追加オプション: 色味ブレンド & タイル形状 */}
+                    <div class="ba-grid ba-grid-cols-1 md:ba-grid-cols-2 ba-gap-4 ba-pt-2 ba-border-t ba-border-base-300">
+                        <div class="ba-stack-2">
+                            <div class="ba-flex ba-items-center ba-justify-between">
+                                <label for="input-mosaic-color-blend" class="ba-label ba-text-xs ba-font-medium">
+                                    元画像の色味ブレンド強度
+                                </label>
+                                <span class="ba-badge ba-badge--neutral ba-text-xs">
+                                    {colorBlend()}%
+                                </span>
+                            </div>
+                            <input
+                                id="input-mosaic-color-blend"
+                                type="range"
+                                min="0"
+                                max="60"
+                                step="5"
+                                value={colorBlend()}
+                                onInput={(e) => {
+                                    setColorBlend(clampFinite(Number(e.currentTarget.value), 0, 60, 20));
+                                }}
+                                class="ba-range"
+                            />
+                            <p class="ba-text-xs ba-text-subtle">
+                                0%で素材写真そのままの色、数値を上げるほど元画像の輪郭や色調がくっきり再現されます。
+                            </p>
+                        </div>
+
+                        <div class="ba-stack-2">
+                            <label for="select-mosaic-tile-aspect" class="ba-label ba-text-xs ba-font-medium">
+                                タイル形状（縦横比）
+                            </label>
+                            <select
+                                id="select-mosaic-tile-aspect"
+                                value={tileAspect()}
+                                onChange={(e) => setTileAspect(e.currentTarget.value as TileAspectRatio)}
+                                class="ba-select ba-w-full"
+                            >
+                                <option value="square">正方形 (1:1 - 標準)</option>
+                                <option value="landscape">横長 (4:3 - 風景写真向け)</option>
+                                <option value="portrait">縦長 (3:4 - ポートレート向け)</option>
+                            </select>
+                            <p class="ba-text-xs ba-text-subtle">
+                                素材写真の向きに合わせてタイルの切り抜き比率を調整できます。
+                            </p>
                         </div>
                     </div>
                 </div>

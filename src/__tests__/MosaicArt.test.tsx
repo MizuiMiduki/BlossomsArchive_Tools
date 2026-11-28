@@ -125,4 +125,41 @@ describe("MosaicArt Page Component", () => {
             globalThis.Image = OriginalImage;
         }
     });
+
+    it("色味ブレンド強度スライダーとタイル形状セレクトを変更できること", () => {
+        render(() => <MosaicArt />);
+
+        const blendSlider = screen.getByLabelText("元画像の色味ブレンド強度") as HTMLInputElement;
+        expect(blendSlider.value).toBe("20");
+        fireEvent.input(blendSlider, { target: { value: "45" } });
+        expect(screen.getByText("45%")).toBeInTheDocument();
+
+        const aspectSelect = screen.getByLabelText("タイル形状（縦横比）") as HTMLSelectElement;
+        expect(aspectSelect.value).toBe("square");
+        fireEvent.change(aspectSelect, { target: { value: "landscape" } });
+        expect(aspectSelect.value).toBe("landscape");
+    });
+
+    it("サンプルタイル(24枚)ボタンでタイルを追加できること", async () => {
+        const mockCtx = {
+            fillStyle: "",
+            fillRect: vi.fn(),
+            createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
+            beginPath: vi.fn(),
+            arc: vi.fn(),
+            fill: vi.fn(),
+        };
+        vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+            mockCtx as unknown as CanvasRenderingContext2D,
+        );
+        vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((cb) => {
+            cb(new Blob(["sample"], { type: "image/png" }));
+        });
+
+        render(() => <MosaicArt />);
+        const sampleBtn = screen.getByRole("button", { name: "サンプルタイル(24枚)を追加" });
+        fireEvent.click(sampleBtn);
+
+        expect(await screen.findByText("24 枚選択中")).toBeInTheDocument();
+    });
 });
