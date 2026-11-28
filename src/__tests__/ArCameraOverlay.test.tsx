@@ -20,7 +20,7 @@ describe("ArCameraOverlay Page", () => {
             "ARカメラ・立ち絵重ね撮影",
         );
         expect(
-            screen.getByRole("button", { name: "AR空間モード（リアル影）" }),
+            screen.getByRole("button", { name: "AR空間モード" }),
         ).toHaveAttribute("aria-pressed", "true");
         expect(
             screen.getByRole("button", { name: "自由固定モード" }),

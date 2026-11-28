@@ -1993,7 +1993,7 @@ export default function ArCameraOverlay() {
                                     aria-pressed={mode() === "ar" ? "true" : "false"}
                                     onClick={() => handleModeChange("ar")}
                                 >
-                                    AR空間モード（リアル影）
+                                    AR空間モード
                                 </button>
                                 <button
                                     type="button"
