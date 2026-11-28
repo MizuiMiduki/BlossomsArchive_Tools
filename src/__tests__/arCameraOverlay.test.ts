@@ -66,6 +66,7 @@ describe("arCameraOverlay utilities", () => {
         expect(bounds.maxY).toBe(2);
         expect(bounds.footCenterXRatio).toBeCloseTo(0.5, 2);
         expect(bounds.footBottomYRatio).toBeCloseTo(0.75, 2);
+        expect(bounds.opaqueHeightRatio).toBeCloseTo(0.5, 2);
     });
 
     it("analyzeImageAlphaBounds: returns safe fallback for fully transparent images", () => {

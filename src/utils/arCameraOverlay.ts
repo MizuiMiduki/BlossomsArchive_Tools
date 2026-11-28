@@ -12,6 +12,8 @@ export interface AlphaBounds {
     footCenterXRatio: number;
     /** 画像高さに対する不透明領域の最下端比率 (0..1) */
     footBottomYRatio: number;
+    /** 解析元画像高さに対する不透明領域高さの比率 (0..1) */
+    opaqueHeightRatio: number;
     hasOpaquePixels: boolean;
 }
 
@@ -156,6 +158,7 @@ export function analyzeImageAlphaBounds(
             height: safeHeight,
             footCenterXRatio: 0.5,
             footBottomYRatio: 1,
+            opaqueHeightRatio: 1,
             hasOpaquePixels: false,
         };
     }
@@ -185,6 +188,7 @@ export function analyzeImageAlphaBounds(
         height: boxHeight,
         footCenterXRatio: clampFinite((footCenterX + 0.5) / safeWidth, 0, 1, 0.5),
         footBottomYRatio: clampFinite((maxY + 1) / safeHeight, 0, 1, 1),
+        opaqueHeightRatio: clampFinite(boxHeight / safeHeight, 0.05, 1, 1),
         hasOpaquePixels: true,
     };
 }

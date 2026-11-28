@@ -366,6 +366,7 @@ export default function ArCameraOverlay() {
             height: ah,
             footCenterXRatio: 0.5,
             footBottomYRatio: 1,
+            opaqueHeightRatio: 1,
             hasOpaquePixels: true,
         };
 
@@ -983,8 +984,8 @@ export default function ArCameraOverlay() {
     const applyHeightScale = (heightCm: number, distanceM: number) => {
         const asset = overlayAsset();
         const opaqueRatio =
-            asset && asset.alphaBounds.hasOpaquePixels && asset.height > 0
-                ? clampFinite(asset.alphaBounds.height / asset.height, 0.1, 1.0, 1.0)
+            asset && asset.alphaBounds.hasOpaquePixels
+                ? clampFinite(asset.alphaBounds.opaqueHeightRatio, 0.1, 1.0, 1.0)
                 : 1.0;
         const isPortraitView =
             !previewCanvasRef || previewCanvasRef.height >= previewCanvasRef.width;
