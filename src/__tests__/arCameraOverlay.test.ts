@@ -307,6 +307,16 @@ describe("arCameraOverlay utilities", () => {
         expect(sClose).toBeGreaterThan(sFar);
         expect(sClose).toBeCloseTo(sFar * 2, 1);
 
+        // 160cm・2.5m・portrait 74° で高解像度立ち絵(縮小解析後も opaqueHeightRatio=0.9)でも巨大化(4.0張り付き)しないこと
+        const normalScale = calculateScaleForCharacterHeight({
+            characterHeightCm: 160,
+            distanceMeters: 2.5,
+            opaqueHeightRatio: 0.9,
+            verticalFovDeg: 74,
+        });
+        expect(normalScale).toBeGreaterThan(0.5);
+        expect(normalScale).toBeLessThan(1.0);
+
         // 透過余白が多い画像（不透明領域50%）ではより大きいscaleになること
         const sPadded = calculateScaleForCharacterHeight({
             characterHeightCm: 160,
