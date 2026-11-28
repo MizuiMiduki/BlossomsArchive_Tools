@@ -57,7 +57,6 @@ export default function ArCameraOverlay() {
     let videoRef: HTMLVideoElement | undefined;
     let previewCanvasRef: HTMLCanvasElement | undefined;
     let overlayInputRef: HTMLInputElement | undefined;
-    let overlayDriveInputRef: HTMLInputElement | undefined;
     let bgInputRef: HTMLInputElement | undefined;
     let lightSampleCanvas: HTMLCanvasElement | undefined;
 
@@ -1334,14 +1333,7 @@ export default function ArCameraOverlay() {
                                         class="ba-btn ba-btn--primary ba-btn--xs"
                                         onClick={() => overlayInputRef?.click()}
                                     >
-                                        写真から選択
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="ba-btn ba-btn--secondary ba-btn--xs"
-                                        onClick={() => overlayDriveInputRef?.click()}
-                                    >
-                                        ドライブ・ファイルから
+                                        透過画像を選択
                                     </button>
                                 </div>
                             </div>
@@ -1477,14 +1469,7 @@ export default function ArCameraOverlay() {
                                 class="ba-btn ba-btn--secondary ba-btn--xs"
                                 onClick={() => overlayInputRef?.click()}
                             >
-                                写真から選択
-                            </button>
-                            <button
-                                type="button"
-                                class="ba-btn ba-btn--secondary ba-btn--xs"
-                                onClick={() => overlayDriveInputRef?.click()}
-                            >
-                                ドライブ・ファイル
+                                画像を選択
                             </button>
                             <button
                                 type="button"
@@ -1596,24 +1581,12 @@ export default function ArCameraOverlay() {
                         </div>
                     </div>
 
-                    {/* 隠しファイル入力 */}
+                    {/* 隠しファイル入力（写真ライブラリ・ドライブ両対応） */}
                     <input
                         ref={overlayInputRef}
                         type="file"
-                        accept="image/*"
                         class="ba-sr-only"
-                        aria-label="写真ライブラリから透過画像を選択"
-                        onChange={(e) => {
-                            const file = e.currentTarget.files?.[0];
-                            if (file) handleOverlayFile(file);
-                            e.currentTarget.value = "";
-                        }}
-                    />
-                    <input
-                        ref={overlayDriveInputRef}
-                        type="file"
-                        class="ba-sr-only"
-                        aria-label="ドライブやファイルアプリから透過画像を選択"
+                        aria-label="写真やドライブから透過画像を選択"
                         onChange={(e) => {
                             const file = e.currentTarget.files?.[0];
                             if (file) handleOverlayFile(file);
