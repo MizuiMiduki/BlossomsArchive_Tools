@@ -39,7 +39,6 @@ export default function MosaicArt() {
     let containerRef: HTMLDivElement | undefined;
     let targetInputRef: HTMLInputElement | undefined;
     let tilesInputRef: HTMLInputElement | undefined;
-    let resultCanvasRef: HTMLCanvasElement | undefined;
 
     // 状態管理
     let tileIdCounter = 0;
@@ -261,7 +260,7 @@ export default function MosaicArt() {
             const cellW = outW / cols;
             const cellH = outH / rows;
 
-            const outCanvas = resultCanvasRef || document.createElement("canvas");
+            const outCanvas = document.createElement("canvas");
             outCanvas.width = outW;
             outCanvas.height = outH;
             const outCtx = outCanvas.getContext("2d");
@@ -546,7 +545,7 @@ export default function MosaicArt() {
                             type="file"
                             accept="image/*"
                             multiple
-                            class="ba-hidden"
+                            style={{ display: "none" }}
                             onChange={(e) => {
                                 if (e.currentTarget.files) {
                                     handleTileFiles(e.currentTarget.files);
@@ -848,7 +847,10 @@ export default function MosaicArt() {
                         </div>
 
                         {/* プレビュー表示枠 */}
-                        <div class="ba-relative ba-rounded-lg ba-overflow-hidden ba-bg-surface-2 ba-border ba-max-h-[600px] ba-overflow-auto ba-p-2 ba-flex ba-items-center ba-justify-center">
+                        <div
+                            class="ba-relative ba-rounded-lg ba-bg-surface-2 ba-border ba-p-2 ba-flex ba-items-center ba-justify-center"
+                            style={{ "max-height": "600px", overflow: "auto" }}
+                        >
                             <Show
                                 when={!showCompare()}
                                 fallback={
@@ -858,7 +860,12 @@ export default function MosaicArt() {
                                             <img
                                                 src={targetImage()?.previewUrl}
                                                 alt="元画像"
-                                                class="ba-max-h-[500px] ba-mx-auto ba-object-contain"
+                                                style={{
+                                                    "max-height": "500px",
+                                                    "max-width": "100%",
+                                                    margin: "0 auto",
+                                                    "object-fit": "contain",
+                                                }}
                                             />
                                         </div>
                                         <div class="ba-stack-1 ba-text-center">
@@ -866,7 +873,12 @@ export default function MosaicArt() {
                                             <img
                                                 src={url()}
                                                 alt="生成モザイクアート"
-                                                class="ba-max-h-[500px] ba-mx-auto ba-object-contain"
+                                                style={{
+                                                    "max-height": "500px",
+                                                    "max-width": "100%",
+                                                    margin: "0 auto",
+                                                    "object-fit": "contain",
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -882,7 +894,11 @@ export default function MosaicArt() {
                                     <img
                                         src={url()}
                                         alt="完成モザイクアートプレビュー"
-                                        class="ba-max-h-[550px] ba-object-contain ba-shadow-md"
+                                        style={{
+                                            "max-height": "550px",
+                                            "max-width": "100%",
+                                            "object-fit": "contain",
+                                        }}
                                     />
                                 </div>
                             </Show>
@@ -920,9 +936,6 @@ export default function MosaicArt() {
                     </div>
                 )}
             </Show>
-
-            {/* 隠しキャンバス（オフスクリーン描画用） */}
-            <canvas ref={resultCanvasRef} class="ba-hidden" />
 
             {/* 使い方＆Tipsガイド */}
             <div class="ba-card ba-card--border ba-stack-3">

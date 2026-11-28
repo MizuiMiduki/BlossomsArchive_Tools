@@ -127,6 +127,8 @@ describe("MosaicArt Page Component", () => {
 
             const downloadLink = await screen.findByRole("link", { name: "モザイクアート画像をダウンロード" });
             expect(downloadLink).toBeInTheDocument();
+            // 余分な出力用 <canvas> がDOM上に重複表示されていないこと
+            expect(container.querySelector("canvas")).toBeNull();
         } finally {
             globalThis.Image = OriginalImage;
         }
