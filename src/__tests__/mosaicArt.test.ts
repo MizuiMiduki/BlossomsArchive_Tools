@@ -186,4 +186,48 @@ describe("mosaicArt utility functions", () => {
             expect(clampFinite(999, 0, 60, 20)).toBe(60);
         });
     });
+
+    describe("noReuse option", () => {
+        it("タイル数 >= セル数の場合、noReuse: true で同一画像が一切再利用されないこと", () => {
+            const tiles = [
+                { avgColor: { r: 255, g: 0, b: 0 } },
+                { avgColor: { r: 250, g: 10, b: 10 } },
+                { avgColor: { r: 0, g: 255, b: 0 } },
+                { avgColor: { r: 0, g: 0, b: 255 } },
+            ];
+            const targetCells = [
+                { r: 255, g: 0, b: 0 },
+                { r: 255, g: 0, b: 0 },
+                { r: 0, g: 255, b: 0 },
+                { r: 0, g: 0, b: 255 },
+            ];
+
+            const indices = generateMosaicGridIndices(targetCells, 2, 2, tiles, {
+                noReuse: true,
+            });
+            expect(indices.length).toBe(4);
+            expect(new Set(indices).size).toBe(4);
+        });
+
+        it("タイル数 < セル数の場合でも、最小使用回数から均等に選出されること", () => {
+            const tiles = [
+                { avgColor: { r: 255, g: 0, b: 0 } },
+                { avgColor: { r: 0, g: 0, b: 255 } },
+            ];
+            const targetCells = [
+                { r: 255, g: 0, b: 0 },
+                { r: 255, g: 0, b: 0 },
+                { r: 255, g: 0, b: 0 },
+                { r: 255, g: 0, b: 0 },
+            ];
+
+            const indices = generateMosaicGridIndices(targetCells, 2, 2, tiles, {
+                noReuse: true,
+            });
+            const count0 = indices.filter((i) => i === 0).length;
+            const count1 = indices.filter((i) => i === 1).length;
+            expect(count0).toBe(2);
+            expect(count1).toBe(2);
+        });
+    });
 });

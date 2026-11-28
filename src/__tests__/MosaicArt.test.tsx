@@ -43,6 +43,8 @@ describe("MosaicArt Page Component", () => {
         const penaltySelect = screen.getByLabelText("重複利用の制限") as HTMLSelectElement;
         fireEvent.change(penaltySelect, { target: { value: "3" } });
         expect(penaltySelect.value).toBe("3");
+        fireEvent.change(penaltySelect, { target: { value: "-1" } });
+        expect(penaltySelect.value).toBe("-1");
 
         const avoidCheckbox = screen.getByLabelText("隣接セルでの同一画像重複を防止") as HTMLInputElement;
         expect(avoidCheckbox.checked).toBe(true);

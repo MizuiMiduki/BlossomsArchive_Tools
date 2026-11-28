@@ -26,6 +26,8 @@ export interface MosaicMatchOptions {
     avoidAdjacent?: boolean;
     /** 画像ごとの重複使用に対するペナルティの重み (0: 重複自由, 1: 弱, 2: 中, 3: 強) */
     duplicatePenaltyWeight?: number;
+    /** 同一画像の再利用を禁止するか（画像数 >= セル数 の場合は完全1回限り、不足時は最小使用回数から選出） */
+    noReuse?: boolean;
 }
 
 export interface MosaicConfig extends MosaicMatchOptions {
@@ -178,11 +180,44 @@ export function generateMosaicGridIndices(
     const usageCounts = new Array<number>(tiles.length).fill(0);
     const penaltyWeight = options.duplicatePenaltyWeight ?? 1;
     const avoidAdjacent = options.avoidAdjacent ?? true;
+    const noReuse = options.noReuse ?? false;
 
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < columns; col++) {
             const index = row * columns + col;
             const targetColor = targetCells[index] || { r: 128, g: 128, b: 128 };
+
+            if (noReuse) {
+                // 再利用なしモード: 現在の最小使用回数（未到達なら0）のタイル群からのみ最適色を選出
+                let minUsage = Number.POSITIVE_INFINITY;
+                for (let i = 0; i < usageCounts.length; i++) {
+                    if (usageCounts[i] < minUsage) {
+                        minUsage = usageCounts[i];
+                    }
+                }
+
+                let bestIdx = 0;
+                let minDist = Number.POSITIVE_INFINITY;
+                for (let i = 0; i < tiles.length; i++) {
+                    if (usageCounts[i] !== minUsage) continue;
+                    const tc = tiles[i].avgColor;
+                    const dist = getColorDistance(
+                        targetColor.r,
+                        targetColor.g,
+                        targetColor.b,
+                        tc.r,
+                        tc.g,
+                        tc.b,
+                    );
+                    if (dist < minDist) {
+                        minDist = dist;
+                        bestIdx = i;
+                    }
+                }
+                result[index] = bestIdx;
+                usageCounts[bestIdx]++;
+                continue;
+            }
 
             const avoidIndices: number[] = [];
             if (avoidAdjacent) {

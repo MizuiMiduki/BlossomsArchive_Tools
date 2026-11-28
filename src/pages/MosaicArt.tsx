@@ -303,6 +303,7 @@ export default function MosaicArt() {
             await new Promise((r) => setTimeout(r, 20));
 
             // 2. モザイク配置インデックスの計算
+            const isNoReuse = duplicatePenalty() < 0;
             const gridIndices = generateMosaicGridIndices(
                 cellColors,
                 cols,
@@ -310,7 +311,8 @@ export default function MosaicArt() {
                 tileList,
                 {
                     avoidAdjacent: avoidAdjacent(),
-                    duplicatePenaltyWeight: duplicatePenalty(),
+                    duplicatePenaltyWeight: isNoReuse ? 0 : duplicatePenalty(),
+                    noReuse: isNoReuse,
                 },
             );
 
@@ -413,6 +415,19 @@ export default function MosaicArt() {
             setStatusMessage("生成処理中にエラーが発生しました。");
         }
     };
+
+    // 現在の設定で必要な総セル数
+    const estimatedTotalCells = createMemo(() => {
+        const target = targetImage();
+        if (!target) return null;
+        const { cols, rows } = calculateGridDimensions(
+            target.width,
+            target.height,
+            columns(),
+            tileAspect(),
+        );
+        return cols * rows;
+    });
 
     // ダウンロードファイル名の決定
     const downloadFileName = createMemo(() => {
@@ -783,7 +798,20 @@ export default function MosaicArt() {
                                 <option value="0">重複制限なし（色の再現度優先）</option>
                                 <option value="1">バランス（推奨）</option>
                                 <option value="3">均等配置（全画像をまんべんなく使用）</option>
+                                <option value="-1">同一画像を再利用しない（各画像1回まで）</option>
                             </select>
+                            <Show
+                                when={
+                                    duplicatePenalty() < 0 &&
+                                    estimatedTotalCells() !== null &&
+                                    tiles().length > 0 &&
+                                    tiles().length < (estimatedTotalCells() ?? 0)
+                                }
+                            >
+                                <p class="ba-text-xs ba-text-warning">
+                                    ※ 総セル数（{estimatedTotalCells()}個）に対して構成画像（{tiles().length}枚）が不足しているため、全画像を使い切った後は最小回数で均等補完されます。分割数を下げると重複なしで生成できます。
+                                </p>
+                            </Show>
                             <div class="ba-flex ba-items-center ba-gap-2 ba-mt-1">
                                 <input
                                     type="checkbox"
