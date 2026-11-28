@@ -95,7 +95,7 @@ export default function ArCameraOverlay() {
     const [shadowOpacity, setShadowOpacity] = createSignal<number>(0.52);
     const [shadowSoftness, setShadowSoftness] = createSignal<number>(0.42);
     const [autoAmbientMatch, setAutoAmbientMatch] = createSignal<boolean>(true);
-    const [autoLightDirection, setAutoLightDirection] = createSignal<boolean>(false);
+    const [autoLightDirection, setAutoLightDirection] = createSignal<boolean>(true);
     const [showArGrid, setShowArGrid] = createSignal<boolean>(true);
 
     // 環境光推定結果
@@ -1430,9 +1430,10 @@ export default function ArCameraOverlay() {
                                                 step="1"
                                                 class="ba-range"
                                                 value={lightAzimuthDeg()}
-                                                onInput={(e) =>
-                                                    setLightAzimuthDeg(clampFinite(Number(e.currentTarget.value), 0, 360, 315))
-                                                }
+                                                onInput={(e) => {
+                                                    setAutoLightDirection(false);
+                                                    setLightAzimuthDeg(clampFinite(Number(e.currentTarget.value), 0, 360, 315));
+                                                }}
                                             />
                                         </div>
 

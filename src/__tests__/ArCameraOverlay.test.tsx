@@ -94,4 +94,18 @@ describe("ArCameraOverlay Page", () => {
         const lockBtn = screen.getByRole("button", { name: "位置ロック" });
         expect(lockBtn.parentElement?.style.flexWrap).toBe("wrap");
     });
+
+    it("影の方向（光源方向自動推定）がデフォルトで有効であり、手動スライダー操作で自動推定が解除されること", () => {
+        render(() => <ArCameraOverlay />);
+        const drawerToggle = screen.getByRole("button", { name: "影・配置調整" });
+        fireEvent.click(drawerToggle);
+
+        const autoLightCheckbox = screen.getByLabelText("映像の明暗から光源方向を自動推定") as HTMLInputElement;
+        expect(autoLightCheckbox.checked).toBe(true);
+
+        const azimuthSlider = screen.getByLabelText(/光源の向き/) as HTMLInputElement;
+        fireEvent.input(azimuthSlider, { target: { value: "90" } });
+        expect(azimuthSlider.value).toBe("90");
+        expect(autoLightCheckbox.checked).toBe(false);
+    });
 });
