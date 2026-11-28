@@ -10,8 +10,9 @@ describe("PhotoComposite", () => {
     it("初期画面で見出し・アップロードボタン・レイヤー管理・書き出しボタンが表示されること", () => {
         render(() => <PhotoComposite />);
         expect(screen.getByRole("heading", { level: 1, name: "写真・立ち絵合成スタジオ" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "背景写真を選択（ドライブ対応）" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "立ち絵を追加（複数・ドライブ対応）" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "背景写真を選択" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "立ち絵を追加（複数可）" })).toBeInTheDocument();
+        expect(screen.queryByText(/ドライブ対応/)).not.toBeInTheDocument();
         expect(screen.getByLabelText("写真ライブラリやドライブから背景写真を選択")).not.toHaveAttribute("accept");
         expect(screen.getByLabelText("写真ライブラリやドライブから立ち絵を追加（複数選択可）")).not.toHaveAttribute("accept");
         expect(screen.getByRole("button", { name: "AI自動馴染ませ（奥行き・地面壁・距離）" })).toBeInTheDocument();
@@ -67,5 +68,51 @@ describe("PhotoComposite", () => {
         const badFile = new File(["hello"], "notes.txt", { type: "text/plain" });
         fireEvent.change(bgInput, { target: { files: [badFile] } });
         expect(screen.getByText("背景写真は PNG / JPEG / WebP などの画像ファイルを選択してください。")).toBeInTheDocument();
+    });
+
+    it("身長と距離の数値入力が入力途中で最低値に強制クランプされず自由に編集できること", () => {
+        const OriginalImage = window.Image;
+        class MockImage {
+            width = 400;
+            height = 800;
+            naturalWidth = 400;
+            naturalHeight = 800;
+            onload: (() => void) | null = null;
+            set src(_val: string) {
+                if (this.onload) this.onload();
+            }
+        }
+        vi.stubGlobal("Image", MockImage);
+        if (!URL.createObjectURL) {
+            URL.createObjectURL = vi.fn(() => "blob:http://localhost/char");
+        } else {
+            vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:http://localhost/char");
+        }
+
+        render(() => <PhotoComposite />);
+        const charInput = screen.getByLabelText("写真ライブラリやドライブから立ち絵を追加（複数選択可）") as HTMLInputElement;
+        const pngFile = new File([new Uint8Array([137, 80, 78, 71])], "chara.png", { type: "image/png" });
+        fireEvent.change(charInput, { target: { files: [pngFile] } });
+
+        const heightInput = screen.getByLabelText("身長 (cm)") as HTMLInputElement;
+        const distInput = screen.getByLabelText("距離 (m)") as HTMLInputElement;
+
+        // 途中の小さな値 (15cm, 0.1m) でも最低値20/0.3に強制リセットされないこと
+        fireEvent.input(heightInput, { target: { value: "15" } });
+        expect(heightInput.value).toBe("15");
+        fireEvent.blur(heightInput);
+        expect(heightInput.value).toBe("15");
+
+        fireEvent.input(distInput, { target: { value: "0.1" } });
+        expect(distInput.value).toBe("0.1");
+        fireEvent.blur(distInput);
+        expect(distInput.value).toBe("0.1");
+
+        // 範囲外 (0) は blur 時のみ最小値へ正規化される
+        fireEvent.input(heightInput, { target: { value: "0" } });
+        fireEvent.blur(heightInput);
+        expect(heightInput.value).toBe("1");
+
+        vi.stubGlobal("Image", OriginalImage);
     });
 });

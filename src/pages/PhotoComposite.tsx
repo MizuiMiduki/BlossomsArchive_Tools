@@ -34,9 +34,12 @@ import {
     projectVerticalPerspectiveT,
 } from "../utils/arCameraOverlay";
 import {
+    type DepthSegmentedLayer,
     sortCharacterLayersByDepth,
     hitTestCharacterLayer,
     estimateLocalEnvironmentLighting,
+    segmentDepthIntoObjectLayers,
+    recommendInsertSlotForDepth,
 } from "../utils/photoComposite";
 
 interface CharacterAsset {
@@ -65,6 +68,7 @@ interface CharacterLayer {
     edgeSoftnessPx: number;
     useOcclusion: boolean;
     occlusionThreshold: number;
+    insertLayerIndex: number;
 }
 
 interface BackgroundPhotoAsset {
@@ -119,6 +123,8 @@ export default function PhotoComposite() {
     } | null>(null);
     const [aiDepthBusy, setAiDepthBusy] = createSignal<boolean>(false);
     const [aiDepthStatus, setAiDepthStatus] = createSignal<string>("");
+    const [segmentedLayers, setSegmentedLayers] = createSignal<DepthSegmentedLayer[]>([]);
+    const [layerSliceCount, setLayerSliceCount] = createSignal<number>(4);
     const [surfaceInfo, setSurfaceInfo] = createSignal<{
         groundPct: number;
         wallPct: number;
@@ -145,6 +151,9 @@ export default function PhotoComposite() {
     let characterLayerCanvas: HTMLCanvasElement | undefined;
     let shadowCatcherCanvas: HTMLCanvasElement | undefined;
     let shadowLayerCanvas: HTMLCanvasElement | undefined;
+    let baseSceneCanvas: HTMLCanvasElement | undefined;
+    let depthLayerCanvas: HTMLCanvasElement | undefined;
+    let depthLayerMaskCanvas: HTMLCanvasElement | undefined;
     let cachedMaskKey = "";
     let cachedDofKey = "";
 
@@ -303,6 +312,7 @@ export default function PhotoComposite() {
 
             // 古いAI深度キャッシュをリセット
             setAiDepthMap(null);
+            setSegmentedLayers([]);
             setSurfaceInfo(null);
             setAiDepthStatus("");
             cachedMaskKey = "";
@@ -338,6 +348,7 @@ export default function PhotoComposite() {
                 let initDist = 2.5;
                 let initThresh = 0.55;
                 let useOcc = false;
+                let initInsertIdx = 0;
 
                 const map = aiDepthMap();
                 if (map) {
@@ -360,6 +371,7 @@ export default function PhotoComposite() {
                     );
                     initThresh = Math.round(clampFinite(gDepth + 0.06, 0.14, 0.92, 0.55) * 100) / 100;
                     useOcc = true;
+                    initInsertIdx = recommendInsertSlotForDepth(segmentedLayers(), gDepth);
                 }
 
                 const newChar: CharacterLayer = {
@@ -378,6 +390,7 @@ export default function PhotoComposite() {
                     edgeSoftnessPx: 0.4,
                     useOcclusion: useOcc,
                     occlusionThreshold: initThresh,
+                    insertLayerIndex: initInsertIdx,
                 };
                 setCharacters((prev) => [...prev, newChar]);
                 setSelectedId(newChar.id);
@@ -436,12 +449,35 @@ export default function PhotoComposite() {
                 });
                 const gDepth = estimateCharacterGroundDepth(map.data, map.width, map.height, nx, ny);
                 const thresh = Math.round(clampFinite(gDepth + 0.06, 0.14, 0.92, 0.55) * 100) / 100;
+                const slot = recommendInsertSlotForDepth(segmentedLayers(), gDepth);
                 return {
                     ...c,
                     cameraDistanceM: estDist,
                     scale: computeScaleForLayer(c.asset, c.characterHeightCm, estDist),
                     occlusionThreshold: thresh,
                     useOcclusion: true,
+                    insertLayerIndex: slot,
+                };
+            }),
+        );
+        renderPreview();
+    };
+
+    const resegmentDepthLayers = (nextCount: number) => {
+        const count = Math.max(2, Math.min(6, Math.round(clampFinite(nextCount, 2, 6, 4))));
+        setLayerSliceCount(count);
+        const map = aiDepthMap();
+        if (!map) return;
+        const sliced = segmentDepthIntoObjectLayers(map.data, map.width, map.height, count);
+        setSegmentedLayers(sliced);
+        setCharacters((list) =>
+            list.map((c) => {
+                const nx = clampFinite(c.posXPercent / 100, 0.05, 0.95, 0.5);
+                const ny = clampFinite(c.posYPercent / 100, 0.05, 0.95, 0.78);
+                const gDepth = estimateCharacterGroundDepth(map.data, map.width, map.height, nx, ny);
+                return {
+                    ...c,
+                    insertLayerIndex: recommendInsertSlotForDepth(sliced, gDepth),
                 };
             }),
         );
@@ -528,6 +564,14 @@ export default function PhotoComposite() {
             );
             setGroundTiltDeg(tilt);
 
+            const sliced = segmentDepthIntoObjectLayers(
+                estimated.data,
+                estimated.width,
+                estimated.height,
+                layerSliceCount(),
+            );
+            setSegmentedLayers(sliced);
+
             const aspect = getCanvasViewAspect();
             setCharacters((list) =>
                 list.map((c) => {
@@ -561,6 +605,7 @@ export default function PhotoComposite() {
                         scale: computeScaleForLayer(c.asset, c.characterHeightCm, estDist),
                         occlusionThreshold: thresh,
                         useOcclusion: true,
+                        insertLayerIndex: recommendInsertSlotForDepth(sliced, gDepth),
                     };
                 }),
             );
@@ -673,6 +718,21 @@ export default function PhotoComposite() {
             }
         }
 
+        // 2.5. レイヤー挟み込み用のクリーンな背景＋DoF スナップショットを保持
+        const bgLayers = segmentedLayers();
+        if (bgLayers.length > 0 && width > 0 && height > 0) {
+            if (!baseSceneCanvas) baseSceneCanvas = document.createElement("canvas");
+            if (baseSceneCanvas.width !== width || baseSceneCanvas.height !== height) {
+                baseSceneCanvas.width = width;
+                baseSceneCanvas.height = height;
+            }
+            const baseCtx = baseSceneCanvas.getContext("2d");
+            if (baseCtx) {
+                baseCtx.clearRect(0, 0, width, height);
+                baseCtx.drawImage(ctx.canvas, 0, 0, width, height);
+            }
+        }
+
         // 3. 地面・壁認識ガイド (プレビューのみ)
         if (!isExport && showSurfaceGuides()) {
             const surf = surfaceInfo();
@@ -689,11 +749,11 @@ export default function PhotoComposite() {
             }
         }
 
-        // 4. 複数体の立ち絵を奥行き順に描画
+        // 4. 複数体の立ち絵を奥行き順＆背景オブジェクトレイヤー間に挟み込み描画
         const sample = bgSampleData();
         const layers = orderedCharacters();
 
-        for (const layer of layers) {
+        const drawCharacterLayer = (layer: CharacterLayer) => {
             const drawH = height * 0.62 * clampFinite(layer.scale, 0.1, 4.0, 0.65);
             const aspect = layer.asset.width / Math.max(1, layer.asset.height);
             const drawW = drawH * aspect;
@@ -954,6 +1014,62 @@ export default function PhotoComposite() {
                 ctx.fill();
                 ctx.restore();
             }
+        };
+
+        if (bgLayers.length > 0 && map && baseSceneCanvas) {
+            const clampSlot = (idx: number) =>
+                Math.max(0, Math.min(bgLayers.length, Math.round(clampFinite(idx, 0, bgLayers.length, 0))));
+
+            // 最背面の立ち絵（すべてのオブジェクトレイヤーの奥）
+            for (const layer of layers) {
+                if (clampSlot(layer.insertLayerIndex) >= bgLayers.length) {
+                    drawCharacterLayer(layer);
+                }
+            }
+
+            // 奥のレイヤーから手前のレイヤーへ順に重ね、指定の隙間に立ち絵を挟み込む
+            for (let li = bgLayers.length - 1; li >= 0; li--) {
+                if (li < bgLayers.length - 1) {
+                    const hasCharBehindThisLayer = layers.some((c) => clampSlot(c.insertLayerIndex) > li);
+                    if (hasCharBehindThisLayer) {
+                        if (!depthLayerCanvas) depthLayerCanvas = document.createElement("canvas");
+                        if (!depthLayerMaskCanvas) depthLayerMaskCanvas = document.createElement("canvas");
+                        if (depthLayerCanvas.width !== width || depthLayerCanvas.height !== height) {
+                            depthLayerCanvas.width = width;
+                            depthLayerCanvas.height = height;
+                        }
+                        depthLayerMaskCanvas.width = map.width;
+                        depthLayerMaskCanvas.height = map.height;
+
+                        const dlCtx = depthLayerCanvas.getContext("2d");
+                        const dmCtx = depthLayerMaskCanvas.getContext("2d");
+                        if (dlCtx && dmCtx) {
+                            dmCtx.putImageData(
+                                new ImageData(new Uint8ClampedArray(bgLayers[li].maskRgba), map.width, map.height),
+                                0,
+                                0,
+                            );
+                            dlCtx.clearRect(0, 0, width, height);
+                            dlCtx.drawImage(baseSceneCanvas, 0, 0, width, height);
+                            dlCtx.save();
+                            dlCtx.globalCompositeOperation = "destination-in";
+                            dlCtx.drawImage(depthLayerMaskCanvas, 0, 0, width, height);
+                            dlCtx.restore();
+                            ctx.drawImage(depthLayerCanvas, 0, 0, width, height);
+                        }
+                    }
+                }
+
+                for (const layer of layers) {
+                    if (clampSlot(layer.insertLayerIndex) === li) {
+                        drawCharacterLayer(layer);
+                    }
+                }
+            }
+        } else {
+            for (const layer of layers) {
+                drawCharacterLayer(layer);
+            }
         }
     };
 
@@ -1162,7 +1278,7 @@ export default function PhotoComposite() {
                                 class="ba-btn ba-btn--primary ba-btn--sm"
                                 onClick={() => bgInputRef?.click()}
                             >
-                                背景写真を選択（ドライブ対応）
+                                背景写真を選択
                             </button>
 
                             <input
@@ -1183,7 +1299,7 @@ export default function PhotoComposite() {
                                 class="ba-btn ba-btn--secondary ba-btn--sm"
                                 onClick={() => charInputRef?.click()}
                             >
-                                立ち絵を追加（複数・ドライブ対応）
+                                立ち絵を追加（複数可）
                             </button>
                         </div>
 
@@ -1286,7 +1402,7 @@ export default function PhotoComposite() {
                             when={characters().length > 0}
                             fallback={
                                 <p class="ba-text-xs ba-text-subtle">
-                                    「立ち絵を追加（複数・ドライブ対応）」から透過PNG画像を追加してください。
+                                    「立ち絵を追加（複数可）」から透過PNG画像を追加してください。
                                 </p>
                             }
                         >
@@ -1382,17 +1498,32 @@ export default function PhotoComposite() {
                                         <input
                                             id="pc-height-input"
                                             type="number"
-                                            min="20"
-                                            max="350"
+                                            min="1"
+                                            max="500"
+                                            step="1"
                                             class="ba-input ba-input--sm"
                                             value={sel().characterHeightCm}
                                             onInput={(e) => {
-                                                const v = clampFinite(Number(e.currentTarget.value), 20, 350, 160);
+                                                const rawText = e.currentTarget.value.trim();
+                                                if (!rawText) return;
+                                                const raw = Number(rawText);
+                                                if (!Number.isFinite(raw) || raw <= 0) return;
+                                                const v = Math.min(500, raw);
                                                 updateSelectedCharacter((c) => ({
                                                     ...c,
                                                     characterHeightCm: v,
                                                     scale: computeScaleForLayer(c.asset, v, c.cameraDistanceM),
                                                 }));
+                                                renderPreview();
+                                            }}
+                                            onBlur={(e) => {
+                                                const v = clampFinite(Number(e.currentTarget.value), 1, 500, 160);
+                                                updateSelectedCharacter((c) => ({
+                                                    ...c,
+                                                    characterHeightCm: v,
+                                                    scale: computeScaleForLayer(c.asset, v, c.cameraDistanceM),
+                                                }));
+                                                e.currentTarget.value = String(v);
                                                 renderPreview();
                                             }}
                                         />
@@ -1404,18 +1535,32 @@ export default function PhotoComposite() {
                                         <input
                                             id="pc-distance-input"
                                             type="number"
-                                            min="0.3"
-                                            max="30"
+                                            min="0.05"
+                                            max="100"
                                             step="0.1"
                                             class="ba-input ba-input--sm"
                                             value={sel().cameraDistanceM}
                                             onInput={(e) => {
-                                                const v = clampFinite(Number(e.currentTarget.value), 0.3, 30, 2.5);
+                                                const rawText = e.currentTarget.value.trim();
+                                                if (!rawText) return;
+                                                const raw = Number(rawText);
+                                                if (!Number.isFinite(raw) || raw <= 0) return;
+                                                const v = Math.min(100, raw);
                                                 updateSelectedCharacter((c) => ({
                                                     ...c,
                                                     cameraDistanceM: v,
                                                     scale: computeScaleForLayer(c.asset, c.characterHeightCm, v),
                                                 }));
+                                                renderPreview();
+                                            }}
+                                            onBlur={(e) => {
+                                                const v = clampFinite(Number(e.currentTarget.value), 0.05, 100, 2.5);
+                                                updateSelectedCharacter((c) => ({
+                                                    ...c,
+                                                    cameraDistanceM: v,
+                                                    scale: computeScaleForLayer(c.asset, c.characterHeightCm, v),
+                                                }));
+                                                e.currentTarget.value = String(v);
                                                 renderPreview();
                                             }}
                                         />
@@ -1529,6 +1674,44 @@ export default function PhotoComposite() {
                                     </div>
                                 </div>
 
+                                <Show when={segmentedLayers().length > 0}>
+                                    <div>
+                                        <label for="pc-insert-layer-select" class="ba-label">
+                                            <span>背景レイヤーの挟み込み位置</span>
+                                        </label>
+                                        <select
+                                            id="pc-insert-layer-select"
+                                            class="ba-select ba-select--sm"
+                                            value={String(sel().insertLayerIndex)}
+                                            onChange={(e) => {
+                                                const nextSlot = Math.max(
+                                                    0,
+                                                    Math.min(
+                                                        segmentedLayers().length,
+                                                        Math.round(clampFinite(Number(e.currentTarget.value), 0, segmentedLayers().length, 0)),
+                                                    ),
+                                                );
+                                                updateSelectedCharacter((c) => ({
+                                                    ...c,
+                                                    insertLayerIndex: nextSlot,
+                                                }));
+                                                renderPreview();
+                                            }}
+                                        >
+                                            <option value="0">最前面（すべてのレイヤーより手前）</option>
+                                            <For each={segmentedLayers()}>
+                                                {(layer, idx) => (
+                                                    <option value={String(idx() + 1)}>
+                                                        {idx() + 1 < segmentedLayers().length
+                                                            ? `「${layer.label}」と「${segmentedLayers()[idx() + 1].label}」の間`
+                                                            : `最背面（「${layer.label}」より奥）`}
+                                                    </option>
+                                                )}
+                                            </For>
+                                        </select>
+                                    </div>
+                                </Show>
+
                                 <Show when={aiDepthMap()}>
                                     <div>
                                         <label for="pc-occ-range" class="ba-label">
@@ -1558,6 +1741,98 @@ export default function PhotoComposite() {
                                 </Show>
                             </section>
                         )}
+                    </Show>
+
+                    <Show when={segmentedLayers().length > 0}>
+                        <section class="ba-card ba-stack-2" aria-label="AI深度オブジェクトレイヤー構成">
+                            <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                <h2 class="ba-h3">AI背景レイヤー分割 ({segmentedLayers().length}層)</h2>
+                                <label for="pc-layer-slice-count" class="ba-sr-only">
+                                    分割レイヤー数
+                                </label>
+                                <select
+                                    id="pc-layer-slice-count"
+                                    class="ba-select ba-select--xs"
+                                    value={String(layerSliceCount())}
+                                    onChange={(e) => resegmentDepthLayers(Number(e.currentTarget.value))}
+                                >
+                                    <option value="2">2層</option>
+                                    <option value="3">3層</option>
+                                    <option value="4">4層</option>
+                                    <option value="5">5層</option>
+                                    <option value="6">6層</option>
+                                </select>
+                            </div>
+                            <p class="ba-text-xs ba-text-subtle">
+                                手前から奥へAIが切り分けたレイヤーの隙間に立ち絵を挟み込めます。
+                            </p>
+                            <div class="ba-stack-1">
+                                <For each={segmentedLayers()}>
+                                    {(layer, idx) => (
+                                        <div class="ba-stack-1">
+                                            <Show when={idx() === 0 && selectedCharacter()}>
+                                                <button
+                                                    type="button"
+                                                    class={`ba-btn ba-btn--xs ${
+                                                        selectedCharacter()?.insertLayerIndex === 0
+                                                            ? "ba-btn--primary"
+                                                            : "ba-btn--ghost"
+                                                    }`}
+                                                    onClick={() => {
+                                                        updateSelectedCharacter((c) => ({
+                                                            ...c,
+                                                            insertLayerIndex: 0,
+                                                        }));
+                                                        renderPreview();
+                                                    }}
+                                                >
+                                                    {selectedCharacter()?.insertLayerIndex === 0
+                                                        ? "★ 選択中キャラ位置：最前面"
+                                                        : "＋ 最前面に配置"}
+                                                </button>
+                                            </Show>
+                                            <div
+                                                class="ba-flex ba-items-center ba-justify-between ba-gap-2"
+                                                style={{
+                                                    padding: "0.35rem 0.55rem",
+                                                    "border-radius": "var(--ba-radius)",
+                                                    border: "1px solid var(--ba-border)",
+                                                }}
+                                            >
+                                                <span class="ba-text-xs ba-font-bold">
+                                                    {idx() + 1}. {layer.label}
+                                                </span>
+                                                <span class="ba-text-xs ba-text-subtle">
+                                                    約{layer.estimatedDistanceM}m ({Math.round(layer.pixelRatio * 100)}%)
+                                                </span>
+                                            </div>
+                                            <Show when={selectedCharacter()}>
+                                                <button
+                                                    type="button"
+                                                    class={`ba-btn ba-btn--xs ${
+                                                        selectedCharacter()?.insertLayerIndex === idx() + 1
+                                                            ? "ba-btn--primary"
+                                                            : "ba-btn--ghost"
+                                                    }`}
+                                                    onClick={() => {
+                                                        const slot = idx() + 1;
+                                                        updateSelectedCharacter((c) => ({
+                                                            ...c,
+                                                            insertLayerIndex: slot,
+                                                        }));
+                                                        renderPreview();
+                                                    }}
+                                                >
+                                                    {selectedCharacter()?.insertLayerIndex === idx() + 1
+                                                        ? `★ 選択中キャラ位置：レイヤー${idx() + 1}の後ろ`
+                                                        : `＋ レイヤー${idx() + 1}の後ろに挟む`}
+                                                </button>
+                                            </Show>
+                                        </div>
+                                    )}
+                                </For>
+                            </div>
+                        </section>
                     </Show>
 
                     {/* 全体ライティング & 被写界深度 */}

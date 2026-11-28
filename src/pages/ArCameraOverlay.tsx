@@ -2537,17 +2537,26 @@ export default function ArCameraOverlay() {
                                             <input
                                                 id="character-height-input"
                                                 type="number"
-                                                min="20"
-                                                max="350"
+                                                min="1"
+                                                max="500"
                                                 step="1"
                                                 class="ba-input ba-input--sm"
                                                 value={characterHeightCm()}
                                                 onInput={(e) => {
-                                                    const raw = Number(e.currentTarget.value);
-                                                    if (!Number.isFinite(raw)) return;
-                                                    const next = clampFinite(raw, 20, 350, 160);
+                                                    const rawText = e.currentTarget.value.trim();
+                                                    if (!rawText) return;
+                                                    const raw = Number(rawText);
+                                                    if (!Number.isFinite(raw) || raw <= 0) return;
+                                                    const next = Math.min(500, raw);
                                                     setCharacterHeightCm(next);
                                                     applyHeightScale(next, cameraDistanceM());
+                                                }}
+                                                onBlur={(e) => {
+                                                    const raw = Number(e.currentTarget.value);
+                                                    const next = clampFinite(raw, 1, 500, 160);
+                                                    setCharacterHeightCm(next);
+                                                    applyHeightScale(next, cameraDistanceM());
+                                                    e.currentTarget.value = String(next);
                                                 }}
                                             />
                                         </div>
@@ -2558,17 +2567,26 @@ export default function ArCameraOverlay() {
                                             <input
                                                 id="camera-distance-input"
                                                 type="number"
-                                                min="0.3"
-                                                max="30"
+                                                min="0.05"
+                                                max="100"
                                                 step="0.1"
                                                 class="ba-input ba-input--sm"
                                                 value={cameraDistanceM()}
                                                 onInput={(e) => {
-                                                    const raw = Number(e.currentTarget.value);
-                                                    if (!Number.isFinite(raw)) return;
-                                                    const next = clampFinite(raw, 0.3, 30, 2.5);
+                                                    const rawText = e.currentTarget.value.trim();
+                                                    if (!rawText) return;
+                                                    const raw = Number(rawText);
+                                                    if (!Number.isFinite(raw) || raw <= 0) return;
+                                                    const next = Math.min(100, raw);
                                                     setCameraDistanceM(next);
                                                     applyHeightScale(characterHeightCm(), next);
+                                                }}
+                                                onBlur={(e) => {
+                                                    const raw = Number(e.currentTarget.value);
+                                                    const next = clampFinite(raw, 0.05, 100, 2.5);
+                                                    setCameraDistanceM(next);
+                                                    applyHeightScale(characterHeightCm(), next);
+                                                    e.currentTarget.value = String(next);
                                                 }}
                                             />
                                         </div>

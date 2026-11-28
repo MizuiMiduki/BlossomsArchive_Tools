@@ -133,3 +133,147 @@ export function estimateLocalEnvironmentLighting(
         brightnessMultiplier: clampFinite(0.62 + lum * 0.52, 0.55, 1.2, 1.0),
     };
 }
+
+export interface DepthSegmentedLayer {
+    /** 0 = 最前面（手前）、大きいほど奥 */
+    index: number;
+    label: string;
+    minDepth: number;
+    maxDepth: number;
+    meanDepth: number;
+    pixelRatio: number;
+    estimatedDistanceM: number;
+    maskRgba: Uint8ClampedArray;
+}
+
+const DEFAULT_LAYER_LABELS_4 = [
+    "最前面オブジェクト",
+    "近景オブジェクト",
+    "中景オブジェクト",
+    "遠景・背景",
+] as const;
+
+function buildLayerLabel(index: number, count: number): string {
+    if (count === 4 && index >= 0 && index < DEFAULT_LAYER_LABELS_4.length) {
+        return DEFAULT_LAYER_LABELS_4[index];
+    }
+    if (index === 0) return "最前面オブジェクト";
+    if (index === count - 1) return "遠景・背景";
+    return `中間オブジェクト ${index}`;
+}
+
+/**
+ * AI深度マップから写真を「手前→奥」の複数オブジェクトレイヤーに分割し、
+ * 各レイヤーのアルファマスク RGBA を生成する。
+ */
+export function segmentDepthIntoObjectLayers(
+    normalizedDepth: Float32Array,
+    width: number,
+    height: number,
+    layerCount = 4,
+): DepthSegmentedLayer[] {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 2048, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 2048, 1)));
+    const total = safeW * safeH;
+    const count = Math.max(2, Math.min(6, Math.round(clampFinite(layerCount, 2, 6, 4))));
+    if (normalizedDepth.length < total) return [];
+
+    // 高速な分位点計算のため最大 16,384 サンプルを均等抽出
+    const step = Math.max(1, Math.floor(total / 16384));
+    const samples: number[] = [];
+    for (let i = 0; i < total; i += step) {
+        const d = normalizedDepth[i];
+        samples.push(Number.isFinite(d) ? Math.max(0, Math.min(1, d)) : 0.5);
+    }
+    samples.sort((a, b) => b - a); // 降順（手前 1.0 -> 奥 0.0）
+
+    const boundaries: number[] = [1.0];
+    for (let k = 1; k < count; k++) {
+        const idx = Math.min(samples.length - 1, Math.max(0, Math.floor((k / count) * samples.length)));
+        const prev = boundaries[k - 1];
+        const candidate = samples[idx];
+        // 単調非増加を保証し、極端に狭い帯域を避ける
+        boundaries.push(Math.min(prev - 0.02, Math.max(0.02 * (count - k), candidate)));
+    }
+    boundaries.push(0.0);
+
+    const feather = 0.025;
+    const layers: DepthSegmentedLayer[] = [];
+
+    for (let i = 0; i < count; i++) {
+        const maxDepth = boundaries[i];
+        const minDepth = boundaries[i + 1];
+        const maskRgba = new Uint8ClampedArray(total * 4);
+        let depthSum = 0;
+        let activePixels = 0;
+
+        for (let p = 0; p < total; p++) {
+            const raw = normalizedDepth[p];
+            const d = Number.isFinite(raw) ? Math.max(0, Math.min(1, raw)) : 0.5;
+            let alpha = 0;
+            if (i === count - 1) {
+                // 最奥レイヤーは全背景の土台として完全に不透明
+                alpha = 255;
+                if (d <= maxDepth) {
+                    depthSum += d;
+                    activePixels++;
+                }
+            } else if (d >= minDepth - feather) {
+                // minDepth 境界のみフェザリングし、手前側の境界は重なりを許容して隙間を防ぐ
+                const t = d >= minDepth ? 1 : (d - (minDepth - feather)) / feather;
+                alpha = Math.round(Math.max(0, Math.min(1, t)) * 255);
+                if (d >= minDepth && d <= maxDepth) {
+                    depthSum += d;
+                    activePixels++;
+                }
+            }
+            const o = p * 4;
+            maskRgba[o] = 255;
+            maskRgba[o + 1] = 255;
+            maskRgba[o + 2] = 255;
+            maskRgba[o + 3] = alpha;
+        }
+
+        const meanDepth =
+            activePixels > 0
+                ? depthSum / activePixels
+                : (minDepth + maxDepth) * 0.5;
+        const pixelRatio = activePixels / Math.max(1, total);
+        const estimatedDistanceM =
+            Math.round(clampFinite(0.6 + (1 - meanDepth) * 14, 0.5, 25, 3) * 10) / 10;
+
+        layers.push({
+            index: i,
+            label: buildLayerLabel(i, count),
+            minDepth: Math.round(minDepth * 1000) / 1000,
+            maxDepth: Math.round(maxDepth * 1000) / 1000,
+            meanDepth: Math.round(meanDepth * 1000) / 1000,
+            pixelRatio: Math.round(pixelRatio * 1000) / 1000,
+            estimatedDistanceM,
+            maskRgba,
+        });
+    }
+
+    return layers;
+}
+
+/**
+ * 立ち絵の足元深度（0=最奥, 1=最手前）から、
+ * どの背景レイヤーの隙間 (0=最前面 .. layers.length=最背面) に挟み込むべきかを推奨する。
+ */
+export function recommendInsertSlotForDepth(
+    layers: readonly DepthSegmentedLayer[],
+    characterDepth: number,
+): number {
+    if (layers.length === 0) return 0;
+    const safeDepth = clampFinite(characterDepth, 0, 1, 0.5);
+    let slot = 0;
+    for (let i = 0; i < layers.length; i++) {
+        if (layers[i].meanDepth > safeDepth + 0.04) {
+            slot = i + 1;
+        } else {
+            break;
+        }
+    }
+    return Math.max(0, Math.min(layers.length, slot));
+}
