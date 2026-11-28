@@ -19,6 +19,8 @@ import {
     generateGroundShadowMaskPixels,
     estimateBackgroundOpticalShift,
     estimateBackgroundScaleAndShift,
+    analyzeGroundAndWallPlanes,
+    generateSurfaceOverlayPixels,
     sampleDepthAtNormalizedPoint,
     calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
@@ -462,5 +464,30 @@ describe("arCameraOverlay utilities", () => {
         expect(warmDark.tintAlpha).toBeGreaterThan(coolBright.tintAlpha);
         expect(warmDark.rimDirX).toBeCloseTo(1, 3);
         expect(coolBright.rimDirX).toBeCloseTo(-1, 3);
+    });
+
+    it("analyzeGroundAndWallPlanes & generateSurfaceOverlayPixels: separates vertical walls from receding horizontal ground", () => {
+        const w = 24;
+        const h = 24;
+        const depth = new Float32Array(w * h);
+        for (let y = 0; y < h; y++) {
+            // 上半分(y < 12)は奥行き一定の正面壁(0.35)、下半分(y >= 12)は手前に迫る床(0.35 -> 0.90)
+            const val = y < 12 ? 0.35 : 0.35 + ((y - 11) / 12) * 0.55;
+            for (let x = 0; x < w; x++) {
+                depth[y * w + x] = val;
+            }
+        }
+        const surface = analyzeGroundAndWallPlanes(depth, w, h);
+        expect(surface.groundRatio).toBeGreaterThan(0.25);
+        expect(surface.wallRatio).toBeGreaterThan(0.25);
+        expect(surface.horizonYRatio).toBeGreaterThanOrEqual(0.35);
+        expect(surface.horizonYRatio).toBeLessThanOrEqual(0.65);
+
+        const overlay = generateSurfaceOverlayPixels(surface.labels, w, h);
+        expect(overlay.length).toBe(w * h * 4);
+        // 壁領域 (y=4, x=4) はインディゴ系 alpha > 0
+        expect(overlay[(4 * w + 4) * 4 + 3]).toBeGreaterThan(0);
+        // 地面領域 (y=18, x=4) はエメラルド系 alpha > 0
+        expect(overlay[(18 * w + 4) * 4 + 3]).toBeGreaterThan(0);
     });
 });

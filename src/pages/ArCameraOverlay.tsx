@@ -27,6 +27,8 @@ import {
     generateDepthOcclusionMaskPixels,
     estimateCharacterGroundDepth,
     estimateDistanceFromArDepth,
+    analyzeGroundAndWallPlanes,
+    generateSurfaceOverlayPixels,
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
@@ -111,6 +113,12 @@ export default function ArCameraOverlay() {
     const [autoDistanceFromAr, setAutoDistanceFromAr] = createSignal<boolean>(true);
     const [visualTrackingEnabled, setVisualTrackingEnabled] = createSignal<boolean>(true);
     const [hasShadowCatcher, setHasShadowCatcher] = createSignal<boolean>(false);
+    const [surfaceInfo, setSurfaceInfo] = createSignal<{
+        groundPct: number;
+        wallPct: number;
+        horizonYRatio: number;
+    } | null>(null);
+    let surfaceOverlayCanvas: HTMLCanvasElement | undefined;
     let shadowCatcherCanvas: HTMLCanvasElement | undefined;
     let shadowLayerCanvas: HTMLCanvasElement | undefined;
     let litCharCanvas: HTMLCanvasElement | undefined;
@@ -680,7 +688,15 @@ export default function ArCameraOverlay() {
         }
 
         if (!isExport && mode() === "ar" && showArGrid()) {
-            const horizonY = height * clampFinite(0.55 - (groundTiltDeg() - 30) * 0.004, 0.25, 0.72, 0.55);
+            const detectedSurface = surfaceInfo();
+            if (detectedSurface && surfaceOverlayCanvas) {
+                const { dx, dy } = getMaskShiftOffset(width, height);
+                ctx.save();
+                ctx.drawImage(surfaceOverlayCanvas, dx, dy, width, height);
+                ctx.restore();
+            }
+            const defaultHorizon = clampFinite(0.55 - (groundTiltDeg() - 30) * 0.004, 0.25, 0.72, 0.55);
+            const horizonY = height * (detectedSurface ? detectedSurface.horizonYRatio : defaultHorizon);
             ctx.save();
             ctx.strokeStyle = "rgba(129, 140, 248, 0.25)";
             ctx.lineWidth = 1;
@@ -1024,11 +1040,15 @@ export default function ArCameraOverlay() {
         if (occlusionCanvas) {
             occlusionCanvas.getContext("2d")?.clearRect(0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
         }
+        if (surfaceOverlayCanvas) {
+            surfaceOverlayCanvas.getContext("2d")?.clearRect(0, 0, surfaceOverlayCanvas.width, surfaceOverlayCanvas.height);
+        }
         maskBaseGyro = null;
         maskBaseVisualX = 0;
         maskBaseVisualY = 0;
         setHasOcclusion(false);
         setHasShadowCatcher(false);
+        setSurfaceInfo(null);
         setAiDepthMap(null);
         setAiDepthStatus("");
     };
@@ -1055,7 +1075,7 @@ export default function ArCameraOverlay() {
             depthMap.width,
             depthMap.height,
             threshold01,
-            0.012,
+            0.008,
             {
                 preserveThinStructures: true,
                 guideRgba: depthMap.guideRgba,
@@ -1181,7 +1201,48 @@ export default function ArCameraOverlay() {
             };
             setAiDepthMap(mapData);
 
+            // 地面（水平面）と壁（垂直面）の境界・領域を認識
+            const surface = analyzeGroundAndWallPlanes(
+                estimated.data,
+                estimated.width,
+                estimated.height,
+            );
+            const groundPct = Math.round(surface.groundRatio * 100);
+            const wallPct = Math.round(surface.wallRatio * 100);
+            setSurfaceInfo({
+                groundPct,
+                wallPct,
+                horizonYRatio: surface.horizonYRatio,
+            });
+            if (!surfaceOverlayCanvas) {
+                surfaceOverlayCanvas = document.createElement("canvas");
+            }
+            surfaceOverlayCanvas.width = estimated.width;
+            surfaceOverlayCanvas.height = estimated.height;
+            const soCtx = surfaceOverlayCanvas.getContext("2d");
+            if (soCtx) {
+                const surfPixels = generateSurfaceOverlayPixels(
+                    surface.labels,
+                    estimated.width,
+                    estimated.height,
+                );
+                soCtx.putImageData(
+                    new ImageData(
+                        new Uint8ClampedArray(surfPixels),
+                        estimated.width,
+                        estimated.height,
+                    ),
+                    0,
+                    0,
+                );
+            }
+            // 足元が壁エリア（境界線より上）に浮いていれば検出された地面上へスナップ
+            if (surface.groundRatio >= 0.08 && posYPercent() < surface.horizonYRatio * 100) {
+                setPosYPercent(Math.round(surface.recommendedFootYRatio * 1000) / 10);
+            }
+
             // 足元に手前の柵がかぶっても引っ張られないよう、足元周辺の床面深度（下位30%点）を基準にする
+            // +0.06 の安全マージンにより立ち位置の壁・床で立ち絵が半透明になるのを防止
             const groundDepth = estimateCharacterGroundDepth(
                 estimated.data,
                 estimated.width,
@@ -1189,7 +1250,7 @@ export default function ArCameraOverlay() {
                 clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
                 clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
             );
-            const autoThreshold = Math.round(clampFinite(groundDepth + 0.02, 0.12, 0.92, 0.55) * 100) / 100;
+            const autoThreshold = Math.round(clampFinite(groundDepth + 0.06, 0.14, 0.92, 0.55) * 100) / 100;
             setAiDepthThreshold(autoThreshold);
             applyDepthMaskToOcclusion(mapData, autoThreshold);
             const estimatedTilt = estimateGroundTiltFromDepthMap(
@@ -1202,11 +1263,11 @@ export default function ArCameraOverlay() {
             if (autoDistanceFromAr()) {
                 const estimatedDist = syncDistanceAndScaleFromDepth(mapData);
                 setAiDepthStatus(
-                    `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で奥行き・推定距離(${estimatedDist}m)・実寸・接地影を最適化しました`,
+                    `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で地面${groundPct}%・壁${wallPct}%・推定距離(${estimatedDist}m)・遮蔽・接地影を最適化しました`,
                 );
             } else {
                 setAiDepthStatus(
-                    `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で奥行き・床角(${estimatedTilt}°)・接地影を最適化しました`,
+                    `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で地面${groundPct}%・壁${wallPct}%・床角(${estimatedTilt}°)・接地影を最適化しました`,
                 );
             }
         } catch (err: unknown) {

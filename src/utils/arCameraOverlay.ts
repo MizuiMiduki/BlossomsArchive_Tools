@@ -790,8 +790,8 @@ function enhanceThinStructuresInDepth(
             }
             const localAvg = sum / Math.max(1, cnt);
             const ridge = d - localAvg;
-            // 背景より手前に突き出た細い構造は境界ボケで値が下がりやすいため局所ピークを補正
-            boosted[idx] = ridge > 0.008 ? clampFinite(d + Math.min(0.055, ridge * 0.85), 0, 1, d) : d;
+            // 背景より手前に明確に突き出た細い構造（柵・手すり等）のみ局所ピークを補正し、緩やかな壁・床の誤強調を防ぐ
+            boosted[idx] = ridge > 0.025 ? clampFinite(d + Math.min(0.055, ridge * 0.85), 0, 1, d) : d;
         }
     }
 
@@ -907,7 +907,7 @@ export function generateDepthOcclusionMaskPixels(
                     alphaRatio = (d - (threshold - safeFeather)) / (safeFeather * 2);
                 }
                 const alpha = Math.round(clampFinite(alphaRatio, 0, 1, 0) * 255);
-                if (alpha > 0) {
+                if (alpha >= 24) {
                     out[gIdx] = 255;
                     out[gIdx + 1] = 0;
                     out[gIdx + 2] = 0;
@@ -928,7 +928,7 @@ export function generateDepthOcclusionMaskPixels(
             alphaRatio = (d - (threshold - safeFeather)) / (safeFeather * 2);
         }
         const alpha = Math.round(clampFinite(alphaRatio, 0, 1, 0) * 255);
-        if (alpha > 0) {
+        if (alpha >= 24) {
             const p = i * 4;
             out[p] = 255;
             out[p + 1] = 0;
@@ -1457,4 +1457,148 @@ export function estimateBackgroundScaleAndShift(
         scale: Math.round(clampFinite(bestScale, 0.55, 1.85, 1.0) * 1000) / 1000,
         confidence,
     };
+}
+
+export interface SurfacePlaneAnalysis {
+    /** ピクセル単位の面分類 (0=その他, 1=地面・床, 2=壁・垂直面) */
+    labels: Uint8Array;
+    /** 画面全体に占める地面の割合 (0..1) */
+    groundRatio: number;
+    /** 画面全体に占める壁の割合 (0..1) */
+    wallRatio: number;
+    /** 検出された地面と壁の境界位置 (0.2..0.85) */
+    horizonYRatio: number;
+    /** 検出された地面領域内の推奨接地Y位置 (0.35..0.9) */
+    recommendedFootYRatio: number;
+}
+
+/**
+ * 正規化深度マップ（0=奥 .. 1=手前）の垂直・水平深度勾配から
+ * 「地面（水平面）」と「壁（垂直面）」およびその境界線を認識する
+ */
+export function analyzeGroundAndWallPlanes(
+    normalizedDepth: ArrayLike<number>,
+    width: number,
+    height: number,
+): SurfacePlaneAnalysis {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    const total = safeW * safeH;
+    const labels = new Uint8Array(total);
+    if (normalizedDepth.length < total || safeW < 5 || safeH < 5) {
+        return {
+            labels,
+            groundRatio: 0,
+            wallRatio: 0,
+            horizonYRatio: 0.55,
+            recommendedFootYRatio: 0.78,
+        };
+    }
+
+    const step = Math.max(2, Math.floor(Math.min(safeW, safeH) * 0.025));
+    let groundCount = 0;
+    let wallCount = 0;
+    let firstGroundRow = -1;
+    let groundYWeightedSum = 0;
+
+    for (let y = 0; y < safeH; y++) {
+        const yUp = Math.max(0, y - step);
+        const yDn = Math.min(safeH - 1, y + step);
+        const dySpan = Math.max(1, yDn - yUp);
+        let rowGround = 0;
+
+        for (let x = 0; x < safeW; x++) {
+            const xL = Math.max(0, x - step);
+            const xR = Math.min(safeW - 1, x + step);
+            const dxSpan = Math.max(1, xR - xL);
+
+            const idx = y * safeW + x;
+            const d = clampFinite(normalizedDepth[idx], 0, 1, 0);
+            const gy =
+                (clampFinite(normalizedDepth[yDn * safeW + x], 0, 1, d) -
+                    clampFinite(normalizedDepth[yUp * safeW + x], 0, 1, d)) /
+                dySpan;
+            const gx =
+                (clampFinite(normalizedDepth[y * safeW + xR], 0, 1, d) -
+                    clampFinite(normalizedDepth[y * safeW + xL], 0, 1, d)) /
+                dxSpan;
+
+            const normalizedGy = gy * safeH;
+            const normalizedGx = gx * safeW;
+
+            if (y >= safeH * 0.25 && normalizedGy > 0.12 && normalizedGy > Math.abs(normalizedGx) * 0.65) {
+                labels[idx] = 1;
+                groundCount++;
+                rowGround++;
+                groundYWeightedSum += y / Math.max(1, safeH - 1);
+            } else if (Math.abs(normalizedGy) <= 0.14 && d > 0.06) {
+                labels[idx] = 2;
+                wallCount++;
+            }
+        }
+
+        if (firstGroundRow < 0 && rowGround >= safeW * 0.18) {
+            firstGroundRow = y;
+        }
+    }
+
+    const groundRatio = clampFinite(groundCount / total, 0, 1, 0);
+    const wallRatio = clampFinite(wallCount / total, 0, 1, 0);
+    const horizonYRatio =
+        firstGroundRow >= 0
+            ? clampFinite(firstGroundRow / Math.max(1, safeH - 1), 0.2, 0.85, 0.55)
+            : 0.55;
+    const avgGroundY = groundCount > 0 ? groundYWeightedSum / groundCount : 0.78;
+    const recommendedFootYRatio = clampFinite(
+        Math.max(horizonYRatio + 0.12, avgGroundY),
+        0.35,
+        0.9,
+        0.78,
+    );
+
+    return {
+        labels,
+        groundRatio,
+        wallRatio,
+        horizonYRatio,
+        recommendedFootYRatio,
+    };
+}
+
+/**
+ * 認識した地面(1)と壁(2)のラベルマップからARプレビュー用の半透明認識オーバーレイ RGBA を生成する
+ */
+export function generateSurfaceOverlayPixels(
+    labels: Uint8Array,
+    width: number,
+    height: number,
+): Uint8ClampedArray {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    const total = safeW * safeH;
+    const out = new Uint8ClampedArray(total * 4);
+    if (labels.length < total) return out;
+
+    for (let y = 0; y < safeH; y++) {
+        const isGridY = y % 16 === 0;
+        for (let x = 0; x < safeW; x++) {
+            const idx = y * safeW + x;
+            const label = labels[idx];
+            const p = idx * 4;
+            const isGrid = isGridY || x % 16 === 0;
+
+            if (label === 1) {
+                out[p] = 16;
+                out[p + 1] = 185;
+                out[p + 2] = 129;
+                out[p + 3] = isGrid ? 62 : 20;
+            } else if (label === 2) {
+                out[p] = 99;
+                out[p + 1] = 102;
+                out[p + 2] = 241;
+                out[p + 3] = isGrid ? 42 : 14;
+            }
+        }
+    }
+    return out;
 }
