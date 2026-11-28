@@ -1004,6 +1004,46 @@ export function sampleDepthAtNormalizedPoint(
     return count > 0 ? clampFinite(sum / count, 0, 1, 0.5) : 0.5;
 }
 
+export interface ArDepthDistanceParams {
+    normalizedDepth: ArrayLike<number>;
+    width: number;
+    height: number;
+    footXRatio: number;
+    footYRatio: number;
+    verticalFovDeg?: number;
+    cameraHeightM?: number;
+    pitchTiltDeg?: number;
+}
+
+/**
+ * AR深度マップ上のキャラクター足元位置とカメラ画角・接地ジオメトリから、
+ * カメラ〜キャラクター足元までの推定距離 (m: 0.5..18.0) を算出する
+ */
+export function estimateDistanceFromArDepth(params: ArDepthDistanceParams): number {
+    const safeW = Math.max(1, Math.floor(clampFinite(params.width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(params.height, 1, 4096, 1)));
+    const nx = clampFinite(params.footXRatio, 0.05, 0.95, 0.5);
+    const ny = clampFinite(params.footYRatio, 0.05, 0.95, 0.78);
+    const fovRad = (clampFinite(params.verticalFovDeg ?? 74, 25, 110, 74) * Math.PI) / 180;
+    const camHeight = clampFinite(params.cameraHeightM ?? 1.35, 0.4, 3.0, 1.35);
+    const pitchDeg = clampFinite(params.pitchTiltDeg ?? 8, -30, 45, 8);
+
+    const groundDepth = estimateCharacterGroundDepth(params.normalizedDepth, safeW, safeH, nx, ny);
+    // 相対逆深度（0=奥 .. 1=手前）からの距離推定
+    const depthDistM = 1.15 / Math.max(0.08, groundDepth + 0.08);
+
+    // 地上カメラ幾何学による足元投影距離（画面下半分に接地している場合に有効）
+    const rayAngleFromCenterRad = Math.atan((2 * ny - 1) * Math.tan(fovRad / 2));
+    const downwardAngleRad = rayAngleFromCenterRad + (pitchDeg * Math.PI) / 180;
+    let blendedDistM = depthDistM;
+    if (downwardAngleRad > 0.06 && ny >= 0.5) {
+        const geomDistM = clampFinite(camHeight / Math.tan(downwardAngleRad), 0.5, 18.0, depthDistM);
+        blendedDistM = depthDistM * 0.6 + geomDistM * 0.4;
+    }
+
+    return Math.round(clampFinite(blendedDistM, 0.5, 18.0, 2.5) * 10) / 10;
+}
+
 export interface CharacterHeightScaleParams {
     /** キャラクターの設定身長 (cm) */
     characterHeightCm: number;

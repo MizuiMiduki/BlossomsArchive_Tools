@@ -13,6 +13,7 @@ import {
     normalizeDepthMap,
     generateDepthOcclusionMaskPixels,
     estimateCharacterGroundDepth,
+    estimateDistanceFromArDepth,
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
@@ -260,6 +261,34 @@ describe("arCameraOverlay utilities", () => {
         }
         const ground = estimateCharacterGroundDepth(depth, 20, 20, 0.5, 0.78);
         expect(ground).toBeCloseTo(0.4, 2);
+    });
+
+    it("estimateDistanceFromArDepth: estimates nearer distance for foreground floor and farther distance for background floor", () => {
+        const depth = new Float32Array(20 * 20);
+        for (let y = 0; y < 20; y++) {
+            const rowDepth = y < 10 ? 0.15 : 0.78;
+            for (let x = 0; x < 20; x++) {
+                depth[y * 20 + x] = rowDepth;
+            }
+        }
+        const nearDist = estimateDistanceFromArDepth({
+            normalizedDepth: depth,
+            width: 20,
+            height: 20,
+            footXRatio: 0.5,
+            footYRatio: 0.85,
+            verticalFovDeg: 74,
+        });
+        const farDist = estimateDistanceFromArDepth({
+            normalizedDepth: depth,
+            width: 20,
+            height: 20,
+            footXRatio: 0.5,
+            footYRatio: 0.45,
+            verticalFovDeg: 74,
+        });
+        expect(nearDist).toBeGreaterThanOrEqual(0.5);
+        expect(nearDist).toBeLessThan(farDist);
     });
 
     it("calculateScaleForCharacterHeight: calculates realistic scale from height(cm), distance(m), and alpha ratio", () => {

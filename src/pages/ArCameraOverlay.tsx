@@ -26,6 +26,7 @@ import {
     isSupportedImageFile,
     generateDepthOcclusionMaskPixels,
     estimateCharacterGroundDepth,
+    estimateDistanceFromArDepth,
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
@@ -107,6 +108,7 @@ export default function ArCameraOverlay() {
     const [aiDepthStatus, setAiDepthStatus] = createSignal<string>("");
     const [characterHeightCm, setCharacterHeightCm] = createSignal<number>(160);
     const [cameraDistanceM, setCameraDistanceM] = createSignal<number>(2.5);
+    const [autoDistanceFromAr, setAutoDistanceFromAr] = createSignal<boolean>(true);
     const [visualTrackingEnabled, setVisualTrackingEnabled] = createSignal<boolean>(true);
     const [hasShadowCatcher, setHasShadowCatcher] = createSignal<boolean>(false);
     let shadowCatcherCanvas: HTMLCanvasElement | undefined;
@@ -961,6 +963,27 @@ export default function ArCameraOverlay() {
         );
     };
 
+    const syncDistanceAndScaleFromDepth = (
+        depthMap: { data: Float32Array; width: number; height: number },
+        nx = clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
+        ny = clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
+    ): number => {
+        const isPortraitView =
+            !previewCanvasRef || previewCanvasRef.height >= previewCanvasRef.width;
+        const estimatedDist = estimateDistanceFromArDepth({
+            normalizedDepth: depthMap.data,
+            width: depthMap.width,
+            height: depthMap.height,
+            footXRatio: nx,
+            footYRatio: ny,
+            verticalFovDeg: isPortraitView ? 74 : 52,
+            pitchTiltDeg: groundTiltDeg(),
+        });
+        setCameraDistanceM(estimatedDist);
+        applyHeightScale(characterHeightCm(), estimatedDist);
+        return estimatedDist;
+    };
+
     const clearOcclusion = () => {
         if (occlusionCanvas) {
             occlusionCanvas.getContext("2d")?.clearRect(0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
@@ -1140,9 +1163,16 @@ export default function ArCameraOverlay() {
             );
             setGroundTiltDeg(estimatedTilt);
             updateGroundShadowCatcher(mapData);
-            setAiDepthStatus(
-                `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で奥行き・床角(${estimatedTilt}°)・接地影を最適化しました`,
-            );
+            if (autoDistanceFromAr()) {
+                const estimatedDist = syncDistanceAndScaleFromDepth(mapData);
+                setAiDepthStatus(
+                    `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で奥行き・推定距離(${estimatedDist}m)・実寸・接地影を最適化しました`,
+                );
+            } else {
+                setAiDepthStatus(
+                    `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で奥行き・床角(${estimatedTilt}°)・接地影を最適化しました`,
+                );
+            }
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "解析に失敗しました";
             setAiDepthStatus(`AI解析エラー: ${message}`);
@@ -1272,12 +1302,19 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerUp = (e: PointerEvent) => {
+        const wasSingleDragging = isDragging && activePointers.size === 1;
         activePointers.delete(e.pointerId);
         if (activePointers.size < 2) {
             pinchStartDistance = 0;
         }
         if (activePointers.size === 0) {
             isDragging = false;
+        }
+        if (wasSingleDragging && mode() === "ar" && autoDistanceFromAr()) {
+            const map = aiDepthMap();
+            if (map) {
+                syncDistanceAndScaleFromDepth(map);
+            }
         }
         (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
     };
@@ -1956,16 +1993,49 @@ export default function ArCameraOverlay() {
                                         border: "1px solid var(--ba-border)",
                                     }}
                                 >
-                                    <div class="ba-flex ba-items-center ba-justify-between ba-gap-2">
+                                    <div class="ba-flex ba-items-center ba-justify-between ba-gap-2 ba-flex-wrap">
                                         <span class="ba-text-xs ba-font-bold">身長・距離から実寸合わせ</span>
-                                        <button
-                                            type="button"
-                                            class="ba-btn ba-btn--primary ba-btn--xs"
-                                            onClick={() => applyHeightScale(characterHeightCm(), cameraDistanceM())}
-                                        >
-                                            サイズを合わせる
-                                        </button>
+                                        <div class="ba-flex ba-items-center ba-gap-1">
+                                            <button
+                                                type="button"
+                                                class="ba-btn ba-btn--secondary ba-btn--xs"
+                                                disabled={aiDepthBusy()}
+                                                onClick={() => {
+                                                    const map = aiDepthMap();
+                                                    if (map) {
+                                                        syncDistanceAndScaleFromDepth(map);
+                                                    } else {
+                                                        void runAiDepthOcclusion();
+                                                    }
+                                                }}
+                                            >
+                                                {aiDepthBusy() ? "解析中..." : "ARから距離合わせ"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="ba-btn ba-btn--primary ba-btn--xs"
+                                                onClick={() => applyHeightScale(characterHeightCm(), cameraDistanceM())}
+                                            >
+                                                サイズを合わせる
+                                            </button>
+                                        </div>
                                     </div>
+                                    <label class="ba-flex ba-items-center ba-gap-2 ba-text-xs ba-cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            class="ba-checkbox"
+                                            checked={autoDistanceFromAr()}
+                                            onChange={(e) => {
+                                                const checked = e.currentTarget.checked;
+                                                setAutoDistanceFromAr(checked);
+                                                const map = aiDepthMap();
+                                                if (checked && map) {
+                                                    syncDistanceAndScaleFromDepth(map);
+                                                }
+                                            }}
+                                        />
+                                        <span>AR奥行き解析・位置移動に合わせて距離と身長を自動調整</span>
+                                    </label>
                                     <div class="ba-grid ba-grid-cols-2 ba-gap-2">
                                         <div>
                                             <label for="character-height-input" class="ba-label">
