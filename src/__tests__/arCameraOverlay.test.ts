@@ -26,6 +26,9 @@ import {
     calculatePerspectivePitchParams,
     projectVerticalPerspectiveT,
     estimateCameraPitchFromGyro,
+    resolveExportDimensions,
+    selectSupportedVideoMimeType,
+    formatRecordingTime,
     sampleDepthAtNormalizedPoint,
     calculateCharacterColorAdaptation,
 } from "../utils/arCameraOverlay";
@@ -551,5 +554,16 @@ describe("arCameraOverlay utilities", () => {
         expect(estimateCameraPitchFromGyro({ alpha: 0, beta: 90, gamma: 0 })).toBeCloseTo(0, 1);
         expect(estimateCameraPitchFromGyro({ alpha: 0, beta: 125, gamma: 0 })).toBeLessThan(-25);
         expect(estimateCameraPitchFromGyro({ alpha: 0, beta: 45, gamma: 0 })).toBeGreaterThan(35);
+    });
+
+    it("resolveExportDimensions, selectSupportedVideoMimeType & formatRecordingTime: supports landscape/portrait export & video mime", () => {
+        const land = resolveExportDimensions("landscape", 720, 1280, 0, 0, 1920);
+        expect(land).toEqual({ width: 1920, height: 1080 });
+        const port = resolveExportDimensions("portrait", 1280, 720, 0, 0, 1920);
+        expect(port).toEqual({ width: 1080, height: 1920 });
+
+        expect(selectSupportedVideoMimeType((m) => m === "video/mp4").ext).toBe("mp4");
+        expect(selectSupportedVideoMimeType((m) => m === "video/webm;codecs=vp9").ext).toBe("webm");
+        expect(formatRecordingTime(65)).toBe("01:05");
     });
 });

@@ -34,6 +34,10 @@ import {
     calculatePerspectivePitchParams,
     projectVerticalPerspectiveT,
     estimateCameraPitchFromGyro,
+    type FrameOrientationMode,
+    resolveExportDimensions,
+    selectSupportedVideoMimeType,
+    formatRecordingTime,
     calculateScaleForCharacterHeight,
     estimateGroundTiltFromDepthMap,
     generateGroundShadowMaskPixels,
@@ -184,10 +188,20 @@ export default function ArCameraOverlay() {
     const [baseGyro, setBaseGyro] = createSignal<GyroOrientation | null>(null);
     const [currentGyro, setCurrentGyro] = createSignal<GyroOrientation | null>(null);
 
-    // 撮影結果
+    // 撮影結果・動画録画・向き設定
     const [capturedUrl, setCapturedUrl] = createSignal<string | null>(null);
     const [captureFormat, setCaptureFormat] = createSignal<"image/png" | "image/jpeg" | "image/webp">("image/png");
+    const [frameOrientation, setFrameOrientation] = createSignal<FrameOrientationMode>("auto");
     const [isFlashActive, setIsFlashActive] = createSignal<boolean>(false);
+    const [isRecording, setIsRecording] = createSignal<boolean>(false);
+    const [recordingSeconds, setRecordingSeconds] = createSignal<number>(0);
+    const [capturedVideoUrl, setCapturedVideoUrl] = createSignal<string | null>(null);
+    const [capturedVideoExt, setCapturedVideoExt] = createSignal<"mp4" | "webm">("webm");
+    const [showVideoModal, setShowVideoModal] = createSignal<boolean>(false);
+    let mediaRecorder: MediaRecorder | null = null;
+    let recordedChunks: Blob[] = [];
+    let recordCanvas: HTMLCanvasElement | undefined;
+    let recordTimerId: number | null = null;
 
     // マルチタッチ・ドラッグ操作状態
     const activePointers = new Map<number, { x: number; y: number }>();
@@ -1477,6 +1491,12 @@ export default function ArCameraOverlay() {
                     );
                 }
             }
+            if (isRecording() && recordCanvas) {
+                const rCtx = recordCanvas.getContext("2d");
+                if (rCtx) {
+                    drawCompositeScene(rCtx, recordCanvas.width, recordCanvas.height, true);
+                }
+            }
             rafId = requestAnimationFrame(render);
         };
         rafId = requestAnimationFrame(render);
@@ -1487,22 +1507,24 @@ export default function ArCameraOverlay() {
         window.setTimeout(() => setIsFlashActive(false), 180);
 
         const exportCanvas = document.createElement("canvas");
-        if (isCameraActive() && videoRef && videoRef.videoWidth > 0) {
-            exportCanvas.width = videoRef.videoWidth;
-            exportCanvas.height = videoRef.videoHeight;
-        } else if (bgAsset()) {
-            const bg = bgAsset()!;
-            exportCanvas.width = Math.min(2400, bg.width);
-            exportCanvas.height = Math.round(
-                (exportCanvas.width / Math.max(1, bg.width)) * bg.height,
-            );
-        } else if (previewCanvasRef && previewCanvasRef.width > 0) {
-            exportCanvas.width = previewCanvasRef.width;
-            exportCanvas.height = previewCanvasRef.height;
-        } else {
-            exportCanvas.width = 1280;
-            exportCanvas.height = 720;
-        }
+        const srcW =
+            isCameraActive() && videoRef && videoRef.videoWidth > 0
+                ? videoRef.videoWidth
+                : bgAsset()?.width ?? 0;
+        const srcH =
+            isCameraActive() && videoRef && videoRef.videoHeight > 0
+                ? videoRef.videoHeight
+                : bgAsset()?.height ?? 0;
+        const dims = resolveExportDimensions(
+            frameOrientation(),
+            previewCanvasRef?.width ?? 1280,
+            previewCanvasRef?.height ?? 720,
+            srcW,
+            srcH,
+            2400,
+        );
+        exportCanvas.width = dims.width;
+        exportCanvas.height = dims.height;
 
         const ctx = exportCanvas.getContext("2d");
         if (!ctx) return;
@@ -1523,6 +1545,103 @@ export default function ArCameraOverlay() {
             mime,
             quality,
         );
+    };
+
+    const stopVideoRecording = () => {
+        if (recordTimerId !== null) {
+            window.clearInterval(recordTimerId);
+            recordTimerId = null;
+        }
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            try {
+                mediaRecorder.stop();
+            } catch {
+                // 停止済み
+            }
+        }
+        setIsRecording(false);
+    };
+
+    const startVideoRecording = () => {
+        if (isRecording()) return;
+        if (typeof MediaRecorder === "undefined") {
+            setCameraError("お使いのブラウザは動画録画（MediaRecorder API）に対応していません。");
+            return;
+        }
+        const dims = resolveExportDimensions(
+            frameOrientation(),
+            previewCanvasRef?.width ?? 1280,
+            previewCanvasRef?.height ?? 720,
+            0,
+            0,
+            1280,
+        );
+        if (!recordCanvas) {
+            recordCanvas = document.createElement("canvas");
+        }
+        recordCanvas.width = dims.width;
+        recordCanvas.height = dims.height;
+        const rCtx = recordCanvas.getContext("2d");
+        if (!rCtx || typeof recordCanvas.captureStream !== "function") {
+            setCameraError("お使いのブラウザはキャンバス動画録画（captureStream）に対応していません。");
+            return;
+        }
+        drawCompositeScene(rCtx, recordCanvas.width, recordCanvas.height, true);
+
+        const { mimeType, ext } = selectSupportedVideoMimeType((m) =>
+            MediaRecorder.isTypeSupported(m),
+        );
+        setCapturedVideoExt(ext);
+        recordedChunks = [];
+        try {
+            const stream = recordCanvas.captureStream(30);
+            const recorder = mimeType
+                ? new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 4_500_000 })
+                : new MediaRecorder(stream);
+            mediaRecorder = recorder;
+            recorder.ondataavailable = (ev) => {
+                if (ev.data && ev.data.size > 0) {
+                    recordedChunks.push(ev.data);
+                }
+            };
+            recorder.onstop = () => {
+                const blobType = mimeType || `video/${ext}`;
+                const blob = new Blob(recordedChunks, { type: blobType });
+                recordedChunks = [];
+                if (blob.size > 0) {
+                    const prev = capturedVideoUrl();
+                    if (prev) URL.revokeObjectURL(prev);
+                    setCapturedVideoUrl(createSafeObjectUrl(blob));
+                    setShowVideoModal(true);
+                }
+            };
+            recorder.start(250);
+            setRecordingSeconds(0);
+            setIsRecording(true);
+            recordTimerId = window.setInterval(() => {
+                setRecordingSeconds((s) => s + 1);
+            }, 1000);
+        } catch {
+            setIsRecording(false);
+            setCameraError("動画録画の開始に失敗しました。端末の対応形式をご確認ください。");
+        }
+    };
+
+    const toggleVideoRecording = () => {
+        if (isRecording()) {
+            stopVideoRecording();
+        } else {
+            startVideoRecording();
+        }
+    };
+
+    const downloadCapturedVideo = () => {
+        const url = capturedVideoUrl();
+        if (!url || !url.startsWith("blob:")) return;
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `ar-overlay-${Date.now()}.${capturedVideoExt()}`;
+        a.click();
     };
 
     const downloadCaptured = () => {
@@ -1660,6 +1779,7 @@ export default function ArCameraOverlay() {
             if (typeof window !== "undefined") {
                 window.removeEventListener("pageshow", handleVisibilityOrPageShow);
             }
+            stopVideoRecording();
             stopCamera();
             disableGyro();
             const o = overlayAsset();
@@ -1668,6 +1788,8 @@ export default function ArCameraOverlay() {
             if (b?.previewUrl) URL.revokeObjectURL(b.previewUrl);
             const c = capturedUrl();
             if (c) URL.revokeObjectURL(c);
+            const cv = capturedVideoUrl();
+            if (cv) URL.revokeObjectURL(cv);
         };
     });
 
@@ -1727,9 +1849,26 @@ export default function ArCameraOverlay() {
                         position: isFullscreen() ? "fixed" : "relative",
                         inset: isFullscreen() ? "0" : "auto",
                         "z-index": isFullscreen() ? "60" : "1",
-                        width: "100%",
-                        height: isFullscreen() ? "100dvh" : "min(78dvh, 760px)",
-                        "min-height": "460px",
+                        width: isFullscreen()
+                            ? "100%"
+                            : frameOrientation() === "portrait"
+                              ? "min(100%, 440px)"
+                              : "100%",
+                        "aspect-ratio": isFullscreen()
+                            ? "auto"
+                            : frameOrientation() === "landscape"
+                              ? "16 / 9"
+                              : frameOrientation() === "portrait"
+                                ? "9 / 16"
+                                : "auto",
+                        height: isFullscreen()
+                            ? "100dvh"
+                            : frameOrientation() === "auto"
+                              ? "min(78dvh, 760px)"
+                              : "auto",
+                        "max-height": isFullscreen() ? "100dvh" : "min(80dvh, 780px)",
+                        "min-height": isFullscreen() ? "0" : "clamp(240px, 52dvh, 460px)",
+                        margin: "0 auto",
                         "background-color": "#0b0f19",
                         "border-radius": isFullscreen() ? "0" : "var(--ba-radius-lg, 16px)",
                         overflow: "hidden",
@@ -1865,6 +2004,24 @@ export default function ArCameraOverlay() {
                                     自由固定モード
                                 </button>
                             </div>
+
+                            <button
+                                type="button"
+                                class="ba-btn ba-btn--secondary ba-btn--xs"
+                                onClick={() => {
+                                    const order: FrameOrientationMode[] = ["auto", "landscape", "portrait"];
+                                    const idx = order.indexOf(frameOrientation());
+                                    const next = order[(idx + 1) % order.length];
+                                    setFrameOrientation(next);
+                                    prevGrayFrame = null;
+                                }}
+                            >
+                                {frameOrientation() === "auto"
+                                    ? "向き: 自動"
+                                    : frameOrientation() === "landscape"
+                                      ? "横撮り (16:9)"
+                                      : "縦撮り (9:16)"}
+                            </button>
 
                             <button
                                 type="button"
@@ -2130,7 +2287,35 @@ export default function ArCameraOverlay() {
                                 />
                             </button>
 
-                            <div aria-hidden="true" />
+                            <div style={{ "justify-self": "end" }}>
+                                <button
+                                    type="button"
+                                    class={`ba-btn ba-btn--sm ${isRecording() ? "ba-btn--danger" : "ba-btn--secondary"}`}
+                                    aria-pressed={isRecording() ? "true" : "false"}
+                                    onClick={toggleVideoRecording}
+                                    style={{
+                                        display: "inline-flex",
+                                        "align-items": "center",
+                                        gap: "0.35rem",
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            width: "10px",
+                                            height: "10px",
+                                            "border-radius": isRecording() ? "2px" : "9999px",
+                                            "background-color": isRecording() ? "#ffffff" : "#ef4444",
+                                            display: "inline-block",
+                                        }}
+                                        aria-hidden="true"
+                                    />
+                                    <span>
+                                        {isRecording()
+                                            ? `停止 (${formatRecordingTime(recordingSeconds())})`
+                                            : "動画録画"}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -2814,6 +2999,57 @@ export default function ArCameraOverlay() {
                                     type="button"
                                     class="ba-btn ba-btn--secondary ba-btn--sm"
                                     onClick={() => setShowCaptureModal(false)}
+                                >
+                                    カメラに戻る
+                                </button>
+                            </div>
+                        </div>
+                    </Show>
+
+                    {/* 動画録画プレビューモーダル */}
+                    <Show when={showVideoModal() && capturedVideoUrl()}>
+                        <div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="録画動画プレビュー"
+                            style={{
+                                position: "absolute",
+                                inset: "0",
+                                "z-index": "40",
+                                background: "rgba(10, 15, 28, 0.9)",
+                                display: "flex",
+                                "flex-direction": "column",
+                                "align-items": "center",
+                                "justify-content": "center",
+                                padding: "1rem",
+                                gap: "0.75rem",
+                            }}
+                        >
+                            <video
+                                src={capturedVideoUrl()!}
+                                controls
+                                playsinline
+                                autoplay
+                                loop
+                                style={{
+                                    "max-width": "100%",
+                                    "max-height": "calc(100% - 4.5rem)",
+                                    "border-radius": "10px",
+                                    border: "1px solid rgba(255,255,255,0.2)",
+                                }}
+                            />
+                            <div class="ba-flex ba-gap-2">
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--success ba-btn--sm"
+                                    onClick={downloadCapturedVideo}
+                                >
+                                    {capturedVideoExt().toUpperCase()}動画で保存
+                                </button>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--secondary ba-btn--sm"
+                                    onClick={() => setShowVideoModal(false)}
                                 >
                                     カメラに戻る
                                 </button>

@@ -314,4 +314,15 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.click(autoPitchCheck);
         expect(autoPitchCheck.checked).toBe(false);
     });
+
+    it("横撮り/縦撮り切替ボタンと動画録画ボタンが表示され操作できること", () => {
+        render(() => <ArCameraOverlay />);
+        const orientBtn = screen.getByRole("button", { name: "向き: 自動" });
+        fireEvent.click(orientBtn);
+        expect(screen.getByRole("button", { name: "横撮り (16:9)" })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "横撮り (16:9)" }));
+        expect(screen.getByRole("button", { name: "縦撮り (9:16)" })).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: "動画録画" })).toBeInTheDocument();
+    });
 });

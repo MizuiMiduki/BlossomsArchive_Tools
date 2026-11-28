@@ -1739,3 +1739,75 @@ export function estimateCameraPitchFromGyro(gyro: GyroOrientation): number {
     const pitchDeg = -(Math.asin(fz) * 180) / Math.PI;
     return Math.round(clampFinite(pitchDeg, -60, 60, 0) * 10) / 10;
 }
+
+export type FrameOrientationMode = "auto" | "portrait" | "landscape";
+
+/**
+ * 撮影向きモード（自動 / 縦9:16 / 横16:9）とプレビュー/カメラ解像度から、
+ * 写真・動画出力用の安全な偶数解像度を算出する
+ */
+export function resolveExportDimensions(
+    orientationMode: FrameOrientationMode,
+    previewWidth: number,
+    previewHeight: number,
+    sourceWidth = 0,
+    sourceHeight = 0,
+    maxEdge = 1920,
+): { width: number; height: number } {
+    const safeMax = Math.max(320, Math.floor(clampFinite(maxEdge, 320, 3840, 1920)));
+    const makeEven = (n: number) => Math.max(2, Math.floor(n / 2) * 2);
+
+    if (orientationMode === "landscape") {
+        const w = makeEven(Math.min(safeMax, 1920));
+        const h = makeEven((w * 9) / 16);
+        return { width: w, height: h };
+    }
+    if (orientationMode === "portrait") {
+        const h = makeEven(Math.min(safeMax, 1920));
+        const w = makeEven((h * 9) / 16);
+        return { width: w, height: h };
+    }
+
+    const baseW = sourceWidth > 0 ? sourceWidth : previewWidth > 0 ? previewWidth : 1280;
+    const baseH = sourceHeight > 0 ? sourceHeight : previewHeight > 0 ? previewHeight : 720;
+    const ratio = Math.min(1, safeMax / Math.max(baseW, baseH));
+    return {
+        width: makeEven(baseW * ratio),
+        height: makeEven(baseH * ratio),
+    };
+}
+
+/**
+ * MediaRecorder でサポートされている最適な動画 MIME タイプと拡張子を選択する
+ */
+export function selectSupportedVideoMimeType(
+    isTypeSupported?: (mime: string) => boolean,
+): { mimeType: string; ext: "mp4" | "webm" } {
+    const candidates: Array<{ mimeType: string; ext: "mp4" | "webm" }> = [
+        { mimeType: "video/mp4;codecs=avc1.42E01E", ext: "mp4" },
+        { mimeType: "video/mp4", ext: "mp4" },
+        { mimeType: "video/webm;codecs=vp9", ext: "webm" },
+        { mimeType: "video/webm;codecs=vp8", ext: "webm" },
+        { mimeType: "video/webm", ext: "webm" },
+    ];
+    if (typeof isTypeSupported === "function") {
+        for (const c of candidates) {
+            try {
+                if (isTypeSupported(c.mimeType)) return c;
+            } catch {
+                // 非対応MIMEをスキップ
+            }
+        }
+    }
+    return { mimeType: "", ext: "webm" };
+}
+
+/**
+ * 録画秒数を MM:SS 形式へフォーマットする
+ */
+export function formatRecordingTime(seconds: number): string {
+    const s = Math.max(0, Math.floor(clampFinite(seconds, 0, 86400, 0)));
+    const mm = String(Math.floor(s / 60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+}
