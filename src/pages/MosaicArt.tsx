@@ -347,13 +347,6 @@ export default function MosaicArt() {
                         </p>
                     </div>
                 </div>
-
-                <div class="ba-alert ba-alert--info ba-text-xs">
-                    <span>
-                        <strong>色味の無加工ポリシー：</strong>
-                        本ツールでは素材画像の色彩・明度を一切上書き加工せず、構成画像本来のピクセルをそのまま敷き詰めてモザイクアートを構築します。
-                    </span>
-                </div>
             </div>
 
             <AdSense />
@@ -700,7 +693,7 @@ export default function MosaicArt() {
                                 <Show when={resultDimensions()}>
                                     {(dims) => (
                                         <p class="ba-text-xs ba-text-subtle">
-                                            解像度: {dims().width} × {dims().height} px（色味無加工・素材写真100%構成）
+                                            解像度: {dims().width} × {dims().height} px
                                         </p>
                                     )}
                                 </Show>
