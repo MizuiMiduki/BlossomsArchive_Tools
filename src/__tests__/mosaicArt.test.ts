@@ -178,6 +178,10 @@ describe("mosaicArt utility functions", () => {
             const portrait = calculateGridDimensions(1000, 1000, 40, "portrait");
             expect(portrait.cols).toBe(40);
             expect(portrait.rows).toBe(30);
+
+            const highCols = calculateGridDimensions(1000, 1000, 200, "square");
+            expect(highCols.cols).toBe(200);
+            expect(highCols.rows).toBe(200);
         });
 
         it("clampFinite が NaN や範囲外数値を安全に正規化すること", () => {

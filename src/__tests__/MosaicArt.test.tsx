@@ -32,6 +32,10 @@ describe("MosaicArt Page Component", () => {
         fireEvent.input(rangeInput, { target: { value: "60" } });
         expect(rangeInput.value).toBe("60");
         expect(screen.getByText("60 列")).toBeInTheDocument();
+
+        fireEvent.input(rangeInput, { target: { value: "200" } });
+        expect(rangeInput.value).toBe("200");
+        expect(screen.getByText("200 列")).toBeInTheDocument();
     });
 
     it("出力サイズや重複利用オプションを変更できること", () => {

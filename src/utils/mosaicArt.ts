@@ -305,7 +305,7 @@ export function calculateGridDimensions(
 ): { cols: number; rows: number; tileAspectFactor: number } {
     const safeW = Math.max(1, clampFinite(imgWidth, 1, 16384, 1));
     const safeH = Math.max(1, clampFinite(imgHeight, 1, 16384, 1));
-    const cols = Math.round(clampFinite(columns, 5, 160, 40));
+    const cols = Math.round(clampFinite(columns, 5, 240, 40));
 
     // tileAspectFactor = cellHeight / cellWidth
     const tileAspectFactor =

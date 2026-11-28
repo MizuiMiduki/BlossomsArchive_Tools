@@ -737,14 +737,14 @@ export default function MosaicArt() {
                             <input
                                 id="input-mosaic-columns"
                                 type="range"
-                                min="15"
-                                max="100"
+                                min="10"
+                                max="200"
                                 step="5"
                                 value={columns()}
                                 onInput={(e) => {
                                     const val = Number(e.currentTarget.value);
                                     if (Number.isFinite(val)) {
-                                        setColumns(Math.max(15, Math.min(100, Math.round(val))));
+                                        setColumns(Math.max(10, Math.min(200, Math.round(val))));
                                     }
                                 }}
                                 class="ba-range"
