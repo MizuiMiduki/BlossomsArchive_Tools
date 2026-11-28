@@ -52,6 +52,7 @@ export default function MosaicArt() {
     const [duplicatePenalty, setDuplicatePenalty] = createSignal<number>(1);
     const [colorBlend, setColorBlend] = createSignal<number>(20);
     const [tileAspect, setTileAspect] = createSignal<TileAspectRatio>("square");
+    const [showTileThumbnails, setShowTileThumbnails] = createSignal<boolean>(true);
     const [outputFormat, setOutputFormat] = createSignal<string>("image/png");
 
     // 実行・進捗状態
@@ -508,11 +509,19 @@ export default function MosaicArt() {
                         >
                             {(target) => (
                                 <div class="ba-stack-3">
-                                    <div class="ba-relative ba-rounded-md ba-overflow-hidden ba-bg-surface-2 ba-flex ba-items-center ba-justify-center ba-max-h-64">
+                                    <div
+                                        class="ba-relative ba-rounded-md ba-overflow-hidden ba-bg-surface-2 ba-flex ba-items-center ba-justify-center"
+                                        style={{ "max-height": "220px" }}
+                                    >
                                         <img
                                             src={target().previewUrl}
                                             alt="ターゲット画像プレビュー"
-                                            class="ba-max-h-64 ba-object-contain"
+                                            style={{
+                                                "max-height": "220px",
+                                                "max-width": "100%",
+                                                width: "auto",
+                                                "object-fit": "contain",
+                                            }}
                                         />
                                     </div>
                                     <div class="ba-flex ba-items-center ba-justify-between ba-text-xs ba-text-subtle">
@@ -620,31 +629,76 @@ export default function MosaicArt() {
                         {/* サムネイル一覧 */}
                         <Show when={tiles().length > 0}>
                             <div class="ba-stack-2">
-                                <div class="ba-flex ba-items-center ba-justify-between ba-text-xs ba-text-subtle">
-                                    <span>素材サムネイル一覧</span>
-                                    <span>※枚数が多いほど細部まで綺麗に再現されます</span>
+                                <div class="ba-flex ba-items-center ba-justify-between ba-gap-2 ba-text-xs ba-text-subtle">
+                                    <span>素材サムネイル一覧（{tiles().length}枚）</span>
+                                    <button
+                                        type="button"
+                                        class="ba-btn ba-btn--ghost ba-btn--xs"
+                                        onClick={() => setShowTileThumbnails((v) => !v)}
+                                    >
+                                        {showTileThumbnails() ? "一覧を折りたたむ" : "一覧を表示する"}
+                                    </button>
                                 </div>
-                                <div class="ba-grid ba-grid-cols-6 ba-gap-2 ba-max-h-48 ba-overflow-y-auto ba-p-2 ba-bg-surface-2 ba-rounded-md">
-                                    <For each={tiles()}>
-                                        {(tile) => (
-                                            <div class="ba-relative ba-group ba-aspect-square ba-rounded ba-overflow-hidden ba-bg-surface-3">
-                                                <img
-                                                    src={tile.previewUrl}
-                                                    alt={tile.name}
-                                                    class="ba-w-full ba-h-full ba-object-cover"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    class="ba-absolute ba-top-0 ba-right-0 ba-bg-black/70 ba-text-white ba-text-xs ba-w-4 ba-h-4 ba-flex ba-items-center ba-justify-center hover:ba-bg-danger"
-                                                    onClick={() => removeTile(tile.id)}
-                                                    aria-label={`${tile.name}を削除`}
+                                <Show when={showTileThumbnails()}>
+                                    <div
+                                        class="ba-p-2 ba-bg-surface-2 ba-rounded-md"
+                                        style={{
+                                            display: "grid",
+                                            "grid-template-columns": "repeat(auto-fill, minmax(56px, 1fr))",
+                                            gap: "0.4rem",
+                                            "max-height": "180px",
+                                            "overflow-y": "auto",
+                                        }}
+                                    >
+                                        <For each={tiles()}>
+                                            {(tile) => (
+                                                <div
+                                                    class="ba-relative ba-rounded ba-overflow-hidden ba-bg-surface-3"
+                                                    style={{
+                                                        position: "relative",
+                                                        "aspect-ratio": "1 / 1",
+                                                        width: "100%",
+                                                    }}
                                                 >
-                                                    ×
-                                                </button>
-                                            </div>
-                                        )}
-                                    </For>
-                                </div>
+                                                    <img
+                                                        src={tile.previewUrl}
+                                                        alt={tile.name}
+                                                        style={{
+                                                            width: "100%",
+                                                            height: "100%",
+                                                            "object-fit": "cover",
+                                                            display: "block",
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeTile(tile.id)}
+                                                        aria-label={`${tile.name}を削除`}
+                                                        style={{
+                                                            position: "absolute",
+                                                            top: "2px",
+                                                            right: "2px",
+                                                            width: "18px",
+                                                            height: "18px",
+                                                            "border-radius": "9999px",
+                                                            background: "rgba(0, 0, 0, 0.72)",
+                                                            color: "#ffffff",
+                                                            border: "none",
+                                                            "font-size": "12px",
+                                                            "line-height": "1",
+                                                            display: "flex",
+                                                            "align-items": "center",
+                                                            "justify-content": "center",
+                                                            cursor: "pointer",
+                                                        }}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </For>
+                                    </div>
+                                </Show>
                             </div>
                         </Show>
                     </div>

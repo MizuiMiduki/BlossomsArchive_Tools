@@ -161,5 +161,9 @@ describe("MosaicArt Page Component", () => {
         fireEvent.click(sampleBtn);
 
         expect(await screen.findByText("24 枚選択中")).toBeInTheDocument();
+
+        const toggleBtn = screen.getByRole("button", { name: "一覧を折りたたむ" });
+        fireEvent.click(toggleBtn);
+        expect(screen.getByRole("button", { name: "一覧を表示する" })).toBeInTheDocument();
     });
 });
