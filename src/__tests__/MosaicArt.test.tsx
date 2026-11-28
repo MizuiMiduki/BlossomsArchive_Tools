@@ -146,30 +146,50 @@ describe("MosaicArt Page Component", () => {
         expect(aspectSelect.value).toBe("landscape");
     });
 
-    it("サンプルタイル(24枚)ボタンでタイルを追加できること", async () => {
+    it("構成画像追加後にサムネイル一覧を折りたたみ・再表示できること", async () => {
         const mockCtx = {
             fillStyle: "",
             fillRect: vi.fn(),
-            createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
-            beginPath: vi.fn(),
-            arc: vi.fn(),
-            fill: vi.fn(),
+            drawImage: vi.fn(),
+            clearRect: vi.fn(),
+            getImageData: vi.fn().mockReturnValue({
+                data: new Uint8ClampedArray(16 * 16 * 4).fill(180),
+            }),
         };
         vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
             mockCtx as unknown as CanvasRenderingContext2D,
         );
-        vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((cb) => {
-            cb(new Blob(["sample"], { type: "image/png" }));
-        });
 
-        render(() => <MosaicArt />);
-        const sampleBtn = screen.getByRole("button", { name: "サンプルタイル(24枚)を追加" });
-        fireEvent.click(sampleBtn);
+        const OriginalImage = globalThis.Image;
+        class MockImage {
+            src = "";
+            width = 64;
+            height = 64;
+            naturalWidth = 64;
+            naturalHeight = 64;
+            onload: (() => void) | null = null;
+            constructor() {
+                setTimeout(() => {
+                    if (this.onload) this.onload();
+                }, 0);
+            }
+        }
+        // @ts-expect-error Mock Image
+        globalThis.Image = MockImage;
 
-        expect(await screen.findByText("24 枚選択中")).toBeInTheDocument();
+        try {
+            const { container } = render(() => <MosaicArt />);
+            const tilesInput = container.querySelectorAll('input[type="file"]')[1] as HTMLInputElement;
+            const tileFile = new File(["tile"], "tile.png", { type: "image/png" });
+            await fireEvent.change(tilesInput, { target: { files: [tileFile] } });
 
-        const toggleBtn = screen.getByRole("button", { name: "一覧を折りたたむ" });
-        fireEvent.click(toggleBtn);
-        expect(screen.getByRole("button", { name: "一覧を表示する" })).toBeInTheDocument();
+            expect(await screen.findByText("1 枚選択中")).toBeInTheDocument();
+
+            const toggleBtn = screen.getByRole("button", { name: "一覧を折りたたむ" });
+            fireEvent.click(toggleBtn);
+            expect(screen.getByRole("button", { name: "一覧を表示する" })).toBeInTheDocument();
+        } finally {
+            globalThis.Image = OriginalImage;
+        }
     });
 });

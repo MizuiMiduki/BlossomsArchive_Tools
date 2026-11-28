@@ -185,69 +185,6 @@ export default function MosaicArt() {
         setTiles([]);
     };
 
-    // サンプルタイルセット（24色）生成
-    const generateSampleTiles = async () => {
-        setIsProcessing(true);
-        setStatusMessage("サンプルタイル（24色）を生成中...");
-        const sampleColors: Array<[number, number, number]> = [];
-        // 12色相 × 明暗2パターン + モノクロ4段階 = 24枚
-        for (let h = 0; h < 10; h++) {
-            const hue = (h * 36) % 360;
-            for (const light of [38, 68]) {
-                const c = (1 - Math.abs((2 * light) / 100 - 1)) * 0.78;
-                const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
-                const m = light / 100 - c / 2;
-                let r1 = 0, g1 = 0, b1 = 0;
-                if (hue < 60) { r1 = c; g1 = x; }
-                else if (hue < 120) { r1 = x; g1 = c; }
-                else if (hue < 180) { g1 = c; b1 = x; }
-                else if (hue < 240) { g1 = x; b1 = c; }
-                else if (hue < 300) { r1 = x; b1 = c; }
-                else { r1 = c; b1 = x; }
-                sampleColors.push([
-                    Math.round((r1 + m) * 255),
-                    Math.round((g1 + m) * 255),
-                    Math.round((b1 + m) * 255),
-                ]);
-            }
-        }
-        sampleColors.push([25, 25, 30], [95, 98, 105], [175, 178, 185], [242, 244, 248]);
-
-        const created: MosaicTile[] = [];
-        for (let i = 0; i < sampleColors.length; i++) {
-            const [r, g, b] = sampleColors[i];
-            const c = document.createElement("canvas");
-            c.width = 64;
-            c.height = 64;
-            const cctx = c.getContext("2d");
-            if (cctx) {
-                const grad = cctx.createLinearGradient(0, 0, 64, 64);
-                grad.addColorStop(0, `rgb(${Math.min(255, r + 18)}, ${Math.min(255, g + 18)}, ${Math.min(255, b + 18)})`);
-                grad.addColorStop(1, `rgb(${Math.max(0, r - 18)}, ${Math.max(0, g - 18)}, ${Math.max(0, b - 18)})`);
-                cctx.fillStyle = grad;
-                cctx.fillRect(0, 0, 64, 64);
-                cctx.fillStyle = "rgba(255,255,255,0.12)";
-                cctx.beginPath();
-                cctx.arc(32, 32, 18, 0, Math.PI * 2);
-                cctx.fill();
-            }
-            const blob = await new Promise<Blob | null>((res) => c.toBlob(res, "image/png"));
-            if (!blob) continue;
-            const url = createSafeObjectUrl(blob);
-            tileIdCounter += 1;
-            created.push({
-                id: `sample-tile-${tileIdCounter}`,
-                name: `sample-${i + 1}.png`,
-                avgColor: { r, g, b },
-                previewUrl: url,
-                source: c,
-            });
-        }
-        setTiles((prev) => [...prev, ...created]);
-        setIsProcessing(false);
-        setStatusMessage("");
-    };
-
     // ターゲット画像のクリア
     const clearTargetImage = () => {
         const current = targetImage();
@@ -615,14 +552,6 @@ export default function MosaicArt() {
                                     aria-label="構成画像を追加選択"
                                 >
                                     画像を追加選択（複数可）
-                                </button>
-                                <button
-                                    type="button"
-                                    class="ba-btn ba-btn--outline ba-btn--sm"
-                                    disabled={isProcessing()}
-                                    onClick={() => void generateSampleTiles()}
-                                >
-                                    サンプルタイル(24枚)を追加
                                 </button>
                             </div>
                         </div>

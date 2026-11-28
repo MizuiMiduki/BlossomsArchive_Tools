@@ -352,81 +352,6 @@ export default function ArCameraOverlay() {
         img.src = previewUrl;
     };
 
-    const loadSampleCharacter = () => {
-        const sampleCanvas = document.createElement("canvas");
-        sampleCanvas.width = 420;
-        sampleCanvas.height = 680;
-        const ctx = sampleCanvas.getContext("2d");
-        if (!ctx) return;
-
-        ctx.clearRect(0, 0, 420, 680);
-
-        ctx.fillStyle = "#312e81";
-        ctx.beginPath();
-        ctx.ellipse(210, 170, 72, 92, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        const coatGrad = ctx.createLinearGradient(120, 220, 300, 560);
-        coatGrad.addColorStop(0, "#4f46e5");
-        coatGrad.addColorStop(1, "#1e1b4b");
-        ctx.fillStyle = coatGrad;
-        ctx.beginPath();
-        ctx.moveTo(165, 225);
-        ctx.lineTo(255, 225);
-        ctx.lineTo(315, 515);
-        ctx.lineTo(105, 515);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = "#1e293b";
-        ctx.fillRect(168, 505, 28, 130);
-        ctx.fillRect(224, 505, 28, 130);
-        ctx.fillStyle = "#0f172a";
-        ctx.beginPath();
-        ctx.roundRect(156, 615, 44, 30, 8);
-        ctx.roundRect(220, 615, 44, 30, 8);
-        ctx.fill();
-
-        ctx.fillStyle = "#fde6d8";
-        ctx.beginPath();
-        ctx.ellipse(210, 160, 44, 52, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "#4338ca";
-        ctx.beginPath();
-        ctx.arc(210, 140, 48, Math.PI, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = "#6366f1";
-        ctx.lineWidth = 22;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(165, 245);
-        ctx.lineTo(118, 375);
-        ctx.moveTo(255, 245);
-        ctx.lineTo(302, 365);
-        ctx.stroke();
-
-        ctx.fillStyle = "#f59e0b";
-        ctx.beginPath();
-        ctx.arc(210, 275, 10, 0, Math.PI * 2);
-        ctx.fill();
-
-        sampleCanvas.toBlob((blob) => {
-            if (!blob) return;
-            const prev = overlayAsset();
-            if (prev?.previewUrl) {
-                URL.revokeObjectURL(prev.previewUrl);
-            }
-            const url = createSafeObjectUrl(blob);
-            const img = new Image();
-            img.onload = () => {
-                setOverlayAsset(buildOverlayAsset("sample-character.png", url, img));
-            };
-            img.src = url;
-        }, "image/png");
-    };
-
     const startCamera = async (facingOverride?: CameraFacing) => {
         const targetFacing = facingOverride ?? cameraFacing();
         setCameraError(null);
@@ -1125,14 +1050,6 @@ export default function ArCameraOverlay() {
                                     >
                                         ドライブ・ファイルから
                                     </button>
-                                    <button
-                                        type="button"
-                                        class="ba-btn ba-btn--outline ba-btn--xs"
-                                        style={{ color: "#f8fafc", "border-color": "rgba(255,255,255,0.4)" }}
-                                        onClick={loadSampleCharacter}
-                                    >
-                                        サンプル立ち絵
-                                    </button>
                                 </div>
                             </div>
                         </Show>
@@ -1329,13 +1246,6 @@ export default function ArCameraOverlay() {
                             <div class="ba-stack-3">
                                 {/* 立ち絵クイック操作 */}
                                 <div class="ba-flex ba-flex-wrap ba-gap-2">
-                                    <button
-                                        type="button"
-                                        class="ba-btn ba-btn--secondary ba-btn--xs"
-                                        onClick={loadSampleCharacter}
-                                    >
-                                        サンプル立ち絵
-                                    </button>
                                     <button
                                         type="button"
                                         class={`ba-btn ba-btn--xs ${flipHorizontal() ? "ba-btn--primary" : "ba-btn--secondary"}`}
