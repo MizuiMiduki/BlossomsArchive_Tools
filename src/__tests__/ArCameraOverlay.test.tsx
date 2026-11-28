@@ -123,4 +123,22 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.click(closeBtn);
         expect(screen.queryByRole("button", { name: "調整パネルを閉じる" })).not.toBeInTheDocument();
     });
+
+    it("上半身のみ表示などのために描画範囲外(-100%..200%)および拡大率4.0まで移動・拡大できること", () => {
+        render(() => <ArCameraOverlay />);
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
+
+        const posXSlider = screen.getByLabelText(/横位置/) as HTMLInputElement;
+        const posYSlider = screen.getByLabelText(/足元接地位置/) as HTMLInputElement;
+        const scaleSlider = screen.getByLabelText(/サイズ/) as HTMLInputElement;
+
+        fireEvent.input(posXSlider, { target: { value: "-45" } });
+        expect(posXSlider.value).toBe("-45");
+
+        fireEvent.input(posYSlider, { target: { value: "160" } });
+        expect(posYSlider.value).toBe("160");
+
+        fireEvent.input(scaleSlider, { target: { value: "3.5" } });
+        expect(scaleSlider.value).toBe("3.5");
+    });
 });

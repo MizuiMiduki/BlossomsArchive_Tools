@@ -513,8 +513,8 @@ export default function ArCameraOverlay() {
         const drawH = baseTargetHeight;
         const drawW = drawH * aspect;
 
-        const baseX = (clampFinite(posXPercent(), 0, 100, 50) / 100) * width;
-        const baseY = (clampFinite(posYPercent(), 0, 100, 78) / 100) * height;
+        const baseX = (clampFinite(posXPercent(), -100, 200, 50) / 100) * width;
+        const baseY = (clampFinite(posYPercent(), -100, 200, 78) / 100) * height;
 
         if (mode() === "fixed") {
             ctx.save();
@@ -733,7 +733,7 @@ export default function ArCameraOverlay() {
             const pts = Array.from(activePointers.values());
             const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
             const ratio = dist / pinchStartDistance;
-            setScale(Math.round(clampFinite(pinchStartScale * ratio, 0.15, 2.5, 0.65) * 100) / 100);
+            setScale(Math.round(clampFinite(pinchStartScale * ratio, 0.1, 4.0, 0.65) * 100) / 100);
             return;
         }
 
@@ -743,8 +743,8 @@ export default function ArCameraOverlay() {
 
         const dxPct = ((e.clientX - dragStartClientX) / rect.width) * 100;
         const dyPct = ((e.clientY - dragStartClientY) / rect.height) * 100;
-        setPosXPercent(Math.round(clampFinite(dragStartPosX + dxPct, 0, 100, 50) * 10) / 10);
-        setPosYPercent(Math.round(clampFinite(dragStartPosY + dyPct, 0, 100, 78) * 10) / 10);
+        setPosXPercent(Math.round(clampFinite(dragStartPosX + dxPct, -100, 200, 50) * 10) / 10);
+        setPosYPercent(Math.round(clampFinite(dragStartPosY + dyPct, -100, 200, 78) * 10) / 10);
     };
 
     const handlePointerUp = (e: PointerEvent) => {
@@ -762,7 +762,7 @@ export default function ArCameraOverlay() {
         if (isPositionLocked()) return;
         e.preventDefault();
         const delta = e.deltaY > 0 ? -0.04 : 0.04;
-        setScale((prev) => Math.round(clampFinite(prev + delta, 0.15, 2.5, 0.65) * 100) / 100);
+        setScale((prev) => Math.round(clampFinite(prev + delta, 0.1, 4.0, 0.65) * 100) / 100);
     };
 
     onSettled(() => {
@@ -1317,14 +1317,14 @@ export default function ArCameraOverlay() {
                                     <input
                                         id="pos-x-range"
                                         type="range"
-                                        min="0"
-                                        max="100"
+                                        min="-100"
+                                        max="200"
                                         step="0.5"
                                         class="ba-range"
                                         disabled={isPositionLocked()}
                                         value={posXPercent()}
                                         onInput={(e) =>
-                                            setPosXPercent(clampFinite(Number(e.currentTarget.value), 0, 100, 50))
+                                            setPosXPercent(clampFinite(Number(e.currentTarget.value), -100, 200, 50))
                                         }
                                     />
                                 </div>
@@ -1337,14 +1337,14 @@ export default function ArCameraOverlay() {
                                     <input
                                         id="pos-y-range"
                                         type="range"
-                                        min="0"
-                                        max="100"
+                                        min="-100"
+                                        max="200"
                                         step="0.5"
                                         class="ba-range"
                                         disabled={isPositionLocked()}
                                         value={posYPercent()}
                                         onInput={(e) =>
-                                            setPosYPercent(clampFinite(Number(e.currentTarget.value), 0, 100, 78))
+                                            setPosYPercent(clampFinite(Number(e.currentTarget.value), -100, 200, 78))
                                         }
                                     />
                                 </div>
@@ -1357,13 +1357,13 @@ export default function ArCameraOverlay() {
                                     <input
                                         id="scale-range"
                                         type="range"
-                                        min="0.15"
-                                        max="2.5"
+                                        min="0.1"
+                                        max="4"
                                         step="0.05"
                                         class="ba-range"
                                         value={scale()}
                                         onInput={(e) =>
-                                            setScale(clampFinite(Number(e.currentTarget.value), 0.15, 2.5, 0.65))
+                                            setScale(clampFinite(Number(e.currentTarget.value), 0.1, 4.0, 0.65))
                                         }
                                     />
                                 </div>
