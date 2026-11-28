@@ -360,8 +360,61 @@ export function calculateProjectedShadowTransform(
     };
 }
 
+function deviceOrientationForwardVector(o: GyroOrientation): [number, number, number] {
+    const deg2rad = Math.PI / 180;
+    const a = normalizeAngleDeg(o.alpha) * deg2rad;
+    const b = clampFinite(o.beta, -180, 180, 0) * deg2rad;
+    const g = clampFinite(o.gamma, -90, 90, 0) * deg2rad;
+
+    const cA = Math.cos(a);
+    const sA = Math.sin(a);
+    const cB = Math.cos(b);
+    const sB = Math.sin(b);
+    const cG = Math.cos(g);
+    const sG = Math.sin(g);
+
+    // W3C DeviceOrientation Z-X'-Y'' 回転行列の第3列の符号反転 (-R * [0, 0, 1]) = 背面カメラのワールド視線方向
+    const vx = -(cA * sG + sA * sB * cG);
+    const vy = -(sA * sG - cA * sB * cG);
+    const vz = -(cB * cG);
+    return [vx, vy, vz];
+}
+
+function deviceOrientationBasis(o: GyroOrientation): {
+    right: [number, number, number];
+    up: [number, number, number];
+    forward: [number, number, number];
+} {
+    const deg2rad = Math.PI / 180;
+    const a = normalizeAngleDeg(o.alpha) * deg2rad;
+    const b = clampFinite(o.beta, -180, 180, 0) * deg2rad;
+    const g = clampFinite(o.gamma, -90, 90, 0) * deg2rad;
+
+    const cA = Math.cos(a);
+    const sA = Math.sin(a);
+    const cB = Math.cos(b);
+    const sB = Math.sin(b);
+    const cG = Math.cos(g);
+    const sG = Math.sin(g);
+
+    // R = Rz(a) * Rx(b) * Ry(g) の各列ベクトル
+    const right: [number, number, number] = [
+        cA * cG - sA * sB * sG,
+        sA * cG + cA * sB * sG,
+        -cB * sG,
+    ];
+    const up: [number, number, number] = [
+        -sA * cB,
+        cA * cB,
+        sB,
+    ];
+    const forward = deviceOrientationForwardVector(o);
+    return { right, up, forward };
+}
+
 /**
- * ジャイロセンサー（DeviceOrientation）の差分角から、AR空間アンカー用の視差オフセットを計算する
+ * ジャイロセンサー（DeviceOrientation）の3D回転行列差分（ジンバルロック耐性）から、
+ * AR空間アンカー用の視差オフセットを計算する
  */
 export function calculateGyroParallaxOffset(
     current: GyroOrientation,
@@ -374,16 +427,35 @@ export function calculateGyroParallaxOffset(
     const safeH = clampFinite(canvasHeight, 100, 8000, 720);
     const sens = clampFinite(sensitivity, 0.1, 3.0, 1.0);
 
-    const dAlpha = shortestAngleDeltaDeg(current.alpha, base.alpha);
-    const dBeta = clampFinite(current.beta - base.beta, -75, 75, 0);
-    const dGamma = clampFinite(current.gamma - base.gamma, -75, 75, 0);
+    const baseBasis = deviceOrientationBasis(base);
+    const curFwd = deviceOrientationForwardVector(current);
+
+    // 基準カメラ座標系に投影した現在の視線ベクトル
+    const relX =
+        curFwd[0] * baseBasis.right[0] +
+        curFwd[1] * baseBasis.right[1] +
+        curFwd[2] * baseBasis.right[2];
+    const relY =
+        curFwd[0] * baseBasis.up[0] +
+        curFwd[1] * baseBasis.up[1] +
+        curFwd[2] * baseBasis.up[2];
+    const relZ =
+        curFwd[0] * baseBasis.forward[0] +
+        curFwd[1] * baseBasis.forward[1] +
+        curFwd[2] * baseBasis.forward[2];
+
+    const yawDeg = (Math.atan2(relX, Math.max(0.15, relZ)) * 180) / Math.PI;
+    const pitchDeg = (Math.atan2(relY, Math.max(0.15, relZ)) * 180) / Math.PI;
 
     const pxPerDegX = (safeW / 60) * sens;
     const pxPerDegY = (safeH / 45) * sens;
 
-    const offsetX = clampFinite(dAlpha * pxPerDegX, -safeW * 1.5, safeW * 1.5, 0);
-    const offsetY = clampFinite(dBeta * pxPerDegY, -safeH * 1.5, safeH * 1.5, 0);
-    const tiltSkewDeg = clampFinite(-dGamma * 0.25 * sens, -15, 15, 0);
+    // カメラが右を向くと(yawDeg > 0)、空間上のアンカーは左(-)へ移動する
+    const offsetX = clampFinite(-yawDeg * pxPerDegX, -safeW * 1.5, safeW * 1.5, 0);
+    const offsetY = clampFinite(pitchDeg * pxPerDegY, -safeH * 1.5, safeH * 1.5, 0);
+
+    const dGamma = shortestAngleDeltaDeg(current.gamma, base.gamma);
+    const tiltSkewDeg = clampFinite(-dGamma * 0.18 * sens, -15, 15, 0);
 
     return {
         offsetX,

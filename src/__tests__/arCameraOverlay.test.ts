@@ -133,6 +133,17 @@ describe("arCameraOverlay utilities", () => {
         expect(offset.offsetX).toBeGreaterThan(0);
         expect(offset.offsetY).toBeLessThan(0);
         expect(Number.isFinite(offset.tiltSkewDeg)).toBe(true);
+
+        // 縦持ち(beta=88°)付近でも安定して向きに応じた有限の視差オフセットを返すこと
+        const portraitOffset = calculateGyroParallaxOffset(
+            { alpha: 350, beta: 88, gamma: 2 },
+            { alpha: 10, beta: 88, gamma: 0 },
+            1280,
+            720,
+            1.0,
+        );
+        expect(Number.isFinite(portraitOffset.offsetX)).toBe(true);
+        expect(portraitOffset.offsetX).toBeLessThan(0);
     });
 
     it("createShadowSilhouettePixels: preserves alpha channel and replaces RGB with shadow color", () => {
