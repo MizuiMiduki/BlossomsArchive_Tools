@@ -1060,105 +1060,52 @@ export default function ArCameraOverlay() {
                         style={{
                             position: "relative",
                             "z-index": "10",
-                            padding: "0.85rem 1rem 1rem",
+                            padding: "0.75rem 0.75rem 0.9rem",
                             background:
-                                "linear-gradient(0deg, rgba(10,15,28,0.88) 0%, rgba(10,15,28,0.45) 70%, rgba(10,15,28,0) 100%)",
+                                "linear-gradient(0deg, rgba(10,15,28,0.9) 0%, rgba(10,15,28,0.52) 72%, rgba(10,15,28,0) 100%)",
                             display: "flex",
-                            "align-items": "center",
-                            "justify-content": "space-between",
-                            gap: "0.75rem",
+                            "flex-direction": "column",
+                            "align-items": "stretch",
+                            gap: "0.625rem",
+                            width: "100%",
+                            "box-sizing": "border-box",
                         }}
                     >
-                        {/* 左：画像・背景選択 & 撮影サムネイル */}
-                        <div class="ba-flex ba-items-center ba-gap-2">
-                            <Show when={capturedUrl()}>
-                                {(url) => (
-                                    <button
-                                        type="button"
-                                        aria-label="撮影した写真を確認"
-                                        onClick={() => setShowCaptureModal(true)}
-                                        style={{
-                                            width: "44px",
-                                            height: "44px",
-                                            padding: 0,
-                                            "border-radius": "8px",
-                                            overflow: "hidden",
-                                            border: "2px solid #ffffff",
-                                            cursor: "pointer",
-                                            background: "#0f172a",
-                                        }}
-                                    >
-                                        <img
-                                            src={url()}
-                                            alt="直前の撮影写真"
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                "object-fit": "cover",
-                                            }}
-                                        />
-                                    </button>
-                                )}
-                            </Show>
+                        {/* 上段：画像選択・位置ロック・調整ボタン（狭い画面でも折り返して収まる） */}
+                        <div
+                            style={{
+                                display: "flex",
+                                "flex-wrap": "wrap",
+                                "align-items": "center",
+                                "justify-content": "center",
+                                gap: "0.375rem",
+                            }}
+                        >
                             <button
                                 type="button"
-                                class="ba-btn ba-btn--secondary ba-btn--sm"
+                                class="ba-btn ba-btn--secondary ba-btn--xs"
                                 onClick={() => overlayInputRef?.click()}
                             >
                                 写真から選択
                             </button>
                             <button
                                 type="button"
-                                class="ba-btn ba-btn--secondary ba-btn--sm"
+                                class="ba-btn ba-btn--secondary ba-btn--xs"
                                 onClick={() => overlayDriveInputRef?.click()}
                             >
                                 ドライブ・ファイル
                             </button>
                             <button
                                 type="button"
-                                class="ba-btn ba-btn--outline ba-btn--sm"
+                                class="ba-btn ba-btn--outline ba-btn--xs"
                                 style={{ color: "#f8fafc", "border-color": "rgba(255,255,255,0.4)" }}
                                 onClick={() => bgInputRef?.click()}
                             >
                                 背景画像
                             </button>
-                        </div>
-
-                        {/* 中央：スマホカメラ風シャッターボタン */}
-                        <button
-                            type="button"
-                            onClick={capturePhoto}
-                            aria-label="撮影する (シャッター)"
-                            style={{
-                                width: "64px",
-                                height: "64px",
-                                "border-radius": "9999px",
-                                border: "4px solid #ffffff",
-                                background: "rgba(255, 255, 255, 0.22)",
-                                display: "flex",
-                                "align-items": "center",
-                                "justify-content": "center",
-                                cursor: "pointer",
-                                "flex-shrink": 0,
-                            }}
-                        >
-                            <span
-                                style={{
-                                    width: "48px",
-                                    height: "48px",
-                                    "border-radius": "9999px",
-                                    "background-color": "#ffffff",
-                                    display: "block",
-                                }}
-                                aria-hidden="true"
-                            />
-                        </button>
-
-                        {/* 右：位置ロック & 調整ドロワー開閉 */}
-                        <div class="ba-flex ba-items-center ba-gap-2">
                             <button
                                 type="button"
-                                class={`ba-btn ba-btn--sm ${isPositionLocked() ? "ba-btn--warning" : "ba-btn--secondary"}`}
+                                class={`ba-btn ba-btn--xs ${isPositionLocked() ? "ba-btn--warning" : "ba-btn--secondary"}`}
                                 aria-pressed={isPositionLocked() ? "true" : "false"}
                                 onClick={() => setIsPositionLocked((v) => !v)}
                             >
@@ -1166,12 +1113,87 @@ export default function ArCameraOverlay() {
                             </button>
                             <button
                                 type="button"
-                                class={`ba-btn ba-btn--sm ${showSettingsDrawer() ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                class={`ba-btn ba-btn--xs ${showSettingsDrawer() ? "ba-btn--primary" : "ba-btn--secondary"}`}
                                 aria-expanded={showSettingsDrawer() ? "true" : "false"}
                                 onClick={() => setShowSettingsDrawer((v) => !v)}
                             >
                                 {showSettingsDrawer() ? "調整を閉じる" : "影・配置調整"}
                             </button>
+                        </div>
+
+                        {/* 下段：左サムネイル・中央シャッターボタン・右スペーサー */}
+                        <div
+                            style={{
+                                display: "grid",
+                                "grid-template-columns": "1fr auto 1fr",
+                                "align-items": "center",
+                                width: "100%",
+                            }}
+                        >
+                            <div style={{ "justify-self": "start" }}>
+                                <Show when={capturedUrl()}>
+                                    {(url) => (
+                                        <button
+                                            type="button"
+                                            aria-label="撮影した写真を確認"
+                                            onClick={() => setShowCaptureModal(true)}
+                                            style={{
+                                                width: "44px",
+                                                height: "44px",
+                                                padding: 0,
+                                                "border-radius": "8px",
+                                                overflow: "hidden",
+                                                border: "2px solid #ffffff",
+                                                cursor: "pointer",
+                                                background: "#0f172a",
+                                            }}
+                                        >
+                                            <img
+                                                src={url()}
+                                                alt="直前の撮影写真"
+                                                style={{
+                                                    width: "100%",
+                                                    height: "100%",
+                                                    "object-fit": "cover",
+                                                }}
+                                            />
+                                        </button>
+                                    )}
+                                </Show>
+                            </div>
+
+                            {/* 中央：スマホカメラ風シャッターボタン */}
+                            <button
+                                type="button"
+                                onClick={capturePhoto}
+                                aria-label="撮影する (シャッター)"
+                                style={{
+                                    "justify-self": "center",
+                                    width: "64px",
+                                    height: "64px",
+                                    "border-radius": "9999px",
+                                    border: "4px solid #ffffff",
+                                    background: "rgba(255, 255, 255, 0.22)",
+                                    display: "flex",
+                                    "align-items": "center",
+                                    "justify-content": "center",
+                                    cursor: "pointer",
+                                    "flex-shrink": 0,
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        width: "48px",
+                                        height: "48px",
+                                        "border-radius": "9999px",
+                                        "background-color": "#ffffff",
+                                        display: "block",
+                                    }}
+                                    aria-hidden="true"
+                                />
+                            </button>
+
+                            <div aria-hidden="true" />
                         </div>
                     </div>
 

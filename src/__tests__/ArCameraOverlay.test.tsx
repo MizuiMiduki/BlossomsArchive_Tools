@@ -83,4 +83,15 @@ describe("ArCameraOverlay Page", () => {
             "カメラアクセスAPI（getUserMedia）に対応していません",
         );
     });
+
+    it("下部シャッターバーがモバイル幅でも折り返し・中央シャッター配置で見切れないレイアウトであること", () => {
+        render(() => <ArCameraOverlay />);
+        const shutterBtn = screen.getByRole("button", { name: "撮影する (シャッター)" });
+        expect(shutterBtn).toBeInTheDocument();
+        expect(shutterBtn.style.justifySelf).toBe("center");
+        expect(shutterBtn.parentElement?.style.gridTemplateColumns).toBe("1fr auto 1fr");
+
+        const lockBtn = screen.getByRole("button", { name: "位置ロック" });
+        expect(lockBtn.parentElement?.style.flexWrap).toBe("wrap");
+    });
 });
