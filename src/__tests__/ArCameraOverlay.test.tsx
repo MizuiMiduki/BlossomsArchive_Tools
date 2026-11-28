@@ -266,4 +266,17 @@ describe("ArCameraOverlay Page", () => {
 
         expect(screen.getByRole("button", { name: "完了" })).toBeInTheDocument();
     });
+
+    it("ARからの距離合わせボタン・自動調整トグル・カメラ切替ボタンが安全に操作できること", () => {
+        render(() => <ArCameraOverlay />);
+        const switchBtn = screen.getByRole("button", { name: /外カメラ|インカメラ/ });
+        fireEvent.click(switchBtn);
+
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
+        expect(screen.getByRole("button", { name: "ARから距離合わせ" })).toBeInTheDocument();
+        const autoDistToggle = screen.getByLabelText("AR奥行き解析・位置移動に合わせて距離と身長を自動調整") as HTMLInputElement;
+        expect(autoDistToggle.checked).toBe(true);
+        fireEvent.click(autoDistToggle);
+        expect(autoDistToggle.checked).toBe(false);
+    });
 });

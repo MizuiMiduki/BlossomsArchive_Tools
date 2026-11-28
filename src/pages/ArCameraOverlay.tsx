@@ -428,6 +428,7 @@ export default function ArCameraOverlay() {
         const img = new Image();
         img.onload = () => {
             setOverlayAsset(buildOverlayAsset(file.name, previewUrl, img));
+            applyHeightScale(characterHeightCm(), cameraDistanceM());
         };
         img.src = previewUrl;
     };
@@ -448,6 +449,11 @@ export default function ArCameraOverlay() {
                 height: img.naturalHeight || img.height,
                 imgElement: img,
             });
+            clearOcclusion();
+            visualOffsetRatioX = 0;
+            visualOffsetRatioY = 0;
+            visualZoomScale = 1;
+            prevGrayFrame = null;
         };
         img.src = previewUrl;
     };
@@ -527,6 +533,11 @@ export default function ArCameraOverlay() {
     const switchCameraFacing = () => {
         const next: CameraFacing = cameraFacing() === "environment" ? "user" : "environment";
         setCameraFacing(next);
+        clearOcclusion();
+        visualOffsetRatioX = 0;
+        visualOffsetRatioY = 0;
+        visualZoomScale = 1;
+        prevGrayFrame = null;
         if (isCameraActive()) {
             void startCamera(next);
         }
@@ -539,12 +550,23 @@ export default function ArCameraOverlay() {
             const dpr = Math.min(2, window.devicePixelRatio || 1);
             const targetW = Math.round(rect.width * dpr);
             const targetH = Math.round(rect.height * dpr);
+            const wasPortrait = previewCanvasRef.height >= previewCanvasRef.width;
+            const nextPortrait = targetH >= targetW;
             if (
                 Math.abs(previewCanvasRef.width - targetW) > 4 ||
                 Math.abs(previewCanvasRef.height - targetH) > 4
             ) {
                 previewCanvasRef.width = targetW;
                 previewCanvasRef.height = targetH;
+                if (wasPortrait !== nextPortrait) {
+                    prevGrayFrame = null;
+                    visualOffsetRatioX = 0;
+                    visualOffsetRatioY = 0;
+                    visualZoomScale = 1;
+                    if (overlayAsset()) {
+                        applyHeightScale(characterHeightCm(), cameraDistanceM());
+                    }
+                }
             }
         }
     };
@@ -609,7 +631,9 @@ export default function ArCameraOverlay() {
                             trackH,
                             1.0,
                         );
-                        tctx.translate(-rotShift.offsetX, -rotShift.offsetY);
+                        tctx.translate(trackW * 0.5 - rotShift.offsetX, trackH * 0.5 - rotShift.offsetY);
+                        tctx.rotate((-rotShift.tiltSkewDeg * Math.PI) / 180);
+                        tctx.translate(-trackW * 0.5, -trackH * 0.5);
                     }
                     tctx.drawImage(ctx.canvas, 0, 0, trackW, trackH);
                     tctx.restore();
@@ -938,18 +962,19 @@ export default function ArCameraOverlay() {
 
     const getMaskShiftOffset = (width: number, height: number): { dx: number; dy: number } => {
         if (mode() !== "ar") return { dx: 0, dy: 0 };
+        let dx = 0;
+        let dy = 0;
         const curG = currentGyro();
         if (gyroEnabled() && curG && maskBaseGyro) {
             const p = calculateGyroParallaxOffset(curG, maskBaseGyro, width, height, 1.0);
-            return { dx: p.offsetX, dy: p.offsetY };
+            dx += p.offsetX;
+            dy += p.offsetY;
         }
         if (visualTrackingEnabled()) {
-            return {
-                dx: (visualOffsetRatioX - maskBaseVisualX) * width,
-                dy: (visualOffsetRatioY - maskBaseVisualY) * height,
-            };
+            dx += (visualOffsetRatioX - maskBaseVisualX) * width;
+            dy += (visualOffsetRatioY - maskBaseVisualY) * height;
         }
-        return { dx: 0, dy: 0 };
+        return { dx, dy };
     };
 
     /** 遮蔽マスクを考慮して立ち絵（影含む）を描画する。マスクもAR画角に追従させる */
