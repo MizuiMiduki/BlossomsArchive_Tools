@@ -13,6 +13,12 @@ describe("photoComposite utilities", () => {
             { id: "mid", cameraDistanceM: 2.5, posYPercent: 72 },
         ]);
         expect(ordered.map((x) => x.id)).toEqual(["far", "mid", "near"]);
+
+        const sameDist = sortCharacterLayersByDepth([
+            { id: "frontY", cameraDistanceM: 2.5, posYPercent: 82 },
+            { id: "backY", cameraDistanceM: 2.5, posYPercent: 68 },
+        ]);
+        expect(sameDist.map((x) => x.id)).toEqual(["backY", "frontY"]);
     });
 
     it("hitTestCharacterLayer: selects foreground character when bounding boxes overlap", () => {

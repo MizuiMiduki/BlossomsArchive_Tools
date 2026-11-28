@@ -597,7 +597,7 @@ async function main(): Promise<void> {
             const totalCandidates = regressions.length;
             console.log(`\n🔄 Re-verifying ${totalCandidates} candidates in single-worker mode...`);
             // CPUとポートの安定化のため少し待機
-            await new Promise((r) => setTimeout(r, 1000));
+            await new Promise((r) => setTimeout(r, 1500));
             const confirmedRegressions: RegressionItem[] = [];
 
             let candIndex = 0;
