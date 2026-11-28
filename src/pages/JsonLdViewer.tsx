@@ -1,7 +1,6 @@
 import { createSignal, createMemo, onSettled, For, Show } from "solid-js";
 import AdSense from "../components/AdSense";
 import ToolIcon from "../components/ToolIcon";
-import { playPageEntrance } from "../utils/animations";
 import {
     parseJsonLd,
     flattenJsonLdProperties,
@@ -28,12 +27,12 @@ function TreeNodeView(props: {
     searchTerm: string;
     level: number;
 }) {
-    const [isExpanded, setIsExpanded] = createSignal(props.level < 2);
+    const [isExpanded, setIsExpanded] = createSignal(props.level < 1);
 
     const hasChildren = () =>
         Boolean(props.node.children && props.node.children.length > 0);
 
-    const isMatch = createMemo(() => {
+    const isMatch = () => {
         const term = props.searchTerm.trim().toLowerCase();
         if (!term) return true;
         if (props.node.key.toLowerCase().includes(term)) return true;
@@ -44,7 +43,7 @@ function TreeNodeView(props: {
         )
             return true;
         return false;
-    });
+    };
 
     const toggle = () => {
         if (hasChildren()) {
@@ -253,7 +252,6 @@ export default function JsonLdViewer() {
     };
 
     onSettled(() => {
-        if (containerRef) playPageEntrance(containerRef, ".ba-card");
         if (typeof window !== "undefined") {
             const paramUrl = new URLSearchParams(window.location.search).get("url");
             if (paramUrl && paramUrl.trim()) {
