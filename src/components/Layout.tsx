@@ -382,7 +382,12 @@ export default function Layout(props: LayoutProps) {
             >
                 {/* ヘッダー部（ロゴ・開閉ボタン）: 上部固定 */}
                 <div class="ba-flex ba-items-center ba-justify-between ba-shrink-0 ba-gap-2" style={{ padding: "1.25rem 1.25rem 0.875rem" }}>
-                    <div class="ba-flex ba-items-center ba-gap-3">
+                    <a
+                        href={getLocalizedRouteHref("/")}
+                        class="ba-flex ba-items-center ba-gap-3"
+                        style={{ color: "inherit", "text-decoration": "none" }}
+                        onClick={() => setIsMenuOpen(false)}
+                    >
                         <img
                             src="/icon-32.png"
                             alt="BlossomsArchive Tools Logo"
@@ -393,7 +398,7 @@ export default function Layout(props: LayoutProps) {
                         <span class="ba-font-black" style={{ "white-space": "nowrap" }}>
                             BA Tools
                         </span>
-                    </div>
+                    </a>
                     <button
                         type="button"
                         class="ba-btn ba-btn--ghost ba-btn--xs ba-btn--square ba-only-desktop"

@@ -304,4 +304,20 @@ describe("Layout Component", () => {
         const qrLink = screen.getByRole("link", { name: "QRコード生成" });
         expect(qrLink.querySelector("svg")).not.toBeNull();
     });
+
+    it("サイドバーのサイト名（BA Tools）リンクがトップページ（/）へ遷移するhrefを持つこと", () => {
+        const HomeLinkRouter = createRouter({
+            history: memoryHistory(),
+            routes: [{ path: "/calculator", component: () => <div>電卓テスト</div> }],
+        });
+
+        render(() => (
+            <HomeLinkRouter>
+                {(props) => <Layout>{props.children}</Layout>}
+            </HomeLinkRouter>
+        ));
+
+        const brandLink = screen.getByRole("link", { name: /BA Tools/i });
+        expect(brandLink).toHaveAttribute("href", "/");
+    });
 });
