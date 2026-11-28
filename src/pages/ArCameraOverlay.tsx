@@ -220,13 +220,12 @@ export default function ArCameraOverlay() {
         setGyroStatus("");
     };
 
-    const toggleGyro = async () => {
-        if (gyroEnabled()) {
-            disableGyro();
-            return;
-        }
+    const enableGyro = async (fromUserGesture = false) => {
+        if (gyroEnabled()) return;
         if (typeof window === "undefined" || typeof DeviceOrientationEvent === "undefined") {
-            setGyroStatus("この端末・ブラウザはジャイロセンサーに対応していません。");
+            if (fromUserGesture) {
+                setGyroStatus("この端末・ブラウザはジャイロセンサーに対応していません。");
+            }
             return;
         }
         try {
@@ -234,6 +233,10 @@ export default function ArCameraOverlay() {
                 requestPermission?: () => Promise<"granted" | "denied">;
             };
             if (typeof devOrientAny.requestPermission === "function") {
+                if (!fromUserGesture) {
+                    setGyroStatus("空間アンカーを利用するには「ジャイロON」または「カメラを起動」をタップしてください。");
+                    return;
+                }
                 const permission = await devOrientAny.requestPermission();
                 if (permission !== "granted") {
                     setGyroStatus("センサーの利用が許可されませんでした。");
@@ -244,10 +247,20 @@ export default function ArCameraOverlay() {
             setCurrentGyro(null);
             window.addEventListener("deviceorientation", handleDeviceOrientation, { passive: true });
             setGyroEnabled(true);
-            setGyroStatus("空間アンカー有効（端末を動かすと追従します）");
+            setGyroStatus("空間アンカー有効（端末を動かすと空間に固定されます）");
         } catch {
-            setGyroStatus("ジャイロセンサーの起動に失敗しました。");
+            if (fromUserGesture) {
+                setGyroStatus("ジャイロセンサーの起動に失敗しました。");
+            }
         }
+    };
+
+    const toggleGyro = async () => {
+        if (gyroEnabled()) {
+            disableGyro();
+            return;
+        }
+        await enableGyro(true);
     };
 
     const resetGyroAnchor = () => {
@@ -262,6 +275,8 @@ export default function ArCameraOverlay() {
         setMode(nextMode);
         if (nextMode === "fixed" && gyroEnabled()) {
             disableGyro();
+        } else if (nextMode === "ar" && !gyroEnabled()) {
+            void enableGyro(true);
         }
     };
 
@@ -409,6 +424,9 @@ export default function ArCameraOverlay() {
                 await videoRef.play().catch(() => {});
             }
             setIsCameraActive(true);
+            if (mode() === "ar" && !gyroEnabled()) {
+                void enableGyro(true);
+            }
         } catch (err: unknown) {
             stopCamera(true);
             const errObj = err as { name?: string; message?: string };
@@ -934,6 +952,9 @@ export default function ArCameraOverlay() {
         }
         if (typeof window !== "undefined") {
             window.addEventListener("pageshow", handleVisibilityOrPageShow);
+        }
+        if (mode() === "ar") {
+            void enableGyro(false);
         }
         startRenderLoop();
 

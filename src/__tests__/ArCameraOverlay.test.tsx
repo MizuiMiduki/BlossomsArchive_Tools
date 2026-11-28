@@ -189,4 +189,25 @@ describe("ArCameraOverlay Page", () => {
         fireEvent(document, new Event("visibilitychange"));
         await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
     });
+
+    it("AR空間モードの初期状態でジャイロ空間アンカーが自動で有効化され、自由固定モード切替で解除されること", async () => {
+        render(() => <ArCameraOverlay />);
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
+
+        await vi.waitFor(() => {
+            expect(screen.getByRole("button", { name: "ジャイロON" })).toBeInTheDocument();
+        });
+
+        // 自由固定モードに切り替えるとジャイロが無効化され、AR空間モードに戻すと再びONになること
+        fireEvent.click(screen.getByRole("button", { name: /自由固定モード/ }));
+        expect(screen.queryByRole("button", { name: "ジャイロON" })).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: /AR空間モード/ }));
+        await vi.waitFor(() => {
+            expect(screen.getByRole("button", { name: "ジャイロON" })).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: "ジャイロON" }));
+        expect(screen.getByRole("button", { name: "ジャイロOFF" })).toBeInTheDocument();
+    });
 });
