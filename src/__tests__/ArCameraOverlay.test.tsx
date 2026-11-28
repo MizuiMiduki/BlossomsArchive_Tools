@@ -245,4 +245,14 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.click(screen.getByRole("button", { name: "サイズを合わせる" }));
         expect(Number(scaleSlider.value)).toBe(scaledFar);
     });
+
+    it("AR空間トラッキングの映像追従トグル(映像追従ON/OFF)を切り替えられること", () => {
+        render(() => <ArCameraOverlay />);
+        fireEvent.click(screen.getByRole("button", { name: "影・配置調整" }));
+
+        const trackingBtn = screen.getByRole("button", { name: "映像追従ON" });
+        expect(trackingBtn).toBeInTheDocument();
+        fireEvent.click(trackingBtn);
+        expect(screen.getByRole("button", { name: "映像追従OFF" })).toBeInTheDocument();
+    });
 });

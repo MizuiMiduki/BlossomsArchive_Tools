@@ -556,3 +556,202 @@ export function calculateScaleForCharacterHeight(params: CharacterHeightScalePar
     const rawScale = screenHeightRatio / (baseRatio * opaqueRatio);
     return Math.round(clampFinite(rawScale, 0.1, 4.0, 0.65) * 100) / 100;
 }
+
+/**
+ * 正規化深度マップ（0=奥 .. 1=手前）の下半分（床領域）の奥行き勾配から
+ * カメラの見下ろし角度（18..72度）を推定する
+ */
+export function estimateGroundTiltFromDepthMap(
+    normalizedDepth: ArrayLike<number>,
+    width: number,
+    height: number,
+): number {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    if (normalizedDepth.length < safeW * safeH) return 34;
+
+    const midRowStart = Math.floor(safeH * 0.52);
+    const midRowEnd = Math.floor(safeH * 0.66);
+    const botRowStart = Math.floor(safeH * 0.80);
+    const botRowEnd = Math.floor(safeH * 0.94);
+
+    let midSum = 0;
+    let midCount = 0;
+    let botSum = 0;
+    let botCount = 0;
+
+    const colStart = Math.floor(safeW * 0.2);
+    const colEnd = Math.ceil(safeW * 0.8);
+
+    for (let y = midRowStart; y < midRowEnd; y++) {
+        for (let x = colStart; x < colEnd; x++) {
+            const v = normalizedDepth[y * safeW + x];
+            if (Number.isFinite(v)) {
+                midSum += v;
+                midCount++;
+            }
+        }
+    }
+    for (let y = botRowStart; y < botRowEnd; y++) {
+        for (let x = colStart; x < colEnd; x++) {
+            const v = normalizedDepth[y * safeW + x];
+            if (Number.isFinite(v)) {
+                botSum += v;
+                botCount++;
+            }
+        }
+    }
+
+    if (midCount === 0 || botCount === 0) return 34;
+    const midAvg = midSum / midCount;
+    const botAvg = botSum / botCount;
+    const gradient = clampFinite(botAvg - midAvg, -0.5, 0.8, 0.2);
+
+    // 勾配が急なほど見下ろし角が大きく、水平に近いほど小さい
+    const estimated = 22 + clampFinite(gradient, 0, 0.6, 0.2) * 75;
+    return Math.round(clampFinite(estimated, 18, 72, 34));
+}
+
+/**
+ * 足元位置の深度を基準に「床や机などの接地同一面」にだけ影を残すマスク RGBA を生成する
+ * （空や遠くの壁・段差の向こう側への影のはみ出しを抑制する）
+ */
+export function generateGroundShadowMaskPixels(
+    normalizedDepth: ArrayLike<number>,
+    width: number,
+    height: number,
+    footXRatio: number,
+    footYRatio: number,
+    depthTolerance = 0.22,
+): Uint8ClampedArray {
+    const safeW = Math.max(1, Math.floor(clampFinite(width, 1, 4096, 1)));
+    const safeH = Math.max(1, Math.floor(clampFinite(height, 1, 4096, 1)));
+    const total = safeW * safeH;
+    const out = new Uint8ClampedArray(total * 4);
+    if (normalizedDepth.length < total) return out;
+
+    const fx = Math.round(clampFinite(footXRatio, 0.05, 0.95, 0.5) * (safeW - 1));
+    const fy = Math.round(clampFinite(footYRatio, 0.05, 0.95, 0.78) * (safeH - 1));
+
+    // 足元周辺 3x3 の中央平均深度を取得
+    let refSum = 0;
+    let refCount = 0;
+    for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+            const sx = Math.min(safeW - 1, Math.max(0, fx + dx));
+            const sy = Math.min(safeH - 1, Math.max(0, fy + dy));
+            const v = normalizedDepth[sy * safeW + sx];
+            if (Number.isFinite(v)) {
+                refSum += v;
+                refCount++;
+            }
+        }
+    }
+    const footDepth = refCount > 0 ? refSum / refCount : 0.5;
+    const tol = clampFinite(depthTolerance, 0.05, 0.6, 0.22);
+
+    for (let i = 0; i < total; i++) {
+        const d = clampFinite(normalizedDepth[i], 0, 1, footDepth);
+        const diff = Math.abs(d - footDepth);
+        let alphaRatio = 0;
+        if (diff <= tol * 0.65) {
+            alphaRatio = 1;
+        } else if (diff < tol * 1.45) {
+            alphaRatio = 1 - (diff - tol * 0.65) / (tol * 0.8);
+        }
+        const alpha = Math.round(clampFinite(alphaRatio, 0, 1, 0) * 255);
+        const p = i * 4;
+        out[p] = 255;
+        out[p + 1] = 255;
+        out[p + 2] = 255;
+        out[p + 3] = alpha;
+    }
+    return out;
+}
+
+/**
+ * 縮小グレースケールフレーム間の2Dブロックマッチングにより、
+ * 背景の平行移動シフト (dx, dy in px) を高速に推定する（AR位置固定の補強用）
+ */
+export function estimateBackgroundOpticalShift(
+    prevGray: Uint8Array | Uint8ClampedArray,
+    currGray: Uint8Array | Uint8ClampedArray,
+    width: number,
+    height: number,
+    maxSearchPx = 6,
+): { dx: number; dy: number; confidence: number } {
+    const safeW = Math.max(8, Math.floor(clampFinite(width, 8, 512, 64)));
+    const safeH = Math.max(8, Math.floor(clampFinite(height, 8, 512, 36)));
+    const total = safeW * safeH;
+    if (prevGray.length < total || currGray.length < total) {
+        return { dx: 0, dy: 0, confidence: 0 };
+    }
+
+    const search = Math.max(1, Math.min(12, Math.floor(clampFinite(maxSearchPx, 1, 12, 6))));
+    const margin = search + 2;
+    if (safeW <= margin * 2 || safeH <= margin * 2) {
+        return { dx: 0, dy: 0, confidence: 0 };
+    }
+
+    // 背景のテクスチャ（コントラスト）が十分にあるか確認
+    let mean = 0;
+    let count = 0;
+    for (let y = margin; y < safeH - margin; y += 2) {
+        for (let x = margin; x < safeW - margin; x += 2) {
+            mean += prevGray[y * safeW + x];
+            count++;
+        }
+    }
+    mean /= Math.max(1, count);
+
+    let variance = 0;
+    for (let y = margin; y < safeH - margin; y += 2) {
+        for (let x = margin; x < safeW - margin; x += 2) {
+            const diff = prevGray[y * safeW + x] - mean;
+            variance += diff * diff;
+        }
+    }
+    variance /= Math.max(1, count);
+    if (variance < 18) {
+        // 無地で特徴がない背景は誤トラッキングを防ぐため 0 を返す
+        return { dx: 0, dy: 0, confidence: 0 };
+    }
+
+    let bestDx = 0;
+    let bestDy = 0;
+    let bestSad = Infinity;
+    let zeroSad = 0;
+
+    for (let dy = -search; dy <= search; dy++) {
+        for (let dx = -search; dx <= search; dx++) {
+            let sad = 0;
+            let samples = 0;
+            for (let y = margin; y < safeH - margin; y += 2) {
+                const cy = y + dy;
+                for (let x = margin; x < safeW - margin; x += 2) {
+                    const cx = x + dx;
+                    sad += Math.abs(currGray[cy * safeW + cx] - prevGray[y * safeW + x]);
+                    samples++;
+                }
+            }
+            const avgSad = sad / Math.max(1, samples);
+            if (dx === 0 && dy === 0) zeroSad = avgSad;
+            if (avgSad < bestSad) {
+                bestSad = avgSad;
+                bestDx = dx;
+                bestDy = dy;
+            }
+        }
+    }
+
+    const improvement = zeroSad > 0 ? clampFinite((zeroSad - bestSad) / zeroSad, 0, 1, 0) : 0;
+    if (bestSad > 32 || (bestDx === 0 && bestDy === 0)) {
+        return { dx: 0, dy: 0, confidence: improvement };
+    }
+
+    return {
+        dx: bestDx,
+        dy: bestDy,
+        confidence: clampFinite(improvement * 2, 0.1, 1, 0.5),
+    };
+}

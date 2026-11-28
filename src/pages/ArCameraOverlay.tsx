@@ -25,6 +25,9 @@ import {
     isSupportedImageFile,
     generateDepthOcclusionMaskPixels,
     calculateScaleForCharacterHeight,
+    estimateGroundTiltFromDepthMap,
+    generateGroundShadowMaskPixels,
+    estimateBackgroundOpticalShift,
 } from "../utils/arCameraOverlay";
 
 interface OverlayImageAsset {
@@ -100,6 +103,14 @@ export default function ArCameraOverlay() {
     const [aiDepthStatus, setAiDepthStatus] = createSignal<string>("");
     const [characterHeightCm, setCharacterHeightCm] = createSignal<number>(160);
     const [cameraDistanceM, setCameraDistanceM] = createSignal<number>(2.5);
+    const [visualTrackingEnabled, setVisualTrackingEnabled] = createSignal<boolean>(true);
+    const [hasShadowCatcher, setHasShadowCatcher] = createSignal<boolean>(false);
+    let shadowCatcherCanvas: HTMLCanvasElement | undefined;
+    let shadowLayerCanvas: HTMLCanvasElement | undefined;
+    let trackCanvas: HTMLCanvasElement | undefined;
+    let prevGrayFrame: Uint8Array | null = null;
+    let visualOffsetRatioX = 0;
+    let visualOffsetRatioY = 0;
     const OCCLUSION_MASK_SIZE = 512;
     let occlusionCanvas: HTMLCanvasElement | undefined;
     let characterLayerCanvas: HTMLCanvasElement | undefined;
@@ -178,6 +189,9 @@ export default function ArCameraOverlay() {
         if (videoRef) {
             videoRef.srcObject = null;
         }
+        prevGrayFrame = null;
+        visualOffsetRatioX = 0;
+        visualOffsetRatioY = 0;
         setIsCameraActive(false);
     };
 
@@ -278,8 +292,11 @@ export default function ArCameraOverlay() {
         const cur = currentGyro();
         if (cur) {
             setBaseGyro({ ...cur });
-            setGyroStatus("空間アンカーの基準位置をリセットしました");
         }
+        visualOffsetRatioX = 0;
+        visualOffsetRatioY = 0;
+        prevGrayFrame = null;
+        setGyroStatus("空間アンカーの基準位置をリセットしました");
     };
 
     const handleModeChange = (nextMode: OverlayMode) => {
@@ -519,6 +536,58 @@ export default function ArCameraOverlay() {
             }
             ctx.drawImage(videoRef, drawX, drawY, drawW, drawH);
             ctx.restore();
+
+            // 背景ビジュアルトラッキング（特徴点移動量推定で平行移動ズレを抑制）
+            if (!isExport && mode() === "ar" && visualTrackingEnabled() && !isDragging) {
+                const trackW = 64;
+                const trackH = 36;
+                if (!trackCanvas) {
+                    trackCanvas = document.createElement("canvas");
+                    trackCanvas.width = trackW;
+                    trackCanvas.height = trackH;
+                }
+                const tctx = trackCanvas.getContext("2d", { willReadFrequently: true });
+                if (tctx) {
+                    tctx.drawImage(ctx.canvas, 0, 0, trackW, trackH);
+                    try {
+                        const frameData = tctx.getImageData(0, 0, trackW, trackH).data;
+                        const currGray = new Uint8Array(trackW * trackH);
+                        for (let i = 0; i < trackW * trackH; i++) {
+                            const p = i * 4;
+                            currGray[i] = Math.round(
+                                0.299 * frameData[p] + 0.587 * frameData[p + 1] + 0.114 * frameData[p + 2],
+                            );
+                        }
+                        if (prevGrayFrame) {
+                            const shift = estimateBackgroundOpticalShift(
+                                prevGrayFrame,
+                                currGray,
+                                trackW,
+                                trackH,
+                                5,
+                            );
+                            if (shift.confidence > 0.15) {
+                                const blend = gyroEnabled() ? 0.35 : 0.85;
+                                visualOffsetRatioX = clampFinite(
+                                    visualOffsetRatioX + (shift.dx / trackW) * blend,
+                                    -0.45,
+                                    0.45,
+                                    0,
+                                );
+                                visualOffsetRatioY = clampFinite(
+                                    visualOffsetRatioY + (shift.dy / trackH) * blend,
+                                    -0.45,
+                                    0.45,
+                                    0,
+                                );
+                            }
+                        }
+                        prevGrayFrame = currGray;
+                    } catch {
+                        // トラッキングスキップ
+                    }
+                }
+            }
         } else if (bg) {
             const coverRatio = Math.max(width / bg.width, height / bg.height);
             const drawW = bg.width * coverRatio;
@@ -624,8 +693,8 @@ export default function ArCameraOverlay() {
             gyroTilt = parallax.tiltSkewDeg;
         }
 
-        const footX = baseX + gyroX;
-        const footY = baseY + gyroY;
+        const footX = baseX + gyroX + (mode() === "ar" && visualTrackingEnabled() ? visualOffsetRatioX * width : 0);
+        const footY = baseY + gyroY + (mode() === "ar" && visualTrackingEnabled() ? visualOffsetRatioY * height : 0);
 
         const footAnchorXRatio = flipHorizontal()
             ? 1 - asset.alphaBounds.footCenterXRatio
@@ -647,42 +716,69 @@ export default function ArCameraOverlay() {
 
         const charOpacity = clampFinite(opacity(), 0, 1, 1);
 
-        // 接地コンタクトシャドウ
-        ctx.save();
-        ctx.translate(footX, footY);
-        const contactGrad = ctx.createRadialGradient(
-            0,
-            0,
-            shadow.contactWidthPx * 0.08,
-            0,
-            0,
-            shadow.contactWidthPx * 0.52,
-        );
-        contactGrad.addColorStop(0, `rgba(10, 14, 24, ${shadow.contactOpacity * charOpacity})`);
-        contactGrad.addColorStop(0.55, `rgba(10, 14, 24, ${shadow.contactOpacity * 0.45 * charOpacity})`);
-        contactGrad.addColorStop(1, "rgba(10, 14, 24, 0)");
-        ctx.scale(1, shadow.contactHeightPx / Math.max(1, shadow.contactWidthPx));
-        ctx.fillStyle = contactGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, shadow.contactWidthPx * 0.52, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        const drawShadows = (sCtx: CanvasRenderingContext2D) => {
+            // 接地コンタクトシャドウ
+            sCtx.save();
+            sCtx.translate(footX, footY);
+            const contactGrad = sCtx.createRadialGradient(
+                0,
+                0,
+                shadow.contactWidthPx * 0.08,
+                0,
+                0,
+                shadow.contactWidthPx * 0.52,
+            );
+            contactGrad.addColorStop(0, `rgba(10, 14, 24, ${shadow.contactOpacity * charOpacity})`);
+            contactGrad.addColorStop(0.55, `rgba(10, 14, 24, ${shadow.contactOpacity * 0.45 * charOpacity})`);
+            contactGrad.addColorStop(1, "rgba(10, 14, 24, 0)");
+            sCtx.scale(1, shadow.contactHeightPx / Math.max(1, shadow.contactWidthPx));
+            sCtx.fillStyle = contactGrad;
+            sCtx.beginPath();
+            sCtx.arc(0, 0, shadow.contactWidthPx * 0.52, 0, Math.PI * 2);
+            sCtx.fill();
+            sCtx.restore();
 
-        // 投影シルエット影
-        ctx.save();
-        ctx.translate(footX + shadow.offsetX, footY + shadow.offsetY);
-        ctx.transform(1, 0, shadow.skewXRatio, shadow.scaleYRatio, 0, 0);
-        if (flipHorizontal()) {
-            ctx.scale(-1, 1);
+            // 投影シルエット影
+            sCtx.save();
+            sCtx.translate(footX + shadow.offsetX, footY + shadow.offsetY);
+            sCtx.transform(1, 0, shadow.skewXRatio, shadow.scaleYRatio, 0, 0);
+            if (flipHorizontal()) {
+                sCtx.scale(-1, 1);
+            }
+            sCtx.globalAlpha = shadow.opacity * charOpacity;
+            if ("filter" in sCtx && shadow.blurPx > 0.4) {
+                sCtx.filter = `blur(${shadow.blurPx.toFixed(1)}px)`;
+            }
+            const silLeft = -drawW * asset.alphaBounds.footCenterXRatio;
+            const silTop = -drawH * footAnchorYRatio;
+            sCtx.drawImage(asset.silhouetteCanvas, silLeft, silTop, drawW, drawH);
+            sCtx.restore();
+        };
+
+        // 深度AIが解析済みの場合は床面・机面以外に影がはみ出さないようシャドウキャッチャーマスクを適用
+        if (hasShadowCatcher() && shadowCatcherCanvas && width > 0 && height > 0) {
+            if (!shadowLayerCanvas) {
+                shadowLayerCanvas = document.createElement("canvas");
+            }
+            if (shadowLayerCanvas.width !== width || shadowLayerCanvas.height !== height) {
+                shadowLayerCanvas.width = width;
+                shadowLayerCanvas.height = height;
+            }
+            const slCtx = shadowLayerCanvas.getContext("2d");
+            if (slCtx) {
+                slCtx.clearRect(0, 0, width, height);
+                drawShadows(slCtx);
+                slCtx.save();
+                slCtx.globalCompositeOperation = "destination-in";
+                slCtx.drawImage(shadowCatcherCanvas, 0, 0, width, height);
+                slCtx.restore();
+                ctx.drawImage(shadowLayerCanvas, 0, 0, width, height);
+            } else {
+                drawShadows(ctx);
+            }
+        } else {
+            drawShadows(ctx);
         }
-        ctx.globalAlpha = shadow.opacity * charOpacity;
-        if ("filter" in ctx && shadow.blurPx > 0.4) {
-            ctx.filter = `blur(${shadow.blurPx.toFixed(1)}px)`;
-        }
-        const silLeft = -drawW * asset.alphaBounds.footCenterXRatio;
-        const silTop = -drawH * footAnchorYRatio;
-        ctx.drawImage(asset.silhouetteCanvas, silLeft, silTop, drawW, drawH);
-        ctx.restore();
 
         // キャラクター本体
         ctx.save();
@@ -830,6 +926,39 @@ export default function ArCameraOverlay() {
         setHasOcclusion(true);
     };
 
+    const updateGroundShadowCatcher = (
+        depthMap: { data: Float32Array; width: number; height: number },
+    ) => {
+        if (!shadowCatcherCanvas) {
+            shadowCatcherCanvas = document.createElement("canvas");
+            shadowCatcherCanvas.width = OCCLUSION_MASK_SIZE;
+            shadowCatcherCanvas.height = OCCLUSION_MASK_SIZE;
+        }
+        const sctx = shadowCatcherCanvas.getContext("2d");
+        if (!sctx) return;
+
+        const pixels = generateGroundShadowMaskPixels(
+            depthMap.data,
+            depthMap.width,
+            depthMap.height,
+            clampFinite(posXPercent() / 100, 0.05, 0.95, 0.5),
+            clampFinite(posYPercent() / 100, 0.05, 0.95, 0.78),
+        );
+        const tmpCanvas = document.createElement("canvas");
+        tmpCanvas.width = depthMap.width;
+        tmpCanvas.height = depthMap.height;
+        const tctx = tmpCanvas.getContext("2d");
+        if (!tctx) return;
+        tctx.putImageData(
+            new ImageData(new Uint8ClampedArray(pixels), depthMap.width, depthMap.height),
+            0,
+            0,
+        );
+        sctx.clearRect(0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
+        sctx.drawImage(tmpCanvas, 0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
+        setHasShadowCatcher(true);
+    };
+
     const runAiDepthOcclusion = async () => {
         if (aiDepthBusy()) return;
         const activeCam = isCameraActive() && videoRef && videoRef.readyState >= 2;
@@ -863,8 +992,15 @@ export default function ArCameraOverlay() {
             };
             setAiDepthMap(mapData);
             applyDepthMaskToOcclusion(mapData, aiDepthThreshold());
+            const estimatedTilt = estimateGroundTiltFromDepthMap(
+                estimated.data,
+                estimated.width,
+                estimated.height,
+            );
+            setGroundTiltDeg(estimatedTilt);
+            updateGroundShadowCatcher(mapData);
             setAiDepthStatus(
-                `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で奥行き解析完了・スライダーで前後調整できます`,
+                `端末内(${estimated.backend === "webgpu" ? "WebGPU" : "WASM"})で奥行き・床角(${estimatedTilt}°)・接地影を最適化しました`,
             );
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "解析に失敗しました";
@@ -1857,7 +1993,14 @@ export default function ArCameraOverlay() {
                                                 >
                                                     {gyroEnabled() ? "ジャイロON" : "ジャイロOFF"}
                                                 </button>
-                                                <Show when={gyroEnabled()}>
+                                                <button
+                                                    type="button"
+                                                    class={`ba-btn ba-btn--xs ${visualTrackingEnabled() ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                                    onClick={() => setVisualTrackingEnabled((v) => !v)}
+                                                >
+                                                    {visualTrackingEnabled() ? "映像追従ON" : "映像追従OFF"}
+                                                </button>
+                                                <Show when={gyroEnabled() || visualTrackingEnabled()}>
                                                     <button
                                                         type="button"
                                                         class="ba-btn ba-btn--outline ba-btn--xs"

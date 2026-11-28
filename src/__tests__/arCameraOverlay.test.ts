@@ -12,6 +12,9 @@ import {
     normalizeDepthMap,
     generateDepthOcclusionMaskPixels,
     calculateScaleForCharacterHeight,
+    estimateGroundTiltFromDepthMap,
+    generateGroundShadowMaskPixels,
+    estimateBackgroundOpticalShift,
 } from "../utils/arCameraOverlay";
 
 describe("arCameraOverlay utilities", () => {
@@ -195,5 +198,54 @@ describe("arCameraOverlay utilities", () => {
         expect(Number.isFinite(sInvalid)).toBe(true);
         expect(sInvalid).toBeGreaterThanOrEqual(0.1);
         expect(sInvalid).toBeLessThanOrEqual(4.0);
+    });
+
+    it("estimateGroundTiltFromDepthMap: estimates steeper tilt for stronger foreground-to-midground gradient", () => {
+        const w = 10;
+        const h = 20;
+        const flat = new Float32Array(w * h).fill(0.5);
+        const steep = new Float32Array(w * h);
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                steep[y * w + x] = y / (h - 1);
+            }
+        }
+        expect(estimateGroundTiltFromDepthMap(steep, w, h)).toBeGreaterThan(
+            estimateGroundTiltFromDepthMap(flat, w, h),
+        );
+    });
+
+    it("generateGroundShadowMaskPixels: preserves shadow near foot depth and suppresses distant background", () => {
+        // 4x4: 上2行(奥) = 0.05、下2行(足元の床) = 0.75
+        const depth = new Float32Array([
+            0.05, 0.05, 0.05, 0.05,
+            0.05, 0.05, 0.05, 0.05,
+            0.75, 0.75, 0.75, 0.75,
+            0.75, 0.75, 0.75, 0.75,
+        ]);
+        const mask = generateGroundShadowMaskPixels(depth, 4, 4, 0.5, 0.9, 0.2);
+        expect(mask[3]).toBe(0); // 上段(空/遠景壁)は影を消す
+        expect(mask[15 * 4 + 3]).toBe(255); // 下段(足元平面)は影を残す
+    });
+
+    it("estimateBackgroundOpticalShift: detects horizontal/vertical camera translation on textured background", () => {
+        const w = 32;
+        const h = 24;
+        const prev = new Uint8Array(w * h);
+        const curr = new Uint8Array(w * h);
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                prev[y * w + x] = ((x * 29 + y * 17) % 200) + 20;
+            }
+        }
+        // 背景が右へ3px、下へ2px移動したフレームを作成
+        for (let y = 2; y < h; y++) {
+            for (let x = 3; x < w; x++) {
+                curr[y * w + x] = prev[(y - 2) * w + (x - 3)];
+            }
+        }
+        const shift = estimateBackgroundOpticalShift(prev, curr, w, h, 6);
+        expect(shift.dx).toBe(3);
+        expect(shift.dy).toBe(2);
     });
 });
