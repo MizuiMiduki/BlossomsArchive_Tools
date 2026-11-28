@@ -83,6 +83,20 @@ export default function ArCameraOverlay() {
     const [posXPercent, setPosXPercent] = createSignal<number>(50);
     const [posYPercent, setPosYPercent] = createSignal<number>(78);
     const [scale, setScale] = createSignal<number>(0.65);
+
+    // 遮蔽（物の奥に立つ表現）用: 手前の物体をペイントして立ち絵を隠す
+    const [occlusionPaintMode, setOcclusionPaintMode] = createSignal<boolean>(false);
+    const [occlusionEraser, setOcclusionEraser] = createSignal<boolean>(false);
+    const [occlusionBrushPx, setOcclusionBrushPx] = createSignal<number>(48);
+    const [hasOcclusion, setHasOcclusion] = createSignal<boolean>(false);
+    const OCCLUSION_MASK_SIZE = 512;
+    let occlusionCanvas: HTMLCanvasElement | undefined;
+    let characterLayerCanvas: HTMLCanvasElement | undefined;
+    let isPaintingOcclusion = false;
+    let lastPaintPoint: { nx: number; ny: number } | null = null;
+
+    // バックグラウンド復帰時にカメラを自動再開するためのフラグ
+    let shouldResumeCamera = false;
     const [rotationDeg, setRotationDeg] = createSignal<number>(0);
     const [opacity, setOpacity] = createSignal<number>(1.0);
     const [flipHorizontal, setFlipHorizontal] = createSignal<boolean>(false);
@@ -140,7 +154,10 @@ export default function ArCameraOverlay() {
         }),
     );
 
-    const stopCamera = () => {
+    const stopCamera = (resetResume = true) => {
+        if (resetResume) {
+            shouldResumeCamera = false;
+        }
         if (mediaStream) {
             for (const track of mediaStream.getTracks()) {
                 track.stop();
@@ -355,13 +372,14 @@ export default function ArCameraOverlay() {
     const startCamera = async (facingOverride?: CameraFacing) => {
         const targetFacing = facingOverride ?? cameraFacing();
         setCameraError(null);
-        stopCamera();
+        stopCamera(false);
 
         if (
             typeof navigator === "undefined" ||
             !navigator.mediaDevices ||
             !navigator.mediaDevices.getUserMedia
         ) {
+            shouldResumeCamera = false;
             setCameraError(
                 "お使いのブラウザまたは端末はカメラアクセスAPI（getUserMedia）に対応していません。背景画像を選択してテストできます。",
             );
@@ -378,19 +396,45 @@ export default function ArCameraOverlay() {
                 audio: false,
             });
             mediaStream = stream;
+            shouldResumeCamera = true;
+            for (const track of stream.getVideoTracks()) {
+                track.addEventListener?.("ended", () => {
+                    if (mediaStream === stream) {
+                        setIsCameraActive(false);
+                    }
+                });
+            }
             if (videoRef) {
                 videoRef.srcObject = stream;
                 await videoRef.play().catch(() => {});
             }
             setIsCameraActive(true);
         } catch (err: unknown) {
-            stopCamera();
+            stopCamera(true);
             const errObj = err as { name?: string; message?: string };
             if (errObj?.name === "NotAllowedError" || errObj?.name === "PermissionDeniedError") {
                 setCameraError("カメラへのアクセス権限が拒否されました。ブラウザの設定でカメラを許可してください。");
             } else {
                 setCameraError(`カメラの起動に失敗しました: ${errObj?.message || "不明なエラー"}`);
             }
+        }
+    };
+
+    const handleVisibilityOrPageShow = () => {
+        if (typeof document === "undefined" || document.visibilityState !== "visible") return;
+        if (!shouldResumeCamera) return;
+        const hasLiveTrack =
+            mediaStream !== null &&
+            mediaStream.getVideoTracks().some((track) => track.readyState === "live");
+        if (hasLiveTrack && videoRef) {
+            if (videoRef.paused) {
+                void videoRef.play().catch(() => {
+                    void startCamera();
+                });
+            }
+            setIsCameraActive(true);
+        } else {
+            void startCamera();
         }
     };
 
@@ -505,10 +549,22 @@ export default function ArCameraOverlay() {
             ctx.restore();
         }
 
+        drawCharacterWithOcclusion(ctx, width, height);
+
+        // 遮蔽ペイント中は塗った範囲を半透明の赤で可視化（保存画像には含めない）
+        if (!isExport && occlusionPaintMode() && hasOcclusion() && occlusionCanvas) {
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+            ctx.drawImage(occlusionCanvas, 0, 0, width, height);
+            ctx.restore();
+        }
+    };
+
+    const drawCharacter = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
         const asset = overlayAsset();
         if (!asset) return;
 
-        const baseTargetHeight = height * 0.62 * clampFinite(scale(), 0.1, 3.0, 0.65);
+        const baseTargetHeight = height * 0.62 * clampFinite(scale(), 0.1, 4.0, 0.65);
         const aspect = asset.width / Math.max(1, asset.height);
         const drawH = baseTargetHeight;
         const drawW = drawH * aspect;
@@ -627,6 +683,82 @@ export default function ArCameraOverlay() {
         ctx.restore();
     };
 
+    /** 遮蔽マスクを考慮して立ち絵（影含む）を描画する。マスクがなければ直接描画 */
+    const drawCharacterWithOcclusion = (
+        ctx: CanvasRenderingContext2D,
+        width: number,
+        height: number,
+    ) => {
+        if (!hasOcclusion() || !occlusionCanvas || width <= 0 || height <= 0) {
+            drawCharacter(ctx, width, height);
+            return;
+        }
+        if (!characterLayerCanvas) {
+            characterLayerCanvas = document.createElement("canvas");
+        }
+        if (characterLayerCanvas.width !== width || characterLayerCanvas.height !== height) {
+            characterLayerCanvas.width = width;
+            characterLayerCanvas.height = height;
+        }
+        const layerCtx = characterLayerCanvas.getContext("2d");
+        if (!layerCtx) {
+            drawCharacter(ctx, width, height);
+            return;
+        }
+        layerCtx.clearRect(0, 0, width, height);
+        drawCharacter(layerCtx, width, height);
+        layerCtx.save();
+        layerCtx.globalCompositeOperation = "destination-out";
+        layerCtx.drawImage(occlusionCanvas, 0, 0, width, height);
+        layerCtx.restore();
+        ctx.drawImage(characterLayerCanvas, 0, 0, width, height);
+    };
+
+    const ensureOcclusionCanvas = (): CanvasRenderingContext2D | null => {
+        if (!occlusionCanvas) {
+            occlusionCanvas = document.createElement("canvas");
+            occlusionCanvas.width = OCCLUSION_MASK_SIZE;
+            occlusionCanvas.height = OCCLUSION_MASK_SIZE;
+        }
+        return occlusionCanvas.getContext("2d");
+    };
+
+    const stampOcclusion = (nx: number, ny: number, rectW: number, rectH: number) => {
+        const mctx = ensureOcclusionCanvas();
+        if (!mctx || rectW <= 0 || rectH <= 0) return;
+        const brush = clampFinite(occlusionBrushPx(), 8, 160, 48);
+        const rx = Math.max(1, (brush / rectW) * OCCLUSION_MASK_SIZE);
+        const ry = Math.max(1, (brush / rectH) * OCCLUSION_MASK_SIZE);
+        const erase = occlusionEraser();
+        mctx.save();
+        mctx.globalCompositeOperation = erase ? "destination-out" : "source-over";
+        mctx.fillStyle = "rgba(255, 0, 0, 1)";
+
+        const from = lastPaintPoint ?? { nx, ny };
+        const dx = (nx - from.nx) * OCCLUSION_MASK_SIZE;
+        const dy = (ny - from.ny) * OCCLUSION_MASK_SIZE;
+        const dist = Math.hypot(dx, dy);
+        const steps = Math.max(1, Math.ceil(dist / Math.max(1, Math.min(rx, ry) * 0.5)));
+        for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            const px = (from.nx + (nx - from.nx) * t) * OCCLUSION_MASK_SIZE;
+            const py = (from.ny + (ny - from.ny) * t) * OCCLUSION_MASK_SIZE;
+            mctx.beginPath();
+            mctx.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2);
+            mctx.fill();
+        }
+        mctx.restore();
+        lastPaintPoint = { nx, ny };
+        if (!erase) setHasOcclusion(true);
+    };
+
+    const clearOcclusion = () => {
+        if (occlusionCanvas) {
+            occlusionCanvas.getContext("2d")?.clearRect(0, 0, OCCLUSION_MASK_SIZE, OCCLUSION_MASK_SIZE);
+        }
+        setHasOcclusion(false);
+    };
+
     const startRenderLoop = () => {
         if (rafId !== null) cancelAnimationFrame(rafId);
         const render = () => {
@@ -705,8 +837,25 @@ export default function ArCameraOverlay() {
         a.click();
     };
 
+    const paintAtPointer = (e: PointerEvent) => {
+        if (!previewCanvasRef) return;
+        const rect = previewCanvasRef.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return;
+        const nx = clampFinite((e.clientX - rect.left) / rect.width, 0, 1, 0.5);
+        const ny = clampFinite((e.clientY - rect.top) / rect.height, 0, 1, 0.5);
+        stampOcclusion(nx, ny, rect.width, rect.height);
+    };
+
     const handlePointerDown = (e: PointerEvent) => {
-        if (isPositionLocked() || !previewCanvasRef) return;
+        if (!previewCanvasRef) return;
+        if (occlusionPaintMode()) {
+            (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+            isPaintingOcclusion = true;
+            lastPaintPoint = null;
+            paintAtPointer(e);
+            return;
+        }
+        if (isPositionLocked()) return;
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
 
@@ -725,6 +874,10 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerMove = (e: PointerEvent) => {
+        if (isPaintingOcclusion && occlusionPaintMode()) {
+            paintAtPointer(e);
+            return;
+        }
         if (isPositionLocked() || !previewCanvasRef) return;
         if (!activePointers.has(e.pointerId)) return;
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -748,6 +901,12 @@ export default function ArCameraOverlay() {
     };
 
     const handlePointerUp = (e: PointerEvent) => {
+        if (isPaintingOcclusion) {
+            isPaintingOcclusion = false;
+            lastPaintPoint = null;
+            (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+            return;
+        }
         activePointers.delete(e.pointerId);
         if (activePointers.size < 2) {
             pinchStartDistance = 0;
@@ -771,6 +930,10 @@ export default function ArCameraOverlay() {
         }
         if (typeof document !== "undefined") {
             document.addEventListener("fullscreenchange", handleFullscreenChange);
+            document.addEventListener("visibilitychange", handleVisibilityOrPageShow);
+        }
+        if (typeof window !== "undefined") {
+            window.addEventListener("pageshow", handleVisibilityOrPageShow);
         }
         startRenderLoop();
 
@@ -781,6 +944,10 @@ export default function ArCameraOverlay() {
             }
             if (typeof document !== "undefined") {
                 document.removeEventListener("fullscreenchange", handleFullscreenChange);
+                document.removeEventListener("visibilitychange", handleVisibilityOrPageShow);
+            }
+            if (typeof window !== "undefined") {
+                window.removeEventListener("pageshow", handleVisibilityOrPageShow);
             }
             stopCamera();
             disableGyro();
@@ -877,7 +1044,11 @@ export default function ArCameraOverlay() {
                             height: "100%",
                             display: "block",
                             "touch-action": "none",
-                            cursor: isPositionLocked() ? "default" : "grab",
+                            cursor: occlusionPaintMode()
+                                ? "crosshair"
+                                : isPositionLocked()
+                                  ? "default"
+                                  : "grab",
                         }}
                         aria-label="カメラと透過画像の合成プレビューキャンバス"
                         onPointerDown={handlePointerDown}
@@ -934,7 +1105,7 @@ export default function ArCameraOverlay() {
                                 <button
                                     type="button"
                                     class="ba-btn ba-btn--danger ba-btn--sm"
-                                    onClick={stopCamera}
+                                    onClick={() => stopCamera()}
                                 >
                                     カメラを停止
                                 </button>
@@ -1071,7 +1242,73 @@ export default function ArCameraOverlay() {
                             "box-sizing": "border-box",
                         }}
                     >
-                        {/* 上段：画像選択・位置ロック・調整ボタン（狭い画面でも折り返して収まる） */}
+                        {/* 遮蔽ペイントツールバー（物の奥に立っている表現用） */}
+                        <Show when={occlusionPaintMode()}>
+                            <div
+                                role="region"
+                                aria-label="遮蔽マスクペイント操作"
+                                style={{
+                                    background: "rgba(15, 23, 42, 0.88)",
+                                    color: "#f8fafc",
+                                    padding: "0.45rem 0.65rem",
+                                    "border-radius": "10px",
+                                    display: "flex",
+                                    "flex-wrap": "wrap",
+                                    "align-items": "center",
+                                    "justify-content": "center",
+                                    gap: "0.4rem",
+                                    "font-size": "0.75rem",
+                                }}
+                            >
+                                <span>手前の物をなぞって隠す:</span>
+                                <button
+                                    type="button"
+                                    class={`ba-btn ba-btn--xs ${!occlusionEraser() ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                    onClick={() => setOcclusionEraser(false)}
+                                >
+                                    塗る
+                                </button>
+                                <button
+                                    type="button"
+                                    class={`ba-btn ba-btn--xs ${occlusionEraser() ? "ba-btn--warning" : "ba-btn--secondary"}`}
+                                    onClick={() => setOcclusionEraser(true)}
+                                >
+                                    消しゴム
+                                </button>
+                                <label class="ba-flex ba-items-center ba-gap-1">
+                                    <span>太さ</span>
+                                    <input
+                                        type="range"
+                                        min="12"
+                                        max="140"
+                                        step="4"
+                                        aria-label="遮蔽ブラシの太さ"
+                                        value={occlusionBrushPx()}
+                                        onInput={(e) =>
+                                            setOcclusionBrushPx(clampFinite(Number(e.currentTarget.value), 12, 140, 48))
+                                        }
+                                        style={{ width: "70px" }}
+                                    />
+                                </label>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--outline ba-btn--xs"
+                                    style={{ color: "#f8fafc", "border-color": "rgba(255,255,255,0.4)" }}
+                                    onClick={clearOcclusion}
+                                >
+                                    マスク消去
+                                </button>
+                                <button
+                                    type="button"
+                                    class="ba-btn ba-btn--success ba-btn--xs"
+                                    onClick={() => setOcclusionPaintMode(false)}
+                                >
+                                    完了
+                                </button>
+                            </div>
+                        </Show>
+
+                        {/* 上段：画像選択・位置ロック・遮蔽・調整ボタン（狭い画面でも折り返して収まる） */}
                         <div
                             style={{
                                 display: "flex",
@@ -1102,6 +1339,14 @@ export default function ArCameraOverlay() {
                                 onClick={() => bgInputRef?.click()}
                             >
                                 背景画像
+                            </button>
+                            <button
+                                type="button"
+                                class={`ba-btn ba-btn--xs ${occlusionPaintMode() ? "ba-btn--primary" : "ba-btn--secondary"}`}
+                                aria-pressed={occlusionPaintMode() ? "true" : "false"}
+                                onClick={() => setOcclusionPaintMode((v) => !v)}
+                            >
+                                {occlusionPaintMode() ? "奥に隠す(編集中)" : "奥に隠す"}
                             </button>
                             <button
                                 type="button"

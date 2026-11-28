@@ -141,4 +141,52 @@ describe("ArCameraOverlay Page", () => {
         fireEvent.input(scaleSlider, { target: { value: "3.5" } });
         expect(scaleSlider.value).toBe("3.5");
     });
+
+    it("物の奥に立たせる遮蔽マスク（奥に隠す）ペイントUIを操作できること", () => {
+        render(() => <ArCameraOverlay />);
+        const occlusionBtn = screen.getByRole("button", { name: "奥に隠す" });
+        fireEvent.click(occlusionBtn);
+
+        expect(screen.getByRole("region", { name: "遮蔽マスクペイント操作" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "塗る" })).toBeInTheDocument();
+        const eraserBtn = screen.getByRole("button", { name: "消しゴム" });
+        fireEvent.click(eraserBtn);
+
+        const brushSlider = screen.getByLabelText("遮蔽ブラシの太さ") as HTMLInputElement;
+        fireEvent.input(brushSlider, { target: { value: "80" } });
+        expect(brushSlider.value).toBe("80");
+
+        fireEvent.click(screen.getByRole("button", { name: "完了" }));
+        expect(screen.queryByRole("region", { name: "遮蔽マスクペイント操作" })).not.toBeInTheDocument();
+    });
+
+    it("バックグラウンドから復帰した際に起動中だったカメラが自動で再取得されること", async () => {
+        const trackStop = vi.fn();
+        const mockTrack = { readyState: "ended", stop: trackStop, addEventListener: vi.fn() };
+        const mockStream = {
+            getTracks: () => [mockTrack],
+            getVideoTracks: () => [mockTrack],
+        };
+        const getUserMedia = vi.fn().mockResolvedValue(mockStream);
+        Object.defineProperty(navigator, "mediaDevices", {
+            configurable: true,
+            value: { getUserMedia },
+        });
+        Object.defineProperty(HTMLMediaElement.prototype, "play", {
+            configurable: true,
+            value: vi.fn().mockResolvedValue(undefined),
+        });
+
+        render(() => <ArCameraOverlay />);
+        fireEvent.click(screen.getByRole("button", { name: "カメラを起動" }));
+        await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
+
+        // バックグラウンドからフォアグラウンドへ復帰（トラックが ended になっていた想定）
+        Object.defineProperty(document, "visibilityState", {
+            configurable: true,
+            value: "visible",
+        });
+        fireEvent(document, new Event("visibilitychange"));
+        await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    });
 });
