@@ -45,6 +45,14 @@ export default function Layout(props: LayoutProps) {
     const [isPcMenuHovered, setIsPcMenuHovered] = createSignal(false);
     const [sidebarSearchQuery, setSidebarSearchQuery] = createSignal("");
     const [isPaletteOpen, setIsPaletteOpen] = createSignal(false);
+    const isInitialMobileViewport =
+        typeof window !== "undefined" &&
+        window.innerWidth > 0 &&
+        window.innerWidth < 1024;
+    const [shouldRenderSidebarNav, setShouldRenderSidebarNav] = createSignal(
+        !isInitialMobileViewport,
+    );
+    let hasHydratedHeadTags = false;
 
     const favoriteRoutes = createMemo(() => {
         const favs = getFavorites();
@@ -153,7 +161,12 @@ export default function Layout(props: LayoutProps) {
         window.addEventListener("click", triggerLoad, { passive: true, once: true });
         window.addEventListener("keydown", handleGlobalKeyDown);
 
+        const sidebarNavTimer = !shouldRenderSidebarNav()
+            ? window.setTimeout(() => setShouldRenderSidebarNav(true), 300)
+            : undefined;
+
         return () => {
+            if (sidebarNavTimer !== undefined) window.clearTimeout(sidebarNavTimer);
             if (hoverTween !== undefined) window.clearTimeout(hoverTween);
             window.removeEventListener("pointerdown", triggerLoad);
             window.removeEventListener("touchstart", triggerLoad);
@@ -293,10 +306,19 @@ export default function Layout(props: LayoutProps) {
             if (typeof document !== "undefined") {
                 document.documentElement.lang = langTag;
 
-                const jsonLd = getPageJsonLd(pathname);
-                let script = document.getElementById(
+                const existingScript = document.getElementById(
                     "ba-tools-global-jsonld",
                 ) as HTMLScriptElement | null;
+                const existingCanonical = document.querySelector('link[rel="canonical"]');
+
+                if (!hasHydratedHeadTags && existingScript && existingCanonical) {
+                    hasHydratedHeadTags = true;
+                    return;
+                }
+                hasHydratedHeadTags = true;
+
+                const jsonLd = getPageJsonLd(pathname);
+                let script = existingScript;
                 if (!script) {
                     script = document.createElement("script");
                     script.type = "application/ld+json";
@@ -305,7 +327,7 @@ export default function Layout(props: LayoutProps) {
                 }
                 script.textContent = JSON.stringify(jsonLd);
 
-                let canonical = document.querySelector('link[rel="canonical"]');
+                let canonical = existingCanonical;
                 if (!canonical) {
                     canonical = document.createElement("link");
                     canonical.setAttribute("rel", "canonical");
@@ -458,6 +480,7 @@ export default function Layout(props: LayoutProps) {
 
                 {/* スクロール領域 */}
                 <div class="ba-flex-1 ba-scroll-y" style={{ padding: "0 1.25rem 1.25rem" }}>
+                    <Show when={shouldRenderSidebarNav() || isMenuOpen()}>
                     <nav class="ba-flex ba-flex-col ba-justify-between ba-gap-6" style={{ "min-height": "100%" }}>
                         <div class="ba-stack-2">
                             {/* お気に入りピン留めセクション */}
@@ -713,6 +736,7 @@ export default function Layout(props: LayoutProps) {
                             </footer>
                         </div>
                     </nav>
+                    </Show>
                 </div>
             </aside>
 
